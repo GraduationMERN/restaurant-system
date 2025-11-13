@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
+import { env } from "./env.js"; // import centralized env config
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      dbName: process.env.DB_NAME || "qr_restaurant",
+    const conn = await mongoose.connect(env.mongoUri, {
+      dbName: env.dbName || "qr_restaurant",
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
