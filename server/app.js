@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 
 // Route imports
+import reviewRoutes from "./src/routes/review.routes.js";
 
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(morgan("dev"));
 connectDB();
 
 // Routes
+app.use("/api/reviews", reviewRoutes);
 
 
 // Default Route

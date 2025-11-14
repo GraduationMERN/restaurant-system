@@ -5,7 +5,6 @@ const reviewSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      
     },
     order: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +26,12 @@ const reviewSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    photos: [
+      {
+        url: { type: String, required: true }, // public URL
+        public_id: { type: String }, // for deleting from cloud
+      },
+    ],
   },
   { timestamps: true }
 );
@@ -34,8 +39,6 @@ const reviewSchema = new mongoose.Schema(
 // Indexes
 reviewSchema.index({ user: 1 }); // For querying reviews by user
 reviewSchema.index({ order: 1 }); // For querying reviews by order
-reviewSchema.index({ user: 1, order: 1 }, { unique: true }); // One review per user per order
-
 const Review = mongoose.model("Review", reviewSchema);
 
 export default Review;

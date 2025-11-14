@@ -1,17 +1,11 @@
 import { ReviewRepository } from "../repositories/review.repository.js";
-import Review from "../models/review.model.js";
+import Review from "../models/Review.js";
 import AppError from "../utils/appError.js";
 
 export const ReviewService = {
   // Create review (ensure one per user per order)
   async createReview(data) {
     const { user, order } = data;
-
-    // Check if the user already reviewed this order
-    const existingReview = await Review.findOne({ user, order });
-    if (existingReview) {
-      throw new AppError("You have already reviewed this order", 400);
-    }
 
     // Create the review
     const review = await ReviewRepository.create(data);
