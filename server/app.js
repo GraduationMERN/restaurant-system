@@ -8,6 +8,7 @@ import connectDB from "./src/config/db.js";
 
 // Route imports
 import reviewRoutes from "./src/routes/review.routes.js";
+import productRoutes from "./src/routes/product.routes.js";
 
 
 dotenv.config();
@@ -24,6 +25,8 @@ connectDB();
 
 // Routes
 app.use("/api/reviews", reviewRoutes);
+app.use('/api/products',productRoutes);
+
 
 
 // Default Route
