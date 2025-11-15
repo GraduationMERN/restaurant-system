@@ -6,7 +6,7 @@ import cloudinary from "../config/cloudinary.js";
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "reviews",                // folder in Cloudinary
+    folder: "qr_restaurant",                // folder in Cloudinary
     allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
