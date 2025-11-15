@@ -1,6 +1,4 @@
-import Review from "../models/Review.js";
-import "../models/Order.js";
-import "../models/User.js";
+import Review from "../models/review.model.js";
 import { ApiFeatures } from "../utils/ApiFeatures.js";
 
 export const ReviewRepository = {
@@ -55,5 +53,5 @@ async updateReview(id, data) {
     return await Review.find({ user: userId })
       .populate("order", "_id");
   }
-
+  
 };
