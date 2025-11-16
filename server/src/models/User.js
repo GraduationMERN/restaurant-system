@@ -14,12 +14,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
-      select: false,
+    },
+    phoneNumber: {
+      type: Number,
+      required: [true, "Phone number is required"],
+      minlength: [11, "Phone number must be 11 number long"],
     },
     role: {
       type: String,
       enum: ["customer", "cashier", "kitchen", "admin"],
-      default: "user",
+      default: "customer",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     points: {
       type: Number,
@@ -33,6 +41,8 @@ const userSchema = new mongoose.Schema(
         message: "Only customers can have points",
       },
     },
+    otp: String,
+    otpExpires: Date,
   },
   { timestamps: true }
 );

@@ -9,6 +9,8 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   jwtKey: process.env.JWT_SECRET,
   expiry: process.env.JWT_EXPIRES_IN,
+  emailUser: process.env.EMAIL_USER,
+  emailPass: process.env.EMAIL_PASS,
 };
 
 // Optional sanity check for missing vars
