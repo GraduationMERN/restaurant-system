@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 
 // Route imports
+import reviewRoutes from "./src/routes/review.routes.js";
+import productRoutes from "./src/routes/product.routes.js";
+import rewardRouter from "./src/modules/rewards/reward.routes.js";
 
 
 dotenv.config();
@@ -19,9 +22,12 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // Connect to Database
-connectDB();
+await connectDB();
 
 // Routes
+app.use("/api/reviews", reviewRoutes);
+app.use('/api/products',productRoutes);
+app.use("/api/reward",rewardRouter)
 
 
 // Default Route
