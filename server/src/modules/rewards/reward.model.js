@@ -1,25 +1,23 @@
-import mongoose  from "mongoose";
+import mongoose from "mongoose";
 
 const rewardSchema = new mongoose.Schema(
-  {
-    title: {
-        type: String,
-        required: true,
+    {
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+            required: true,
+        },
+        pointsRequired: {
+            type: Number,
+            required: true,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+
     },
-    description: {
-        type: String,
-        required: true,
-    },
-    pointsRequired: {
-        type: Number,
-        required: true,
-    },
-    imageUrl: {
-        type: String,
-        required: false,
-    },
-  },
-  { timestamps: true }
+    { timestamps: true }
 );
 
 const Reward = mongoose.model("Reward", rewardSchema);

@@ -1,12 +1,11 @@
 import express from 'express';
+import { AddReward, deleteReward, getAllRewards, getRewardById, updateReward } from './reward.controller.js';
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.send('Get all rewards');
-});
-
-router.post('/', (req, res) => {
-  res.send('Create a new reward');
-});
+router.get('/', getAllRewards);
+router.get('/:id',getRewardById);
+router.post('/', AddReward);
+router.delete('/:id', deleteReward);
+router.patch('/:id', updateReward);
 
 export default router;
