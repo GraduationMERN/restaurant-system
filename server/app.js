@@ -13,7 +13,7 @@ import chatRoutes from './src/routes/chat.routes.js';
 // Route imports
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
-
+import categoryRoutes from "./src/routes/category.routes.js";
 
 dotenv.config();
 
@@ -37,7 +37,9 @@ app.use('/api/chatBot', chatRoutes);
 
 // Routes
 app.use("/api/reviews", reviewRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/products',productRoutes);
+app.use('/api/categories',categoryRoutes);
+
 
 
 

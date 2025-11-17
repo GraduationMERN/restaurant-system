@@ -1,5 +1,17 @@
 import mongoose from "mongoose";
 
+const optionSchema = new mongoose.Schema({
+  name: { type: String, required: true },          // e.g. "Size"
+  required: { type: Boolean, default: false },   
+  choices: [
+    {
+      label: { type: String, required: true },     // e.g. "Small"
+      priceDelta: { type: Number, default: 0 },    // +price بالنسبة للأساس
+      stock: { type: Number, default: null },     // اختياري - لو لكل اختيار ستوك
+    }
+  ]
+});
+
 const productSchema = new mongoose.Schema({
     name:{
         type:String,
@@ -9,7 +21,7 @@ const productSchema = new mongoose.Schema({
         type:String,
         required:true,
     },
-    price:{
+    basePrice:{
         type:Number,
         required:true,
         min: 0
@@ -20,7 +32,7 @@ const productSchema = new mongoose.Schema({
     },
     categoryId:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'categories',
+        ref:'Category',
         required:true,
     },
     stock:{
@@ -42,11 +54,12 @@ const productSchema = new mongoose.Schema({
         default:0
     },
     tags: [String], // Array of strings for tags like 'spicy', 'vegan', 'Best Seller'
+    options: [ optionSchema ],
 
 },{
     timestamps:true
 })
 
-//MODEL ->instance                      'Product'-> name of collection in database
+
 export default mongoose.model('Product',productSchema)
 
