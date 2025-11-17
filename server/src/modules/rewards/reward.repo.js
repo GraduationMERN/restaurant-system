@@ -11,6 +11,7 @@ const getRewardById = async (id) => {
 const deleteReward = async (id) => {
   return await Reward.findByIdAndDelete(id);
 }
+
 const createReward = async (rewardData) => {
   return await Reward.create(rewardData);
 }
