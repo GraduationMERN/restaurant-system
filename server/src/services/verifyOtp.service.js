@@ -1,5 +1,9 @@
-import { findUserByEmail } from "../repositories/user.repository.js";
-import { createToken } from "../utils/jwtGen.js";
+import {
+  findUserByEmail,
+  saveRefreshToken,
+} from "../repositories/user.repository.js";
+import { createAccessToken } from "../utils/createAccessToken.js";
+import { createRefreshToken } from "../utils/createRefreshToken.js";
 export const verifyOtpService = async (email, code) => {
   const user = await findUserByEmail(email);
   if (!user) {
@@ -33,7 +37,8 @@ export const verifyOtpService = async (email, code) => {
   await user.save();
 
   // create token now
-  const token = createToken(user);
-
-  return { user, token };
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+  saveRefreshToken(user._id, refreshToken);
+  return { user, accessToken, refreshToken };
 };

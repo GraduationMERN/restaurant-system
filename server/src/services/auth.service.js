@@ -1,9 +1,10 @@
-import { addUser, findUserByEmail } from "../repositories/user.repository.js";
+import { addUser, findUserByEmail, saveRefreshToken } from "../repositories/user.repository.js";
 import bcrypt from "bcryptjs";
-import { createToken } from "../utils/jwtGen.js";
+import { createAccessToken } from "../utils/createAccessToken.js";
 import User from "../models/User.js";
 import { generateOTP } from "../utils/otpGen.js";
 import { sendEmail } from "../utils/Mailer.js";
+import { createRefreshToken } from "../utils/createRefreshToken.js";
 
 export const registerUserService = async (user) => {
   const { name, email, password, phoneNumber } = user;
@@ -44,8 +45,10 @@ export const loginUserService = async (email, password) => {
     throw new Error("Invalid email or password");
   }
 
-  const token = createToken(user);
-  return { user, token };
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+  saveRefreshToken(user._id,refreshToken)
+  return { user, accessToken, refreshToken };
 };
 
 const hashPassword = async (password) => {

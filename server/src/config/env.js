@@ -8,7 +8,8 @@ export const env = {
   mongoUri: process.env.MONGO_URI,
   nodeEnv: process.env.NODE_ENV || "development",
   jwtKey: process.env.JWT_SECRET,
-  expiry: process.env.JWT_EXPIRES_IN,
+  expiry: process.env.ACCESS_JWT_EXPIRES_IN,
+  refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
 };

@@ -2,7 +2,15 @@ import {
   loginUserService,
   registerUserService,
 } from "../services/auth.service.js";
+import { refreshTokenService } from "../services/refreshToken.service.js";
 import { verifyOtpService } from "../services/verifyOtp.service.js";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,
+  maxAge: 24 * 60 * 60 * 1000,
+  sameSite: "none",
+};
 
 export const registerUserController = async (req, res) => {
   try {
@@ -29,13 +37,14 @@ export const registerUserController = async (req, res) => {
 export const loginUserController = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const { user, token } = await loginUserService(email, password);
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "none",
-    });
+    const { user, accessToken, refreshToken } = await loginUserService(
+      email,
+      password
+    );
+    console.log(user);
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
     res.status(200).json({
       message: "Logged in successfully",
       user: {
@@ -67,13 +76,13 @@ export const getMe = async (req, res) => {
 export const verifyOTP = async (req, res) => {
   try {
     const { email, code } = req.body;
-    const { user, token } = await verifyOtpService(email, code);
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "none",
-    });
+    const { user, accessToken, refreshToken } = await verifyOtpService(
+      email,
+      code
+    );
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
     res.status(201).json({
       message: "Registered successfully",
       user: {
@@ -85,5 +94,18 @@ export const verifyOTP = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: err.message });
+  }
+};
+export const refreshTokenController = async (req, res) => {
+  try {
+    const { newAccessToken, newRefreshToken } = await refreshTokenService(
+      req.cookies.refreshToken
+    );
+    res.cookie("accessToken", newAccessToken, cookieOptions);
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+
+    res.status(200).json({ message: "Token refreshed" });
+  } catch (err) {
+    res.status(401).json({ message: err.message });
   }
 };
