@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 import mongoose from "mongoose";
 
 const optionSchema = new mongoose.Schema({
@@ -65,4 +63,3 @@ const productSchema = new mongoose.Schema({
 
 export default mongoose.model('Product',productSchema)
 
->>>>>>> bcf907a894f9807f18b9c7f68fb92a0d8ae5f188
