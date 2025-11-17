@@ -1,4 +1,4 @@
-import { createRewardService, deleteRewardService, getAllRewardsServices, getRewardByIdService, updateRewardService } from './reward.service.js';
+import { createRewardService, deleteRewardService, getAllRewardsServices, getRewardByIdService, redeemRewardService, updateRewardService } from './reward.service.js';
 
 async function getAllRewards(req, res) {
     try {
@@ -55,4 +55,15 @@ async function updateReward(req,res) {
     }
 }
 
-export { getAllRewards, AddReward,deleteReward, getRewardById,updateReward };
+async function redeemReward(req, res) {
+    try {
+        console.log(req.body);
+        const { rewardId, userId } = req.body;
+        await redeemRewardService(rewardId, userId);
+        res.status(200).json({ message: 'Reward redeemed successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }   
+}
+
+export { getAllRewards, AddReward,deleteReward, getRewardById,updateReward , redeemReward};
