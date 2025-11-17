@@ -11,6 +11,7 @@ import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import categoryRoutes from "./src/routes/category.routes.js";
 
 dotenv.config();
 
@@ -30,6 +31,10 @@ app.use("/api/reviews", reviewRoutes);
 app.use('/api/products',productRoutes);
 app.use("/api/reward",rewardRouter)
 app.use("/auth", authRoutes);
+app.use('/api/categories',categoryRoutes);
+
+
+
 
 // Default Route
 app.get("/", (req, res) => {
