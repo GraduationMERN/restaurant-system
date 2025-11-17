@@ -19,3 +19,9 @@ export const deleteRewardService = async (id) => {
 export const updateRewardService = async (id, rewardData) => {
     return await updateReward(id, rewardData);
 }
+
+export const redeemRewardService = async (rewardId, userId) => {
+    // Placeholder for redeem reward logic
+    console.log(userId)
+    console.log(rewardId)
+}

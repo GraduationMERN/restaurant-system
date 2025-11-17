@@ -5,13 +5,12 @@ const getAllRewardsRepo = async () => {
 }
 
 const getRewardById = async (id) => {
-  return await Reward.findById(id);
+  return await Reward.findById(id).populate("productId");
 }
 
 const deleteReward = async (id) => {
   return await Reward.findByIdAndDelete(id);
 }
-
 const createReward = async (rewardData) => {
   return await Reward.create(rewardData);
 }
@@ -19,4 +18,5 @@ const createReward = async (rewardData) => {
 const updateReward = async (id, rewardData) => {
   return await Reward.findByIdAndUpdate(id, rewardData, { new: true });
 }
+
 export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward};
