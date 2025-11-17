@@ -1,5 +1,5 @@
-import { ReviewRepository } from "../repositories/review.repository.js";
-import Review from "../models/review.model.js";
+import  {ReviewRepository}  from "../repositories/review.repository.js";
+import Review from "../models/Review.js";
 import AppError from "../utils/appError.js";
 
 export const ReviewService = {

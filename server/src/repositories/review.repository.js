@@ -1,4 +1,4 @@
-import Review from "../models/review.model.js";
+import Review from "../models/Review.js";
 import { ApiFeatures } from "../utils/ApiFeatures.js";
 
 export const ReviewRepository = {
