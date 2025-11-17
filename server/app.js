@@ -24,7 +24,18 @@ app.use(morgan("dev"));
 app.use(cookieParser());
 
 // Connect to Database
+
+connectDB();
+
+// // connect to database for chatAI ---> this is for testing only
+// ragEngine.connectToDatabase();
+// // important initialize for chatbot_AI
+// ragEngine.initializeEmbeddingModel();
+
+// // chatBot_AI Route
+
 await connectDB();
+
 
 // Routes
 app.use("/api/reviews", reviewRoutes);
