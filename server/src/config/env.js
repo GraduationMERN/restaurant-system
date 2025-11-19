@@ -13,6 +13,9 @@ export const env = {
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
   frontendUrl: process.env.FRONTEND_URL,
+  googleId: process.env.GOOGLE_CLIENT_ID,
+  googleSecret: process.env.GOOGLE_CLIENT_SECRET,
+  serverURI: process.env.GOOGLE_REDIRECT_URI,
 };
 
 // Optional sanity check for missing vars

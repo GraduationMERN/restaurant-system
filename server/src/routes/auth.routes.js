@@ -1,7 +1,9 @@
 import express from "express";
 import {
   forgetPasswordController,
+  googleCallbackController,
   loginUserController,
+  logoutController,
   refreshTokenController,
   registerUserController,
   resetPasswordController,
@@ -10,6 +12,7 @@ import {
 import authMiddleware from "../middlewares/auth.middleware.js";
 import { getMe } from "../controllers/auth.controller.js";
 import validatePassword from "../middlewares/validatePassword.middleware.js";
+import { env } from "../config/env.js";
 
 const router = express.Router();
 
@@ -20,5 +23,21 @@ router.get("/me", authMiddleware, getMe);
 router.post("/refresh", refreshTokenController);
 router.post("/forget", forgetPasswordController);
 router.post("/reset", validatePassword, resetPasswordController);
+router.get("/google", (req, res) => {
+  const redirectUrl =
+    "https://accounts.google.com/o/oauth2/v2/auth?" +
+    new URLSearchParams({
+      client_id: env.googleId,
+      redirect_uri: `${env.serverURI}/auth/google/callback`,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "consent",
+    });
+
+  res.redirect(redirectUrl);
+});
+router.get("/google/callback", googleCallbackController);
+
+router.post("/logout", logoutController);
 
 export default router;

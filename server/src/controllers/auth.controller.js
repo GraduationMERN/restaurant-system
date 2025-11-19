@@ -1,6 +1,8 @@
+import { env } from "../config/env.js";
 import {
   forgetPasswordService,
   loginUserService,
+  logoutUserService,
   registerUserService,
   resetPasswordService,
 } from "../services/auth.service.js";
@@ -134,5 +136,41 @@ export const resetPasswordController = async (req, res) => {
     res.status(200).json({ message });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+export const googleCallbackController = async (req, res) => {
+  const code = req.query.code;
+
+  try {
+    const { refreshToken, accessToken, user } = await googleAuthService(code);
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: "Logged in successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+
+    res.redirect(env.frontendUrl);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+export const logoutController = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    await logoutUserService(refreshToken);
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
 };

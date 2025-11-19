@@ -10,6 +10,10 @@ export const findUserById = async (id) => {
   return await User.findById(id).select("-password");
 };
 
+export const findUserByGoogleId = async (googleId) => {
+  return User.findOne({ googleId });
+};
+
 export const findUserByEmail = async (email) => {
   return await User.findOne({ email });
 };
@@ -23,6 +27,13 @@ export const findUserByResetToken = async (token) => {
 
 export const addUser = async (user) => {
   return await User.create(user);
+};
+
+export const deleteRefreshToken = async (refreshToken) => {
+  return await User.updateOne(
+    { refreshToken },
+    { $unset: { refreshToken: 1 } }
+  );
 };
 export const saveRefreshToken = async (userId, token) => {
   await User.findByIdAndUpdate(userId, { refreshToken: token });

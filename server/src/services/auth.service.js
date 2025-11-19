@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import {
   addUser,
+  deleteRefreshToken,
   findUserByEmail,
   findUserByResetToken,
   saveRefreshToken,
@@ -12,6 +13,10 @@ import { generateOTP } from "../utils/otpGen.js";
 import { sendEmail } from "../utils/Mailer.js";
 import { createRefreshToken } from "../utils/createRefreshToken.js";
 import { env } from "../config/env.js";
+import {
+  decodeGoogleIdToken,
+  exchangeGoogleCodeForTokens,
+} from "../utils/google.js";
 
 export const registerUserService = async (user) => {
   const { name, email, password, phoneNumber } = user;
@@ -58,6 +63,10 @@ export const loginUserService = async (email, password) => {
   return { user, accessToken, refreshToken };
 };
 
+export const logoutUserService = async (refreshToken) => {
+  await deleteRefreshToken(refreshToken);
+};
+
 export const forgetPasswordService = async (email) => {
   const user = await findUserByEmail(email);
   if (!user) {
@@ -93,6 +102,34 @@ export const resetPasswordService = async (token, newPassword) => {
   user.resetPasswordExpires = undefined;
   await user.save();
   return { message: "Password reset successful" };
+};
+
+export const googleAuthService = async (code) => {
+  const { id_token } = await exchangeGoogleCodeForTokens(code);
+
+  const googleUser = decodeGoogleIdToken(id_token);
+
+  let user = await findUserByGoogleId(googleUser.sub);
+
+  if (!user) {
+    const existingEmailUser = await findUserByEmail(googleUser.email);
+
+    if (existingEmailUser) {
+      throw new Error("Email already registered without Google");
+    }
+
+    user = await addUser({
+      googleId: googleUser.sub,
+      email: googleUser.email,
+      name: googleUser.name,
+    });
+  }
+
+  // Step 5: create JWT for your app
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+  saveRefreshToken(user._id, refreshToken);
+  return { accessToken, refreshToken, user };
 };
 
 const hashPassword = async (password) => {
