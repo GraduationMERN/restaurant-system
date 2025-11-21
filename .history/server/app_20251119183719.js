@@ -3,15 +3,11 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
-import orderRoutes from "./src/modules/order.module/order.routes.js";
+import orderRoutes from "./src/routes/order.routes.js";
+
 // Route imports
-import reviewRoutes from "./src/routes/review.routes.js";
-import productRoutes from "./src/routes/product.routes.js";
-import rewardRouter from "./src/modules/rewards/reward.routes.js";
-import authRoutes from "./src/routes/auth.routes.js";
-import categoryRoutes from "./src/routes/category.routes.js";
+
 
 dotenv.config();
 
@@ -21,19 +17,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cookieParser());
 
 // Connect to Database
-await connectDB();
+connectDB();
 
 // Routes
-app.use("/api/reviews", reviewRoutes);
-app.use('/api/products',productRoutes);
-app.use("/api/reward",rewardRouter)
-app.use("/auth", authRoutes);
-app.use('/api/categories',categoryRoutes);
-
-
 
 app.use("/api/orders", orderRoutes);
 
