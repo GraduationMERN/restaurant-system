@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
-import { env } from "../config/env.js";
+import { env } from "../../../config/env.js";
 import {
   getUserByRefreshToken,
   saveRefreshToken,
-} from "../repositories/user.repository.js";
-import { createAccessToken } from "../utils/createAccessToken.js";
-import { createRefreshToken } from "../utils/createRefreshToken.js";
+} from "../repository/user.repository.js";
+import { createAccessToken } from "../../../utils/createAccessToken.js";
+import { createRefreshToken } from "../../../utils/createRefreshToken.js";
 
 export const refreshTokenService = async (refreshToken) => {
   if (!refreshToken) {

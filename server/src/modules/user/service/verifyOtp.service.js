@@ -1,9 +1,9 @@
 import {
   findUserByEmail,
   saveRefreshToken,
-} from "../repositories/user.repository.js";
-import { createAccessToken } from "../utils/createAccessToken.js";
-import { createRefreshToken } from "../utils/createRefreshToken.js";
+} from "../repository/user.repository.js";
+import { createAccessToken } from "../../../utils/createAccessToken.js";
+import { createRefreshToken } from "../../../utils/createRefreshToken.js";
 export const verifyOtpService = async (email, code) => {
   const user = await findUserByEmail(email);
   if (!user) {

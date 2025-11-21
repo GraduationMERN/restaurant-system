@@ -8,11 +8,11 @@ import {
   registerUserController,
   resetPasswordController,
   verifyOTP,
-} from "../controllers/auth.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { getMe } from "../controllers/auth.controller.js";
-import validatePassword from "../middlewares/validatePassword.middleware.js";
-import { env } from "../config/env.js";
+} from "../controller/auth.controller.js";
+import authMiddleware from "../../../middlewares/auth.middleware.js";
+import { getMe } from "../controller/auth.controller.js";
+import validatePassword from "../../../middlewares/validatePassword.middleware.js";
+import { env } from "../../../config/env.js";
 
 const router = express.Router();
 

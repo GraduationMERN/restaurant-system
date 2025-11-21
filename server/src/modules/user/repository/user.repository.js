@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "../models/User.js";
+import User from "../model/User.js";
 
 export const findAllUsers = async () => {
   return await User.find().select("-password");

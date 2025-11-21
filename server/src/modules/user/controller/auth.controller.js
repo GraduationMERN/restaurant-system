@@ -1,13 +1,13 @@
-import { env } from "../config/env.js";
+import { env } from "../../../config/env.js";
 import {
   forgetPasswordService,
   loginUserService,
   logoutUserService,
   registerUserService,
   resetPasswordService,
-} from "../services/auth.service.js";
-import { refreshTokenService } from "../services/refreshToken.service.js";
-import { verifyOtpService } from "../services/verifyOtp.service.js";
+} from "../service/auth.service.js";
+import { refreshTokenService } from "../service/refreshToken.service.js";
+import { verifyOtpService } from "../service/verifyOtp.service.js";
 
 const cookieOptions = {
   httpOnly: true,

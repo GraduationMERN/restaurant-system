@@ -5,18 +5,18 @@ import {
   findUserByEmail,
   findUserByResetToken,
   saveRefreshToken,
-} from "../repositories/user.repository.js";
+} from "../repository/user.repository.js";
 import bcrypt from "bcryptjs";
-import { createAccessToken } from "../utils/createAccessToken.js";
-import User from "../models/User.js";
-import { generateOTP } from "../utils/otpGen.js";
-import { sendEmail } from "../utils/Mailer.js";
-import { createRefreshToken } from "../utils/createRefreshToken.js";
-import { env } from "../config/env.js";
+import { createAccessToken } from "../../../utils/createAccessToken.js";
+import User from "../model/User.js";
+import { generateOTP } from "../../../utils/otpGen.js";
+import { sendEmail } from "../../../utils/Mailer.js";
+import { createRefreshToken } from "../../../utils/createRefreshToken.js";
+import { env } from "../../../config/env.js";
 import {
   decodeGoogleIdToken,
   exchangeGoogleCodeForTokens,
-} from "../utils/google.js";
+} from "../../../utils/google.js";
 
 export const registerUserService = async (user) => {
   const { name, email, password, phoneNumber } = user;

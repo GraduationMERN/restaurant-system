@@ -1,7 +1,7 @@
 import {
   getAllUsersService,
   getUserByIdService,
-} from "../services/user.service.js";
+} from "../service/user.service.js";
 
 export const getAllUsers = async (req, res) => {
   try {

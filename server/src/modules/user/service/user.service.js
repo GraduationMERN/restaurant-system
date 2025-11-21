@@ -1,4 +1,4 @@
-import { findAllUsers, findUserById } from "../repositories/user.repository.js";
+import { findAllUsers, findUserById } from "../repository/user.repository.js";
 
 export const getAllUsersService = async () => {
   const users = await findAllUsers();
