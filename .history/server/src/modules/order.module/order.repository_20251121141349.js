@@ -1,24 +1,33 @@
+// repositories/orderRepository.js
 import Order from "./orderModel.js";
 
 class OrderRepository {
   async create(orderData, session = null) {
-    if (session) {
-      const order = await Order.create([orderData], { session });
-      return order[0];
-    }
-    return Order.create(orderData);
+    const options = session ? { session } : {};
+    const order = await Order.create([orderData], options);
+    return order[0]; 
   }
 
+  // ==============================
+  // 2) Find Order by ID
+  // ==============================
   async findById(orderId, { populate = [], lean = true } = {}) {
     let query = Order.findById(orderId);
+
     populate.forEach((p) => (query = query.populate(p)));
+
     if (lean) query = query.lean();
+
     return query.exec();
   }
 
+  // ==============================
+  // 3) List Orders for Restaurant
+  // ==============================
   async listByRestaurant(restaurantId, { status, limit = 50, skip = 0 } = {}) {
     const filter = { restaurantId };
     if (status) filter.orderStatus = status;
+
     return Order.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -27,6 +36,9 @@ class OrderRepository {
       .exec();
   }
 
+  // ==============================
+  // 4) List Orders for Customer
+  // ==============================
   async listByCustomer(customerId, { limit = 50, skip = 0 } = {}) {
     return Order.find({ customerId })
       .sort({ createdAt: -1 })
@@ -36,6 +48,9 @@ class OrderRepository {
       .exec();
   }
 
+  // ==============================
+  // 5) Update Order Status
+  // ==============================
   async updateStatus(orderId, newStatus) {
     return Order.findByIdAndUpdate(
       orderId,
@@ -44,24 +59,23 @@ class OrderRepository {
     ).exec();
   }
 
+  // ==============================
+  // 6) Update Payment Status
+  // ==============================
   async updatePayment(orderId, paymentStatus, paymentMethod = null) {
-    const update = { paymentStatus };
-    if (paymentMethod) update.paymentMethod = paymentMethod;
+    const updateObj = { paymentStatus };
+    if (paymentMethod) updateObj.paymentMethod = paymentMethod;
+
     return Order.findByIdAndUpdate(
       orderId,
-      { $set: update },
+      { $set: updateObj },
       { new: true }
     ).exec();
   }
 
-  async updateRewardPoints(orderId, rewardPoints) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { rewardPointsEarned: rewardPoints } },
-      { new: true }
-    ).exec();
-  }
-
+  // ==============================
+  // 7) Add Item to Existing Order
+  // ==============================
   async addItem(orderId, item) {
     return Order.findByIdAndUpdate(
       orderId,
@@ -70,14 +84,9 @@ class OrderRepository {
     ).exec();
   }
 
-  async updateItems(orderId, items) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { items } },
-      { new: true }
-    ).exec();
-  }
-
+  // ==============================
+  // 8) Change Total Amount
+  // ==============================
   async updateTotal(orderId, totalAmount) {
     return Order.findByIdAndUpdate(
       orderId,
@@ -86,22 +95,9 @@ class OrderRepository {
     ).exec();
   }
 
-  async updateTable(orderId, tableNumber) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { tableNumber } },
-      { new: true }
-    ).exec();
-  }
-
-  async updateServiceType(orderId, serviceType) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { serviceType } },
-      { new: true }
-    ).exec();
-  }
-
+  // ==============================
+  // 9) General filter
+  // ==============================
   async search(filter = {}, { skip = 0, limit = 50 } = {}) {
     return Order.find(filter)
       .sort({ createdAt: -1 })
@@ -111,6 +107,9 @@ class OrderRepository {
       .exec();
   }
 
+  // ==============================
+  // 10) Delete Order
+  // ==============================
   async delete(orderId) {
     return Order.findByIdAndDelete(orderId).exec();
   }

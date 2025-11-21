@@ -9,6 +9,9 @@ export const createOrder = async (req, res) => {
   }
 };
 
+// ============================
+// GET ORDER BY ID
+// ============================
 export const getOrderById = async (req, res) => {
   try {
     const order = await orderService.getOrder(req.params.id);
@@ -18,6 +21,9 @@ export const getOrderById = async (req, res) => {
   }
 };
 
+// ============================
+// UPDATE ORDER STATUS
+// ============================
 export const updateOrderStatus = async (req, res) => {
   try {
     const updated = await orderService.updateStatus(req.params.id, req.body.status);
@@ -27,6 +33,9 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// ============================
+// UPDATE PAYMENT
+// ============================
 export const updatePaymentStatus = async (req, res) => {
   try {
     const updated = await orderService.updatePayment(
@@ -40,6 +49,18 @@ export const updatePaymentStatus = async (req, res) => {
   }
 };
 
+// ============================
+// LIST ORDERS FOR RESTAURANT
+// ============================
+// مثال: create order
+const orderData = {
+  customerId: req.body.customerId,
+  restaurantId: req.body.restaurantId,
+  items: req.body.items,
+  isRewardOrder: req.body.isRewardOrder || false
+};
+const order = await orderService.createOrder(orderData);
+
 export const getOrdersForRestaurant = async (req, res) => {
   try {
     const orders = await orderService.getOrdersForRestaurant(req.params.restaurantId);
@@ -49,6 +70,9 @@ export const getOrdersForRestaurant = async (req, res) => {
   }
 };
 
+// ============================
+// LIST ORDERS FOR CUSTOMER
+// ============================
 export const getOrdersForCustomer = async (req, res) => {
   try {
     const orders = await orderService.getOrdersForCustomer(req.params.customerId);

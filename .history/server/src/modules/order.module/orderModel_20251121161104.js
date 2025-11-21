@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
+
+// ==============================
 // Order Item Schema
+// ==============================
 const OrderItemSchema = new mongoose.Schema(
   {
     itemId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MenuItem",
-      required: false,  
+      required: false, // مش ضروري لو العنصر من reward menu
     },
 
     name: { type: String, required: true },
@@ -16,11 +19,14 @@ const OrderItemSchema = new mongoose.Schema(
 
     quantity: { type: Number, required: true, min: 1 },
 
-    itemPoints: { type: Number, default: 0 }
+    itemPoints: { type: Number, default: 0 } // نقاط المكافآت لو العنصر من reward
   },
   { _id: false }
 );
+
+// ==============================
 // Order Schema
+// ==============================
 const OrderSchema = new mongoose.Schema(
   {
     restaurantId: {
@@ -85,5 +91,8 @@ const OrderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ==============================
 // Export Model 
+// ==============================
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

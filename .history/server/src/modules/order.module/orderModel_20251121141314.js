@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-// Order Item Schema
+
 const OrderItemSchema = new mongoose.Schema(
   {
     itemId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MenuItem",
-      required: false,  
+      required: false,
     },
 
     name: { type: String, required: true },
@@ -20,7 +20,7 @@ const OrderItemSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-// Order Schema
+
 const OrderSchema = new mongoose.Schema(
   {
     restaurantId: {
@@ -76,14 +76,10 @@ const OrderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    isRewardOrder: {
-      type: Boolean,
-      default: false, 
-    },
 
     notes: { type: String, default: "" },
   },
   { timestamps: true }
 );
-// Export Model 
+
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

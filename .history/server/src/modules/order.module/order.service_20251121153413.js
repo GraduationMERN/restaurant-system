@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import orderRepo from "./order.repository.js";
-import { calculateTotal } from "./orderUtils.js";
+import { calculateTotal, calculateRewardPoints, calculatePointsCost } from "./orderUtils.js";
 
 class OrderService {
   async createOrder(orderData) {
@@ -8,19 +8,26 @@ class OrderService {
       throw new Error("Order must contain at least one item.");
     }
 
-    if (!orderData.isRewardOrder) {
-      orderData.totalAmount = calculateTotal(orderData.items);
-    } else {
-      orderData.totalAmount = 0;
-    }
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+      if (orderData.isRewardOrder) {
+        // لو الطلب من Reward Menu
+        const pointsCost = calculatePointsCost(orderData.items);
+        orderData.totalAmount = 0; // ما فيش فلوس تدفع في الطلب من Reward Menu
+        orderData.rewardPointsSpent = pointsCost; // نخزن النقاط المستهلكة
+      } else {
+        // الطلب العادي
+        const total = calculateTotal(orderData.items);
+        orderData.totalAmount = total;
+        orderData.rewardPointsEarned = calculateRewardPoints(orderData.items);
+      }
+
       const newOrder = await orderRepo.create(orderData, session);
       await session.commitTransaction();
       session.endSession();
+
       return newOrder;
     } catch (err) {
       await session.abortTransaction();
@@ -57,11 +64,29 @@ class OrderService {
   }
 
   async addItemToOrder(orderId, item) {
-    return await orderRepo.addItem(orderId, item);
+    const updatedOrder = await orderRepo.addItem(orderId, item);
+    // تحديث المجموع أو النقاط بعد الإضافة
+    if (!updatedOrder.isRewardOrder) {
+      const total = calculateTotal(updatedOrder.items);
+      const rewardPoints = calculateRewardPoints(updatedOrder.items);
+      await orderRepo.updateTotal(orderId, total);
+      await orderRepo.updateRewardPoints(orderId, rewardPoints);
+    }
+    return updatedOrder;
   }
 
   async updateOrderItems(orderId, items) {
-    return await orderRepo.updateItems(orderId, items);
+    const updatedOrder = await orderRepo.updateItems(orderId, items);
+    if (!updatedOrder.isRewardOrder) {
+      const total = calculateTotal(updatedOrder.items);
+      const rewardPoints = calculateRewardPoints(updatedOrder.items);
+      await orderRepo.updateTotal(orderId, total);
+      await orderRepo.updateRewardPoints(orderId, rewardPoints);
+    } else {
+      const pointsCost = calculatePointsCost(updatedOrder.items);
+      updatedOrder.rewardPointsSpent = pointsCost;
+    }
+    return updatedOrder;
   }
 }
 

@@ -20,7 +20,10 @@ const OrderItemSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
+// ==============================
 // Order Schema
+// ==============================
 const OrderSchema = new mongoose.Schema(
   {
     restaurantId: {
@@ -85,5 +88,8 @@ const OrderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ==============================
 // Export Model 
+// ==============================
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);
