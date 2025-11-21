@@ -71,6 +71,9 @@ const OrderSchema = new mongoose.Schema(
       enum: ["cash", "card", "wallet"],
       default: "cash",
     },
+    stripeCheckoutSessionId: 
+    { type: String, default: null },
+
 
     rewardPointsEarned: {
       type: Number,
