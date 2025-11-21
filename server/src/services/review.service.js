@@ -1,17 +1,11 @@
 import { ReviewRepository } from "../repositories/review.repository.js";
-import Review from "../models/review.model.js";
+import Review from "../models/Review.js";
 import AppError from "../utils/appError.js";
 
 export const ReviewService = {
   // Create review (ensure one per user per order)
   async createReview(data) {
     const { user, order } = data;
-
-    // Check if the user already reviewed this order
-    const existingReview = await Review.findOne({ user, order });
-    if (existingReview) {
-      throw new AppError("You have already reviewed this order", 400);
-    }
 
     // Create the review
     const review = await ReviewRepository.create(data);
@@ -36,9 +30,9 @@ export const ReviewService = {
     if (!review) throw new AppError("Review not found", 404);
 
     // Prevent normal users from changing approval status
-    if (data.status && userRole !== "admin") {
-      throw new AppError("Only admins can change review status", 403);
-    }
+    // if (data.status && userRole !== "admin") {
+    //   throw new AppError("Only admins can change review status", 403);
+    // }
 
     const updated = await ReviewRepository.updateReview(id, data);
     return updated;
@@ -50,9 +44,9 @@ export const ReviewService = {
     if (!review) throw new AppError("Review not found", 404);
 
     // Check permission
-    if (review.user._id.toString() !== user._id.toString() && user.role !== "admin") {
-      throw new AppError("You are not allowed to delete this review", 403);
-    }
+    // if (review.user._id.toString() !== user._id.toString() && user.role !== "admin") {
+    //   throw new AppError("You are not allowed to delete this review", 403);
+    // }
 
     await ReviewRepository.deleteReview(id);
     return { message: "Review deleted successfully" };
