@@ -6,6 +6,12 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
 
+// middlewares
+import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
+import requestLogger from "./src/middlewares/requestLogger.middleware.js";
+import errorHandler from "./src/middlewares/error.middleware.js";
+import logger from "./src/utils/logger.js";
+
 // Route imports
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
@@ -20,7 +26,13 @@ const app = express();
 // Global Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(morgan("dev"));
+// Request id and logging
+app.use(requestIdMiddleware);
+app.use(requestLogger);
+// keep morgan for development console-friendly logs
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan("dev"));
+}
 app.use(cookieParser());
 
 // Connect to Database
@@ -43,13 +55,14 @@ app.get("/", (req, res) => {
 
 // 404 handler
 app.use((req, res, next) => {
-  res.status(404).json({ message: "Route not found" });
+  res.status(404).json({ message: "Route not found", requestId: req.requestId });
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({ message: "Internal Server Error" });
-});
+app.use(errorHandler);
+
+// startup log
+logger.info('server_initialized', { env: process.env.NODE_ENV || 'development' });
+
 
 export default app;
