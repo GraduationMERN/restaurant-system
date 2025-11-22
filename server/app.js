@@ -12,6 +12,7 @@ import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
+import cartRoutes from "./src/routes/cart.routes.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/products',productRoutes);
 app.use("/api/reward",rewardRouter)
 app.use("/auth", authRoutes);
 app.use('/api/categories',categoryRoutes);
+app.use('/api/cart',cartRoutes);
 
 
 
