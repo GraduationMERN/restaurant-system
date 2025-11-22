@@ -9,10 +9,13 @@ export const env = {
     port: process.env.PORT || 5000,
     mongoUri: process.env.MONGO_URI,
     nodeEnv: process.env.NODE_ENV || "development",
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    cloudApiKey: process.env.CLOUDINARY_API_KEY,
-    cloudApiSecret: process.env.CLOUDINARY_API_SECRET,
+    
+    //NODMAILER
+    emailUser: process.env.EMAIL_USER,
+    emailPass: process.env.EMAIL_PASS,
 
+    jwtKey: process.env.JWT_SECRET,
+    expiry: process.env.JWT_EXPIRY || "1d",
 };
 
 // Optional sanity check for missing vars

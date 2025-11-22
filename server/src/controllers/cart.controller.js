@@ -1,18 +1,18 @@
 import Cart from '../models/Cart.js';
-import {getCartForUserService,addToCartService} from '../services/cart.service.js';
+import { getCartForUserService, addToCartService } from '../services/cart.service.js';
 import { getProductByIdService } from '../services/product.service.js';
 
 //getCartForUser
-export const getCartForUser =async(req,res)=>{
-    try{
-        const {userId} = req.params;
+export const getCartForUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
         const cart = await getCartForUserService(userId);
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }
         res.status(200).json(cart);
-    }catch(err){
-        res.status(500).json({error:err.message});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 }
 
@@ -38,9 +38,9 @@ function calculateFinalPrice(product, selectedOptions) {
 
 
 // add to cart 
-export const addToCart =async(req,res)=>{
-        try{
-        const {userId,productId,quantity,selectedOptions}= req.body;
+export const addToCart = async (req, res) => {
+    try {
+        const { userId, productId, quantity, selectedOptions } = req.body;
         let cart = await addToCartService(userId)
         const product = await getProductByIdService(productId);
         if (!product) {
@@ -79,15 +79,15 @@ export const addToCart =async(req,res)=>{
             }
         }
 
-        const finalPrice = calculateFinalPrice(product,selectedOptions)
+        const finalPrice = calculateFinalPrice(product, selectedOptions)
         // if first time -> create new cart
-        if (!cart) { 
+        if (!cart) {
             cart = new Cart({
-            userId,
-            products: [{ productId, quantity ,selectedOptions,price: finalPrice}],
-            totalPrice: finalPrice * quantity,
+                userId,
+                products: [{ productId, quantity, selectedOptions, price: finalPrice }],
+                totalPrice: finalPrice * quantity,
             });
-        }else{ // نشوف المنتج موجود بنفس الخيارات ولا لأ
+        } else { // نشوف المنتج موجود بنفس الخيارات ولا لأ
             const productInCart = cart.products.find(
                 (p) => p.productId.toString() === productId && JSON.stringify(p.selectedOptions) === JSON.stringify(selectedOptions)
             );
@@ -104,43 +104,43 @@ export const addToCart =async(req,res)=>{
             // }
             if (productInCart) {
 
-    // لو المنتج مفيهوش اختيارات → شيك على stock العام
-    if (!product.options || product.options.length === 0) {
-        if (productInCart.quantity + quantity > product.stock) {
-            return res.status(400).json({ message: 'Not enough stock for this quantity' });
-        }
-    } 
-    else {
-        // المنتج ليه options → شيك على stock الخاص بالاختيارات
-        for (let opt of product.options) {
-            const choiceName = selectedOptions[opt.name];
-            if (!choiceName) continue;
-
-            const choiceData = opt.choices.find(c => c.label === choiceName);
-            if (choiceData && choiceData.stock !== null) {
-                if (productInCart.quantity + quantity > choiceData.stock) {
-                    return res.status(400).json({
-                        message: `Not enough stock for option "${opt.name}" (${choiceName})`
-                    });
+                // لو المنتج مفيهوش اختيارات → شيك على stock العام
+                if (!product.options || product.options.length === 0) {
+                    if (productInCart.quantity + quantity > product.stock) {
+                        return res.status(400).json({ message: 'Not enough stock for this quantity' });
+                    }
                 }
+                else {
+                    // المنتج ليه options → شيك على stock الخاص بالاختيارات
+                    for (let opt of product.options) {
+                        const choiceName = selectedOptions[opt.name];
+                        if (!choiceName) continue;
+
+                        const choiceData = opt.choices.find(c => c.label === choiceName);
+                        if (choiceData && choiceData.stock !== null) {
+                            if (productInCart.quantity + quantity > choiceData.stock) {
+                                return res.status(400).json({
+                                    message: `Not enough stock for option "${opt.name}" (${choiceName})`
+                                });
+                            }
+                        }
+                    }
+                }
+
+                //  هنا لازم تزودي الكمية
+                productInCart.quantity += quantity;
+                cart.totalPrice += finalPrice * quantity;
             }
-        }
-    }
+            else {
+                //  منتج جديد
+                cart.products.push({ productId, quantity, selectedOptions, price: finalPrice });
+                cart.totalPrice += finalPrice * quantity;
+            }
 
-    //  هنا لازم تزودي الكمية
-    productInCart.quantity += quantity;
-    cart.totalPrice += finalPrice * quantity;
-}
-else {
-    //  منتج جديد
-    cart.products.push({ productId, quantity, selectedOptions, price: finalPrice });
-    cart.totalPrice += finalPrice * quantity;
-}
 
-            
         }
         if (!product.options || product.options.length === 0) {
-            product.stock-=quantity;
+            product.stock -= quantity;
         }
         if (product.options && selectedOptions) {
             for (let opt of product.options) {
@@ -156,8 +156,8 @@ else {
         await product.save();
         await cart.save();
         res.status(201).json(cart);
-    }catch(err){
-        res.status(500).json({error:err.message});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
 
     }
 }

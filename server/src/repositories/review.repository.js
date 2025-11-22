@@ -1,5 +1,5 @@
 import Review from "../models/Review.js";
-import "../models/Order.js";
+import "../modules/order.module/orderModel.js"
 import "../models/User.js";
 import { ApiFeatures } from "../utils/ApiFeatures.js";
 
