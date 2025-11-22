@@ -1,263 +1,161 @@
 /**
- * RAG Engine Module - Modular version for Express integration
+ * ragEngine - generates embeddings, retrieves top matches from Products & Reviews,
+ * builds context and calls LLM.
  */
 
 import { pipeline } from '@xenova/transformers';
-import { MongoClient } from 'mongodb';
-import fs from 'fs/promises';
+import Product from "../models/Product.js";
+import Review from "../models/Review.js";
+import { env } from "../config/env.js"
+import dotenv from "dotenv";
+dotenv.config();
 
-process.loadEnvFile();
+const CONFIG = { llmMaxTokens: 500 };
 
-// Configuration
-const CONFIG = {
-    mongoUrl: process.env.MONGO_URL,
-    dbName: 'restaurant_rag',
-    collectionName: 'menu_items',
-    embeddingModel: 'Xenova/all-MiniLM-L6-v2',
-    topK: 3,
-    llmApiUrl: 'https://api.groq.com/openai/v1/chat/completions',
-    llmModel: 'llama-3.3-70b-versatile',
-    llmMaxTokens: 500,
-};
-
-// Global variables
 let extractor = null;
-let mongoClient = null;
-let db = null;
-let collection = null;
 
-/**
- * Initialize the embedding model
- */
-async function initializeEmbeddingModel() {
+export async function initializeEmbeddingModel() {
     if (!extractor) {
         console.log('[RAG] Loading embedding model...');
-        extractor = await pipeline('feature-extraction', CONFIG.embeddingModel);
-        console.log('[RAG] Embedding model loaded successfully');
+        extractor = await pipeline('feature-extraction', env.embeddingModel);
+        console.log('[RAG] Embedding model loaded');
     }
 }
 
-/**
- * Generate embedding for text
- */
-async function getEmbedding(text) {
+export async function getEmbedding(text) {
     await initializeEmbeddingModel();
-    const output = await extractor(text, { pooling: 'mean', normalize: true });
-    return Array.from(output.data);
+    const out = await extractor(text, { pooling: 'mean', normalize: true });
+    // out.data might be Float32Array or similar
+    return Array.from(out.data);
 }
 
-/**
- * Calculate cosine similarity between two vectors
- */
-function cosineSimilarity(vectorA, vectorB) {
-    if (vectorA.length !== vectorB.length) {
-        throw new Error('Vectors must have the same length');
+export function cosineSimilarity(a = [], b = []) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length === 0 || b.length === 0) return 0;
+    if (a.length !== b.length) {
+        // if lengths differ, you may want to pad or return 0
+        return 0;
     }
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < vectorA.length; i++) {
-        dotProduct += vectorA[i] * vectorB[i];
-        normA += vectorA[i] * vectorA[i];
-        normB += vectorB[i] * vectorB[i];
+    let dot = 0, na = 0, nb = 0;
+    for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        na += a[i] * a[i];
+        nb += b[i] * b[i];
     }
-
-    normA = Math.sqrt(normA);
-    normB = Math.sqrt(normB);
-
-    if (normA === 0 || normB === 0) return 0;
-
-    return dotProduct / (normA * normB);
+    const denom = Math.sqrt(na) * Math.sqrt(nb);
+    return denom === 0 ? 0 : dot / denom;
 }
 
-/**
- * Connect to MongoDB
- */
-async function connectToDatabase() {
-    if (!mongoClient) {
-        console.log('[RAG] Connecting to MongoDB...');
-        mongoClient = new MongoClient(CONFIG.mongoUrl);
-        await mongoClient.connect();
-        db = mongoClient.db(CONFIG.dbName);
-        collection = db.collection(CONFIG.collectionName);
-        await collection.createIndex({ name: 1 });
-        console.log('[RAG] Connected to MongoDB');
+/* ---------- Save embeddings (one-time scripts use these) ---------- */
+
+export async function saveAllProductEmbeddings() {
+    console.log('[RAG] Generating product embeddings...');
+    const products = await Product.find({}).lean();
+    for (const p of products) {
+        const text = `${p.name}. ${p.desc}. Tags: ${p.tags?.join(',') || ''}. Price: ${p.price}`;
+        const embedding = await getEmbedding(text);
+        await Product.findByIdAndUpdate(p._id, { embedding });
+        console.log(`[RAG] Saved embedding for product: ${p.name}`);
     }
+    console.log('[RAG] Product embeddings complete');
 }
 
-/**
- * Save menu embeddings to database
- */
-async function saveMenuEmbeddings() {
-    await connectToDatabase();
+/* ---------- Retrieval ---------- */
 
-    console.log('[RAG] Loading menu items from menu.json...');
-    const menuData = await fs.readFile('./menu.json', 'utf-8');
-    const menuItems = JSON.parse(menuData);
-
-    console.log(`[RAG] Processing ${menuItems.length} menu items...`);
-
-    await collection.deleteMany({});
-
-    for (let i = 0; i < menuItems.length; i++) {
-        const item = menuItems[i];
-        const textToEmbed = `${item.name}. ${item.description}`;
-
-        console.log(`[RAG] Embedding: ${item.name} (${i + 1}/${menuItems.length})`);
-        const embedding = await getEmbedding(textToEmbed);
-
-        const document = {
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            category: item.category,
-            dietary: item.dietary || [],
-            spicy: item.spicy || false,
-            embedding: embedding,
-            createdAt: new Date()
-        };
-
-        await collection.insertOne(document);
-    }
-
-    console.log('[RAG] All embeddings saved successfully!');
+export async function getTopProductMatches(questionEmbedding, topK = env.topK) {
+    const products = await Product.find({}).lean();
+    const scored = products.map(p => ({
+        _id: p._id,
+        name: p.name,
+        desc: p.desc,
+        price: p.price,
+        tags: p.tags || [],
+        categoryId: p.categoryId,
+        similarity: cosineSimilarity(questionEmbedding, p.embedding || [])
+    }));
+    scored.sort((a, b) => b.similarity - a.similarity);
+    return scored.slice(0, topK);
 }
 
-/**
- * Get top matching menu items
- */
-async function getTopMatches(questionEmbedding, topK = CONFIG.topK) {
 
-    const allItems = await collection.find({}).toArray();
+/* ---------- Build context & call LLM ---------- */
 
-    const itemsWithScores = allItems.map(item => {
-        const similarity = cosineSimilarity(questionEmbedding, item.embedding);
-        return {
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            category: item.category,
-            dietary: item.dietary || [],
-            spicy: item.spicy || false,
-            similarityScore: similarity
-        };
-    });
+function buildContext(products = []) {
+    const prodCtx = products.map(p =>
+        `Product: ${p.name}. ${p.desc}. Price: ${p.price}. Tags: ${p.tags?.join(', ') || 'None'}.`
+    ).join('\n');
 
-    itemsWithScores.sort((a, b) => b.similarityScore - a.similarityScore);
-    return itemsWithScores.slice(0, topK);
+    return `${prodCtx}`.trim();
 }
 
-/**
- * Call Groq LLM API
- */
-async function callLLM(context, question) {
-    const apiKey = process.env.GROQ_API_KEY;
+export async function callLLM(context, question) {
+    const apiKey = env.groqApiKey;
+    const url = process.env.GROQ_API_URL;
+    if (!apiKey || !url) throw new Error('GROQ_API_KEY or GROQ_API_URL not set');
 
-    if (!apiKey) {
-        throw new Error('GROQ_API_KEY environment variable not set');
-    }
+    const systemPrompt = `You are a friendly restaurant assistant. Answer questions about menu items, prices, and customer opinions based ONLY on the provided context. If there's not enough info, say so. Be concise.`;
 
-    const systemPrompt = `You are a friendly restaurant assistant. Answer questions about menu items based ONLY on the provided context. Be concise, friendly, and helpful. If you don't have enough information, politely say so.`;
-
-    const userMessage = `Context (menu items):
+    const userMessage = `Context:
 ${context}
 
-Customer Question: ${question}
-
-Please provide a helpful, friendly answer based on the context above.`;
+Customer Question: ${question}`;
 
     const requestBody = {
-        model: CONFIG.llmModel,
+        model: env.llmModel,
         messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
         ],
         max_tokens: CONFIG.llmMaxTokens,
-        temperature: 0.7,
+        temperature: 0.2,
         top_p: 0.9,
         stream: false
     };
 
-    try {
-        const response = await fetch(CONFIG.llmApiUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Groq API error: ${errorData.error?.message || response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (!data.choices || data.choices.length === 0) {
-            throw new Error('No response generated');
-        }
-
-        return data.choices[0].message.content;
-
-    } catch (error) {
-        console.error('[RAG] LLM error:', error);
-        throw error;
+    if (!resp.ok) {
+        const err = await resp.text();
+        throw new Error(`LLM API error: ${resp.status} ${err}`);
     }
+    const data = await resp.json();
+    if (!data.choices || data.choices.length === 0) throw new Error('No reply from LLM');
+    return data.choices[0].message.content;
 }
 
-/**
- * Main RAG function - Answer user question
- */
-async function answerQuestion(question) {
-    console.log(`[RAG] Processing: "${question}"`);
+/* ---------- Main API for answering ---------- */
 
-    try {
-        // Generate question embedding
-        const questionEmbedding = await getEmbedding(question);
+export async function answerQuestion(question) {
+    await initializeEmbeddingModel();
+    const qEmb = await getEmbedding(question);
 
-        // Find top matches
-        const topMatches = await getTopMatches(questionEmbedding);
+    // retrieve from multiple sources
+    const topProducts = await getTopProductMatches(qEmb, env.topK);
 
-        console.log(`[RAG] Found ${topMatches.length} relevant items`);
+    const context = buildContext(topProducts);
 
-        // Build context
-        const context = topMatches.map(match =>
-            `- ${match.name} ($${match.price}): ${match.description} [Category: ${match.category}, Dietary: ${match.dietary.join(', ') || 'None'}, Spicy: ${match.spicy ? 'Yes' : 'No'}]`
-        ).join('\n');
-
-        // Generate answer
-        const answer = await callLLM(context, question);
-
+    // If context is empty, short-circuit
+    if (!context) {
         return {
             success: true,
-            answer: answer,
-            relevantItems: topMatches.map(item => ({
-                name: item.name,
-                price: item.price,
-                similarity: item.similarityScore.toFixed(3)
-            }))
-        };
-
-    } catch (error) {
-        console.error('[RAG] Error:', error);
-        return {
-            success: false,
-            error: error.message,
-            answer: "I'm having trouble processing your question right now. Please try again."
+            answer: "Sorry, there isn't enough information about this right now",
+            relevant: { products: [] }
         };
     }
-}
 
-// Export functions
-export {
-    initializeEmbeddingModel,
-    connectToDatabase,
-    answerQuestion,
-    saveMenuEmbeddings,
-    getEmbedding,
-    getTopMatches
-};
+    const llmAnswer = await callLLM(context, question);
+
+    return {
+        success: true,
+        answer: llmAnswer,
+        relevant: {
+            products: topProducts.map(p => ({ id: p._id, name: p.name, price: p.price, score: p.similarity.toFixed(3) })),
+        }
+    };
+}
