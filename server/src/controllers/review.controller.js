@@ -52,7 +52,7 @@ export const updateReview = async (req, res, next) => {
     const updated = await ReviewService.updateReview(
       req.params.id,
       req.body,
-      req.user.role
+      // req.user.role
     );
     res.status(200).json({ success: true, data: updated });
   } catch (error) {

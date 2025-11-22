@@ -4,6 +4,6 @@ const router = express.Router();
 
 router.get('/health', checkHealth);
 // Main chat endpoint
-router.post('/ask', answerQuestion);
+router.post('/chat', answerQuestion);
 
 export default router;

@@ -5,7 +5,6 @@
 
 import { pipeline } from '@xenova/transformers';
 import Product from "../models/Product.js";
-import Review from "../models/Review.js";
 import { env } from "../config/env.js"
 import dotenv from "dotenv";
 dotenv.config();
