@@ -1,13 +1,13 @@
-const ragEngine = require('../services/chat.service');
+import * as ragEngine from '../services/chat.service.js';
 
-const checkHealth = (req, res) => {
+export const checkHealth = (req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString()
     });
 }
 
-const answerQuestion = async (req, res) => {
+export const answerQuestion = async (req, res) => {
     try {
         const { message } = req.body;
 
@@ -35,9 +35,4 @@ const answerQuestion = async (req, res) => {
             answer: "I'm having trouble right now. Please try again in a moment."
         });
     }
-}
-
-module.exports = {
-    checkHealth,
-    answerQuestion
 }

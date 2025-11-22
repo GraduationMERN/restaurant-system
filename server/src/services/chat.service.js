@@ -4,7 +4,7 @@
  */
 
 import { pipeline } from '@xenova/transformers';
-import Product from "../models/Product.js";
+import { updateEmbeddingProductByID, getAllProductsWithLean } from '../repositories/product.repository.js';
 import { env } from "../config/env.js"
 import dotenv from "dotenv";
 dotenv.config();
@@ -48,11 +48,11 @@ export function cosineSimilarity(a = [], b = []) {
 
 export async function saveAllProductEmbeddings() {
     console.log('[RAG] Generating product embeddings...');
-    const products = await Product.find({}).lean();
+    const products = await getAllProductsWithLean();
     for (const p of products) {
         const text = `${p.name}. ${p.desc}. Tags: ${p.tags?.join(',') || ''}. Price: ${p.price}`;
         const embedding = await getEmbedding(text);
-        await Product.findByIdAndUpdate(p._id, { embedding });
+        await updateEmbeddingProductByID(p._id, { embedding });
         console.log(`[RAG] Saved embedding for product: ${p.name}`);
     }
     console.log('[RAG] Product embeddings complete');
@@ -61,12 +61,12 @@ export async function saveAllProductEmbeddings() {
 /* ---------- Retrieval ---------- */
 
 export async function getTopProductMatches(questionEmbedding, topK = env.topK) {
-    const products = await Product.find({}).lean();
+    const products = await getAllProductsWithLean();
     const scored = products.map(p => ({
         _id: p._id,
         name: p.name,
         desc: p.desc,
-        price: p.price,
+        price: p.basePrice,
         tags: p.tags || [],
         categoryId: p.categoryId,
         similarity: cosineSimilarity(questionEmbedding, p.embedding || [])
@@ -88,10 +88,10 @@ function buildContext(products = []) {
 
 export async function callLLM(context, question) {
     const apiKey = env.groqApiKey;
-    const url = process.env.GROQ_API_URL;
+    const url = env.llmApiUrl;
     if (!apiKey || !url) throw new Error('GROQ_API_KEY or GROQ_API_URL not set');
 
-    const systemPrompt = `You are a friendly restaurant assistant. Answer questions about menu items, prices, and customer opinions based ONLY on the provided context. If there's not enough info, say so. Be concise.`;
+    const systemPrompt = `You are a friendly restaurant assistant. Answer questions about menu items, prices, and customer opinions based ONLY on the provided context. If there's not enough info, say so. Be concise and reply as customer service `;
 
     const userMessage = `Context:
 ${context}
