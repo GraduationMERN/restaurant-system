@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
+<<<<<<< HEAD
 
 // middlewares
 import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
@@ -12,12 +13,16 @@ import requestLogger from "./src/middlewares/requestLogger.middleware.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import logger from "./src/utils/logger.js";
 
+=======
+import orderRoutes from "./src/modules/order.module/order.routes.js";
+>>>>>>> 711862642d9c42ace3c6a729b80f546b4dee7498
 // Route imports
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
+import cartRoutes from "./src/routes/cart.routes.js";
 
 dotenv.config();
 
@@ -44,9 +49,11 @@ app.use('/api/products',productRoutes);
 app.use("/api/reward",rewardRouter)
 app.use("/auth", authRoutes);
 app.use('/api/categories',categoryRoutes);
+app.use('/api/cart',cartRoutes);
 
 
 
+app.use("/api/orders", orderRoutes);
 
 // Default Route
 app.get("/", (req, res) => {
