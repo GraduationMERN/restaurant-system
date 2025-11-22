@@ -1,7 +1,7 @@
 import productModel from '../models/Product.js';
 
 export const getAll = async () => {
-    return await productModel.find().populate('categoryId','name');
+    return await productModel.find().populate('categoryId', 'name');
 }
 
 export const getProductById = async (id) => {
@@ -12,8 +12,8 @@ export const createProduct = async (productData) => {
     return await productModel.create(productData);
 }
 
-export const updateProduct = async (productData,id) => {
-    return await productModel.findByIdAndUpdate(id,productData,{new:true});
+export const updateProduct = async (productData, id) => {
+    return await productModel.findByIdAndUpdate(id, productData, { new: true });
 }
 
 export const deleteProduct = async (id) => {
@@ -26,7 +26,16 @@ export const getNewProducts = async () => {
 
 export const getProductForList = async (queryFilter, sortBy, sortOrder, page, pageSize) => {
     return await productModel.find(queryFilter)
-            .sort({ [sortBy]: +sortOrder })  
-            .skip((page - 1) * pageSize)
-            .limit(pageSize);
+        .sort({ [sortBy]: +sortOrder })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize);
+}
+
+// for AI
+export const getAllProductsWithLean = async () => {
+    return await productModel.find({}).lean();
+}
+
+export const updateEmbeddingProductByID = async (id, embeddingObject) => {
+    return await productModel.findByIdAndUpdate(id, embeddingObject);
 }

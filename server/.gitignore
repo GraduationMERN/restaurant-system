@@ -21,3 +21,7 @@ Thumbs.db
 # 🧪 Optional: temporary uploads or local data
 uploads/
 data/
+
+# for AI 
+generate_product_embeddings.js
+add_products_in_mongo.js
