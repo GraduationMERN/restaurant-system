@@ -15,8 +15,14 @@ import logger from "./src/utils/logger.js";
 
 >>>>>>> b8c2fb501a9e71511375eadf4031630528dd6ba9
 import orderRoutes from "./src/modules/order.module/order.routes.js";
+<<<<<<< HEAD
 // import paymentRoutes from "./src/modules/payment.module/payment.routes.js";
 import paymentRoutes from "./src/modules/payment/paymentRoutes.js";
+=======
+// Route imports
+import authRoutes from "./src/modules/user/routes/auth.routes.js";
+import usersRoutes from "./src/modules/user/routes/user.routes.js";
+>>>>>>> 2b28b6f23ebf797cc450f1e7d223a603e0e7c55e
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
@@ -54,8 +60,12 @@ app.use('/api/products', productRoutes);
 app.use("/api/reward", rewardRouter);
 app.use("/auth", authRoutes);
 <<<<<<< HEAD
+<<<<<<< HEAD
 app.use('/api/categories', categoryRoutes);
 =======
+=======
+app.use("/users", usersRoutes);
+>>>>>>> 2b28b6f23ebf797cc450f1e7d223a603e0e7c55e
 app.use('/api/categories',categoryRoutes);
 app.use('/api/cart',cartRoutes);
 
