@@ -19,7 +19,8 @@ export const env = {
   googleSecret: process.env.GOOGLE_CLIENT_SECRET,
   serverURI: process.env.GOOGLE_REDIRECT_URI,
   dbName: process.env.DB_NAME,
-  
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   // for AI
   groqApiKey: process.env.GROQ_API_KEY,
   llmApiUrl: process.env.GROQ_API_URL,

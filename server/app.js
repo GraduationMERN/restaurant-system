@@ -15,7 +15,6 @@ import orderRoutes from "./src/modules/order.module/order.routes.js";
 // import paymentRoutes from "./src/modules/payment.module/payment.routes.js";
 import paymentRoutes from "./src/modules/payment/paymentRoutes.js";
 // Route imports
-import orderRoutes from "./src/modules/order.module/order.routes.js";
 import authRoutes from "./src/modules/user/routes/auth.routes.js";
 import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/modules/review/review.routes.js";
@@ -57,7 +56,7 @@ initializeEmbeddingModel();
 app.use('/api/chatBot', chatRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use('/api/products', productRoutes);
-app.use("/api/reward", rewardRouter)
+app.use("/api/reward", rewardRouter);
 app.use("/auth", authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use("/users", usersRoutes);
