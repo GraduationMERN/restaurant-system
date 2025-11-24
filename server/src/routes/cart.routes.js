@@ -3,11 +3,11 @@ const router = express.Router();
 import {getCartForUser,addToCart,deleteProductFromCart,updateCartQuantity,clearCart} from "../controllers/cart.controller.js";
 
 
-router.get('/:userId',getCartForUser);
+router.get('/',getCartForUser);
 router.post('/add',addToCart);
-router.delete('/clear/:userId',clearCart);
-router.delete('/:userId/:productId',deleteProductFromCart);
-router.put('/:userId/:productId',updateCartQuantity);
+router.delete('/clear/',clearCart);
+router.delete('/:productId',deleteProductFromCart);
+router.put('/:productId',updateCartQuantity);
 
 
 export default router;

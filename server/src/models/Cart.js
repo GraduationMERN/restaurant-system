@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const cartSchema = new mongoose.Schema({
     userId :{
-                type:mongoose.Schema.Types.ObjectId,
+                // type:mongoose.Schema.Types.ObjectId,
+                type: String, // بدل ObjectId عشان يدعم guest UUID
                 ref:'User',   
                 required:true,
     },

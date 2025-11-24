@@ -1,6 +1,7 @@
 import Review from "../models/Review.js";
 import "../modules/order.module/orderModel.js"
-import "../models/User.js";
+// import "../models/User.js";
+import  "../modules/user/model/User.js";
 import { ApiFeatures } from "../utils/ApiFeatures.js";
 
 export const ReviewRepository = {
