@@ -1,6 +1,6 @@
-import { ReviewRepository } from "../repositories/review.repository.js";
-import Review from "../models/Review.js";
-import AppError from "../utils/appError.js";
+import { ReviewRepository } from "./review.repository.js";
+
+import AppError from "../../utils/appError.js";
 
 export const ReviewService = {
   // Create review (ensure one per user per order)

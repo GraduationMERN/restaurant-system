@@ -1,4 +1,4 @@
-import * as ragEngine from '../services/chat.service.js';
+import * as ragEngine from './chat.service.js';
 
 export const checkHealth = (req, res) => {
     res.json({

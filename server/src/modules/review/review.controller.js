@@ -1,5 +1,5 @@
-import { ReviewService } from "../services/review.service.js";
-import AppError from "../utils/appError.js";
+
+import { ReviewService } from "./review.service.js";
 
 // CREATE REVIEW
 export const createReview = async (req, res, next) => {

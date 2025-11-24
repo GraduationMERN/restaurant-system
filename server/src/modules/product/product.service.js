@@ -1,4 +1,4 @@
-import { getAll,getProductById,createProduct,updateProduct,deleteProduct,getNewProducts,getProductForList} from "../repositories/product.repository.js";
+import { getAll,getProductById,createProduct,updateProduct,deleteProduct,getNewProducts,getProductForList} from "./product.repository.js";
 
 export const getAllProductsService = async () => {
     return await getAll();

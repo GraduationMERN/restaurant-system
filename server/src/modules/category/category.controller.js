@@ -1,4 +1,4 @@
-import {getAllCategoriesService,getCategoryByIdService,addCategoryService,updateCategoryService,deleteCategoryService} from "../services/category.service.js";
+import {getAllCategoriesService,getCategoryByIdService,addCategoryService,updateCategoryService,deleteCategoryService} from "./category.service.js";
 
 //getAllCategories
 export const getAllCategories = async (req, res) => {
