@@ -1,11 +1,28 @@
 import Cart from '../models/Cart.js';
 import { getCartForUserService, addToCartService } from '../services/cart.service.js';
 import { getProductByIdService } from '../services/product.service.js';
+import { v4 as uuidv4 } from 'uuid';
+
+//getCartUserId for both guest and registered users
+function getCartUserId(req, res) {
+    if (req.user?._id) return req.user._id.toString(); // مستخدم مسجل
+    // guest user
+    if (!req.cookies.guestCartId) {
+        const guestId = uuidv4();
+        res.cookie('guestCartId', guestId, { httpOnly: true, maxAge: 7*24*60*60*1000 }); // أسبوع
+        return guestId;
+    }
+    return req.cookies.guestCartId;
+}
+
 
 //getCartForUser
 export const getCartForUser = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // const { userId } = req.params;
+        // const userId = req.user._id;
+        const userId = getCartUserId(req, res);
+
         const cart = await getCartForUserService(userId);
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
@@ -40,7 +57,10 @@ function calculateFinalPrice(product, selectedOptions) {
 // add to cart 
 export const addToCart = async (req, res) => {
     try {
-        const { userId, productId, quantity, selectedOptions } = req.body;
+        // const userId = req.user._id;
+        const userId = getCartUserId(req, res);
+
+        const {  productId, quantity, selectedOptions } = req.body;
         let cart = await addToCartService(userId)
         const product = await getProductByIdService(productId);
         if (!product) {
@@ -166,7 +186,10 @@ export const addToCart = async (req, res) => {
 // delete product from cart
 export const deleteProductFromCart = async (req, res) => {
     try {
-        const { userId, productId } = req.params;
+        // const userId = req.user._id;
+        const userId = getCartUserId(req, res);
+
+        const { productId } = req.params;
 
         // Get user cart
         let cart = await addToCartService(userId);
@@ -240,7 +263,10 @@ export const deleteProductFromCart = async (req, res) => {
 // update product quantity in cart
 export const updateCartQuantity = async (req, res) => {
     try {
-        const { userId, productId } = req.params;
+        // const userId = req.user._id;
+        const userId = getCartUserId(req, res);
+
+        const { productId } = req.params;
         const { newQuantity } = req.body; // number
 
         if (newQuantity < 1) {
@@ -345,7 +371,10 @@ export const updateCartQuantity = async (req, res) => {
 //clearCart
 export const clearCart = async (req, res) => {
     try {
-        const { userId } = req.params;
+        // const { userId } = req.params;
+        // const userId = req.user._id;
+        const userId = getCartUserId(req, res);
+
 
         let cart = await addToCartService(userId);
         if (!cart) {

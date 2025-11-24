@@ -1,5 +1,6 @@
 import e from 'express';
 import { getAllProductsService ,getProductByIdService,createProductService,updateProductService,deleteProductService,getNewProductsService,getProductForListService} from '../services/product.service.js';
+import { getEmbedding } from "../services/chat.service.js"; // for AI
 
 
 //getAllProducts
@@ -14,22 +15,22 @@ export const getAllProducts = async (req, res) => {
 
 
 //getProductById
-export const getProductById =async(req,res)=>{
+export const getProductById = async (req, res) => {
     try {
-        const {id} = req.params;
+        const { id } = req.params;
         const product = await getProductByIdService(id);
-        if(!product){
+        if (!product) {
             return res.status(404).json({ message: 'product not found' });
         }
         res.status(200).json(product);
-    }catch(error){
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
 
 //createProduct
-export const createProduct =async(req,res)=>{
+export const createProduct = async (req, res) => {
     try {
         const { name, desc,categoryId,stock,basePrice,options  } = req.body;
         if (!name || !desc ||!req.file ||!categoryId||!stock||!basePrice ) {
@@ -43,9 +44,14 @@ export const createProduct =async(req,res)=>{
                 return res.status(400).json({ message: 'Options must be a valid JSON string' });
             }
         }
-        const product = await createProductService(req.body);
+
+        // these line for AI 
+        const text = `${name}. ${desc}. Tags: ${p.tags?.join(',') || ''}. Price: ${price}`;
+        const embeddingProduct = await getEmbedding(text);
+
+        const product = await createProductService({ ...req.body, embedding: embeddingProduct }); // storing embeddings for product for AI search
         res.status(201).json(product);
-    }catch(error){
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 }

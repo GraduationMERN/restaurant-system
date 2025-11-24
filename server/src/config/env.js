@@ -18,6 +18,14 @@ export const env = {
   googleId: process.env.GOOGLE_CLIENT_ID,
   googleSecret: process.env.GOOGLE_CLIENT_SECRET,
   serverURI: process.env.GOOGLE_REDIRECT_URI,
+  dbName: process.env.DB_NAME,
+  
+  // for AI
+  groqApiKey: process.env.GROQ_API_KEY,
+  llmApiUrl: process.env.GROQ_API_URL,
+  embeddingModel: process.env.EMBEDDING_MODEL || 'Xenova/all-MiniLM-L6-v2',
+  llmModel: process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
+  topK: parseInt(process.env.TOP_K || '3'),
 };
 
 // Optional sanity check for missing vars

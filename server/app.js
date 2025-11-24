@@ -19,8 +19,15 @@ import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
+// import authRoutes from "./src/routes/auth.routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
 import cartRoutes from "./src/routes/cart.routes.js";
+
+// for AI 
+import chatRoutes from './src/routes/chat.routes.js';
+import { initializeEmbeddingModel } from './src/services/chat.service.js';
+import authMiddleware from "./src/middlewares/auth.middleware.js";
+import optionalAuthMiddleware from "./src/middlewares/optionalAuthMiddleware.js";
 
 dotenv.config();
 
@@ -41,14 +48,21 @@ app.use(cookieParser());
 // Connect to Database
 await connectDB();
 
+// important initialize for chatbot_AI
+initializeEmbeddingModel();
+
 // Routes
+app.use('/api/chatBot', chatRoutes);
 app.use("/api/reviews", reviewRoutes);
-app.use('/api/products',productRoutes);
-app.use("/api/reward",rewardRouter)
+app.use('/api/products', productRoutes);
+app.use("/api/reward", rewardRouter)
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
 app.use('/api/categories',categoryRoutes);
-app.use('/api/cart',cartRoutes);
+app.use('/api/cart',optionalAuthMiddleware,cartRoutes);
+
+
+
 app.use("/api/orders", orderRoutes);
 
 // Default Route
