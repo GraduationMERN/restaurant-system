@@ -12,9 +12,12 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: function () {
+        return !this.googleId;
+      },
       minlength: [6, "Password must be at least 6 characters long"],
     },
+    googleId: String,
     phoneNumber: {
       type: Number,
       required: [true, "Phone number is required"],
@@ -31,6 +34,7 @@ const userSchema = new mongoose.Schema(
     },
     points: {
       type: Number,
+      default: 0,
       valide: {
         validator: function (val) {
           if (this.role === "customer" && val && val >= 0) {
@@ -43,6 +47,9 @@ const userSchema = new mongoose.Schema(
     },
     otp: String,
     otpExpires: Date,
+    refreshToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );
