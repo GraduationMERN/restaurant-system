@@ -20,6 +20,10 @@ import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/modules/review/review.routes.js";
 
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
+import authRoutes from "./src/routes/auth.routes.js";
+import categoryRoutes from "./src/routes/category.routes.js";
+import cartRoutes from "./src/routes/cart.routes.js";
+import notificationRoutes from "./src/modules/notification/notification.routes.js";
 // import authRoutes from "./src/routes/auth.routes.js";
 import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
@@ -61,6 +65,8 @@ app.use("/auth", authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use("/users", usersRoutes);
 app.use('/api/categories',categoryRoutes);
+app.use('/api/cart',cartRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use('/api/cart',optionalAuthMiddleware,cartRoutes);
 
 
