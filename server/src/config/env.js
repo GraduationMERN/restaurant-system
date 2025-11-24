@@ -6,16 +6,18 @@ dotenv.config({
 });
 
 export const env = {
-    port: process.env.PORT || 5000,
-    mongoUri: process.env.MONGO_URI,
-    nodeEnv: process.env.NODE_ENV || "development",
-    
-    //NODMAILER
-    emailUser: process.env.EMAIL_USER,
-    emailPass: process.env.EMAIL_PASS,
-
-    jwtKey: process.env.JWT_SECRET,
-    expiry: process.env.JWT_EXPIRY || "1d",
+  port: process.env.PORT || 5000,
+  mongoUri: process.env.MONGO_URI,
+  nodeEnv: process.env.NODE_ENV || "development",
+  jwtKey: process.env.JWT_SECRET,
+  expiry: process.env.ACCESS_JWT_EXPIRES_IN,
+  refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
+  emailUser: process.env.EMAIL_USER,
+  emailPass: process.env.EMAIL_PASS,
+  frontendUrl: process.env.FRONTEND_URL,
+  googleId: process.env.GOOGLE_CLIENT_ID,
+  googleSecret: process.env.GOOGLE_CLIENT_SECRET,
+  serverURI: process.env.GOOGLE_REDIRECT_URI,
 };
 
 // Optional sanity check for missing vars

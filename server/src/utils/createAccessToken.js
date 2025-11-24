@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 
-export const createToken = (user) => {
+export const createAccessToken = (user) => {
   const payload = {
     id: user._id.toString(),
     name: user.name,
