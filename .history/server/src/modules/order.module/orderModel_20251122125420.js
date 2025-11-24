@@ -63,7 +63,9 @@ const OrderSchema = new mongoose.Schema(
 
     totalAmount: { type: Number, required: true, min: 0 },
 
+    // ==========================
     // Payment
+    // ==========================
     paymentStatus: {
       type: String,
       enum: ["unpaid", "paid", "refunded"],
@@ -76,9 +78,12 @@ const OrderSchema = new mongoose.Schema(
       default: "cash",
     },
 
+    // لو استخدمتي Stripe Checkout Session
     stripeSessionId: { type: String, default: null },
 
+    // ==========================
     // Rewards
+    // ==========================
     rewardPointsEarned: {
       type: Number,
       default: 0,

@@ -69,10 +69,12 @@ export const getOrdersForRestaurant = async (req, res) => {
   }
 };
 
+// ==============================
 // 7) Get Orders for Customer
+// ==============================
 export const getOrdersForCustomer = async (req, res) => {
   try {
-    const { isRewardOrder } = req.query; 
+    const { isRewardOrder } = req.query; // فلترة اختياري
     const orders = await orderService.getOrdersForCustomer(req.params.customerId, {
       isRewardOrder: isRewardOrder === "true" ? true : isRewardOrder === "false" ? false : undefined
     });

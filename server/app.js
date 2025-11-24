@@ -1,4 +1,3 @@
-// src/app.js
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -12,6 +11,9 @@ import requestLogger from "./src/middlewares/requestLogger.middleware.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import logger from "./src/utils/logger.js";
 
+import orderRoutes from "./src/modules/order.module/order.routes.js";
+// import paymentRoutes from "./src/modules/payment.module/payment.routes.js";
+import paymentRoutes from "./src/modules/payment/paymentRoutes.js";
 // Route imports
 import orderRoutes from "./src/modules/order.module/order.routes.js";
 import authRoutes from "./src/modules/user/routes/auth.routes.js";
@@ -34,7 +36,8 @@ const app = express();
 
 // Global Middlewares
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // for normal routes
+app.use(morgan("dev"));
 // Request id and logging
 app.use(requestIdMiddleware);
 app.use(requestLogger);
@@ -56,6 +59,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use('/api/products', productRoutes);
 app.use("/api/reward", rewardRouter)
 app.use("/auth", authRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use("/users", usersRoutes);
 app.use('/api/categories',categoryRoutes);
 app.use('/api/cart',optionalAuthMiddleware,cartRoutes);
@@ -63,6 +67,8 @@ app.use('/api/cart',optionalAuthMiddleware,cartRoutes);
 
 
 app.use("/api/orders", orderRoutes);
+app.use("/api/checkout", paymentRoutes); 
+// payment module routes
 
 // Default Route
 app.get("/", (req, res) => {

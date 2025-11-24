@@ -85,7 +85,9 @@ class OrderService {
     return await orderRepo.search(filter);
   }
 
+  // ==============================
   // 13) Get Orders for Customer (supports filtering by reward)
+  // ==============================
   async getOrdersForCustomer(customerId, { isRewardOrder } = {}) {
     const filter = { customerId };
     if (typeof isRewardOrder === "boolean") filter.isRewardOrder = isRewardOrder;

@@ -8,7 +8,10 @@ export const createOrder = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+// ==============================
 // 2) Get Order by ID
+// ==============================
 export const getOrderById = async (req, res) => {
   try {
     const order = await orderService.getOrder(req.params.id);
@@ -17,7 +20,10 @@ export const getOrderById = async (req, res) => {
     res.status(404).json({ success: false, message: err.message });
   }
 };
+
+// ==============================
 // 3) Update Order Status
+// ==============================
 export const updateOrderStatus = async (req, res) => {
   try {
     const updated = await orderService.updateStatus(req.params.id, req.body.status);
@@ -27,14 +33,16 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// ==============================
 // 4) Update Payment Status
+// ==============================
 export const updatePaymentStatus = async (req, res) => {
   try {
     const updated = await orderService.updatePayment(
       req.params.id,
       req.body.paymentStatus,
       req.body.paymentMethod,
-      req.body.stripeSessionId 
+      req.body.stripeSessionId // جديد: لدعم Stripe Checkout
     );
     res.json({ success: true, data: updated });
   } catch (err) {
@@ -42,7 +50,9 @@ export const updatePaymentStatus = async (req, res) => {
   }
 };
 
+// ==============================
 // 5) Update Reward Points (admin / system use)
+// ==============================
 export const updateRewardPoints = async (req, res) => {
   try {
     const updated = await orderService.updateRewardPoints(
@@ -55,10 +65,12 @@ export const updateRewardPoints = async (req, res) => {
   }
 };
 
+// ==============================
 // 6) Get Orders for Restaurant
+// ==============================
 export const getOrdersForRestaurant = async (req, res) => {
   try {
-    const { status, isRewardOrder } = req.query; 
+    const { status, isRewardOrder } = req.query; // فلترة اختياري
     const orders = await orderService.getOrdersForRestaurant(req.params.restaurantId, {
       status,
       isRewardOrder: isRewardOrder === "true" ? true : isRewardOrder === "false" ? false : undefined
@@ -69,10 +81,12 @@ export const getOrdersForRestaurant = async (req, res) => {
   }
 };
 
+// ==============================
 // 7) Get Orders for Customer
+// ==============================
 export const getOrdersForCustomer = async (req, res) => {
   try {
-    const { isRewardOrder } = req.query; 
+    const { isRewardOrder } = req.query; // فلترة اختياري
     const orders = await orderService.getOrdersForCustomer(req.params.customerId, {
       isRewardOrder: isRewardOrder === "true" ? true : isRewardOrder === "false" ? false : undefined
     });

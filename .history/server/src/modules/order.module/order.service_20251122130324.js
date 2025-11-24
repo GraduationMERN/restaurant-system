@@ -77,7 +77,9 @@ class OrderService {
     return await orderRepo.markAsRewardOrder(orderId, isReward);
   }
 
+  // ==============================
   // 12) Get Orders for Restaurant (supports filtering by status & reward)
+  // ==============================
   async getOrdersForRestaurant(restaurantId, { status, isRewardOrder } = {}) {
     const filter = { restaurantId };
     if (status) filter.orderStatus = status;
@@ -85,7 +87,9 @@ class OrderService {
     return await orderRepo.search(filter);
   }
 
+  // ==============================
   // 13) Get Orders for Customer (supports filtering by reward)
+  // ==============================
   async getOrdersForCustomer(customerId, { isRewardOrder } = {}) {
     const filter = { customerId };
     if (typeof isRewardOrder === "boolean") filter.isRewardOrder = isRewardOrder;

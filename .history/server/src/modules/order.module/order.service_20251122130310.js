@@ -67,17 +67,24 @@ class OrderService {
   async updateTable(orderId, tableNumber) {
     return await orderRepo.updateTable(orderId, tableNumber);
   }
+
+  // ==============================
   // 10) Update Service Type
+  // ==============================
   async updateServiceType(orderId, serviceType) {
     return await orderRepo.updateServiceType(orderId, serviceType);
   }
 
+  // ==============================
   // 11) Mark Order as Reward Order
+  // ==============================
   async markAsRewardOrder(orderId, isReward = true) {
     return await orderRepo.markAsRewardOrder(orderId, isReward);
   }
 
+  // ==============================
   // 12) Get Orders for Restaurant (supports filtering by status & reward)
+  // ==============================
   async getOrdersForRestaurant(restaurantId, { status, isRewardOrder } = {}) {
     const filter = { restaurantId };
     if (status) filter.orderStatus = status;
@@ -85,7 +92,9 @@ class OrderService {
     return await orderRepo.search(filter);
   }
 
+  // ==============================
   // 13) Get Orders for Customer (supports filtering by reward)
+  // ==============================
   async getOrdersForCustomer(customerId, { isRewardOrder } = {}) {
     const filter = { customerId };
     if (typeof isRewardOrder === "boolean") filter.isRewardOrder = isRewardOrder;

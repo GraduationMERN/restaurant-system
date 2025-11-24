@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
-// Order product Schema
+// ==========================
+// Order Item Schema
+// ==========================
 const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -13,12 +15,15 @@ const OrderItemSchema = new mongoose.Schema(
 
     img: { type: String, default: "" },
 
+    // السعر اللي المستخدم دفعه فعلاً وقت الطلب
     price: { type: Number, required: true },
 
     quantity: { type: Number, required: true, min: 1 },
 
+    // لو المنتج عليه points earning
     itemPoints: { type: Number, default: 0 },
 
+    // لو المنتج ليه options
     selectedOptions: [
       {
         label: String,
@@ -29,7 +34,10 @@ const OrderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+
+// ==========================
 // Main Order Schema
+// ==========================
 const OrderSchema = new mongoose.Schema(
   {
     restaurantId: {
@@ -54,16 +62,21 @@ const OrderSchema = new mongoose.Schema(
       default: "pickup",
     },
 
+    // ==========================
     // Items
+    // ==========================
     items: {
       type: [OrderItemSchema],
       required: true,
       validate: (v) => Array.isArray(v) && v.length > 0,
     },
 
+    // المبلغ النهائي بعد كل الحسابات
     totalAmount: { type: Number, required: true, min: 0 },
 
+    // ==========================
     // Payment
+    // ==========================
     paymentStatus: {
       type: String,
       enum: ["unpaid", "paid", "refunded"],
@@ -76,9 +89,12 @@ const OrderSchema = new mongoose.Schema(
       default: "cash",
     },
 
+    // لو استخدمتي Stripe Checkout Session
     stripeSessionId: { type: String, default: null },
 
+    // ==========================
     // Rewards
+    // ==========================
     rewardPointsEarned: {
       type: Number,
       default: 0,
