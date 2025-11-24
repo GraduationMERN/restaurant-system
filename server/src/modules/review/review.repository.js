@@ -1,15 +1,11 @@
-<<<<<<<< HEAD:.history/server/src/repositories/review.repository_20251121220647.js
-import Review from "../models/Review.js";
-import "../models/Order.js";
-import "../models/User.js";
-import { ApiFeatures } from "../utils/ApiFeatures.js";
-========
-import Review from "../review/Review.js";
+
+import { ApiFeatures } from "../../utils/ApiFeatures.js";
+import Review from "./Review.js";
 import "../order.module/orderModel.js"
 import "../user/model/User.js"
 // import "../models/User.js";
-import { ApiFeatures } from "../../utils/ApiFeatures.js";
->>>>>>>> dev:server/src/modules/review/review.repository.js
+
+
 
 export const ReviewRepository = {
   
