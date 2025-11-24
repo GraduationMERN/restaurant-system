@@ -16,17 +16,16 @@ import logger from "./src/utils/logger.js";
 import orderRoutes from "./src/modules/order.module/order.routes.js";
 import authRoutes from "./src/modules/user/routes/auth.routes.js";
 import usersRoutes from "./src/modules/user/routes/user.routes.js";
-import reviewRoutes from "./src/routes/review.routes.js";
-import productRoutes from "./src/routes/product.routes.js";
+import reviewRoutes from "./src/modules/review/review.routes.js";
+
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
 // import authRoutes from "./src/routes/auth.routes.js";
-import categoryRoutes from "./src/routes/category.routes.js";
-import cartRoutes from "./src/routes/cart.routes.js";
-
+import categoryRoutes from "./src/modules/category/category.routes.js";
+import cartRoutes from "./src/modules/cart/cart.routes.js";
+import productRoutes from "./src/modules/product/product.routes.js";
 // for AI 
-import chatRoutes from './src/routes/chat.routes.js';
-import { initializeEmbeddingModel } from './src/services/chat.service.js';
-import authMiddleware from "./src/middlewares/auth.middleware.js";
+import chatRoutes from "./src/modules/chat/chat.routes.js"
+import { initializeEmbeddingModel } from './src/modules/chat/chat.service.js';
 import optionalAuthMiddleware from "./src/middlewares/optionalAuthMiddleware.js";
 
 dotenv.config();

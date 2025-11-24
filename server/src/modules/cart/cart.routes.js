@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import {getCartForUser,addToCart,deleteProductFromCart,updateCartQuantity,clearCart} from "../controllers/cart.controller.js";
+import {getCartForUser,addToCart,deleteProductFromCart,updateCartQuantity,clearCart} from "./cart.controller.js";
 
 
 router.get('/',getCartForUser);

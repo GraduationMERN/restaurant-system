@@ -1,4 +1,4 @@
-import productModel from '../models/Product.js';
+import productModel from './Product.js';
 
 export const getAll = async () => {
     return await productModel.find().populate('categoryId', 'name');

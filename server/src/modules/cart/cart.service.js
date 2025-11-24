@@ -1,4 +1,4 @@
-import {getCartForUserRepo,addToCartRepo} from "../repositories/cart.repositorty.js"
+import {getCartForUserRepo,addToCartRepo} from "./cart.repositorty.js"
 
 export const getCartForUserService =async(userId)=>{
     return await getCartForUserRepo(userId)

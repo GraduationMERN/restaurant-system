@@ -7,9 +7,9 @@ import {
   deleteReview,
   getReviewsByOrder,
   getReviewsByUser,
-} from "../controllers/review.controller.js";
+} from "./review.controller.js";
 
-import { uploadCloud } from "../middlewares/uploadCloudinary.middleware.js";
+import { uploadCloud } from "../../middlewares/uploadCloudinary.middleware.js";
 
 const router = express.Router();
 

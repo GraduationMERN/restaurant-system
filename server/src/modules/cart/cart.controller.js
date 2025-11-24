@@ -1,6 +1,6 @@
-import Cart from '../models/Cart.js';
-import { getCartForUserService, addToCartService } from '../services/cart.service.js';
-import { getProductByIdService } from '../services/product.service.js';
+import Cart from './Cart.js';
+import { getCartForUserService, addToCartService } from './cart.service.js';
+import { getProductByIdService } from '../product/product.service.js';
 import { v4 as uuidv4 } from 'uuid';
 
 //getCartUserId for both guest and registered users

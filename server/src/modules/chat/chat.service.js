@@ -4,8 +4,8 @@
  */
 
 import { pipeline } from '@xenova/transformers';
-import { updateEmbeddingProductByID, getAllProductsWithLean } from '../repositories/product.repository.js';
-import { env } from "../config/env.js"
+import { updateEmbeddingProductByID, getAllProductsWithLean } from '../product/product.repository.js';
+import { env } from "../../config/env.js"
 import dotenv from "dotenv";
 dotenv.config();
 

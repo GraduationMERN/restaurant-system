@@ -1,4 +1,4 @@
-import {getAllCategoriesRepo,getCategoryByIdRepo,addCategoryRepo,updateCategoryRepo,deleteCategoryRepo} from "../repositories/category.repository.js";
+import {getAllCategoriesRepo,getCategoryByIdRepo,addCategoryRepo,updateCategoryRepo,deleteCategoryRepo} from "./category.repository.js";
 
 export const getAllCategoriesService = async () => {
     return await getAllCategoriesRepo();

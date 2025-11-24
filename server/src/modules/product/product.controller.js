@@ -1,6 +1,5 @@
-import e from 'express';
-import { getAllProductsService ,getProductByIdService,createProductService,updateProductService,deleteProductService,getNewProductsService,getProductForListService} from '../services/product.service.js';
-import { getEmbedding } from "../services/chat.service.js"; // for AI
+import { getAllProductsService ,getProductByIdService,createProductService,updateProductService,deleteProductService,getNewProductsService,getProductForListService} from './product.service.js';
+import { getEmbedding } from "../chat/chat.service.js"; // for AI
 
 
 //getAllProducts

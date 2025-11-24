@@ -1,8 +1,8 @@
 import express from "express";
 const router = express.Router();
-import { getAllCategories ,getCategoryById,addCategory,updateCategory,deleteCategory} from "../controllers/category.controller.js";
+import { getAllCategories ,getCategoryById,addCategory,updateCategory,deleteCategory} from "./category.controller.js";
 
-import { uploadCloud } from "../middlewares/uploadCloudinary.middleware.js";
+import { uploadCloud } from "../../middlewares/uploadCloudinary.middleware.js";
 
 router.get("/", getAllCategories);
 router.get('/:id',getCategoryById);
