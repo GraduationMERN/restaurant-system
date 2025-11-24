@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
+import RewardPage from "./pages/RewardPage";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/rewards" element={<RewardPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

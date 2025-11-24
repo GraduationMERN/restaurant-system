@@ -12,14 +12,13 @@ import requestLogger from "./src/middlewares/requestLogger.middleware.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import logger from "./src/utils/logger.js";
 
-import orderRoutes from "./src/modules/order.module/order.routes.js";
 // Route imports
+import orderRoutes from "./src/modules/order.module/order.routes.js";
 import authRoutes from "./src/modules/user/routes/auth.routes.js";
 import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
-import authRoutes from "./src/routes/auth.routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
 import cartRoutes from "./src/routes/cart.routes.js";
 
@@ -50,9 +49,6 @@ app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
 app.use('/api/categories',categoryRoutes);
 app.use('/api/cart',cartRoutes);
-
-
-
 app.use("/api/orders", orderRoutes);
 
 // Default Route
