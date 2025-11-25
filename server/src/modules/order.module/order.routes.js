@@ -2,7 +2,7 @@ import express from "express";
 import * as orderController from "./order.controller.js";
 
 const router = express.Router();
-
+router.get("/",orderController.getAllOrders)
 // CREATE order
 router.post("/", orderController.createOrder);
 

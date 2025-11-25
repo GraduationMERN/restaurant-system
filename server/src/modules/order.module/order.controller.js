@@ -1,6 +1,17 @@
 import orderService from "./order.service.js";
 // 1) Create Order
 import { notificationService } from "../../../server.js"
+
+export const getAllOrders = async(req,res)=>{
+  try{
+    const orders = await orderService.getAllOrders();
+    res.status(201).json({success:true,data: orders})
+  }catch(err){
+    res.status(400).json({success:false,message:err.message})
+  }
+}
+
+
 export const createOrder = async (req, res) => {
   try {
     const order = await orderService.createOrder(req.body);

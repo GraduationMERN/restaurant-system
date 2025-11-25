@@ -15,10 +15,11 @@ class OrderRepository {
   // ==============================
   // 2) Find Order by ID
   // ==============================
-  async findById(orderId, { populate = [], lean = true } = {}) {
+  async findById(orderId, { populate = [], lean = true, session = null } = {}) {
     let query = Order.findById(orderId);
     populate.forEach((p) => (query = query.populate(p)));
     if (lean) query = query.lean();
+    if (session) query = query.session(session);
     return query.exec();
   }
 
@@ -51,12 +52,14 @@ class OrderRepository {
   // ==============================
   // 5) Update Order Status
   // ==============================
-  async updateStatus(orderId, newStatus) {
-    return Order.findByIdAndUpdate(
+  async updateStatus(orderId, newStatus, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { orderStatus: newStatus } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
@@ -87,67 +90,79 @@ class OrderRepository {
   // ==============================
   // 8) Add Item to Existing Order
   // ==============================
-  async addItem(orderId, item) {
-    return Order.findByIdAndUpdate(
+  async addItem(orderId, item, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $push: { items: item } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 9) Replace All Items
   // ==============================
-  async updateItems(orderId, items) {
-    return Order.findByIdAndUpdate(
+  async updateItems(orderId, items, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { items } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 10) Update Total Amount
   // ==============================
-  async updateTotal(orderId, totalAmount) {
-    return Order.findByIdAndUpdate(
+  async updateTotal(orderId, totalAmount, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { totalAmount } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 11) Update Table Number
   // ==============================
-  async updateTable(orderId, tableNumber) {
-    return Order.findByIdAndUpdate(
+  async updateTable(orderId, tableNumber, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { tableNumber } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 12) Update Service Type
   // ==============================
-  async updateServiceType(orderId, serviceType) {
-    return Order.findByIdAndUpdate(
+  async updateServiceType(orderId, serviceType, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { serviceType } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 13) Mark Order as Reward Order
   // ==============================
-  async markAsRewardOrder(orderId, isReward = true) {
-    return Order.findByIdAndUpdate(
+  async markAsRewardOrder(orderId, isReward = true, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { isRewardOrder: isReward } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
@@ -167,6 +182,10 @@ class OrderRepository {
   // ==============================
   async delete(orderId) {
     return Order.findByIdAndDelete(orderId).exec();
+  }
+
+  async getAllOrders(){
+    return Order.find()
   }
 }
 
