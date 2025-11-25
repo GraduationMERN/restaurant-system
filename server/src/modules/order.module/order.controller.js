@@ -1,8 +1,14 @@
 import orderService from "./order.service.js";
 // 1) Create Order
+import { notificationService } from "../../../server.js"
 export const createOrder = async (req, res) => {
   try {
     const order = await orderService.createOrder(req.body);
+    await notificationService.sendToAdmin({
+      title: "New Order",
+      message: `A new order was created by ${order.customerName || "Guest"}`,
+      orderId: order._id,
+    });
     res.status(201).json({ success: true, data: order });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
