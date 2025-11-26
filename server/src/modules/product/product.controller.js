@@ -29,10 +29,10 @@ export const getProductById = async (req, res) => {
 
 
 //createProduct
-export const createProduct = async (req, res) => {
+export const createProduct = async (req, res, next) => {
     try {
-        const { name, desc,categoryId,stock,basePrice,options  } = req.body;
-        if (!name || !desc ||!req.file ||!categoryId||!stock||!basePrice ) {
+        const { name, desc, categoryId, stock, basePrice, options } = req.body;
+        if (!name || !desc || !req.file || !categoryId || !stock || !basePrice) {
             return res.status(400).json({ message: 'Name , desc , image , stock , basePrice  and category are required' });
         }
         req.body.imgURL = req.file.path;
@@ -44,14 +44,22 @@ export const createProduct = async (req, res) => {
             }
         }
 
-        // these line for AI 
-        const text = `${name}. ${desc}. Tags: ${p.tags?.join(',') || ''}. Price: ${price}`;
-        const embeddingProduct = await getEmbedding(text);
+        // prepare embedding text safely
+        const tags = req.body.tags || (req.body.tagsString ? req.body.tagsString.split(',') : []);
+        const text = `${name}. ${desc}. Tags: ${Array.isArray(tags) ? tags.join(',') : tags}. Price: ${basePrice}`;
+
+        let embeddingProduct = [];
+        try {
+            embeddingProduct = await getEmbedding(text);
+        } catch (e) {
+            // embedding failures should not block product creation; log and continue
+            req?.log?.warn('embedding generation failed', { error: e?.message || String(e) });
+        }
 
         const product = await createProductService({ ...req.body, embedding: embeddingProduct }); // storing embeddings for product for AI search
-        res.status(201).json(product);
+        return res.status(201).json(product);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return next(error);
     }
 }
 
@@ -94,12 +102,12 @@ export const deleteProduct= async(req,res)=>{
 }
 
 //getNewProducts
-export const getNewProducts=async(req,res)=>{
-    try{
+export const getNewProducts = async (req, res) => {
+    try {
         const products = await getNewProductsService();
         res.status(200).json(products);
-    }catch(err){
-        res.status(500).json({error:err.message});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 }
 

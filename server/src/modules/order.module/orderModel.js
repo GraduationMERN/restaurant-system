@@ -1,104 +1,106 @@
 import mongoose from "mongoose";
 
-// Order product Schema
 const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
+      ref: "Cart",
       required: true,
     },
-
-    name: { type: String, required: true },
-
-    img: { type: String, default: "" },
-
-    price: { type: Number, required: true },
-
-    quantity: { type: Number, required: true, min: 1 },
-
-    itemPoints: { type: Number, default: 0 },
-
-    selectedOptions: [
-      {
-        label: String,
-        priceDelta: Number,
-      }
-    ],
+    name: { type: String, required: true }, // Store product name for history
+    img: { type: String, default: "" }, // Store product image for history
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    selectedOptions: {
+      type: Object, // { Size: "Large", Cheese: "Extra" }
+      default: {}
+    },
+    price: { // Final price including options (matches cart)
+      type: Number,
+      required: true
+    }
   },
-  { _id: false }
+  { _id: true }
 );
 
-// Main Order Schema
 const OrderSchema = new mongoose.Schema(
   {
-    restaurantId: {
+    // RELATIONSHIPS (matches cart structure)
+    cartId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Restaurant",
+      ref: "Cart",
+      default: null
+    },
+    
+    userId: { // Matches cart userId (String for both ObjectId and UUID)
+      type: String,
       required: true,
       index: true,
     },
 
-    customerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-      index: true,
+    // ORDER DETAILS
+    tableNumber: { 
+      type: String, 
+      default: null 
     },
-
-    tableNumber: { type: String, default: null },
-
     serviceType: {
       type: String,
-      enum: ["table", "pickup"],
-      default: "pickup",
-    },
-
-    // Items
-    items: {
-      type: [OrderItemSchema],
+      enum: ["dine-in", "pickup", "delivery"],
       required: true,
-      validate: (v) => Array.isArray(v) && v.length > 0,
     },
 
-    totalAmount: { type: Number, required: true, min: 0 },
+    // ITEMS (from cart products)
+    items: [OrderItemSchema],
 
-    // Payment
+    // PRICING (calculated from cart + options)
+    subtotal: { type: Number, required: true, default: 0 },
+    tax: { type: Number, required: true, default: 0 },
+    deliveryFee: { type: Number, required: true, default: 0 },
+    discount: { type: Number, required: true, default: 0 },
+    totalAmount: { type: Number, required: true, default: 0 },
+
+    // PAYMENT
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "paid", "refunded"],
+      enum: ["unpaid", "paid", "refunded", "failed"],
       default: "unpaid",
     },
-
     paymentMethod: {
       type: String,
-      enum: ["cash", "card", "wallet"],
-      default: "cash",
+      enum: ["cash", "card", "online"],
+      required: true,
     },
 
-    stripeSessionId: { type: String, default: null },
-
-    // Rewards
-    rewardPointsEarned: {
-      type: Number,
-      default: 0,
+    // CUSTOMER INFO (for guest orders)
+    customerInfo: {
+      name: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      email: { type: String, default: "" }
     },
 
-    isRewardOrder: {
-      type: Boolean,
-      default: false,
-    },
-
-    notes: { type: String, default: "" },
-
+    // ORDER STATUS
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "ready", "completed", "cancelled"],
       default: "pending",
       index: true,
     },
+
+    notes: { 
+      type: String, 
+      default: "" 
+    }
   },
-  { timestamps: true }
+  { 
+    timestamps: true 
+  }
 );
 
-export default mongoose.models.Order || mongoose.model("Order", OrderSchema);
+// Indexes for efficient queries
+OrderSchema.index({ userId: 1, createdAt: -1 });
+OrderSchema.index({ orderStatus: 1 });
+
+export default mongoose.model("Order", OrderSchema);

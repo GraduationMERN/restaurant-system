@@ -1,95 +1,126 @@
 import mongoose from "mongoose";
 import orderRepo from "./order.repository.js";
-import { calculateTotal } from "./orderUtils.js";
+import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
 
 class OrderService {
-  // 1) Create Order
-  async createOrder(orderData) {
+  // CREATE ORDER FROM CART
+  async createOrderFromCart(cart, productDetails, orderData) {
+    if (!cart.products || cart.products.length === 0) {
+      throw new Error("Cart is empty");
+    }
+
+    // Format cart items for order (add product names, images)
+    const orderItems = formatCartItemsForOrder(cart.products, productDetails);
+
+    // Calculate totals
+    const totals = calculateOrderTotals(
+      cart.products,
+      orderData.taxRate || 0.1,
+      orderData.deliveryFee || 0,
+      orderData.discount || 0
+    );
+
+    const order = {
+      cartId: cart._id,
+      userId: cart.userId, // Same as cart userId
+      serviceType: orderData.serviceType,
+      tableNumber: orderData.tableNumber,
+      items: orderItems,
+      paymentMethod: orderData.paymentMethod,
+      customerInfo: orderData.customerInfo || {},
+      notes: orderData.notes || "",
+      ...totals
+    };
+
+    return await orderRepo.create(order);
+  }
+
+  // CREATE DIRECT ORDER (without cart)
+  async createDirectOrder(orderData) {
     if (!orderData.items || orderData.items.length === 0) {
       throw new Error("Order must contain at least one item.");
     }
 
-    if (!orderData.isRewardOrder) {
-      orderData.totalAmount = calculateTotal(orderData.items);
-    } else {
-      orderData.totalAmount = 0;
-    }
+    const totals = calculateOrderTotals(
+      orderData.items,
+      orderData.taxRate || 0.1,
+      orderData.deliveryFee || 0,
+      orderData.discount || 0
+    );
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const orderWithTotals = {
+      ...orderData,
+      ...totals
+    };
 
-    try {
-      const newOrder = await orderRepo.create(orderData, session);
-      await session.commitTransaction();
-      session.endSession();
-      return newOrder;
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      throw err;
-    }
+    return await orderRepo.create(orderWithTotals);
   }
-  // 2) Get Order by ID
+
+  // GET ORDER BY ID
   async getOrder(orderId) {
-    const order = await orderRepo.findById(orderId);
+    const order = await orderRepo.findById(orderId, true); // Populate products
     if (!order) throw new Error("Order not found");
     return order;
   }
-  // 3) Update Order Status
+
+  // GET ORDERS BY USER
+  async getOrdersByUser(userId) {
+    return await orderRepo.findByUserId(userId);
+  }
+
+  // GET ORDER BY CART ID
+  async getOrderByCartId(cartId) {
+    return await orderRepo.findByCartId(cartId);
+  }
+
+  // GET ACTIVE ORDERS (for kitchen)
+  async getActiveOrders() {
+    return await orderRepo.findActiveOrders();
+  }
+
+  // UPDATE ORDER STATUS
   async updateStatus(orderId, newStatus) {
-    return await orderRepo.updateStatus(orderId, newStatus);
-  }
-  // 4) Update Payment (status, method, stripeSessionId)
-  async updatePayment(orderId, paymentStatus, paymentMethod = null, stripeSessionId = null) {
-    return await orderRepo.updatePayment(orderId, paymentStatus, paymentMethod, stripeSessionId);
-  }
-  // 5) Update Reward Points (after reward system calculates them)
-  async updateRewardPoints(orderId, rewardPoints) {
-    return await orderRepo.updateRewardPoints(orderId, rewardPoints);
+    const order = await orderRepo.updateStatus(orderId, newStatus);
+    if (!order) throw new Error("Order not found");
+    return order;
   }
 
-  // 6) Add Item to Existing Order
-  async addItemToOrder(orderId, item) {
-    return await orderRepo.addItem(orderId, item);
+  // UPDATE PAYMENT STATUS
+  async updatePayment(orderId, paymentStatus, paymentMethod) {
+    const order = await orderRepo.updatePayment(orderId, paymentStatus, paymentMethod);
+    if (!order) throw new Error("Order not found");
+    return order;
   }
 
-  // 7) Replace All Items in Order
-  async updateOrderItems(orderId, items) {
-    return await orderRepo.updateItems(orderId, items);
+  // UPDATE CUSTOMER INFO
+  async updateCustomerInfo(orderId, customerInfo) {
+    const order = await orderRepo.updateCustomerInfo(orderId, customerInfo);
+    if (!order) throw new Error("Order not found");
+    return order;
   }
 
-  // 8) Update Total Amount
-  async updateTotal(orderId, totalAmount) {
-    return await orderRepo.updateTotal(orderId, totalAmount);
+  // LINK USER TO ORDER (when guest registers)
+  async linkUserToOrder(orderId, newUserId) {
+    const order = await orderRepo.updateUserId(orderId, newUserId);
+    if (!order) throw new Error("Order not found");
+    return order;
   }
 
-  // 9) Update Table Number
-  async updateTable(orderId, tableNumber) {
-    return await orderRepo.updateTable(orderId, tableNumber);
-  }
-  // 10) Update Service Type
-  async updateServiceType(orderId, serviceType) {
-    return await orderRepo.updateServiceType(orderId, serviceType);
+  // SEARCH ORDERS
+  async searchOrders(filter = {}, options = {}) {
+    return await orderRepo.search(filter, options);
   }
 
-  // 11) Mark Order as Reward Order
-  async markAsRewardOrder(orderId, isReward = true) {
-    return await orderRepo.markAsRewardOrder(orderId, isReward);
+  // DELETE ORDER
+  async deleteOrder(orderId) {
+    const order = await orderRepo.delete(orderId);
+    if (!order) throw new Error("Order not found");
+    return order;
   }
 
-  // 12) Get Orders for Restaurant (supports filtering by status & reward)
-  async getOrdersForRestaurant(restaurantId, { status, isRewardOrder } = {}) {
-    const filter = { restaurantId };
-    if (status) filter.orderStatus = status;
-    if (typeof isRewardOrder === "boolean") filter.isRewardOrder = isRewardOrder;
-    return await orderRepo.search(filter);
-  }
-
-  // 13) Get Orders for Customer (supports filtering by reward)
-  async getOrdersForCustomer(customerId, { isRewardOrder } = {}) {
-    const filter = { customerId };
-    if (typeof isRewardOrder === "boolean") filter.isRewardOrder = isRewardOrder;
-    return await orderRepo.search(filter);
+  // 14) GET all orders
+  async getAllOrders(){
+    return await orderRepo.getAllOrders()
   }
 }
 

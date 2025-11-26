@@ -1,62 +1,59 @@
 import Order from "./orderModel.js";
 
 class OrderRepository {
-  // ==============================
-  // 1) Create Order
-  // ==============================
-  async create(orderData, session = null) {
-    if (session) {
-      const order = await Order.create([orderData], { session });
-      return order[0];
-    }
-    return Order.create(orderData);
+  // CREATE ORDER
+  async create(orderData) {
+    return await Order.create(orderData);
   }
 
-  // ==============================
-  // 2) Find Order by ID
-  // ==============================
-  async findById(orderId, { populate = [], lean = true } = {}) {
+  // FIND BY ID (with product population)
+  async findById(orderId, populateProducts = false) {
     let query = Order.findById(orderId);
-    populate.forEach((p) => (query = query.populate(p)));
-    if (lean) query = query.lean();
+    if (populateProducts) {
+      query = query.populate('items.productId');
+    }
     return query.exec();
   }
 
-  // ==============================
-  // 3) List Orders by Restaurant
-  // ==============================
-  async listByRestaurant(restaurantId, { status, limit = 50, skip = 0 } = {}) {
-    const filter = { restaurantId };
-    if (status) filter.orderStatus = status;
-    return Order.find(filter)
+  // FIND BY USER ID
+  async findByUserId(userId) {
+    return await Order.find({ userId })
+      .populate('items.productId')
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
       .exec();
   }
 
-  // ==============================
-  // 4) List Orders by Customer
-  // ==============================
-  async listByCustomer(customerId, { limit = 50, skip = 0 } = {}) {
-    return Order.find({ customerId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
+  // FIND BY CART ID
+  async findByCartId(cartId) {
+    return await Order.findOne({ cartId })
+      .populate('items.productId')
       .exec();
   }
 
+  // FIND ACTIVE ORDERS (for kitchen)
+  async findActiveOrders() {
+    return await Order.find({ 
+      orderStatus: { $in: ["pending", "preparing", "ready"] } 
+    })
+    .populate('items.productId')
+    .sort({ createdAt: 1 })
+    .exec();
+  }
+
+  // UPDATE STATUS
+  async updateStatus(orderId, newStatus) {
+    return await Order.findByIdAndUpdate(
   // ==============================
   // 5) Update Order Status
   // ==============================
-  async updateStatus(orderId, newStatus) {
-    return Order.findByIdAndUpdate(
+  async updateStatus(orderId, newStatus, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { orderStatus: newStatus } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
@@ -87,86 +84,93 @@ class OrderRepository {
   // ==============================
   // 8) Add Item to Existing Order
   // ==============================
-  async addItem(orderId, item) {
-    return Order.findByIdAndUpdate(
+  async addItem(orderId, item, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $push: { items: item } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 9) Replace All Items
   // ==============================
-  async updateItems(orderId, items) {
-    return Order.findByIdAndUpdate(
+  async updateItems(orderId, items, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { items } },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 10) Update Total Amount
   // ==============================
-  async updateTotal(orderId, totalAmount) {
-    return Order.findByIdAndUpdate(
+  async updateTotal(orderId, totalAmount, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
-      { $set: { totalAmount } },
+      { orderStatus: newStatus },
       { new: true }
-    ).exec();
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // ==============================
   // 11) Update Table Number
   // ==============================
-  async updateTable(orderId, tableNumber) {
-    return Order.findByIdAndUpdate(
+  async updateTable(orderId, tableNumber, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
-      { $set: { tableNumber } },
+      { 
+        paymentStatus,
+        paymentMethod 
+      },
       { new: true }
-    ).exec();
+    ).populate('items.productId');
   }
 
-  // ==============================
-  // 12) Update Service Type
-  // ==============================
-  async updateServiceType(orderId, serviceType) {
-    return Order.findByIdAndUpdate(
+  // UPDATE CUSTOMER INFO
+  async updateCustomerInfo(orderId, customerInfo) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: { serviceType } },
+      { customerInfo },
       { new: true }
-    ).exec();
+    ).populate('items.productId');
   }
 
-  // ==============================
-  // 13) Mark Order as Reward Order
-  // ==============================
-  async markAsRewardOrder(orderId, isReward = true) {
-    return Order.findByIdAndUpdate(
+  // UPDATE USER ID (when guest registers)
+  async updateUserId(orderId, newUserId) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: { isRewardOrder: isReward } },
+      { userId: newUserId },
       { new: true }
-    ).exec();
+    );
   }
 
-  // ==============================
-  // 14) Search Orders (filter + pagination)
-  // ==============================
-  async search(filter = {}, { skip = 0, limit = 50 } = {}) {
-    return Order.find(filter)
-      .sort({ createdAt: -1 })
+  // SEARCH ORDERS WITH FILTERS
+  async search(filter = {}, options = {}) {
+    const { limit = 50, skip = 0, sort = { createdAt: -1 } } = options;
+    
+    return await Order.find(filter)
+      .populate('items.productId')
+      .sort(sort)
       .skip(skip)
       .limit(limit)
-      .lean()
       .exec();
   }
 
-  // ==============================
-  // 15) Delete Order
-  // ==============================
+  // DELETE ORDER
   async delete(orderId) {
-    return Order.findByIdAndDelete(orderId).exec();
+    return await Order.findByIdAndDelete(orderId);
+  }
+
+  async getAllOrders(){
+    return Order.find()
   }
 }
 
