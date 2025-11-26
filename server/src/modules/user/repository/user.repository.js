@@ -42,3 +42,19 @@ export const saveRefreshToken = async (userId, token) => {
 export const getUserByRefreshToken = async (token) => {
   return User.findOne({ refreshToken: token });
 };
+
+// increment user's points safely, optionally using a mongoose session
+export const incrementUserPoints = async (userId, points, session = null) => {
+  const opts = {};
+  if (session) opts.session = session;
+  // Use atomic $inc to avoid race conditions
+  return await User.findByIdAndUpdate(userId, { $inc: { points } }, { new: true, ...opts }).exec();
+};
+
+// decrement user's points safely, optionally using a mongoose session
+export const decrementUserPoints = async (userId, points, session = null) => {
+  const opts = {};
+  if (session) opts.session = session;
+  // $inc with negative value to decrease points
+  return await User.findByIdAndUpdate(userId, { $inc: { points: -points } }, { new: true, ...opts }).exec();
+};

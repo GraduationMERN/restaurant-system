@@ -1,6 +1,7 @@
+import { getUserByIdService } from '../user/service/user.service.js';
 import { createRewardService, deleteRewardService, getAllRewardsServices, getRewardByIdService, redeemRewardService, updateRewardService } from './reward.service.js';
 
-async function getAllRewards(req, res) {
+export async function getAllRewards(req, res) {
     try {
         const rewards = await getAllRewardsServices();
         res.status(200).json(rewards);
@@ -9,7 +10,7 @@ async function getAllRewards(req, res) {
     }
 }
 
-async function getRewardById(req, res) {
+export async function getRewardById(req, res) {
     try {
         const { id } = req.params;
         const reward = await getRewardByIdService(id);
@@ -22,10 +23,10 @@ async function getRewardById(req, res) {
     }   
 }
 
-async function AddReward(req, res) {
+export async function AddReward(req, res) {
     try {
-        console.log("Incoming body:", req.body);
         const rewardData = req.body;
+        if(!req.body.productId || !req.body.pointsRequired) res.status(402).json({error:"productId and points are required to make the reward"})
         const newReward = await createRewardService(rewardData);
         console.log("Created reward:", newReward);
         res.status(201).json(newReward);
@@ -34,7 +35,7 @@ async function AddReward(req, res) {
     }
 }
 
-async function deleteReward(req,res) {
+export async function deleteReward(req,res) {
     try{
         const { id } = req.params;
         await deleteRewardService(id);
@@ -44,7 +45,7 @@ async function deleteReward(req,res) {
     }
 }
 
-async function updateReward(req,res) {
+export async function updateReward(req,res) {
     try{
         const { id } = req.params;
         const rewardData = req.body;
@@ -55,15 +56,27 @@ async function updateReward(req,res) {
     }
 }
 
-async function redeemReward(req, res) {
+export async function redeemReward(req, res) {
     try {
-        console.log(req.body);
         const { rewardId, userId } = req.body;
-        await redeemRewardService(rewardId, userId);
-        res.status(200).json({ message: 'Reward redeemed successfully' });
+        const reward = await getRewardByIdService(rewardId)
+        const result = await redeemRewardService(rewardId, userId);
+        res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }   
 }
 
-export { getAllRewards, AddReward,deleteReward, getRewardById,updateReward , redeemReward};
+export async function updatePoints(req,res){
+  try{
+    const {id} = req.params;
+    const user = await getUserByIdService(id);
+    if(!user){
+      return res.status(404).json({message:"NOT FOUND"})
+    }
+    await updatePointsService(id)
+    res.status(200).json({user})
+  }catch(err){
+    res.status(400).json({message:err.message})
+  }
+}

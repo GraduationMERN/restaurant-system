@@ -47,7 +47,7 @@ const productSchema = new mongoose.Schema({
     },
     productPoints: {
         type: Number,
-        default: 0
+        required:true
     },
     pointsToPay: {
         type: Number,
