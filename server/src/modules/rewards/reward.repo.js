@@ -1,7 +1,7 @@
 import Reward from "./reward.model.js";
 
 const getAllRewardsRepo = async () => {
-  return await Reward.find().populate("productId");
+  return await Reward.find().populate("productId", "name basePrice desc imgURL categoryId stock isnew productPoints tags");
 }
 
 const getRewardById = async (id) => {
