@@ -16,11 +16,12 @@ class OrderRepository {
   }
 
   // FIND BY USER ID
-  async findByUserId(userId) {
-    return await Order.find({ userId })
-      .populate('items.productId')
-      .sort({ createdAt: -1 })
-      .exec();
+  async findById(orderId, { populate = [], lean = true, session = null } = {}) {
+    let query = Order.findById(orderId);
+    populate.forEach((p) => (query = query.populate(p)));
+    if (lean) query = query.lean();
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // FIND BY CART ID
@@ -41,12 +42,10 @@ class OrderRepository {
   }
 
   // UPDATE STATUS
-  async updateStatus(orderId, newStatus) {
-    return await Order.findByIdAndUpdate(
   // ==============================
   // 5) Update Order Status
   // ==============================
-  async updateStatus(orderId, newStatus, session = null) {
+    async updateStatus(orderId, newStatus, session = null) {
     let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { orderStatus: newStatus } },
@@ -84,7 +83,7 @@ class OrderRepository {
   // ==============================
   // 8) Add Item to Existing Order
   // ==============================
-  async addItem(orderId, item, session = null) {
+   async addItem(orderId, item, session = null) {
     let query = Order.findByIdAndUpdate(
       orderId,
       { $push: { items: item } },
@@ -97,7 +96,7 @@ class OrderRepository {
   // ==============================
   // 9) Replace All Items
   // ==============================
-  async updateItems(orderId, items, session = null) {
+ async updateItems(orderId, items, session = null) {
     let query = Order.findByIdAndUpdate(
       orderId,
       { $set: { items } },
@@ -110,10 +109,10 @@ class OrderRepository {
   // ==============================
   // 10) Update Total Amount
   // ==============================
-  async updateTotal(orderId, totalAmount, session = null) {
+ async updateTotal(orderId, totalAmount, session = null) {
     let query = Order.findByIdAndUpdate(
       orderId,
-      { orderStatus: newStatus },
+      { $set: { totalAmount } },
       { new: true }
     );
     if (session) query = query.session(session);
@@ -126,21 +125,22 @@ class OrderRepository {
   async updateTable(orderId, tableNumber, session = null) {
     let query = Order.findByIdAndUpdate(
       orderId,
-      { 
-        paymentStatus,
-        paymentMethod 
-      },
+      { $set: { tableNumber } },
       { new: true }
-    ).populate('items.productId');
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // UPDATE CUSTOMER INFO
-  async updateCustomerInfo(orderId, customerInfo) {
-    return await Order.findByIdAndUpdate(
+   async updateServiceType(orderId, serviceType, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
-      { customerInfo },
+      { $set: { serviceType } },
       { new: true }
-    ).populate('items.productId');
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // UPDATE USER ID (when guest registers)
@@ -150,6 +150,16 @@ class OrderRepository {
       { userId: newUserId },
       { new: true }
     );
+  }
+
+   async markAsRewardOrder(orderId, isReward = true, session = null) {
+    let query = Order.findByIdAndUpdate(
+      orderId,
+      { $set: { isRewardOrder: isReward } },
+      { new: true }
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
   // SEARCH ORDERS WITH FILTERS

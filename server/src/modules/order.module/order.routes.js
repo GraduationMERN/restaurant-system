@@ -1,5 +1,7 @@
 import express from "express";
 import * as orderController from "./order.controller.js";
+import authMiddleware from "../../middlewares/auth.middleware.js";
+import roleMiddleware from "../../middlewares/role.middleware.js";
 
 const router = express.Router();
 
@@ -14,10 +16,10 @@ router.get("/cart/:cartId", orderController.getOrderByCartId); // Get order by c
 router.get("/kitchen/active", orderController.getActiveOrders); // Get active orders
 
 // ORDER UPDATES
-router.patch("/:id/status", orderController.updateOrderStatus);      // Update status
-router.patch("/:id/payment", orderController.updatePaymentStatus);   // Update payment
-router.patch("/:id/customer-info", orderController.updateCustomerInfo); // Update customer info
-router.patch("/:id/link-user", orderController.linkUserToOrder);     // Link user to order
+router.patch("/:id/status", authMiddleware, roleMiddleware("admin", "kitchen", "cashier"), orderController.updateOrderStatus);      // Update status
+router.patch("/:id/payment", authMiddleware, roleMiddleware("admin", "cashier"), orderController.updatePaymentStatus);   // Update payment
+router.patch("/:id/customer-info", authMiddleware, roleMiddleware("admin"), orderController.updateCustomerInfo); // Update customer info
+router.patch("/:id/link-user", authMiddleware, roleMiddleware("admin"), orderController.linkUserToOrder);     // Link user to order
 
 // ORDER MANAGEMENT
 router.post("/search", orderController.searchOrders);          // Search orders
