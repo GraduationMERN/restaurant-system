@@ -117,6 +117,11 @@ class OrderService {
     if (!order) throw new Error("Order not found");
     return order;
   }
+
+  // 14) GET all orders
+  async getAllOrders(){
+    return await orderRepo.getAllOrders()
+  }
 }
 
 export default new OrderService();

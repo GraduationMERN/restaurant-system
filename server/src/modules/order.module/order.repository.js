@@ -43,15 +43,88 @@ class OrderRepository {
   // UPDATE STATUS
   async updateStatus(orderId, newStatus) {
     return await Order.findByIdAndUpdate(
+  // ==============================
+  // 5) Update Order Status
+  // ==============================
+  async updateStatus(orderId, newStatus, session = null) {
+    let query = Order.findByIdAndUpdate(
+      orderId,
+      { $set: { orderStatus: newStatus } },
+      { new: true }
+    );
+    if (session) query = query.session(session);
+    return query.exec();
+  }
+
+  // ==============================
+  // 6) Update Payment (status + method + stripeSessionId)
+  // ==============================
+  async updatePayment(orderId, paymentStatus, paymentMethod = null, stripeSessionId = null) {
+    const update = { paymentStatus };
+    if (paymentMethod) update.paymentMethod = paymentMethod;
+    if (stripeSessionId) update.stripeSessionId = stripeSessionId;
+    return Order.findByIdAndUpdate(
+      orderId,
+      { $set: update },
+      { new: true }
+    ).exec();
+  }
+
+  // ==============================
+  // 7) Update Reward Points
+  // ==============================
+  async updateRewardPoints(orderId, rewardPoints) {
+    return Order.findByIdAndUpdate(
+      orderId,
+      { $set: { rewardPointsEarned: rewardPoints } },
+      { new: true }
+    ).exec();
+  }
+
+  // ==============================
+  // 8) Add Item to Existing Order
+  // ==============================
+  async addItem(orderId, item, session = null) {
+    let query = Order.findByIdAndUpdate(
+      orderId,
+      { $push: { items: item } },
+      { new: true }
+    );
+    if (session) query = query.session(session);
+    return query.exec();
+  }
+
+  // ==============================
+  // 9) Replace All Items
+  // ==============================
+  async updateItems(orderId, items, session = null) {
+    let query = Order.findByIdAndUpdate(
+      orderId,
+      { $set: { items } },
+      { new: true }
+    );
+    if (session) query = query.session(session);
+    return query.exec();
+  }
+
+  // ==============================
+  // 10) Update Total Amount
+  // ==============================
+  async updateTotal(orderId, totalAmount, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { orderStatus: newStatus },
       { new: true }
-    ).populate('items.productId');
+    );
+    if (session) query = query.session(session);
+    return query.exec();
   }
 
-  // UPDATE PAYMENT
-  async updatePayment(orderId, paymentStatus, paymentMethod) {
-    return await Order.findByIdAndUpdate(
+  // ==============================
+  // 11) Update Table Number
+  // ==============================
+  async updateTable(orderId, tableNumber, session = null) {
+    let query = Order.findByIdAndUpdate(
       orderId,
       { 
         paymentStatus,
@@ -94,6 +167,10 @@ class OrderRepository {
   // DELETE ORDER
   async delete(orderId) {
     return await Order.findByIdAndDelete(orderId);
+  }
+
+  async getAllOrders(){
+    return Order.find()
   }
 }
 
