@@ -1,5 +1,4 @@
 import orderService from "./order.service.js";
-import { notificationService } from "../../../server.js"
 
 // CREATE ORDER FROM CART
 export const createOrderFromCart = async (req, res) => {
@@ -7,11 +6,7 @@ export const createOrderFromCart = async (req, res) => {
     const { cart, productDetails, orderData } = req.body;
     
     const order = await orderService.createOrderFromCart(cart, productDetails, orderData);
-    await notificationService.sendToAdmin({
-      title: "New Order",
-      message: `A new order was created by ${order.customerName || "Guest"}`,
-      orderId: order._id,
-    });
+    
     res.status(201).json({ 
       success: true, 
       message: "Order created successfully",
@@ -26,28 +21,11 @@ export const createOrderFromCart = async (req, res) => {
 export const createDirectOrder = async (req, res) => {
   try {
     const order = await orderService.createDirectOrder(req.body);
-    await notificationService.sendToAdmin({
-      title: "New Order",
-      message: `A new order was created by ${order.customerName || "Guest"}`,
-      orderId: order._id,
-    });
-      res.status(201).json({ success: true, data: order });
+    res.status(201).json({ success: true, data: order });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 };
-// 1) Create Order
-
-
-export const getAllOrders = async(req,res)=>{
-  try{
-    const orders = await orderService.getAllOrders();
-    res.status(201).json({success:true,data: orders})
-  }catch(err){
-    res.status(400).json({success:false,message:err.message})
-  }
-}
-
 
 // GET ORDER DETAILS
 export const getOrder = async (req, res) => {
@@ -92,7 +70,7 @@ export const getActiveOrders = async (req, res) => {
 // UPDATE ORDER STATUS
 export const updateOrderStatus = async (req, res) => {
   try {
-    const order = await orderService.updateStatus(req.params.id, req.body.orderStatus);
+    const order = await orderService.updateStatus(req.params.id, req.body.status);
     res.json({ success: true, data: order });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

@@ -15,10 +15,14 @@ function getCartUserId(req, res) {
     return req.cookies.guestCartId;
 }
 
+
 //getCartForUser
 export const getCartForUser = async (req, res) => {
     try {
+        // const { userId } = req.params;
+        // const userId = req.user._id;
         const userId = getCartUserId(req, res);
+
         const cart = await getCartForUserService(userId);
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
@@ -29,42 +33,40 @@ export const getCartForUser = async (req, res) => {
     }
 }
 
+
+
+
 function calculateFinalPrice(product, selectedOptions) {
     let total = product.basePrice;
-    
-    // ✅ FIX: Check if product has options first
-    if (product.options && product.options.length > 0 && selectedOptions) {
-        product.options.forEach(opt => {
-            const userChoice = selectedOptions[opt.name];
-            if (!userChoice) return;
+    // product.options => array
+    // selectedOptions => object { Size: "Large", Cheese:"Extra"}
+    product.options.forEach(opt => {
+        const userChoice = selectedOptions[opt.name];
+        if (!userChoice) return;
 
-            const choiceData = opt.choices.find(c => c.label === userChoice);
-            if (choiceData) {
-                total += choiceData.priceDelta;
-            }
-        });
-    }
+        const choiceData = opt.choices.find(c => c.label === userChoice);
+        if (choiceData) {
+            total += choiceData.priceDelta;
+        }
+    });
 
     return total;
 }
 
+
 // add to cart 
 export const addToCart = async (req, res) => {
     try {
+        // const userId = req.user._id;
         const userId = getCartUserId(req, res);
-        const { productId, quantity, selectedOptions } = req.body;
-        
-        let cart = await addToCartService(userId);
+
+        const {  productId, quantity, selectedOptions } = req.body;
+        let cart = await addToCartService(userId)
         const product = await getProductByIdService(productId);
-        
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-
-        // ✅ FIX: Check if product has NO options or empty options array
-        const hasOptions = product.options && product.options.length > 0;
-        
-        if (!hasOptions) {
+        if (!product.options || product.options.length === 0) {
             // المنتج مفيهوش اختيارات → استخدام stock العام
             if (quantity > product.stock) {
                 return res.status(400).json({ message: 'Requested quantity exceeds available stock' });
@@ -74,8 +76,9 @@ export const addToCart = async (req, res) => {
             }
         }
 
-        // ✅ FIX: Only validate options if product actually has options
-        if (hasOptions && selectedOptions) {
+
+        // تحقق من stock لكل خيار إذا موجود
+        if (product.options && selectedOptions) {
             for (let opt of product.options) {
                 const choiceName = selectedOptions[opt.name];
                 if (!choiceName) {
@@ -96,28 +99,38 @@ export const addToCart = async (req, res) => {
             }
         }
 
-        const finalPrice = calculateFinalPrice(product, selectedOptions);
-        
+        const finalPrice = calculateFinalPrice(product, selectedOptions)
         // if first time -> create new cart
         if (!cart) {
             cart = new Cart({
                 userId,
-                products: [{ productId, quantity, selectedOptions: selectedOptions || {}, price: finalPrice }],
+                products: [{ productId, quantity, selectedOptions, price: finalPrice }],
                 totalPrice: finalPrice * quantity,
             });
-        } else {
-            // نشوف المنتج موجود بنفس الخيارات ولا لأ
+        } else { // نشوف المنتج موجود بنفس الخيارات ولا لأ
             const productInCart = cart.products.find(
-                (p) => p.productId.toString() === productId && JSON.stringify(p.selectedOptions) === JSON.stringify(selectedOptions || {})
+                (p) => p.productId.toString() === productId && JSON.stringify(p.selectedOptions) === JSON.stringify(selectedOptions)
             );
-            
+            // if(productInCart){
+            //     if (productInCart.quantity + quantity > product.stock) {
+            //         return res.status(400).json({ message: 'Not enough stock for this quantity' });
+            //     }
+            //     productInCart.quantity+=quantity;
+            //     cart.totalPrice += finalPrice *quantity;
+            // }else{
+            //     // منتج جديد أو نفس المنتج باختيارات مختلفة
+            //     cart.products.push({ productId, quantity ,selectedOptions,price: finalPrice});
+            //     cart.totalPrice += finalPrice * quantity;
+            // }
             if (productInCart) {
+
                 // لو المنتج مفيهوش اختيارات → شيك على stock العام
-                if (!hasOptions) {
+                if (!product.options || product.options.length === 0) {
                     if (productInCart.quantity + quantity > product.stock) {
                         return res.status(400).json({ message: 'Not enough stock for this quantity' });
                     }
-                } else {
+                }
+                else {
                     // المنتج ليه options → شيك على stock الخاص بالاختيارات
                     for (let opt of product.options) {
                         const choiceName = selectedOptions[opt.name];
@@ -126,7 +139,7 @@ export const addToCart = async (req, res) => {
                         const choiceData = opt.choices.find(c => c.label === choiceName);
                         if (choiceData && choiceData.stock !== null) {
                             if (productInCart.quantity + quantity > choiceData.stock) {
-                                return res.status({
+                                return res.status(400).json({
                                     message: `Not enough stock for option "${opt.name}" (${choiceName})`
                                 });
                             }
@@ -134,20 +147,22 @@ export const addToCart = async (req, res) => {
                     }
                 }
 
-                // هنا لازم تزودي الكمية
+                //  هنا لازم تزودي الكمية
                 productInCart.quantity += quantity;
                 cart.totalPrice += finalPrice * quantity;
-            } else {
-                // منتج جديد
-                cart.products.push({ productId, quantity, selectedOptions: selectedOptions || {}, price: finalPrice });
+            }
+            else {
+                //  منتج جديد
+                cart.products.push({ productId, quantity, selectedOptions, price: finalPrice });
                 cart.totalPrice += finalPrice * quantity;
             }
-        }
 
-        // ✅ FIX: Update stock based on whether product has options
-        if (!hasOptions) {
+
+        }
+        if (!product.options || product.options.length === 0) {
             product.stock -= quantity;
-        } else if (selectedOptions) {
+        }
+        if (product.options && selectedOptions) {
             for (let opt of product.options) {
                 const choiceName = selectedOptions[opt.name];
                 if (!choiceName) continue;
@@ -158,19 +173,22 @@ export const addToCart = async (req, res) => {
                 }
             }
         }
-        
         await product.save();
         await cart.save();
         res.status(201).json(cart);
     } catch (err) {
         res.status(500).json({ error: err.message });
+
     }
 }
+
 
 // delete product from cart
 export const deleteProductFromCart = async (req, res) => {
     try {
+        // const userId = req.user._id;
         const userId = getCartUserId(req, res);
+
         const { productId } = req.params;
 
         // Get user cart
@@ -206,21 +224,19 @@ export const deleteProductFromCart = async (req, res) => {
         // ❗ RETURN STOCK
         // ---------------------------------------
 
-        // ✅ FIX: Check if product has options
-        const hasOptions = product.options && product.options.length > 0;
-
         // Case 1: Product with NO options → return general stock
-        if (!hasOptions) {
+        if (!product.options || product.options.length === 0) {
             product.stock += quantity;
         }
 
         // Case 2: Product WITH options → return stock to EACH selected choice
-        if (hasOptions && selectedOptions) {
+        if (product.options && selectedOptions) {
             for (let opt of product.options) {
                 const selectedChoice = selectedOptions[opt.name];
                 if (!selectedChoice) continue;
 
                 const choiceObj = opt.choices.find(c => c.label === selectedChoice);
+
                 if (choiceObj && choiceObj.stock !== null) {
                     choiceObj.stock += quantity;
                 }
@@ -243,10 +259,13 @@ export const deleteProductFromCart = async (req, res) => {
     }
 };
 
+
 // update product quantity in cart
 export const updateCartQuantity = async (req, res) => {
     try {
+        // const userId = req.user._id;
         const userId = getCartUserId(req, res);
+
         const { productId } = req.params;
         const { newQuantity } = req.body; // number
 
@@ -275,15 +294,13 @@ export const updateCartQuantity = async (req, res) => {
         const oldQuantity = cartItem.quantity;
         const difference = newQuantity - oldQuantity;
 
-        // ✅ FIX: Check if product has options
-        const hasOptions = product.options && product.options.length > 0;
-
         // ------------------------------------------------
         // CASE 1 → Increase quantity (need stock check)
         // ------------------------------------------------
         if (difference > 0) {
+
             // (A) product has NO options → check product.stock
-            if (!hasOptions) {
+            if (!product.options || product.options.length === 0) {
                 if (product.stock < difference) {
                     return res.status(400).json({ message: "Not enough product stock" });
                 }
@@ -291,21 +308,20 @@ export const updateCartQuantity = async (req, res) => {
             }
 
             // (B) product HAS options → check each selected option stock
-            if (hasOptions && cartItem.selectedOptions) {
+            if (product.options && cartItem.selectedOptions) {
                 for (let opt of product.options) {
                     const selected = cartItem.selectedOptions[opt.name];
                     if (!selected) continue;
 
                     const choiceObj = opt.choices.find(c => c.label === selected);
-                    if (choiceObj && choiceObj.stock < difference) {
+
+                    if (choiceObj.stock < difference) {
                         return res.status(400).json({
                             message: `Not enough stock for option: ${opt.name} (${selected})`
                         });
                     }
 
-                    if (choiceObj) {
-                        choiceObj.stock -= difference;
-                    }
+                    choiceObj.stock -= difference;
                 }
             }
         }
@@ -317,20 +333,18 @@ export const updateCartQuantity = async (req, res) => {
             const qtyToReturn = Math.abs(difference);
 
             // product without options
-            if (!hasOptions) {
+            if (!product.options || product.options.length === 0) {
                 product.stock += qtyToReturn;
             }
 
             // product with options
-            if (hasOptions && cartItem.selectedOptions) {
+            if (product.options && cartItem.selectedOptions) {
                 for (let opt of product.options) {
                     const selected = cartItem.selectedOptions[opt.name];
                     if (!selected) continue;
 
                     const choiceObj = opt.choices.find(c => c.label === selected);
-                    if (choiceObj) {
-                        choiceObj.stock += qtyToReturn;
-                    }
+                    choiceObj.stock += qtyToReturn;
                 }
             }
         }
@@ -357,9 +371,12 @@ export const updateCartQuantity = async (req, res) => {
 //clearCart
 export const clearCart = async (req, res) => {
     try {
+        // const { userId } = req.params;
+        // const userId = req.user._id;
         const userId = getCartUserId(req, res);
+
+
         let cart = await addToCartService(userId);
-        
         if (!cart) {
             return res.status(404).json({ message: "Cart not found" });
         }
@@ -377,20 +394,17 @@ export const clearCart = async (req, res) => {
 
             const quantity = item.quantity;
 
-            // ✅ FIX: Check if product has options
-            const hasOptions = product.options && product.options.length > 0;
-
             // -----------------------
             // Product WITH NO options
             // -----------------------
-            if (!hasOptions) {
+            if (!product.options || product.options.length === 0) {
                 product.stock += quantity;
             }
 
             // -----------------------
             // Product WITH options
             // -----------------------
-            if (hasOptions && item.selectedOptions) {
+            if (product.options && item.selectedOptions) {
                 for (let opt of product.options) {
                     const selected = item.selectedOptions[opt.name];
                     if (!selected) continue;

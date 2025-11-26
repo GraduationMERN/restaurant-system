@@ -66,9 +66,11 @@ app.use('/api/categories', categoryRoutes);
 app.use("/users", usersRoutes);
 app.use('/api/categories',categoryRoutes);
 app.use('/api/cart',cartRoutes);
-// app.use("/api/notifications", notificationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use('/api/cart',optionalAuthMiddleware,cartRoutes);
+
+
+
 app.use("/api/orders", orderRoutes);
 app.use("/api/checkout", paymentRoutes); 
 // payment module routes

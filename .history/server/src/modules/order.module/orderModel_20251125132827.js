@@ -4,22 +4,20 @@ const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Cart",
+      ref: "Product",
       required: true,
     },
-    name: { type: String, required: true }, // Store product name for history
-    img: { type: String, default: "" }, // Store product image for history
     quantity: {
       type: Number,
       required: true,
       min: 1,
     },
     selectedOptions: {
-      type: Object, // { Size: "Large", Cheese: "Extra" }
+      type: Object,
       default: {}
     },
-    price: { // Final price including options (matches cart)
-      type: Number,
+    price: {
+      type: Number,     // Final price with options
       required: true
     }
   },
@@ -28,17 +26,17 @@ const OrderItemSchema = new mongoose.Schema(
 
 const OrderSchema = new mongoose.Schema(
   {
-    // RELATIONSHIPS (matches cart structure)
+    // RELATIONSHIPS
     cartId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Cart",
       default: null
     },
     
-    userId: { // Matches cart userId (String for both ObjectId and UUID)
+    // USER - Simple: can be ObjectId (registered) or UUID (guest)
+    userId: {
       type: String,
       required: true,
-      index: true,
     },
 
     // ORDER DETAILS
@@ -52,10 +50,10 @@ const OrderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // ITEMS (from cart products)
+    // ITEMS (from cart)
     items: [OrderItemSchema],
 
-    // PRICING (calculated from cart + options)
+    // PRICING
     subtotal: { type: Number, required: true, default: 0 },
     tax: { type: Number, required: true, default: 0 },
     deliveryFee: { type: Number, required: true, default: 0 },
@@ -74,33 +72,23 @@ const OrderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // CUSTOMER INFO (for guest orders)
+    // CUSTOMER INFO (for guests)
     customerInfo: {
       name: { type: String, default: "" },
       phone: { type: String, default: "" },
       email: { type: String, default: "" }
     },
 
-    // ORDER STATUS
+    // STATUS
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "ready", "completed", "cancelled"],
       default: "pending",
-      index: true,
-    },
-
-    notes: { 
-      type: String, 
-      default: "" 
     }
   },
   { 
     timestamps: true 
   }
 );
-
-// Indexes for efficient queries
-OrderSchema.index({ userId: 1, createdAt: -1 });
-OrderSchema.index({ orderStatus: 1 });
 
 export default mongoose.model("Order", OrderSchema);

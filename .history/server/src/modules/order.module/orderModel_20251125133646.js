@@ -4,7 +4,7 @@ const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Cart",
+      ref: "Product",
       required: true,
     },
     name: { type: String, required: true }, // Store product name for history
