@@ -58,7 +58,9 @@ export async function updateReward(req,res) {
 
 export async function redeemReward(req, res) {
     try {
-        const { rewardId, userId } = req.body;
+        // Prefer authenticated user id (secure) — fall back to payload if present
+        const userId = req.user?._id || req.body.userId;
+        const { rewardId } = req.body;
         const reward = await getRewardByIdService(rewardId)
         const result = await redeemRewardService(rewardId, userId);
         res.status(200).json(result);

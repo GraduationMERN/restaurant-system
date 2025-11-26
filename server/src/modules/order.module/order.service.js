@@ -78,11 +78,45 @@ class OrderService {
     return await orderRepo.findActiveOrders();
   }
 
-  // UPDATE ORDER STATUS
-  async updateStatus(orderId, newStatus) {
-    const order = await orderRepo.updateStatus(orderId, newStatus);
-    if (!order) throw new Error("Order not found");
-    return order;
+  // 3) Update Order Status (with reward awarding on transition to completed)
+ async updateStatus(orderId, newStatus) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await orderRepo.findById(orderId, { populate: [], lean: false });
+      if (!order) throw new Error("Order not found");
+
+      const prevStatus = order.orderStatus;
+
+      // update the status in document
+      order.orderStatus = newStatus;
+
+      // Only award points when transitioning to completed and not already awarded
+      if (newStatus === "completed" && prevStatus !== "completed" && (!order.rewardPointsEarned || order.rewardPointsEarned === 0)) {
+        // compute points from the snapshot itemPoints
+        let awardedPoints = 0;
+        for (const it of order.items) {
+          const qty = it.quantity || 1;
+          const pts = it.itemPoints || 0;
+          awardedPoints += pts * qty;
+        }
+
+        if (awardedPoints > 0 && order.customerId) {
+          await rewardService.awardPointsToUser(order.customerId, awardedPoints, session);
+          order.rewardPointsEarned = awardedPoints;
+        }
+      }
+
+      await order.save({ session });
+      await session.commitTransaction();
+      session.endSession();
+      return order;
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      throw err;
+    }
   }
 
   // UPDATE PAYMENT STATUS
