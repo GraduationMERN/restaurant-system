@@ -1,16 +1,16 @@
-import React from 'react';
-import { Utensils, Clock } from 'lucide-react';
+import React from "react";
+import { Utensils, Clock } from "lucide-react";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-7xl w-full">
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 mx-auto mb-6 rounded-full overflow-hidden shadow-lg">
-            <img 
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop" 
-              alt="Bella Vista" 
+            <img
+              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop"
+              alt="Bella Vista"
               className="w-full h-full object-cover"
             />
           </div>
