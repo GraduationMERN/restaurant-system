@@ -7,7 +7,7 @@ export default function Layout({ children }) {
   const isAdmin = location.pathname.startsWith("/admin");
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-gray-50">
+    <div className="min-h-screen w-full flex flex-col bg-default">
       <div className={` w-full flex justify-center md:block`}>
         <div className={`w-full  max-w-xl px-4 md:max-w-none md:px-0`}>
           {children}

@@ -40,7 +40,7 @@ export default function ReviewsPage() {
         <h2 className="text-2xl font-bold mb-4">Reviews</h2>
 
         {/* Write Review Button */}
-        <button className="bg-blue-600 text-white w-full px-5 py-2 rounded-xl shadow mb-8 hover:bg-blue-700 transition">
+        <button className="bg-primary text-white w-full px-5 py-2 rounded-xl shadow mb-8">
           + Write a Review
         </button>
 
@@ -49,7 +49,7 @@ export default function ReviewsPage() {
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="bg-white shadow rounded-2xl p-4 flex flex-col gap-3 border border-gray-200"
+              className="bg-surface shadow rounded-2xl p-4 flex flex-col gap-3 border border-muted"
             >
               {/* Avatar + name + time */}
               <div className="flex items-center gap-3 w-full">
@@ -60,8 +60,8 @@ export default function ReviewsPage() {
                 />
 
                 <div className="flex justify-between w-full">
-                  <p className="font-semibold text-gray-800">{review.name}</p>
-                  <p className="text-xs text-gray-500">{review.daysAgo}</p>
+                  <p className="font-semibold text-on-surface">{review.name}</p>
+                  <p className="text-xs text-muted">{review.daysAgo}</p>
                 </div>
               </div>
 
@@ -71,13 +71,13 @@ export default function ReviewsPage() {
                   <Star
                     key={idx}
                     size={16}
-                    className="fill-yellow-400 text-yellow-400"
+                    className="fill-warning text-warning"
                   />
                 ))}
               </div>
 
               {/* Review Text */}
-              <p className="text-gray-700 text-sm leading-relaxed">
+              <p className="text-muted text-sm leading-relaxed">
                 {review.text}
               </p>
 
@@ -89,7 +89,7 @@ export default function ReviewsPage() {
                       key={index}
                       src={img}
                       alt="review"
-                      className="w-24 h-24 rounded-lg object-cover border"
+                      className="w-24 h-24 rounded-lg object-cover border border-muted"
                     />
                   ))}
                 </div>
