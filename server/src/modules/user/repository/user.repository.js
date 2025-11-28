@@ -53,8 +53,12 @@ export const incrementUserPoints = async (userId, points, session = null) => {
 
 // decrement user's points safely, optionally using a mongoose session
 export const decrementUserPoints = async (userId, points, session = null) => {
-  const opts = {};
+  // Use a conditional update to ensure we don't dip below 0 in a race condition
+  const query = { _id: userId, points: { $gte: points } };
+  const update = { $inc: { points: -points } };
+  const opts = { new: true };
   if (session) opts.session = session;
-  // $inc with negative value to decrease points
-  return await User.findByIdAndUpdate(userId, { $inc: { points: -points } }, { new: true, ...opts }).exec();
+  const updated = await User.findOneAndUpdate(query, update, opts).exec();
+  if (!updated) return null; // indicates insufficient points or user not found
+  return updated;
 };

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* style for admin layout */
+@import "./admin.css";
+
+/* dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* global theme colors */
 @theme {
   --color-primary: #3490dc;
   --color-secondary: #ffed4a;
