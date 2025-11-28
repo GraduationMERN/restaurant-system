@@ -4,9 +4,6 @@ import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
-  // import OrderPage from "./features/order/ui/OrderPage"; 
-import OrderPage from "./features/orders/ui/OrderPage.jsx";
-
 
 function App() {
   return (
@@ -17,7 +14,6 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/rewards" element={<RewardPage />} />
-          <Route path="/orders" element={<OrderPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

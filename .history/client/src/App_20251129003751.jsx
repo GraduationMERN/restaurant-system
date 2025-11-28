@@ -4,8 +4,7 @@ import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
-  // import OrderPage from "./features/order/ui/OrderPage"; 
-import OrderPage from "./features/orders/ui/OrderPage.jsx";
+import OrderPage from "./features/order/ui/OrderPage"; 
 
 
 function App() {
