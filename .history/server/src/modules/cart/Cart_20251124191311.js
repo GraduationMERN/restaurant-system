@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const cartSchema = new mongoose.Schema({
     userId :{
                 // type:mongoose.Schema.Types.ObjectId,
-                type: String, //  ObjectId  guest UUID
+                type: String, // بدل ObjectId عشان يدعم guest UUID
                 ref:'User',   
                 required:true,
     },
@@ -25,7 +25,7 @@ const cartSchema = new mongoose.Schema({
                 default: {}
             },
             price: {
-                type: Number,     // final price including options
+                type: Number,     // السعر بعد إضافة الـ options
                 required: true
             }
         }
