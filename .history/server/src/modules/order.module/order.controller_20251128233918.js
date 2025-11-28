@@ -35,7 +35,9 @@ export const createDirectOrder = async (req, res) => {
   }
 };
 
+// ==============================
 // GET ORDERS
+// ==============================
 export const getOrder = async (req, res) => {
   try {
     res.json({ success: true, data: await orderService.getOrder(req.params.id) });
@@ -68,7 +70,9 @@ export const getActiveOrders = async (req, res) => {
   }
 };
 
+// ==============================
 // ADMIN/CASHIER UPDATES
+// ==============================
 export const updateOrderStatus = async (req, res) => {
   try {
     res.json({ success: true, data: await orderService.updateStatus(req.params.id, req.body.orderStatus) });
@@ -128,7 +132,9 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// ==============================
 // CUSTOMER-ONLY UPDATES
+// ==============================
 export const cancelOrder = async (req, res) => {
   try {
     const order = await orderService.cancelOwnOrder(req.user._id, req.params.id);
