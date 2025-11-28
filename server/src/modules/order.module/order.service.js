@@ -1,5 +1,8 @@
 import orderRepo from "./order.repository.js";
 import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
+import { getProductById } from "../product/product.repository.js";
+import * as rewardService from "../rewards/reward.service.js";
+import * as couponService from "../coupon/coupon.service.js";
 
 class OrderService {
   // ==============================
