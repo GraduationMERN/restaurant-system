@@ -4,7 +4,7 @@ const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Cart",
+      ref: "Product",
       required: true,
     },
     name: { type: String, required: true }, // Store product name for history
@@ -22,6 +22,11 @@ const OrderItemSchema = new mongoose.Schema(
       type: Number,
       required: true
     }
+    ,
+    // Points snapshot: reward points per unit at the time of ordering
+    itemPoints: { type: Number, default: 0 },
+    // Backward compatible field name in case some code expects `productPoints` on order items
+    productPoints: { type: Number, default: 0 }
   },
   { _id: true }
 );
@@ -93,6 +98,9 @@ const OrderSchema = new mongoose.Schema(
       type: String, 
       default: "" 
     }
+    ,
+    // Total points awarded for this order (computed on completed)
+    rewardPointsEarned: { type: Number, default: 0 }
   },
   { 
     timestamps: true 

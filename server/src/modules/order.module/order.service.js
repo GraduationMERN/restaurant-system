@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import orderRepo from "./order.repository.js";
 import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
+import { getProductById } from "../product/product.repository.js";
+import { awardPointsToUser } from "../rewards/reward.service.js";
 
 class OrderService {
   // CREATE ORDER FROM CART
@@ -48,6 +50,18 @@ class OrderService {
       orderData.discount || 0
     );
 
+    // For direct orders (not from cart) ensure each item snapshots product points
+    for (const item of orderData.items) {
+      const prod = await getProductById(item.productId);
+      if (!prod) throw new Error(`Product not found: ${item.productId}`);
+      // Snapshot item details
+      item.name = prod.name;
+      item.img = prod.imgURL || prod.img || "";
+      item.price = item.price || prod.basePrice || 0;
+      item.itemPoints = prod.productPoints || 0; // snapshot points
+      item.productPoints = prod.productPoints || 0; // backward compatibility
+    }
+
     const orderWithTotals = {
       ...orderData,
       ...totals
@@ -78,11 +92,55 @@ class OrderService {
     return await orderRepo.findActiveOrders();
   }
 
-  // UPDATE ORDER STATUS
-  async updateStatus(orderId, newStatus) {
-    const order = await orderRepo.updateStatus(orderId, newStatus);
-    if (!order) throw new Error("Order not found");
-    return order;
+  // 3) Update Order Status (with reward awarding on transition to completed)
+ async updateStatus(orderId, newStatus) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await orderRepo.findById(orderId, { populate: [], lean: false });
+      if (!order) throw new Error("Order not found");
+
+      const prevStatus = order.orderStatus;
+
+      // update the status in document
+      order.orderStatus = newStatus;
+
+      // Only award points when transitioning to completed and not already awarded
+      if (newStatus === "completed" && prevStatus !== "completed" && (!order.rewardPointsEarned || order.rewardPointsEarned === 0)) {
+        // compute points from the snapshot itemPoints
+        let awardedPoints = 0;
+          for (const it of order.items) {
+            const qty = it.quantity || 1;
+            let pts = 0;
+            // Prefer itemPoints (snapshot), fallback to productPoints (legacy)
+            if (typeof it.itemPoints !== 'undefined') {
+              pts = it.itemPoints;
+            } else if (typeof it.productPoints !== 'undefined') {
+              pts = it.productPoints;
+            } else if (it.productId) {
+              // As a last resort, read product's productPoints
+              const prod = await getProductById(it.productId);
+              pts = prod ? (prod.productPoints || 0) : 0;
+            }
+            awardedPoints += pts * qty;
+          }
+
+        if (awardedPoints > 0 && order.userId) {
+          await awardPointsToUser(order.userId, awardedPoints, session);
+          order.rewardPointsEarned = awardedPoints;
+        }
+      }
+
+      await order.save({ session });
+      await session.commitTransaction();
+      session.endSession();
+      return order;
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      throw err;
+    }
   }
 
   // UPDATE PAYMENT STATUS

@@ -27,6 +27,10 @@ export const formatCartItemsForOrder = (cartItems, productDetails) => {
       quantity: item.quantity,
       selectedOptions: item.selectedOptions || {},
       price: item.price // Use the calculated price from cart
+      ,
+      // snapshot productPoints / itemPoints so orders keep consistent reward state
+      itemPoints: product?.productPoints || 0,
+      productPoints: product?.productPoints || 0
     };
   });
 };

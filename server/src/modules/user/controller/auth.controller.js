@@ -74,6 +74,7 @@ export const getMe = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      points:user.points
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
