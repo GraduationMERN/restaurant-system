@@ -1,6 +1,7 @@
 import { getProductById } from "../product/product.repository.js";
+import mongoose from 'mongoose';
 import { findUserById, incrementUserPoints, decrementUserPoints } from "../user/repository/user.repository.js";
-import { createReward, getAllRewardsRepo, deleteReward, getRewardById, updateReward } from "./reward.repo.js";
+import { createReward, getAllRewardsRepo, deleteReward, getRewardById, updateReward, createRewardRedemption } from "./reward.repo.js";
 
 export const getAllRewardsServices = async () => {
     return await getAllRewardsRepo()
@@ -11,6 +12,10 @@ export const getRewardByIdService = async (id) => {
 }
 
 export const createRewardService = async (rewardData) => {
+    // Validate reward data: product must exist and pointsRequired > 0
+    const product = await getProductById(rewardData.productId);
+    if (!product) throw new Error("Product not found for reward");
+    if (!rewardData.pointsRequired || rewardData.pointsRequired <= 0) throw new Error("pointsRequired must be a positive number");
     return await createReward(rewardData);
 }
 
@@ -23,25 +28,37 @@ export const updateRewardService = async (id, rewardData) => {
 }
 
 export const redeemRewardService = async (rewardId, userId) => {
+    // Redeem flow: deduct points and create redemption record in a transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-        // Fetch reward and user using repository functions (DB access lives in repo)
         const reward = await getRewardById(rewardId);
-        const user = await findUserById(userId)
+        const user = await findUserById(userId);
 
-        // Business validations
         if (!reward) throw new Error("Reward not found");
         if (!user) throw new Error("User not found");
-        if (user.points < reward.pointsRequired)
-            throw new Error("Insufficient points");
+        if (!reward.isActive) throw new Error("Reward is not active");
+        if (user.points < reward.pointsRequired) throw new Error("Insufficient points");
+        // atomically decrement points using session
+        await reducePointsService(userId, reward.pointsRequired, session);
 
-        // Perform the deduction using service-layer function that delegates to repo
-        await reducePointsService(userId, reward.pointsRequired);
-        return { message: "Reward redeemed successfully" };
+        // record redemption
+        const redemption = await createRewardRedemption({
+            userId,
+            rewardId,
+            productId: reward.productId,
+            pointsUsed: reward.pointsRequired,
+            status: 'completed'
+        }, session);
+
+        await session.commitTransaction();
+        session.endSession();
+        return { message: "Reward redeemed successfully", redemption };
     } catch (err) {
-        // Propagate business error message to the caller; repository errors will bubble up too
-        return {message:err.message}
+        await session.abortTransaction();
+        session.endSession();
+        return { message: err.message };
     }
-
 }
 
 export async function increasePointsService(userId,productId){

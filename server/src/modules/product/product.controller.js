@@ -31,9 +31,9 @@ export const getProductById = async (req, res) => {
 //createProduct
 export const createProduct = async (req, res, next) => {
     try {
-        const { name, desc, categoryId, stock, basePrice, options } = req.body;
-        if (!name || !desc || !req.file || !categoryId || !stock || !basePrice) {
-            return res.status(400).json({ message: 'Name , desc , image , stock , basePrice  and category are required' });
+        const { name, desc, categoryId, stock, basePrice, options, productPoints } = req.body;
+        if (!name || !desc || !req.file || !categoryId || !stock || !basePrice || !productPoints ) {
+            return res.status(400).json({ message: 'Name , desc , image , stock , basePrice, productPoints  and category are required' });
         }
         req.body.imgURL = req.file.path;
         if (options) {

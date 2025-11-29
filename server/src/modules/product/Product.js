@@ -49,10 +49,6 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required:true
     },
-    pointsToPay: {
-        type: Number,
-        default: 0
-    },
     tags: [String], // Array of strings for tags like 'spicy', 'vegan', 'Best Seller'
     options: [optionSchema],
 
