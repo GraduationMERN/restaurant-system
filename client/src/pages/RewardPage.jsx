@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Gift } from 'lucide-react';
 import { useDispatch, useSelector } from "react-redux";
-import { getAllRewards } from '../redux/slices/rewardSlice';
+import { getAllRewards, redeemReward } from '../redux/slices/rewardSlice';
+import { FaStarOfLife } from "react-icons/fa";
 
 export default function RewardPage() {
   const dispatch = useDispatch();
@@ -27,14 +28,14 @@ export default function RewardPage() {
     <div className="md:mx-20 min-h-screen bg-white pb-10">
 
       {/* HEADER */}
-      <div className="bg-blue-600 text-white py-8 px-6 rounded-b-3xl shadow-lg">
+      <div className=" py-8 px-6 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-4">Rewards</h1>
 
         <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
 
           <div className="flex justify-between items-center mb-2">
             <span className="text-lg font-semibold">Your Points</span>
-            <Star className="w-6 h-6 text-yellow-300" />
+            
           </div>
 
           <p className="text-4xl font-bold">{points}</p>
@@ -42,9 +43,9 @@ export default function RewardPage() {
           {/* MILESTONE PROGRESS BAR */}
           <div className="relative mt-6">
             {/* Base line */}
-            <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden">
               <div
-                className="bg-yellow-300 h-full rounded-full transition-all duration-500"
+                className="bg-secondary-200 h-full rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -60,10 +61,9 @@ export default function RewardPage() {
                     className="absolute top-0 flex flex-col items-center"
                     style={{ left: `${leftPos}%`, transform: "translateX(-50%)" }}
                   >
-                    {/* Dot */}
-                    <div
-                      className={`relative -top-3 w-4 h-4 rounded-full border-2 ${points >= m ? "bg-yellow-300 border-yellow-400" : "bg-white border-gray-300"
-                        }`}
+                    {/* Star */}
+                    <FaStarOfLife
+                      className={`relative -top-5 w-7 h-7 font-bold ${points >= m ? "text-secondary" : "text-default"}`}
                     />
 
                     {/* Text */}
@@ -94,7 +94,7 @@ export default function RewardPage() {
               return (
                 <div
                   key={item._id}
-                  className={` ${canRedeem(item.pointsRequired)?"opacity-100":"opacity-50"} rounded-2xl shadow-md border border-primary h-30 lg:h-80 bg-white flex items-center justify-between lg:flex-col hover:shadow-lg transition overflow-hidden`}
+                  className={` ${canRedeem(item.pointsRequired)?"opacity-100":"opacity-50"} rounded-2xl shadow-md border border-secondary h-30 lg:h-80 bg-white flex items-center justify-between lg:flex-col hover:shadow-lg transition overflow-hidden`}
                 >
                   <div className="flex lg:flex-col items-center gap-4">
                     {product?.imgURL ? (
@@ -116,8 +116,18 @@ export default function RewardPage() {
                       <h3 className={`mx-2 text-sm font-semibold col-span-4  ${canRedeem(item.pointsRequired)?"text-on-surface" : "text-muted"}`}>{product?.name || "Reward"}</h3>
                     <button
                       disabled={!canRedeem(item.pointsRequired)}
-                      className={`px-4 py-2 rounded-tl-xl font-semibold shadow-sm transition-all ${canRedeem(item.pointsRequired)
-                          ? "bg-primary-500 text-white hover:bg-primary"
+                      onClick={async () => {
+                        if (!canRedeem(item.pointsRequired)) return;
+                        try {
+                          const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
+                          // Optionally show a toast or update local points
+                          console.log('Redeem result', r);
+                        } catch (err) {
+                          console.error('Redeem failed', err);
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-tl-xl font-semibold shadow-sm transition-all duration-300 hover:bg-secondary-200 ${canRedeem(item.pointsRequired)
+                          ? "bg-secondary text-white "
                           : "bg-gray-200 text-gray-400 cursor-not-allowed"
                         }`}
                     >

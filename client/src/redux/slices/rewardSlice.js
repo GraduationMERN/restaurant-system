@@ -13,6 +13,78 @@ export const getAllRewards = createAsyncThunk(
   }
 );
 
+export const getRewardById = createAsyncThunk(
+  "reward/getById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/api/reward/${id}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
+export const addReward = createAsyncThunk(
+  "reward/add",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/api/reward`, payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
+export const deleteReward = createAsyncThunk(
+  "reward/delete",
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.delete(`/api/reward/${id}`);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
+export const updateReward = createAsyncThunk(
+  "reward/update",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const res = await api.patch(`/api/reward/${id}`, data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
+export const redeemReward = createAsyncThunk(
+  "reward/redeem",
+  async ({ rewardId }, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/api/reward/redeem`, { rewardId });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
+export const updatePoints = createAsyncThunk(
+  "reward/updatePoints",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const res = await api.patch(`/api/reward/user/${userId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
 const rejected = (state, action) => {
   state.loading = false;
   state.error = action.payload;
@@ -21,8 +93,46 @@ const rejected = (state, action) => {
 const fulfilled = (state, action) => {
   state.loading = false;
   state.reward = action.payload;
-  state.items = action.payload?.items || [];
-  state.totalPrice = action.payload?.totalPrice || 0;
+  state.error = null;
+};
+
+const fulfilledById = (state, action) => {
+  state.loading = false;
+  state.rewardById = action.payload;
+  state.error = null;
+};
+
+const fulfilledAdded = (state, action) => {
+  state.loading = false;
+  state.reward = state.reward ? [...state.reward, action.payload] : [action.payload];
+  state.error = null;
+};
+
+const fulfilledDeleted = (state, action) => {
+  state.loading = false;
+  const id = action.payload;
+  state.reward = state.reward ? state.reward.filter((r) => r._id !== id) : [];
+  state.error = null;
+};
+
+const fulfilledUpdated = (state, action) => {
+  state.loading = false;
+  const updated = action.payload;
+  if (Array.isArray(state.reward)) {
+    state.reward = state.reward.map((r) => (r._id === updated._id ? updated : r));
+  }
+  state.error = null;
+};
+
+const fulfilledRedeemed = (state, action) => {
+  state.loading = false;
+  state.lastRedemption = action.payload;
+  state.error = null;
+};
+
+const fulfilledUpdatePoints = (state, action) => {
+  state.loading = false;
+  state.pointsUpdateResult = action.payload;
   state.error = null;
 };
 
@@ -43,9 +153,27 @@ const rewardSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getAllRewards.pending,pending)
-      .addCase(getAllRewards.fulfilled,fulfilled)
-      .addCase(getAllRewards.rejected,rejected)
+      .addCase(getAllRewards.pending, pending)
+      .addCase(getAllRewards.fulfilled, fulfilled)
+      .addCase(getAllRewards.rejected, rejected)
+      .addCase(getRewardById.pending, pending)
+      .addCase(getRewardById.fulfilled, fulfilledById)
+      .addCase(getRewardById.rejected, rejected)
+      .addCase(addReward.pending, pending)
+      .addCase(addReward.fulfilled, fulfilledAdded)
+      .addCase(addReward.rejected, rejected)
+      .addCase(deleteReward.pending, pending)
+      .addCase(deleteReward.fulfilled, fulfilledDeleted)
+      .addCase(deleteReward.rejected, rejected)
+      .addCase(updateReward.pending, pending)
+      .addCase(updateReward.fulfilled, fulfilledUpdated)
+      .addCase(updateReward.rejected, rejected)
+      .addCase(redeemReward.pending, pending)
+      .addCase(redeemReward.fulfilled, fulfilledRedeemed)
+      .addCase(redeemReward.rejected, rejected)
+      .addCase(updatePoints.pending, pending)
+      .addCase(updatePoints.fulfilled, fulfilledUpdatePoints)
+      .addCase(updatePoints.rejected, rejected);
   },
 });
 
