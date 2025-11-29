@@ -38,7 +38,10 @@ dotenv.config();
 const app = express();
 
 // Global Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 app.use(express.json()); // for normal routes
 app.use(morgan("dev"));
 // Request id and logging

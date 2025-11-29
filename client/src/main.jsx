@@ -7,11 +7,15 @@ import App from './App.jsx'
 import './i18n';
 import { AppWrapper } from "./components/common/PageMeta.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { Provider } from 'react-redux';
+import { store } from "./redux/store";
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
   <ThemeProvider>
     <AppWrapper>
-      <App />
+      <Provider store={store}>
+        <App />
+      </Provider>
     </AppWrapper>
   </ThemeProvider>
   // </StrictMode>,
