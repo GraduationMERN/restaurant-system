@@ -18,6 +18,9 @@ import {
   TrashBinIcon,
   PlusIcon,
 } from "../../icons/admin-icons";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllRewards, addReward, deleteReward, updateReward } from "../../redux/slices/rewardSlice";
 
 const initialPrograms = [
   { name: "Free Dessert", points: 500, type: "dessert", desc: "Get any dessert for free" },
@@ -27,15 +30,20 @@ const initialPrograms = [
 ];
 
 export default function Rewards() {
-  const [programs, setPrograms] = useState(initialPrograms);
   const [isOpen, setIsOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [form, setForm] = useState({ name: "", points: "", type: "discount", desc: "" });
-
   const totalPointsIssued = useMemo(() => 45230, []);
   const activeMembers = useMemo(() => 1247, []);
   const rewardsRedeemed = useMemo(() => 892, []);
+  const dispatch = useDispatch()
+   const { reward, loading, error } = useSelector((state) => state.reward);
 
+   const rewards = reward || []
+  useEffect(()=>{
+    dispatch(getAllRewards())
+    console.log(rewards)
+  },[dispatch])
   const iconForType = (type) => {
     if (type === "discount") return <DollarLineIcon className="size-6" />;
     if (type === "drink") return <PlugInIcon className="size-6" />;
@@ -45,13 +53,13 @@ export default function Rewards() {
 
   const openAdd = () => {
     setEditingIndex(null);
-    setForm({ name: "", points: "", type: "discount" });
+    setForm({ name: "", pointsRequired: "", image: "" });
     setIsOpen(true);
   };
   const openEdit = (idx) => {
-    const p = programs[idx];
+    const p = rewards[idx];
     setEditingIndex(idx);
-    setForm({ name: p.name, points: String(p.points), type: p.type || "discount", desc: p.desc || "" });
+    setForm({ name: p.name, points: String(p.pointsRequired || p.points), type: p.type || "discount", desc: p.desc || "" });
     setIsOpen(true);
   };
   const closeModal = () => setIsOpen(false);
@@ -59,16 +67,18 @@ export default function Rewards() {
     const name = form.name.trim();
     const points = Number(form.points);
     if (!name || Number.isNaN(points) || points <= 0) return;
-    const payload = { name, points, type: form.type, desc: form.desc.trim() };
+    const payload = { name, pointsRequired: points, type: form.type, desc: form.desc.trim() };
     if (editingIndex !== null) {
-      setPrograms((prev) => prev.map((p, i) => (i === editingIndex ? payload : p)));
+      const id = rewards[editingIndex]._id;
+      dispatch(updateReward({ id, data: payload }));
     } else {
-      setPrograms((prev) => [...prev, payload]);
+      dispatch(addReward(payload));
     }
     setIsOpen(false);
   };
   const deleteProgram = (idx) => {
-    setPrograms((prev) => prev.filter((_, i) => i !== idx));
+    const id = rewards[idx]._id;
+    dispatch(deleteReward(id));
   };
 
   return (
@@ -118,17 +128,17 @@ export default function Rewards() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {programs.map((p, idx) => (
+        {rewards.map((p, idx) => (
           <div key={p.name + idx} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
             <div className="flex items-start justify-between">
               <span className="text-brand-500">
                 {iconForType(p.type)}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">{p.points} pts</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{p.pointsRequired || p.points} pts</span>
             </div>
             <div className="mt-4">
               <h4 className="text-gray-800 font-semibold dark:text-white/90">{p.name}</h4>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{p.desc}</p>
+              <img src={p.image}></img>
             </div>
             <div className="mt-4 flex items-center justify-between">
               <button onClick={() => openEdit(idx)} className="inline-flex items-center gap-1 text-brand-500 hover:text-brand-600">
