@@ -85,8 +85,20 @@ const OrderSchema = new mongoose.Schema(
       phone: { type: String, default: "" },
       email: { type: String, default: "" }
     },
+     appliedCoupon: {
+      couponId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Coupon',
+        default: null,
+      },
+      code: { type: String, default: null },
+      discountAmount: { type: Number, default: 0 },
+    },
+    
+    subtotal: { type: Number, required: true }, // before discount
+    totalAmount: { type: Number, required: true },
+    notes: { type: String, default: "" },
 
-    // ORDER STATUS
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "ready", "completed", "cancelled"],
