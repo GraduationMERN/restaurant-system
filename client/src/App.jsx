@@ -3,12 +3,10 @@ import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
-  // import OrderPage from "./features/order/ui/OrderPage"; 
-import OrderPage from "./features/orders/ui/OrderPage.jsx";
-
 import Admin from "./pages/admin/Admin";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import OrderPage from "./features/orders/ui/OrderPage";
 
 function App() {
   return (
@@ -19,7 +17,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/rewards" element={<RewardPage />} />
-          <Route path="/orders" element={<OrderPage />} />
+           <Route path="/orders" element={<OrderPage />} />
           {/* Single Admin Page with section sub-route */}
           <Route element={<AppLayout />}>
             <Route path="/admin/:section?" element={<Admin />} />
