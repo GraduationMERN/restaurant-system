@@ -1,16 +1,10 @@
 import Order from "./orderModel.js";
 
 class OrderRepository {
-  // ==============================
-  // CREATE
-  // ==============================
   async create(orderData) {
     return Order.create(orderData);
   }
 
-  // ==============================
-  // READ
-  // ==============================
   async findById(orderId, populateProducts = false) {
     let query = Order.findById(orderId);
     if (populateProducts) query = query.populate("items.productId");
@@ -41,9 +35,6 @@ class OrderRepository {
     return Order.find().populate("items.productId");
   }
 
-  // ==============================
-  // UPDATE
-  // ==============================
   async updateStatus(orderId, newStatus) {
     return Order.findByIdAndUpdate(
       orderId,
@@ -76,9 +67,6 @@ class OrderRepository {
     ).populate("items.productId");
   }
 
-  // ==============================
-  // CUSTOMER-ONLY
-  // ==============================
   async updateOwnOrder(userId, orderId, updates) {
     return Order.findOneAndUpdate(
       { _id: orderId, userId },
@@ -99,9 +87,7 @@ class OrderRepository {
     return order.save();
   }
 
-  // ==============================
-  // SEARCH / DELETE
-  // ==============================
+// SEARCH with filtering, pagination, sorting
   async search(filter = {}, options = {}) {
     const { limit = 50, skip = 0, sort = { createdAt: -1 } } = options;
     return Order.find(filter)

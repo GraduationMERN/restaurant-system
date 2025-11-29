@@ -23,7 +23,7 @@
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": ">=2.7.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -39,5 +39,10 @@
     "stripe": "^20.0.0",
     "uuid": "^9.0.0",
     "winston": "^3.9.0"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "2.7.0"
+    }
   }
 }
