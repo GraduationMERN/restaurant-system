@@ -39,7 +39,6 @@ export const redeemRewardService = async (rewardId, userId) => {
         if (!user) throw new Error("User not found");
         if (!reward.isActive) throw new Error("Reward is not active");
         if (user.points < reward.pointsRequired) throw new Error("Insufficient points");
-
         // atomically decrement points using session
         await reducePointsService(userId, reward.pointsRequired, session);
 
@@ -60,7 +59,6 @@ export const redeemRewardService = async (rewardId, userId) => {
         session.endSession();
         return { message: err.message };
     }
-
 }
 
 export async function increasePointsService(userId,productId){
