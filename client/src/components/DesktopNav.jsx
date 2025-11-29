@@ -6,93 +6,196 @@ import {
   Gift,
   Moon,
   LogInIcon,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
-export default function DesktopNav() {
+export default function CombinedNavbar() {
   const { t, i18n } = useTranslation();
-
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(true);
 
   const isActive = (path) => location.pathname === path;
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-52 bg-surface shadow-sm">
-      <div className="flex flex-col h-full py-4 gap-2">
-        {/* Language Switch */}
-        <div className="flex justify-between">
-          {i18n.language === "en" && (
-            <button
-              onClick={() => i18n.changeLanguage("ar")}
-              className="px-4 py-2 text-left hover:bg-surface "
-            >
-              AR
-            </button>
-          )}
-          {i18n.language === "ar" && (
-            <button
-              onClick={() => i18n.changeLanguage("en")}
-              className="px-4 py-2 text-left  hover:bg-gray-100 "
-            >
-              EN
-            </button>
-          )}
+    <>
+      {/* ================= DESKTOP NAV (≥ md) ================= */}
+      <aside
+        className={`
+          hidden md:block
+          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300
+          ${isOpen ? "w-52" : "w-16"}
+        `}
+      >
+        <div className="flex flex-col h-full py-4 gap-2">
 
-          {/* Dark mode toggle */}
-            <button className="px-4 py-2 text-left hover:bg-surface ">
-            <Moon size={20} />
+          {/* Toggle Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="px-4 py-2 hover:bg-gray-100 flex items-center"
+          >
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+
+          {/* Language + Dark Mode */}
+          <div className="flex justify-between items-center px-2">
+            {isOpen && (
+              <>
+                {i18n.language === "en" && (
+                  <button
+                    onClick={() => i18n.changeLanguage("ar")}
+                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
+                  >
+                    AR
+                  </button>
+                )}
+
+                {i18n.language === "ar" && (
+                  <button
+                    onClick={() => i18n.changeLanguage("en")}
+                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
+                  >
+                    EN
+                  </button>
+                )}
+              </>
+            )}
+
+            <button className="px-2 py-2 hover:bg-gray-100 rounded-md">
+              <Moon size={20} />
+            </button>
+          </div>
+
+          {/* Navigation Items */}
+          <DesktopNavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t("home")}
+            active={isActive("/")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label={t("menu")}
+            active={isActive("/menu")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/orders"
+            icon={<Clock4 size={20} />}
+            label={t("orders")}
+            active={isActive("/orders")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/reviews"
+            icon={<Star size={20} />}
+            label={t("reviews")}
+            active={isActive("/reviews")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/rewards"
+            icon={<Gift size={20} />}
+            label={t("rewards")}
+            active={isActive("/rewards")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/login"
+            icon={<LogInIcon size={20} />}
+            label={t("Login")}
+            active={isActive("/login")}
+            isOpen={isOpen}
+          />
         </div>
+      </aside>
 
-        {/* Navigation */}
-        <Link
-          to="/"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-surface ${isActive('/') ? 'text-primary' : 'text-muted'}`}
-        >
-          <Home size={20} />
-          <span className="text-sm">{t("home")}</span>
-        </Link>
+      {/* ================= MOBILE NAV (sm only) ================= */}
+      <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
+        <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
+          {/* Language */}
+          {i18n.language == "en" && (
+            <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
+          )}
+          {i18n.language == "ar" && (
+            <button onClick={() => i18n.changeLanguage("en")}>EN</button>
+          )}
 
-        <Link
-          to="/menu"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-gray-100 ${isActive('/menu') ? 'text-primary' : 'text-muted'}`}
-        >
-          <Utensils size={20} />
-          <span className="text-sm">{t("menu")}</span>
-        </Link>
+          <MobileNavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t("home")}
+            active={isActive("/")}
+          />
 
-        <Link
-          to="/orders"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-gray-100 ${isActive('/orders') ? 'text-primary' : 'text-muted'}`}
-        >
-          <Clock4 size={20} />
-          <span className="text-sm">{t("orders")}</span>
-        </Link>
+          <MobileNavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label={t("menu")}
+            active={isActive("/menu")}
+          />
 
-        <Link
-          to="/reviews"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-gray-100 ${isActive('/reviews') ? 'text-primary' : 'text-muted'}`}
-        >
-          <Star size={20} />
-          <span className="text-sm">{t("reviews")}</span>
-        </Link>
+          <MobileNavItem
+            to="/orders"
+            icon={<Clock4 size={20} />}
+            label={t("orders")}
+            active={isActive("/orders")}
+          />
 
-        <Link
-          to="/rewards"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-gray-100 ${isActive('/rewards') ? 'text-primary' : 'text-muted'}`}
-        >
-          <Gift size={20} />
-          <span className="text-sm">{t("rewards")}</span>
-        </Link>
-        <Link
-          to="/login"
-          className={`px-4 py-2 w-full flex items-center gap-3 hover:bg-gray-100 ${isActive('/login') ? 'text-primary' : 'text-muted'}`}
-        >
-          <LogInIcon size={20} />
-          <span className="text-sm">{t("Login")}</span>
-        </Link>
+          <MobileNavItem
+            to="/reviews"
+            icon={<Star size={20} />}
+            label={t("reviews")}
+            active={isActive("/reviews")}
+          />
+
+          <MobileNavItem
+            to="/rewards"
+            icon={<Gift size={20} />}
+            label={t("rewards")}
+            active={isActive("/rewards")}
+          />
+        </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+/* ------------ Desktop Nav Item ------------ */
+function DesktopNavItem({ to, icon, label, active, isOpen }) {
+  return (
+    <Link
+      to={to}
+      className={`
+        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
+        ${active ? "text-primary" : "text-muted"}
+      `}
+    >
+      {icon}
+      {isOpen && <span className="text-sm">{label}</span>}
+    </Link>
+  );
+}
+
+/* ------------ Mobile Nav Item ------------ */
+function MobileNavItem({ to, icon, label, active }) {
+  return (
+    <Link
+      to={to}
+      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"}`}
+    >
+      {icon}
+      <span className="text-xs">{label}</span>
+    </Link>
   );
 }
