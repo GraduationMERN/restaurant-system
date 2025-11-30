@@ -5,7 +5,7 @@ const OrderItemSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      required: false,
     },
     name: { type: String, required: true }, // Store product name for history
     img: { type: String, default: "" }, // Store product image for history
@@ -85,8 +85,21 @@ const OrderSchema = new mongoose.Schema(
       phone: { type: String, default: "" },
       email: { type: String, default: "" }
     },
+     appliedCoupon: {
+      couponId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Coupon',
+        default: null,
+      },
+      code: { type: String, default: null },
+      discountAmount: { type: Number, default: 0 },
+    },
+    
+    // subtotal & totalAmount (before/after discount)
+    subtotal: { type: Number, required: true },
+    totalAmount: { type: Number, required: true },
+    notes: { type: String, default: "" },
 
-    // ORDER STATUS
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "ready", "completed", "cancelled"],
@@ -106,6 +119,13 @@ const OrderSchema = new mongoose.Schema(
     timestamps: true 
   }
 );
+// Applied reward metadata for reward-based orders
+OrderSchema.add({
+  appliedReward: {
+    rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
+    rewardRedemptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'RewardOrder' },
+  }
+});
 
 // Indexes for efficient queries
 OrderSchema.index({ userId: 1, createdAt: -1 });

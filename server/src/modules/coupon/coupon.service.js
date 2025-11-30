@@ -62,8 +62,7 @@ export const validateCouponService = async (code, userId, orderTotal, restaurant
   }
   
   // 5. Check minimum order amount
-  const cart = await g
-  if (cartId < coupon.minOrderAmount) {
+  if (orderTotal < coupon.minOrderAmount) {
     return { 
       valid: false, 
       message: `Minimum order amount is ${coupon.minOrderAmount} EGP` 
