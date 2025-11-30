@@ -7,12 +7,9 @@ import Admin from "./pages/admin/Admin";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import CartPage from "./pages/CartPage";
-import store from "./redux/store/store";
-import { Provider } from 'react-redux'
 
 function App() {
   return (
-    <Provider store={store}>
       <BrowserRouter>
         <ScrollToTop />
         <Layout>
@@ -28,7 +25,6 @@ function App() {
           </Routes>
         </Layout>
       </BrowserRouter>
-    </Provider>
   );
 }
 

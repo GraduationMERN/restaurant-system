@@ -1,6 +1,11 @@
 // Table Component
-const Table = ({ children, className }) => {
-  return <table className={`min-w-full  ${className}`}>{children}</table>;
+const Table = ({ children, className, rowGap = 0 }) => {
+  const style = rowGap ? { borderCollapse: "separate", borderSpacing: `0 ${rowGap}px` } : undefined;
+  return (
+    <table style={style} className={`min-w-full  ${className}`}>
+      {children}
+    </table>
+  );
 };
 
 // TableHeader Component

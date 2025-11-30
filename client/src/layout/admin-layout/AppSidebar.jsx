@@ -11,6 +11,7 @@ const navItems = [
   { icon: <TaskIcon />, name: "Menu Management", path: "/admin/menu" },
   { icon: <ShootingStarIcon />, name: "Reviews", path: "/admin/reviews" },
   { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
+  { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },
   { icon: <SettingsGearIcon />, name: "Settings", path: "/admin/settings" },
   { icon: <UserCircleIcon />, name: "User Profile", path: "/admin/profile" },
 ];
