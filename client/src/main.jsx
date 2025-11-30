@@ -7,6 +7,7 @@ import App from './App.jsx'
 import './i18n';
 import { AppWrapper } from "./components/common/PageMeta.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { ToastProvider } from './components/ui/toast/ToastProvider';
 import { Provider } from 'react-redux';
 import { store } from "./redux/store";
 createRoot(document.getElementById('root')).render(
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')).render(
   <ThemeProvider>
     <AppWrapper>
       <Provider store={store}>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </Provider>
     </AppWrapper>
   </ThemeProvider>
