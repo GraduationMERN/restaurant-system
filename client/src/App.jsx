@@ -7,24 +7,26 @@ import Admin from "./pages/admin/Admin";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import CartPage from "./pages/CartPage";
+import Chatbot from "./components/chatbot/Chatbot";
 
 function App() {
   return (
-      <BrowserRouter>
-        <ScrollToTop />
-        <Layout>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/rewards" element={<RewardPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            {/* Single Admin Page with section sub-route */}
-            <Route element={<AppLayout />}>
-              <Route path="/admin/:section?" element={<Admin />} />
-            </Route>
-          </Routes>
-        </Layout>
-      </BrowserRouter>
+    <BrowserRouter>
+      <ScrollToTop />
+      <Layout>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/rewards" element={<RewardPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          {/* Single Admin Page with section sub-route */}
+          <Route element={<AppLayout />}>
+            <Route path="/admin/:section?" element={<Admin />} />
+          </Route>
+        </Routes>
+      </Layout>
+      <Chatbot />
+    </BrowserRouter>
   );
 }
 
