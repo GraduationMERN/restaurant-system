@@ -1,8 +1,5 @@
 import orderRepo from "./order.repository.js";
 import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
-import { getProductById } from "../product/product.repository.js";
-import * as rewardService from "../rewards/reward.service.js";
-import * as couponService from "../coupon/coupon.service.js";
 
 class OrderService {
   // ==============================
@@ -35,99 +32,7 @@ class OrderService {
   async createDirectOrder(orderData) {
     if (!orderData.items || orderData.items.length === 0) throw new Error("Order must contain at least one item.");
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      // 1. Snapshot item prices
-      for (const item of orderData.items) {
-        const prod = await getProductById(item.productId);
-        if (!prod) throw new Error(`Product not found: ${item.productId}`);
-        
-        item.name = prod.name;
-        item.img = prod.imgURL || prod.img || "";
-        
-        let price = prod.basePrice || 0;
-        if (item.selectedOptions && prod.options) {
-          for (const opt of prod.options) {
-            const selected = item.selectedOptions?.[opt.name];
-            if (!selected) continue;
-            const choice = opt.choices?.find(c => c.label === selected);
-            if (choice && choice.priceDelta) price += choice.priceDelta;
-          }
-        }
-        item.price = price;
-        item.itemPoints = prod.productPoints || 0;
-      }
-
-      // 2. Calculate totals (subtotal, tax, delivery fee, discount, totalAmount)
-      const totals = calculateOrderTotals(orderData.items, orderData.taxRate || 0.1, orderData.deliveryFee || 0, orderData.discount || 0);
-      orderData.subtotal = totals.subtotal;
-      orderData.tax = totals.tax;
-      orderData.deliveryFee = totals.deliveryFee;
-      orderData.discount = totals.discount;
-      
-      // 3. Apply coupon if provided
-      let discountAmount = 0;
-      
-      if (orderData.couponCode && !orderData.isRewardOrder) {
-        const validation = await couponService.validateCouponService(
-          orderData.couponCode,
-          orderData.customerId,
-          subtotal,
-          orderData.restaurantId
-        );
-        
-        if (!validation.valid) {
-          throw new Error(validation.message);
-        }
-        
-        discountAmount = validation.discountAmount;
-        
-        // Store coupon info in order
-        orderData.appliedCoupon = {
-          couponId: validation.coupon._id,
-          code: orderData.couponCode,
-          discountAmount: discountAmount,
-        };
-      }
-      
-      // 4. Calculate final total
-      if (!orderData.isRewardOrder) {
-        orderData.totalAmount = subtotal - discountAmount;
-      } else {
-        orderData.totalAmount = 0;
-      }
-
-      // 5. Create order
-      const newOrder = await orderRepo.create(orderData, session);
-      
-      // 6. Record coupon usage
-      if (orderData.appliedCoupon && orderData.appliedCoupon.couponId) {
-        await couponService.applyCouponService(
-          orderData.appliedCoupon.couponId,
-          orderData.customerId,
-          newOrder._id,
-          discountAmount,
-          session
-        );
-      }
-
-      await session.commitTransaction();
-      session.endSession();
-      return newOrder;
-      
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      throw err;
-    }
-    const totals = calculateOrderTotals(
-      orderData.items,
-      orderData.taxRate || 0.1,
-      orderData.deliveryFee || 0,
-      orderData.discount || 0
-    );
+    const totals = calculateOrderTotals(orderData.items, orderData.taxRate, orderData.deliveryFee, orderData.discount);
 
     const order = {
       ...orderData,
