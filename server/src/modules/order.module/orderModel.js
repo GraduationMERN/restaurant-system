@@ -5,7 +5,7 @@ const OrderItemSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      required: false,
     },
     name: { type: String, required: true },
     img: { type: String, default: "" },
@@ -61,7 +61,8 @@ const OrderSchema = new mongoose.Schema(
       discountAmount: { type: Number, default: 0 },
     },
     
-    subtotal: { type: Number, required: true }, // before discount
+    // subtotal & totalAmount (before/after discount)
+    subtotal: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
     notes: { type: String, default: "" },
 
@@ -78,6 +79,13 @@ const OrderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+// Applied reward metadata for reward-based orders
+OrderSchema.add({
+  appliedReward: {
+    rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
+    rewardRedemptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'RewardOrder' },
+  }
+});
 
 // Indexes
 OrderSchema.index({ userId: 1, createdAt: -1 });
