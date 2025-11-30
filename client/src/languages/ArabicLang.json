@@ -3,5 +3,17 @@
     "menu": "القائمة",
     "orders": "طلباتي",
     "reviews": "التقييمات",
-    "rewards": "النقاط"
+    "rewards": "النقاط",
+    "reviews_title": "التقييمات",
+    "write_review": "اكتب تقييم",
+    "rating": "التقييم",
+    "comment": "التعليق",
+    "upload_photos": "رفع الصور",
+    "no_reviews": "لا توجد تقييمات حتى الآن.",
+    "submit": "إرسال",
+    "no_comment": "لا يوجد تعليق",
+    "anonymous": "مجهول",
+    "loading": "جاري التحميل...",
+    "choose_your_photos": "اختر صورك",
+    "share_experience": "شارك تجربتك"
 }
