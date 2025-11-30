@@ -69,9 +69,12 @@ class OrderService {
         item.itemPoints = prod.productPoints || 0;
       }
 
-      // 2. Calculate subtotal (before discount)
-      const subtotal = calculateTotal(orderData.items);
-      orderData.subtotal = subtotal;
+      // 2. Calculate totals (subtotal, tax, delivery fee, discount, totalAmount)
+      const totals = calculateOrderTotals(orderData.items, orderData.taxRate || 0.1, orderData.deliveryFee || 0, orderData.discount || 0);
+      orderData.subtotal = totals.subtotal;
+      orderData.tax = totals.tax;
+      orderData.deliveryFee = totals.deliveryFee;
+      orderData.discount = totals.discount;
       
       // 3. Apply coupon if provided
       let discountAmount = 0;
