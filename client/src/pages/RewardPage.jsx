@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Star, Gift } from 'lucide-react';
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, redeemReward } from '../redux/slices/rewardSlice';
+import { useToast } from '../hooks/useToast';
 import { FaStarOfLife } from "react-icons/fa";
 
 export default function RewardPage() {
   const dispatch = useDispatch();
-  const { reward, loading, error } = useSelector((state) => state.reward);
+  const { reward, loading, error } = useSelector((state) => state.reward || {});
+  const toast = useToast();
 
   const [points] = useState(2100);
 
@@ -116,13 +118,14 @@ export default function RewardPage() {
                       <h3 className={`mx-2 text-sm font-semibold col-span-4  ${canRedeem(item.pointsRequired)?"text-on-surface" : "text-muted"}`}>{product?.name || "Reward"}</h3>
                     <button
                       disabled={!canRedeem(item.pointsRequired)}
-                      onClick={async () => {
+                          onClick={async () => {
                         if (!canRedeem(item.pointsRequired)) return;
                         try {
                           const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
-                          // Optionally show a toast or update local points
+                          toast.showToast({ message: 'Redeemed successfully', type: 'success' });
                           console.log('Redeem result', r);
                         } catch (err) {
+                          toast.showToast({ message: 'Redeem failed: ' + (err?.message || err || 'unknown'), type: 'error' });
                           console.error('Redeem failed', err);
                         }
                       }}
