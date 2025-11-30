@@ -12,8 +12,11 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { useSelector } from "react-redux";
+import LogoutButton from "./ui/button/LogoutButton";
 
 export default function CombinedNavbar() {
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(true);
@@ -31,7 +34,6 @@ export default function CombinedNavbar() {
         `}
       >
         <div className="flex flex-col h-full py-4 gap-2">
-
           {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -109,14 +111,17 @@ export default function CombinedNavbar() {
             active={isActive("/rewards")}
             isOpen={isOpen}
           />
-
-          <DesktopNavItem
-            to="/login"
-            icon={<LogInIcon size={20} />}
-            label={t("Login")}
-            active={isActive("/login")}
-            isOpen={isOpen}
-          />
+          {isAuthenticated ? (
+            <LogoutButton />
+          ) : (
+            <DesktopNavItem
+              to="/login"
+              icon={<LogInIcon size={20} />}
+              label={t("Login")}
+              active={isActive("/login")}
+              isOpen={isOpen}
+            />
+          )}
         </div>
       </aside>
 
@@ -192,7 +197,9 @@ function MobileNavItem({ to, icon, label, active }) {
   return (
     <Link
       to={to}
-      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"}`}
+      className={`flex flex-col items-center ${
+        active ? "text-primary" : "text-muted"
+      }`}
     >
       {icon}
       <span className="text-xs">{label}</span>
