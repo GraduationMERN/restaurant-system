@@ -1,12 +1,15 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ReviewsGrid({ reviews }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const { t } = useTranslation();
 
-  if (!reviews || reviews.length === 0) return <p>No reviews yet.</p>;
+  if (!reviews || reviews.length === 0) return <p>{t("no_reviews")}</p>;
 
   const getInitials = (name) => {
-    if (!name) return "AN";
+    if (!name) return t("anonymous").slice(0, 2).toUpperCase();
+
     const parts = name.split(" ");
     return parts.length === 1
       ? parts[0][0].toUpperCase()
@@ -17,7 +20,8 @@ export default function ReviewsGrid({ reviews }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3">
       {reviews.map((review) => {
         if (review.status === "pending") return null;
-        const userName = review.user?.name || "Anonymous";
+
+        const userName = review.user?.name || t("anonymous");
         const initials = getInitials(review.user?.name);
 
         return (
@@ -47,7 +51,7 @@ export default function ReviewsGrid({ reviews }) {
             </div>
 
             {/* Comment */}
-            <p className="mt-1">{review.comment || "No comment"}</p>
+            <p className="mt-1">{review.comment || t("no_comment")}</p>
 
             {/* Photos */}
             <div className="flex gap-2 mt-2">
