@@ -3,6 +3,7 @@ import rewardReducer from "./slices/rewardSlice";
 import productReducer from "./slices/ProductSlice"
 import categoryReducer from"./slices/CategorySlice";
 import cartReducer from"./slices/cartSlice";
+import reviewReducer from"./slices/reviewSlice";
 
 
 export const store = configureStore({
