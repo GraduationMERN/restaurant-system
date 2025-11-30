@@ -18,19 +18,16 @@ import paymentRoutes from "./src/modules/payment/paymentRoutes.js";
 import authRoutes from "./src/modules/user/routes/auth.routes.js";
 import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/modules/review/review.routes.js";
-
+import couponRoutes from "./src/modules/coupon/coupon.route.js"
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
-// import authRoutes from "./src/routes/auth.routes.js";
-// import categoryRoutes from "./src/routes/category.routes.js";
-// import cartRoutes from "./src/routes/cart.routes.js";
 import notificationRoutes from "./src/modules/notification/notification.routes.js";
-// import authRoutes from "./src/routes/auth.routes.js";
+
 import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
 // for AI 
-import chatRoutes from "./src/modules/chat/chat.routes.js"
-import { initializeEmbeddingModel } from './src/modules/chat/chat.service.js';
+// import chatRoutes from "./src/modules/chat/chat.routes.js"
+// import { initializeEmbeddingModel } from './src/modules/chat/chat.service.js';
 import optionalAuthMiddleware from "./src/middlewares/optionalAuthMiddleware.js";
 
 dotenv.config();
@@ -57,10 +54,11 @@ app.use(cookieParser());
 await connectDB();
 
 // important initialize for chatbot_AI
-initializeEmbeddingModel();
+// initializeEmbeddingModel();
 
 // Routes
-app.use('/api/chatBot', chatRoutes);
+app.use("/api",couponRoutes)
+// app.use('/api/chatBot', chatRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use('/api/products', productRoutes);
 app.use("/api/reward", rewardRouter);
