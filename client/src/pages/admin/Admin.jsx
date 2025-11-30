@@ -7,10 +7,11 @@ import Menu from "./Menu";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
+import RewardOrders from "./RewardOrders";
 
 export default function Admin() {
     const { section: rawSection } = useParams();
-    const allowed = new Set(["dashboard", "orders", "menu", "reviews", "rewards", "settings", "profile"]);
+    const allowed = new Set(["dashboard", "orders", "menu", "reviews", "rewards", "settings", "profile", "reward-orders"]);
     const section = rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
 
     return (
@@ -42,6 +43,11 @@ export default function Admin() {
             {section === "rewards" && (
                 <section id="rewards" className="mt-8">
                     <Rewards />
+                </section>
+            )}
+            {section === "reward-orders" && (
+                <section id="reward-orders" className="mt-8">
+                    <RewardOrders />
                 </section>
             )}
 
