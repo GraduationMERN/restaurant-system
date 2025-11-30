@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { Star, X } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { createReview, fetchReviews } from "../../redux/slices/reviewSlice";
+import { useTranslation } from "react-i18next";
 
 export default function ReviewModal({ isOpen, close }) {
   const dispatch = useDispatch();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [images, setImages] = useState([]);
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
@@ -36,9 +38,9 @@ export default function ReviewModal({ isOpen, close }) {
         <button className="absolute top-4 right-4 text-muted" onClick={close}>
           <X size={20} />
         </button>
-        <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
+        <h3 className="text-xl font-semibold mb-4">{t("write_review")}</h3>
 
-        <p className="text-sm mb-2 font-medium">Rating</p>
+        <p className="text-sm mb-2 font-medium">{t("rating")}</p>
         <div className="flex gap-1 mb-4">
           {[1, 2, 3, 4, 5].map((num) => (
             <Star
@@ -54,17 +56,17 @@ export default function ReviewModal({ isOpen, close }) {
           ))}
         </div>
 
-        <p className="text-sm mb-2 font-medium">Comment</p>
+        <p className="text-sm mb-2 font-medium">{t("comment")}</p>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Share your experience..."
+          placeholder={t("share_experience")}
           className="w-full h-28 border border-gray-300 rounded-xl p-3 text-sm"
         />
 
-        <p className=" text-sm mb-2 mt-2 font-medium">Upload Photos</p>
+        <p className=" text-sm mb-2 mt-2 font-medium">{t("upload_photos")}</p>
         <label className="cursor-pointer bg-white border border-gray-300 px-4 py-2 rounded-xl inline-flex items-center gap-2">
-         Choose your photos
+        {t("choose_your_photos")}
           <input
             type="file"
             multiple
@@ -89,7 +91,7 @@ export default function ReviewModal({ isOpen, close }) {
           className="w-full mt-4 bg-primary text-white py-2 rounded-xl shadow"
           onClick={handleSubmit}
         >
-          Submit
+          {t("submit")}
         </button>
       </div>
     </div>
