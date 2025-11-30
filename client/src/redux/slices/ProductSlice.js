@@ -1,13 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../../api/axios";
 
-const API = "http://localhost:3000/api/products";
 
 // Fetch All Products
 export const fetchProducts = createAsyncThunk(
     "products/fetchAll",
     async () => {
-        const res = await axios.get(`${API}`);
+        const res = await api.get('/api/products');
         return res.data;
     }
 );
@@ -16,7 +15,7 @@ export const fetchProducts = createAsyncThunk(
 export const fetchProductById = createAsyncThunk(
     "products/fetchById",
     async (id) => {
-        const res = await axios.get(`${API}/${id}`);
+        const res = await api.get(`/api/products/${id}`);
         return res.data;
     }
 );
@@ -25,7 +24,7 @@ export const fetchProductById = createAsyncThunk(
 export const fetchNewProducts  = createAsyncThunk(
     "products/getNew",
     async () => {
-        const res = await axios.get(`${API}/new`);
+        const res = await api.get(`/api/products/new`);
         return res.data;
     }
 );
@@ -35,7 +34,7 @@ export const fetchProductList = createAsyncThunk(
     "products/getList",
     async (params) => {
         // params ممكن تكون { searchTerm, categoryId, sortBy, sortOrder, page, pageSize }
-        const res = await axios.get(`${API}/list`, { params });
+        const res = await api.get(`/api/products/list`, { params });
         return res.data;
     }
 );
@@ -44,8 +43,8 @@ export const fetchProductList = createAsyncThunk(
 export const createProduct = createAsyncThunk(
     "products/create",
     async (productData) => {
-        const res = await axios.post(`${API}`, productData,{
-                withCredentials: true,      
+        const res = await api.post(`/api/products`, productData,{
+                // withCredentials: true,      
                 headers: { "Content-Type": "multipart/form-data" }
             });
         return res.data;
@@ -56,8 +55,8 @@ export const createProduct = createAsyncThunk(
 export const updateProduct = createAsyncThunk(
     "products/update",
     async ({ id, productData }) => {
-        const res = await axios.put(`${API}/${id}`, productData,{
-                withCredentials: true,      
+        const res = await api.put(`/api/products/${id}`, productData,{
+                // withCredentials: true,      
                 headers: { "Content-Type": "multipart/form-data" }
             });
         return res.data;
@@ -68,8 +67,8 @@ export const updateProduct = createAsyncThunk(
 export const deleteProduct = createAsyncThunk(
     "products/delete",
     async (id) => {
-        const res = await axios.delete(`${API}/${id}`, {
-                withCredentials: true,      
+        const res = await api.delete(`/api/products/${id}`, {
+                // withCredentials: true,      
             });
         return res.data;
     }
@@ -175,5 +174,5 @@ const productSlice =createSlice({
     }
 });
 
-
+export const { clearMessage, clearSingle } = productSlice.actions;
 export default productSlice.reducer;
