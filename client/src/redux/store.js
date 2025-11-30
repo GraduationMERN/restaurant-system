@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rewardReducer from "./slices/rewardSlice";
+import authReducer from "./slices/authSlice";
 import productReducer from "./slices/ProductSlice";
 import categoryReducer from "./slices/CategorySlice";
 import cartReducer from "./slices/cartSlice";
@@ -10,6 +11,7 @@ import chatbotReducer from "./slices/chatbotSlice";
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
+    auth: authReducer,
     product: productReducer,
     category: categoryReducer,
     cart: cartReducer,

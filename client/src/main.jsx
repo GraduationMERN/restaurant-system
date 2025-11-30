@@ -10,7 +10,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ToastProvider } from './components/ui/toast/ToastProvider';
 import { Provider } from 'react-redux';
 import { store } from "./redux/store";
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   // <StrictMode>
   <ThemeProvider>
     <AppWrapper>
@@ -22,4 +22,4 @@ createRoot(document.getElementById('root')).render(
     </AppWrapper>
   </ThemeProvider>
   // </StrictMode>,
-)
+);
