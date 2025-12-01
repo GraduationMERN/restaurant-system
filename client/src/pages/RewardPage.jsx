@@ -7,15 +7,24 @@ import { FaStarOfLife } from "react-icons/fa";
 
 export default function RewardPage() {
   const dispatch = useDispatch();
-  const { reward, loading, error } = useSelector((state) => state.reward || {});
+  const { reward } = useSelector((state) => state.reward || {});
+  const { user, isAuthenticated, loadingGetMe } = useSelector((state) => state.auth);
+
   const toast = useToast();
 
-  const [points] = useState(2100);
+  const points = user?.points || 0;
+  const [userPoints, setUserPoints] = useState(points);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
 
+  const userName = user?.name || "Guest";
   useEffect(() => {
     dispatch(getAllRewards());
   }, [dispatch]);
 
+  useEffect(() => {
+    setUserPoints(points);
+  }, [points]);
   const rewards = reward || [];
 
   // ---- MILESTONE LOGIC ----
@@ -26,21 +35,30 @@ export default function RewardPage() {
 
   const canRedeem = (required) => points >= required;
 
+  const handleRedeem = async (item) => {
+    if (!canRedeem(item.pointsRequired)) return;
+    try {
+      const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
+      setUserPoints(prev => prev - item.pointsRequired);
+      toast.showToast({ message: 'Redeemed successfully', type: 'success' });
+    } catch (err) {
+      toast.showToast({ message: 'Redeem failed: ' + (err?.message || err || 'unknown'), type: 'error' });
+    }
+  };
   return (
-    <div className="md:mx-20 min-h-screen bg-white pb-10">
+    <div className="lg:mx-20 md:ml-20 min-h-screen bg-white pb-10 transition-all dark:bg-gray-900 dark:text-white">
 
       {/* HEADER */}
-      <div className=" py-8 px-6 rounded-b-3xl shadow-lg">
+      <div className="fixed z-10  top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-4">Rewards</h1>
 
         <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
 
           <div className="flex justify-between items-center mb-2">
-            <span className="text-lg font-semibold">Your Points</span>
-            
+            <span className="text-lg font-semibold">Hello, {userName}</span>
           </div>
 
-          <p className="text-4xl font-bold">{points}</p>
+          <p className="text-4xl font-bold">{userPoints}</p>
 
           {/* MILESTONE PROGRESS BAR */}
           <div className="relative mt-6">
@@ -82,23 +100,33 @@ export default function RewardPage() {
       </div>
 
       {/* REWARDS LIST */}
-      <div className="px-6 mt-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Available Rewards</h2>
+      <div className="px-6 mt-80 mb-20 md:mb-10 ">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Available Rewards</h2>
 
         {rewards.length === 0 ? (
-          <p className="text-gray-500 text-center mt-10">No rewards found.</p>
+          <p className="text-gray-500 text-center mt-10 dark:text-gray-200">No rewards found.</p>
         ) : (
-          <div className=" grid grid-cols-1 md:grid-cols-2 xl:grid-cols-8 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
 
             {rewards.map((item) => {
               const product = item.productId;
 
               return (
                 <div
+                  onClick={() => {
+                    setSelectedReward(item);
+                    setShowConfirm(true);
+                  }
+
+                  }
                   key={item._id}
-                  className={` ${canRedeem(item.pointsRequired)?"opacity-100":"opacity-50"} rounded-2xl shadow-md border border-secondary h-30 lg:h-80 bg-white flex items-center justify-between lg:flex-col hover:shadow-lg transition overflow-hidden`}
+                  className={`${canRedeem(item.pointsRequired) ? "opacity-100" : "opacity-70"
+                    } group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2
+                    h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col lg:justify-between
+                    hover:shadow-lg transition duration-200 overflow-hidden`}
                 >
-                  <div className="flex lg:flex-col items-center gap-4">
+
+                  <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center gap-4">
                     {product?.imgURL ? (
                       <img
                         src={product.imgURL}
@@ -111,35 +139,33 @@ export default function RewardPage() {
                       </div>
                     )}
                   </div>
-                 
-                  <div className="flex flex-col">
-                    <h3 className="mx-2 text-md font-semibold text-secondary">{item.pointsRequired}</h3>
-                    <div className='grid grid-cols-5'>
-                      <h3 className={`mx-2 text-sm font-semibold col-span-4  ${canRedeem(item.pointsRequired)?"text-on-surface" : "text-muted"}`}>{product?.name || "Reward"}</h3>
+
+                  {/* RIGHT SIDE */}
+                  <div className="flex lg:flex-col justify-between w-1/2 lg:w-full lg:relative">
+
+                    <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-secondary">
+
+                      <span
+                        className={`text-sm font-semibold flex-1 ${canRedeem(item.pointsRequired)
+                          ? "text-on-surface"
+                          : "text-muted"
+                          }`}
+                      >
+                        {product?.name || "Reward"}
+                      </span>
+                      {item.pointsRequired}
+                    </h3>
+                    {/* FULL HEIGHT BUTTON */}
                     <button
                       disabled={!canRedeem(item.pointsRequired)}
-                          onClick={async () => {
-                        if (!canRedeem(item.pointsRequired)) return;
-                        try {
-                          const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
-                          toast.showToast({ message: 'Redeemed successfully', type: 'success' });
-                          console.log('Redeem result', r);
-                        } catch (err) {
-                          toast.showToast({ message: 'Redeem failed: ' + (err?.message || err || 'unknown'), type: 'error' });
-                          console.error('Redeem failed', err);
-                        }
-                      }}
-                      className={`px-4 py-2 rounded-tl-xl font-semibold shadow-sm transition-all duration-300 hover:bg-secondary-200 ${canRedeem(item.pointsRequired)
-                          ? "bg-secondary text-white "
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                        }`}
+                      className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl  ${canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                     >
-                      +
+                      <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
+                        +
+                      </span>
                     </button>
-                    </div>
                   </div>
                 </div>
-
               );
             })}
 
@@ -147,6 +173,38 @@ export default function RewardPage() {
         )}
 
       </div>
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-sm text-center animate-fadeIn">
+            <h2 className="text-xl font-semibold mb-4">Confirm Redemption</h2>
+            <p className="text-gray-600 mb-6">
+              Redeem <span className="font-bold">{selectedReward.title}</span> for{" "}
+              <span className="font-bold">{selectedReward.pointsRequired}</span> points?
+            </p>
+
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => {
+                  handleRedeem(selectedReward);
+                  setShowConfirm(false);
+                }}
+                className="px-4 py-2 bg-secondary text-white rounded-xl"
+              >
+                Yes, Redeem
+              </button>
+
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-xl"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
+
   );
 }

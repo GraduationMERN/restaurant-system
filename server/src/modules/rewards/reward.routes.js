@@ -1,5 +1,5 @@
 import express from 'express';
-import { AddReward, deleteReward, getAllRewards, getRewardById, redeemReward, updatePoints, updateReward, getAllRewardOrder, getRewardOrderById, updateRewardOrder, deleteRewardOrder } from './reward.controller.js';
+import { AddReward, deleteReward, getAllRewards, getRewardById, redeemReward, updateReward, getAllRewardOrder, getRewardOrderById, updateRewardOrder, deleteRewardOrder } from './reward.controller.js';
 import authMiddleware from '../../middlewares/auth.middleware.js';
 import roleMiddleware from '../../middlewares/role.middleware.js';
 import { uploadCloud } from '../../middlewares/uploadCloudinary.middleware.js';
@@ -18,5 +18,5 @@ router.delete('/:id', authMiddleware, roleMiddleware('admin'), deleteReward);
 router.patch('/:id', authMiddleware, roleMiddleware('admin'), uploadCloud.single('image'), updateReward);
 // Authenticated users can redeem rewards for themselves
 router.post('/redeem', authMiddleware, redeemReward);
-router.patch('/user/:id', authMiddleware, roleMiddleware('admin'), updatePoints);
+// router.patch('/user/:id', authMiddleware, roleMiddleware('admin'), updatePoints);
 export default router;

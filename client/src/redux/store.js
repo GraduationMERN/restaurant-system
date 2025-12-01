@@ -6,6 +6,8 @@ import categoryReducer from "./slices/CategorySlice";
 import cartReducer from "./slices/cartSlice";
 import reviewReducer from "./slices/reviewSlice";
 import chatbotReducer from "./slices/chatbotSlice";
+import orderReducer from "./slices/orderSlice";
+
 
 
 export const store = configureStore({
@@ -17,5 +19,6 @@ export const store = configureStore({
     cart: cartReducer,
     reviews: reviewReducer,
     chatbot: chatbotReducer,
+    order: orderReducer,
   },
 });

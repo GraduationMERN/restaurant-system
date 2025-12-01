@@ -1,221 +1,179 @@
 import orderRepo from "./order.repository.js";
-import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
-import { getProductById } from "../product/product.repository.js";
-import * as rewardService from "../rewards/reward.service.js";
-import * as couponService from "../coupon/coupon.service.js";
+import Cart from "../cart/Cart.js";
+import mongoose from "mongoose";
+import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
+import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
 
 class OrderService {
-  // ==============================
-  // CREATE ORDERS
-  // ==============================
-  async createOrderFromCart(cart, productDetails, orderData) {
+
+  // Create order from cart
+  async createOrderFromCart(orderData, identity = {}) {
+    const { cartId, serviceType, tableNumber, notes, paymentMethod, customerInfo } = orderData;
+    const { user: reqUser = null, guestId = null } = identity;
+
+    // 1. Load cart with product population
+    const cart = await Cart.findById(cartId).populate("products.productId");
+    if (!cart) throw new Error("Cart not found");
     if (!cart.products || cart.products.length === 0) throw new Error("Cart is empty");
 
-    const items = formatCartItemsForOrder(cart.products, productDetails);
-    const totals = calculateOrderTotals(items, orderData.taxRate, orderData.deliveryFee, orderData.discount);
+    // 2. Format items
+    const items = formatCartItemsForOrder(cart.products);
 
+    // 3. Calculate totals
+    const totals = calculateOrderTotals(items, 0.14, 0, 0);
+
+    // 4. Identity handling
+    const orderUserIdString = cart.userId ?? (reqUser ? reqUser._id.toString() : guestId ?? null);
+    const customerId = reqUser ? new mongoose.Types.ObjectId(reqUser._id) : null;
+    const createdBy = reqUser ? new mongoose.Types.ObjectId(reqUser._id) : null;
+
+    // 5. Build order object
     const order = {
       cartId: cart._id,
-      userId: cart.userId,
-      createdBy: cart.userId,
-      orderSource: "cart",
-      isDirectOrder: false,
+      userId: orderUserIdString,
+      customerId: customerId ? new mongoose.Types.ObjectId(customerId) : null,
+      serviceType,
+      tableNumber: serviceType === "dine-in" ? String(tableNumber ?? "") : null,
       items,
-      serviceType: orderData.serviceType,
-      tableNumber: orderData.tableNumber,
-      paymentMethod: orderData.paymentMethod,
-      customerInfo: orderData.customerInfo || {},
-      notes: orderData.notes || "",
-      ...totals
-    };
-
-    return orderRepo.create(order);
-  }
-
-  async createDirectOrder(orderData) {
-    if (!orderData.items || orderData.items.length === 0) throw new Error("Order must contain at least one item.");
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      // 1. Snapshot item prices
-      for (const item of orderData.items) {
-        const prod = await getProductById(item.productId);
-        if (!prod) throw new Error(`Product not found: ${item.productId}`);
-        
-        item.name = prod.name;
-        item.img = prod.imgURL || prod.img || "";
-        
-        let price = prod.basePrice || 0;
-        if (item.selectedOptions && prod.options) {
-          for (const opt of prod.options) {
-            const selected = item.selectedOptions?.[opt.name];
-            if (!selected) continue;
-            const choice = opt.choices?.find(c => c.label === selected);
-            if (choice && choice.priceDelta) price += choice.priceDelta;
-          }
-        }
-        item.price = price;
-        item.itemPoints = prod.productPoints || 0;
+      subtotal: totals.subtotal,
+      vat: totals.tax,
+      deliveryFee: totals.deliveryFee,
+      discount: totals.discount,
+      totalAmount: totals.totalAmount,
+      paymentMethod: paymentMethod || "cash",
+      paymentStatus: "pending",
+      status: "pending",
+      orderNumber: generateOrderNumber(),
+      notes: notes || "",
+      estimatedTime: 25,
+      customerInfo: {
+        name: (customerInfo && customerInfo.name) || (reqUser?.name) || "",
+        phone: (customerInfo && customerInfo.phone) || (reqUser?.phoneNumber?.toString()) || "",
+        email: (customerInfo && customerInfo.email) || (reqUser?.email) || "",
       }
-
-      // 2. Calculate totals (subtotal, tax, delivery fee, discount, totalAmount)
-      const totals = calculateOrderTotals(orderData.items, orderData.taxRate || 0.1, orderData.deliveryFee || 0, orderData.discount || 0);
-      orderData.subtotal = totals.subtotal;
-      orderData.tax = totals.tax;
-      orderData.deliveryFee = totals.deliveryFee;
-      orderData.discount = totals.discount;
-      
-      // 3. Apply coupon if provided
-      let discountAmount = 0;
-      
-      if (orderData.couponCode && !orderData.isRewardOrder) {
-        const validation = await couponService.validateCouponService(
-          orderData.couponCode,
-          orderData.customerId,
-          subtotal,
-          orderData.restaurantId
-        );
-        
-        if (!validation.valid) {
-          throw new Error(validation.message);
-        }
-        
-        discountAmount = validation.discountAmount;
-        
-        // Store coupon info in order
-        orderData.appliedCoupon = {
-          couponId: validation.coupon._id,
-          code: orderData.couponCode,
-          discountAmount: discountAmount,
-        };
-      }
-      
-      // 4. Calculate final total
-      if (!orderData.isRewardOrder) {
-        orderData.totalAmount = subtotal - discountAmount;
-      } else {
-        orderData.totalAmount = 0;
-      }
-
-      // 5. Create order
-      const newOrder = await orderRepo.create(orderData, session);
-      
-      // 6. Record coupon usage
-      if (orderData.appliedCoupon && orderData.appliedCoupon.couponId) {
-        await couponService.applyCouponService(
-          orderData.appliedCoupon.couponId,
-          orderData.customerId,
-          newOrder._id,
-          discountAmount,
-          session
-        );
-      }
-
-      await session.commitTransaction();
-      session.endSession();
-      return newOrder;
-      
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      throw err;
     }
+    const created = await orderRepo.create(order);
+    return created;
+  }
+  //////////////////////////////////////////////////////////////////////////diresct order
+  async createDirectOrder(orderData, identity = {}) {
+    if (!orderData.items || orderData.items.length === 0) {
+      throw new Error("Order must contain at least one item.");
+    }
+
+    const { user: reqUser = null } = identity;
+
+    // Calculate totals
     const totals = calculateOrderTotals(
       orderData.items,
-      orderData.taxRate || 0.1,
-      orderData.deliveryFee || 0,
-      orderData.discount || 0
+      orderData.taxRate ?? 0.14,
+      orderData.deliveryFee ?? 0,
+      orderData.discount ?? 0
     );
+
+    const customerId = reqUser ? new mongoose.Types.ObjectId(reqUser._id) : null;
 
     const order = {
       ...orderData,
-      createdBy: orderData.userId || "guest",
-      orderSource: orderData.orderSource || "direct",
-      isDirectOrder: true,
-      ...totals
+      isDirectOrder: true, // important to skip cartId requirement
+      userId: orderData.userId ?? (reqUser ? reqUser._id.toString() : null),
+      customerId,
+      subtotal: totals.subtotal,
+      vat: totals.tax,
+      deliveryFee: totals.deliveryFee,
+      discount: totals.discount,
+      totalAmount: totals.totalAmount,
+      paymentStatus: "pending",
+      status: "pending",
+      orderNumber: generateOrderNumber(),
     };
 
-    return orderRepo.create(order);
+    // Ensure each item has unit price and totalPrice
+    order.items = order.items.map(item => ({
+      ...item,
+      price: item.price ?? item.totalPrice / item.quantity,
+      totalPrice: item.totalPrice
+    }));
+
+    const created = await orderRepo.create(order);
+    return created;
   }
 
-  // ==============================
-  // GET ORDERS
-  // ==============================
-  async getOrder(orderId) {
-    return orderRepo.findById(orderId, true);
-  }
 
-  async getOrdersByUser(userId) {
-    return orderRepo.findByUserId(userId);
-  }
+  // ===== Other service methods =====
+  async getOrder(orderId) { return orderRepo.findById(orderId, true); }
+  async getOrdersByUser(userId) { return orderRepo.findByUserId(userId); }
+  async getOrderByCartId(cartId) { return orderRepo.findByCartId(cartId); }
+  async getActiveOrders() { return orderRepo.findActiveOrders(); }
+  async getAllOrders() { return orderRepo.getAllOrders(); }
 
-  async getOrderByCartId(cartId) {
-    return orderRepo.findByCartId(cartId);
-  }
-
-  async getActiveOrders() {
-    return orderRepo.findActiveOrders();
-  }
-
-  // ==============================
-  // ADMIN / CASHIER UPDATES
-  // ==============================
   async updateStatus(orderId, newStatus) {
+    const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
+    if (!validStatuses.includes(newStatus)) {throw new Error("Invalid order status");}
+    if (newStatus === "completed") { await earningPoints(orderId); }
     return orderRepo.updateStatus(orderId, newStatus);
   }
 
-  async updatePayment(orderId, paymentStatus, paymentMethod) {
-    return orderRepo.updatePayment(orderId, paymentStatus, paymentMethod);
+  async updatePayment(orderId, paymentStatus, paymentMethod = null) {
+    const validPaymentStatuses = ["pending", "paid", "failed", "refunded"];
+    if (!validPaymentStatuses.includes(paymentStatus)) throw new Error("Invalid payment status");
+    const updates = { paymentStatus };
+    if (paymentMethod) updates.paymentMethod = paymentMethod;
+    if (paymentStatus === "paid") updates.paidAt = new Date();
+    return orderRepo.updatePayment(orderId, updates);
   }
 
   async updateCustomerInfo(orderId, customerInfo) {
-    return orderRepo.updateCustomerInfo(orderId, customerInfo);
+    const allowedFields = ["name", "phone", "email", "address"];
+    const filteredInfo = {};
+    Object.keys(customerInfo || {}).forEach(key => {
+      if (allowedFields.includes(key)) filteredInfo[key] = customerInfo[key];
+    });
+    return orderRepo.updateCustomerInfo(orderId, filteredInfo);
   }
 
-  async linkUserToOrder(orderId, userId) {
-    return orderRepo.updateUserId(orderId, userId);
-  }
-
-  async searchOrders(filter = {}, options = {}) {
-    return orderRepo.search(filter, options);
-  }
-
+  async linkUserToOrder(orderId, userId) { return orderRepo.updateUserId(orderId, userId); }
+  async searchOrders(filter = {}, options = {}) { return orderRepo.search(filter, options); }
   async deleteOrder(orderId) {
+    const order = await orderRepo.findById(orderId);
+    if (!order) throw new Error("Order not found");
+    if (order.status === "completed") throw new Error("Cannot delete completed orders");
     return orderRepo.delete(orderId);
   }
 
-  async getAllOrders() {
-    return orderRepo.getAllOrders();
-  }
-
-  // ==============================
-  // CUSTOMER-ONLY UPDATES
-  // ==============================
   async cancelOwnOrder(userId, orderId) {
     const order = await orderRepo.findById(orderId);
     if (!order) throw new Error("Order not found");
-    if (order.userId.toString() !== userId.toString()) throw new Error("You can only cancel your own order");
-
-    // Only allow cancellation if status allows
-    if (["completed", "cancelled"].includes(order.orderStatus)) {
-      throw new Error("Cannot cancel completed or already cancelled order");
-    }
-
-    return orderRepo.updateStatus(orderId, "cancelled");
+    if (order.userId.toString() !== userId.toString())
+      throw new Error("You can only cancel your own order");
+    const cancellableStatuses = ["pending", "confirmed"];
+    if (!cancellableStatuses.includes(order.status))
+      throw new Error(`Cannot cancel order with status: ${order.status}`);
+    return orderRepo.cancelOrder(orderId);
   }
 
   async updateOwnOrder(userId, orderId, updates) {
     const order = await orderRepo.findById(orderId);
     if (!order) throw new Error("Order not found");
-    if (order.userId.toString() !== userId.toString()) throw new Error("You can only update your own order");
 
-    // Only allow certain fields to be updated by the customer
-    const allowedFields = ["notes", "customerInfo", "deliveryAddress"];
+    // Check ownership
+    if (order.userId.toString() !== userId.toString()) {
+      throw new Error("You can only update your own order");
+    }
+
+    // Only allow editing while order is still draft / pending
+    if (order.status !== "pending") {
+      throw new Error("Cannot modify an order after submission");
+    }
+
+    // Only allow certain fields to be updated
+    const allowedFields = ["notes", "tableNumber", "customerInfo", "items"];
+
     const filteredUpdates = {};
-    Object.keys(updates).forEach(key => {
-      if (allowedFields.includes(key)) filteredUpdates[key] = updates[key];
+    Object.keys(updates || {}).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        filteredUpdates[key] = updates[key];
+      }
     });
 
     return orderRepo.update(orderId, filteredUpdates);

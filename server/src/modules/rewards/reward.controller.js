@@ -64,7 +64,9 @@ export async function updateReward(req,res) {
 export async function redeemReward(req, res) {
     try {
         // Prefer authenticated user id (secure) — fall back to payload if present
-        const userId = req.user?.id || req.body.userId;
+      
+        const userId = req.user?.id;
+        console.log("UserID:"+userId)
         const { rewardId } = req.body;
         const result = await redeemRewardService(rewardId, userId);
         // if redemption and order are returned, provide them as part of the response
@@ -72,20 +74,6 @@ export async function redeemReward(req, res) {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }   
-}
-
-export async function updatePoints(req,res){
-  try{
-    const {id} = req.params;
-    const user = await getUserByIdService(id);
-    if(!user){
-      return res.status(404).json({message:"NOT FOUND"})
-    }
-        const updated = await updatePointsService(id)
-        res.status(200).json({user: updated})
-  }catch(err){
-    res.status(400).json({message:err.message})
-  }
 }
 
 export const getAllRewardOrder = async(req,res)=>{
