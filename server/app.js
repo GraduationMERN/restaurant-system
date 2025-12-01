@@ -4,7 +4,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
-import { frontendUrl } from "./src/config/env.js";
+import { env } from "./src/config/env.js";
 // Middlewares
 import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
 import requestLogger from "./src/middlewares/requestLogger.middleware.js";
@@ -31,9 +31,23 @@ dotenv.config();
 const app = express();
 
 // --- Global Middlewares ---
-console.log(frontendUrl)
+const allowedOrigins = [
+  env.frontendUrl,            // Production
+  "http://localhost:5173",    // Local frontend
+  "http://localhost:3000",    // Alternate local
+];
+
 app.use(cors({
-  origin: frontendUrl, 
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked from origin: ${origin}`));
+    }
+  },
   credentials: true,
 }));
 
