@@ -32,8 +32,8 @@ const app = express();
 
 // --- Global Middlewares ---
 app.use(cors({
-  origin: "http://localhost:5173", // <--- correct this, remove any brackets
-  credentials: true,               // if you need cookies/auth
+  origin: '*', // Correctly allows all origins
+  credentials: false, // Must be false if origin is '*'
 }));
 
 // Fix for preflight requests
