@@ -1,19 +1,31 @@
 import Order from "./orderModel.js";
 
 class OrderRepository {
+  // ==============================
+  // CREATE
+  // ==============================
   async create(orderData) {
     return Order.create(orderData);
   }
 
+  // ==============================
+  // READ
+  // ==============================
   async findById(orderId, populateProducts = false) {
     let query = Order.findById(orderId);
-    if (populateProducts) query = query.populate("items.productId");
+    if (populateProducts) {
+      query = query
+        .populate("items.productId")
+        .populate("userId", "name email phone")
+        .populate("cartId");
+    }
     return query.exec();
   }
 
   async findByUserId(userId) {
     return Order.find({ userId })
       .populate("items.productId")
+      .populate("cartId")
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -21,86 +33,141 @@ class OrderRepository {
   async findByCartId(cartId) {
     return Order.findOne({ cartId })
       .populate("items.productId")
+      .populate("userId", "name email phone")
       .exec();
   }
 
   async findActiveOrders() {
-    return Order.find({ orderStatus: { $in: ["pending", "preparing", "ready"] } })
+    return Order.find({ status: { $in: ["pending", "confirmed", "preparing"] } })
       .populate("items.productId")
+      .populate("userId", "name email phone")
       .sort({ createdAt: 1 })
       .exec();
   }
 
-  async getAllOrders() {
-    return Order.find().populate("items.productId");
+  async findByStatus(status) {
+    return Order.find({ status })
+      .populate("items.productId")
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
+  async getAllOrders() {
+    return Order.find()
+      .populate("items.productId")
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  // ==============================
+  // UPDATE
+  // ==============================
   async updateStatus(orderId, newStatus) {
     return Order.findByIdAndUpdate(
       orderId,
-      { orderStatus: newStatus },
+      { status: newStatus, updatedAt: new Date() },
       { new: true }
-    ).populate("items.productId");
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
-  async updatePayment(orderId, paymentStatus, paymentMethod = null, stripeSessionId = null) {
-    const update = { paymentStatus };
-    if (paymentMethod) update.paymentMethod = paymentMethod;
-    if (stripeSessionId) update.stripeSessionId = stripeSessionId;
-
-    return Order.findByIdAndUpdate(orderId, { $set: update }, { new: true }).populate("items.productId");
+  async updatePayment(orderId, updates) {
+    return Order.findByIdAndUpdate(
+      orderId,
+      { ...updates, updatedAt: new Date() },
+      { new: true }
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
   async updateCustomerInfo(orderId, customerInfo) {
     return Order.findByIdAndUpdate(
       orderId,
-      { customerInfo },
+      { customerInfo, updatedAt: new Date() },
       { new: true }
-    ).populate("items.productId");
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
   async updateUserId(orderId, newUserId) {
     return Order.findByIdAndUpdate(
       orderId,
-      { userId: newUserId },
+      { userId: newUserId, updatedAt: new Date() },
       { new: true }
-    ).populate("items.productId");
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
-
-  async updateOwnOrder(userId, orderId, updates) {
-    return Order.findOneAndUpdate(
-      { _id: orderId, userId },
-      updates,
+  async update(orderId, updates) {
+    return Order.findByIdAndUpdate(
+      orderId,
+      { ...updates, updatedAt: new Date() },
       { new: true }
-    ).populate("items.productId");
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
-  async cancelOwnOrder(userId, orderId) {
-    const order = await Order.findOne({ _id: orderId, userId }).populate("items.productId");
-    if (!order) throw new Error("Order not found or you don't have permission");
-
-    if (["completed", "cancelled"].includes(order.orderStatus)) {
-      throw new Error("Cannot cancel completed or already cancelled order");
-    }
-
-    order.orderStatus = "cancelled";
-    return order.save();
+  async cancelOrder(orderId) {
+    return Order.findByIdAndUpdate(
+      orderId,
+      { status: "cancelled", updatedAt: new Date() },
+      { new: true }
+    )
+    .populate("items.productId")
+    .populate("userId", "name email phone");
   }
 
-// SEARCH with filtering, pagination, sorting
+  // ==============================
+  // DELETE
+  // ==============================
+  async delete(orderId) {
+    return Order.findByIdAndDelete(orderId);
+  }
+
+  // ==============================
+  // SEARCH / FILTER / PAGINATION
+  // ==============================
   async search(filter = {}, options = {}) {
     const { limit = 50, skip = 0, sort = { createdAt: -1 } } = options;
     return Order.find(filter)
       .populate("items.productId")
+      .populate("userId", "name email phone")
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .exec();
   }
 
-  async delete(orderId) {
-    return Order.findByIdAndDelete(orderId).populate("items.productId");
+  async findByDateRange(startDate, endDate) {
+    return Order.find({
+      createdAt: { $gte: startDate, $lte: endDate }
+    })
+    .populate("items.productId")
+    .populate("userId", "name email phone")
+    .sort({ createdAt: -1 })
+    .exec();
+  }
+
+  // ==============================
+  // STATISTICS
+  // ==============================
+  async getOrderStats() {
+    return Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalRevenue: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
   }
 }
 
