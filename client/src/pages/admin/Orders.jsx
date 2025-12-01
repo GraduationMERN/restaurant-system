@@ -90,7 +90,7 @@ export default function Orders() {
           </div>
         </ComponentCard>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800  dark:bg-white/[0.03] sm:p-6">
           <div className="max-w-full overflow-x-auto">
             <Table>
               <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
@@ -139,9 +139,9 @@ export default function Orders() {
 
       <Modal isOpen={!!viewOrder} onClose={() => setViewOrder(null)} className="max-w-xl p-6">
         {viewOrder && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Order Details</h3>
-            <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+          <div className="dark:text-white">
+            <h3 className="text-lg font-semibold text-gray-800  ">Order Details</h3>
+            <div className="mt-4 space-y-2 text-sm text-gray-700">
               <p><strong>ID:</strong> {viewOrder.id}</p>
               <p><strong>Customer:</strong> {viewOrder.customer}</p>
               <p><strong>Items:</strong> {viewOrder.itemsCount}</p>
