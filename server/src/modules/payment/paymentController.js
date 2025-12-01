@@ -1,55 +1,41 @@
+// src/modules/payment/paymentController.js
 import PaymentService from "./paymentService.js";
-import stripe from "stripe";
-
-const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 
 class PaymentController {
-  //  Create Checkout Session
   async createCheckoutSession(req, res) {
     try {
       const { orderId } = req.body;
+      
       if (!orderId) {
-        return res.status(400).json({ success: false, message: "orderId is required" });
+        return res.status(400).json({ error: "orderId is required" });
       }
 
-      const session = await PaymentService.createCheckoutSession(orderId);
+      const session = await PaymentService.createCheckoutSession(orderId, {
+        traceId: req.requestId
+      });
 
-      res.status(200).json({ success: true, url: session.url });
-    } catch (err) {
-      res.status(400).json({ success: false, message: err.message });
+      res.json({
+        url: session.url,
+        sessionId: session.id,
+        orderId: orderId
+      });
+
+    } catch (error) {
+      console.error("Checkout session error:", error);
+      res.status(500).json({ 
+        error: error.message || "Failed to create checkout session" 
+      });
     }
   }
 
-  // ==========================
-  // 2️⃣ Handle Stripe Webhook
-  // ==========================
   async handleWebhook(req, res) {
-    const sig = req.headers["stripe-signature"];
-    let event;
-
     try {
-  
-      event = stripeClient.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      return res.status(400).send(`Webhook error: ${err.message}`);
+      const result = await PaymentService.handleWebhook(req);
+      res.status(result.statusCode).json(result.body);
+    } catch (error) {
+      console.error("Webhook processing error:", error);
+      res.status(500).json({ error: error.message });
     }
-
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-
-      try {
-        await PaymentService.handleCheckoutSession(session);
-        console.log(`Order ${session.metadata.orderId} marked as paid.`);
-      } catch (err) {
-        console.error("Error handling checkout session:", err.message);
-      }
-    }
-
-    res.status(200).json({ received: true });
   }
 }
 

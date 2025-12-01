@@ -1,5 +1,6 @@
 import Order from "./orderModel.js";
 
+
 class OrderRepository {
   // ==============================
   // CREATE
@@ -169,6 +170,31 @@ class OrderRepository {
       }
     ]);
   }
+
+  // ==============================
+  // NEW FUNCTIONS FOR PAYMENT SERVICE
+  // ==============================
+
+  /**
+   * Update Stripe Session ID (supports optional transaction)
+   */
+  async updateStripeSessionId(orderId, sessionId, opts = {}) {
+    return Order.findByIdAndUpdate(
+      orderId,
+      { stripeSessionId: sessionId },
+      { new: true, ...(opts.session && { session: opts.session }) }
+    );
+  }
+
+  /**
+   * Create a Payment Log for auditing
+   */
+  // async createPaymentLog(orderId, payload, opts = {}) {
+  //   if (!PaymentLog) return null; // optional
+  //   return PaymentLog.create([{ orderId, ...payload }], {
+  //     ...(opts.session && { session: opts.session })
+  //   });
+  // }
 }
 
 export default new OrderRepository();
