@@ -1,14 +1,17 @@
 // src/pages/CheckoutPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
-import { updateCartQuantity, deleteProductFromCart, addToCart } from "../redux/slices/cartSlice";
+import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser } from "../redux/slices/cartSlice";
 
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { products, _id: cartId, loading } = useSelector((state) => state.cart.cart || { products: [] });
+
+  const { products, totalPrice, loading, _id: cartId } = useSelector(
+    (state) => state.cart
+  );
 
   const [serviceType, setServiceType] = useState("dine-in");
   const [tableNumber, setTableNumber] = useState("");
@@ -17,15 +20,23 @@ export default function CheckoutPage() {
   const [promoCode, setPromoCode] = useState("");
   const [showRewardModal, setShowRewardModal] = useState(false);
 
+  // Load cart on mount
+  useEffect(() => {
+    dispatch(getCartForUser());
+  }, [dispatch]);
+
+  // Handle quantity change
   const handleQuantityChange = (productId, quantity) => {
     if (quantity < 1) return;
     dispatch(updateCartQuantity({ productId, newQuantity: quantity }));
   };
 
+  // Handle delete product
   const handleDeleteItem = (productId) => {
     dispatch(deleteProductFromCart(productId));
   };
 
+  // Handle option change
   const handleOptionChange = (product, optionName, choiceLabel) => {
     const newSelectedOptions = { ...product.selectedOptions, [optionName]: choiceLabel };
     dispatch(addToCart({
@@ -35,10 +46,12 @@ export default function CheckoutPage() {
     }));
   };
 
+  // Compute totals
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   const total = +(subtotal + vat).toFixed(2);
 
+  // Handle submit order
   const handleSubmit = async () => {
     if (!cartId) return;
     setSubmitting(true);
@@ -82,14 +95,12 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">My order</h1>
-              {/* Branch selector - restaurant can customize */}
               <div className="flex items-center text-sm text-gray-600">
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
                 <select className="bg-transparent border-none focus:outline-none focus:ring-0 text-gray-600 cursor-pointer">
                   <option>Select Branch</option>
-                  {/* Restaurant can add their branches here */}
                 </select>
               </div>
               <p className="text-xs text-gray-500 mt-1">Confirm your order so we can prep it.</p>
@@ -115,14 +126,14 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-blue-100 rounded-full px-1">
                           <button 
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
                             className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
                           >
                             −
                           </button>
                           <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
                           <button 
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
                           >
                             +
@@ -132,7 +143,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Options */}
-                    {item.productId.options && item.productId.options.length > 0 && (
+                    {item.productId.options?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {item.productId.options.map((opt) => (
                           <select
@@ -160,7 +171,7 @@ export default function CheckoutPage() {
                         Edit
                       </button>
                       <button 
-                        onClick={() => handleDeleteItem(item.productId._id)}
+                        onClick={() => handleDeleteItem(item._id)}
                         className="text-red-500 hover:text-red-700 flex items-center transition-colors"
                       >
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
