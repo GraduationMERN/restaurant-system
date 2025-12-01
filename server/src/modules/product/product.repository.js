@@ -1,7 +1,7 @@
 import productModel from './Product.js';
 
 export const getAll = async () => {
-    return await productModel.find().populate('categoryId', 'name');
+    return await productModel.find().select("-embedding");;
 }
 
 export const getProductById = async (id) => {
