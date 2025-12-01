@@ -1,5 +1,5 @@
 import { getAllProductsService ,getProductByIdService,createProductService,updateProductService,deleteProductService,getNewProductsService,getProductForListService} from './product.service.js';
-import { getEmbedding } from "../chat/chat.service.js"; // for AI
+// import { getEmbedding } from "../chat/chat.service.js"; // for AI
 
 
 //getAllProducts
