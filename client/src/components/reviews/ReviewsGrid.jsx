@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { format } from "timeago.js";
 
 export default function ReviewsGrid({ reviews }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -19,7 +20,7 @@ export default function ReviewsGrid({ reviews }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3">
       {reviews.map((review) => {
-        if (review.status === "pending") return null;
+        if (review.status !== "approved") return null;
 
         const userName = review.user?.name || t("anonymous");
         const initials = getInitials(review.user?.name);
@@ -36,6 +37,9 @@ export default function ReviewsGrid({ reviews }) {
                 {initials}
               </div>
               <span className="font-medium">{userName}</span>
+              <p className="text-xs text-gray-500">
+                      {format(review.createdAt)}
+                    </p>
             </div>
 
             {/* Rating */}
