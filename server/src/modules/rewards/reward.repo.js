@@ -30,7 +30,12 @@ const createRewardOrderRepo = async (data, session = null) => {
   return RewardOrder.create(data);
 };
 const getAllRewardOrderRepo = async() =>{
-  return await RewardOrder.find().populate('rewardId').populate('userId');
+  return await RewardOrder.find()
+  .populate({
+    path: "rewardId",
+    populate: { path: "productId" }
+  })
+  .populate("userId")
 }
 
 const getRewardOrderByIdRepo = async (id) => {
