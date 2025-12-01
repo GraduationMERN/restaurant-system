@@ -52,23 +52,51 @@ export default function CheckoutPage() {
   const total = +(subtotal + vat).toFixed(2);
 
   // Handle submit order
+  // const handleSubmit = async () => {
+  //   if (!cartId) return;
+  //   setSubmitting(true);
+  //   try {
+  //     const res = await dispatch(createOrderFromCart({
+  //       cartId,
+  //       serviceType,
+  //       tableNumber,
+  //       notes
+  //     })).unwrap();
+  //     navigate(`/order-tracking/${res._id || res.id}`);
+  //   } catch (err) {
+  //     console.error("Order creation failed:", err);
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async () => {
-    if (!cartId) return;
-    setSubmitting(true);
-    try {
-      const res = await dispatch(createOrderFromCart({
+  if (!cartId) return;
+  setSubmitting(true);
+
+  try {
+    // create the order from cart
+    const res = await dispatch(
+      createOrderFromCart({
         cartId,
         serviceType,
         tableNumber,
-        notes
-      })).unwrap();
-      navigate(`/order-tracking/${res._id || res.id}`);
-    } catch (err) {
-      console.error("Order creation failed:", err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        notes,
+      })
+    ).unwrap();
+
+    // navigate to Payment page instead of order-tracking
+    // passing orderId in query params or state
+    
+    navigate("/payment", { state: {  orderId: res.id || res._id || res.orderId,
+        order: res } });
+
+  } catch (err) {
+    console.error("Order creation failed:", err);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading cart...</div>;
 

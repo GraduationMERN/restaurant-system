@@ -84,6 +84,13 @@ isDirectOrder: { type: Boolean, default: false },
     },
     paidAt: { type: Date, default: null },
 
+    //strip id 
+    stripeSessionId: {
+  type: String,
+  default: null
+}
+,
+
     // Customer Information
     customerInfo: {
       name: { type: String, default: "" },

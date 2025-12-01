@@ -14,8 +14,12 @@ import { getMe } from "./redux/slices/authSlice";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
-
 import Chatbot from "./components/chatbot/Chatbot";
+
+// New Payment Pages
+import PaymentPage from "./pages/PaymentPage";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 
 function App() {
   const dispatch = useDispatch();
@@ -23,11 +27,11 @@ function App() {
   useEffect(() => {
     dispatch(getMe());
   }, []);
+
   return (
     <BrowserRouter>
       <ScrollToTop />
       <Layout>
-        
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
@@ -35,10 +39,14 @@ function App() {
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/verifyOtp" element={<VerifyOtpPage />} />
           <Route path="/login" element={<LoginPage />} />
-                  <Route path="/checkout" element={<CheckoutPage />} />
-
-
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/cart" element={<CartPage />} />
+
+          {/* Payment Flow */}
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+
           {/* Single Admin Page with section sub-route */}
           <Route element={<AppLayout />}>
             <Route path="/admin/:section?" element={<Admin />} />
