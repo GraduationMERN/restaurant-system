@@ -8,8 +8,7 @@ import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 const router = express.Router();
 
 // Global: attach requestId + optional auth for allowed routes
-router.use(requestIdMiddleware);
-
+router.use(requestIdMiddleware); 
 // ---- CREATE ----
 router.post("/from-cart", optionalAuthMiddleware, orderController.createOrderFromCart);
 router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder);
@@ -21,7 +20,7 @@ router.get("/cart/:cartId", optionalAuthMiddleware, orderController.getOrderByCa
 router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getActiveOrders);
 router.get("/", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
 
-// ---- CUSTOMER ----
+// ---- CUSTOMER ---- 
 router.patch("/:id/cancel", authMiddleware, orderController.cancelOrder);
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
