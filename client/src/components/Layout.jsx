@@ -9,16 +9,16 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen w-full flex flex-col bg-white">
       
-      {/* Desktop navbar */}
+    
       {!isAdmin && <DesktopNav />}
 
       {/* Main content with correct spacing */}
       <div
         className={`w-full flex justify-center ${
-          !isAdmin ? "pt-20 pb-20 md:pt-[22vh] md:pb-4" : ""
+          !isAdmin ? "" : ""
         }`}
       >
-        <div className="w-full max-w-xl px-4 md:max-w-4xl md:px-8">
+        <div className="w-full max-w-screen-2xl px-4 md:px-8">
           {children}
         </div>
       </div>
