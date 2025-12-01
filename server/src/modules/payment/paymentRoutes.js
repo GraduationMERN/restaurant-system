@@ -1,6 +1,5 @@
 import express from "express";
 import PaymentController from "./paymentController.js";
-// import { stripeWebhookMiddleware } from "./stripeWebhookMiddleware.js";
 import { stripeWebhookMiddleware } from "./stripeWebhookMiddleware.js";
 
 const router = express.Router();

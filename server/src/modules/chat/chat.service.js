@@ -68,6 +68,7 @@ export async function getTopProductMatches(questionEmbedding, topK = env.topK) {
         desc: p.desc,
         price: p.basePrice,
         tags: p.tags || [],
+        imgURL: p.imgURL,
         categoryId: p.categoryId,
         similarity: cosineSimilarity(questionEmbedding, p.embedding || [])
     }));
@@ -80,8 +81,12 @@ export async function getTopProductMatches(questionEmbedding, topK = env.topK) {
 
 function buildContext(products = []) {
     const prodCtx = products.map(p =>
-        `Product: ${p.name}. ${p.desc}. Price: ${p.price}. Tags: ${p.tags?.join(', ') || 'None'}.`
-    ).join('\n');
+        `Product: ${p.name}.
+         Description: ${p.desc}.
+         Price: ${p.price}.
+         Tags: ${p.tags?.join(', ') || 'None'}.
+         Image: ${p.imgURL}.`
+    ).join('\n\n');
 
     return `${prodCtx}`.trim();
 }

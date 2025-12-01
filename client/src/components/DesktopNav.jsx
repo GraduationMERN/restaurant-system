@@ -19,19 +19,31 @@ export default function CombinedNavbar() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path;
 
+  // Close sidebar when clicking a nav item (useful on mobile)
+  const handleNavClick = () => setIsOpen(false);
+
   return (
     <>
-      {/* ================= DESKTOP NAV (≥ md) ================= */}
+      {/* BACKDROP (only visible on md and up when sidebar is open) */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:block"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* DESKTOP SIDEBAR */}
       <aside
         className={`
           hidden md:block
-          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300
+          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300 z-50
           ${isOpen ? "w-52" : "w-16"}
         `}
+        onClick={(e) => e.stopPropagation()} // prevent backdrop clicks from bubbling inside
       >
         <div className="flex flex-col h-full py-4 gap-2">
           {/* Toggle Button */}
@@ -78,6 +90,7 @@ export default function CombinedNavbar() {
             label={t("home")}
             active={isActive("/")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -86,6 +99,7 @@ export default function CombinedNavbar() {
             label={t("menu")}
             active={isActive("/menu")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -94,6 +108,7 @@ export default function CombinedNavbar() {
             label={t("orders")}
             active={isActive("/orders")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -102,6 +117,7 @@ export default function CombinedNavbar() {
             label={t("reviews")}
             active={isActive("/reviews")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -110,6 +126,7 @@ export default function CombinedNavbar() {
             label={t("rewards")}
             active={isActive("/rewards")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
           {isAuthenticated ? (
             <LogoutButton />
@@ -125,51 +142,26 @@ export default function CombinedNavbar() {
         </div>
       </aside>
 
-      {/* ================= MOBILE NAV (sm only) ================= */}
+      {/* MOBILE NAV (fixed bottom) */}
       <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
         <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
-          {/* Language */}
-          {i18n.language == "en" && (
+          {/* Language toggles (mobile) */}
+          {i18n.language === "en" && (
             <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
           )}
-          {i18n.language == "ar" && (
+          {i18n.language === "ar" && (
             <button onClick={() => i18n.changeLanguage("en")}>EN</button>
           )}
 
-          <MobileNavItem
-            to="/"
-            icon={<Home size={20} />}
-            label={t("home")}
-            active={isActive("/")}
-          />
+          <MobileNavItem to="/" icon={<Home size={20} />} label={t("home")} active={isActive("/")} onClick={handleNavClick} />
 
-          <MobileNavItem
-            to="/menu"
-            icon={<Utensils size={20} />}
-            label={t("menu")}
-            active={isActive("/menu")}
-          />
+          <MobileNavItem to="/menu" icon={<Utensils size={20} />} label={t("menu")} active={isActive("/menu")} onClick={handleNavClick} />
 
-          <MobileNavItem
-            to="/orders"
-            icon={<Clock4 size={20} />}
-            label={t("orders")}
-            active={isActive("/orders")}
-          />
+          <MobileNavItem to="/orders" icon={<Clock4 size={20} />} label={t("orders")} active={isActive("/orders")} onClick={handleNavClick} />
 
-          <MobileNavItem
-            to="/reviews"
-            icon={<Star size={20} />}
-            label={t("reviews")}
-            active={isActive("/reviews")}
-          />
+          <MobileNavItem to="/reviews" icon={<Star size={20} />} label={t("reviews")} active={isActive("/reviews")} onClick={handleNavClick} />
 
-          <MobileNavItem
-            to="/rewards"
-            icon={<Gift size={20} />}
-            label={t("rewards")}
-            active={isActive("/rewards")}
-          />
+          <MobileNavItem to="/rewards" icon={<Gift size={20} />} label={t("rewards")} active={isActive("/rewards")} onClick={handleNavClick} />
         </div>
       </div>
     </>
@@ -177,10 +169,12 @@ export default function CombinedNavbar() {
 }
 
 /* ------------ Desktop Nav Item ------------ */
-function DesktopNavItem({ to, icon, label, active, isOpen }) {
+function DesktopNavItem({ to, icon, label, active, isOpen, onClick }) {
+  // Note: onClick used to optionally close sidebar or perform other actions
   return (
     <Link
       to={to}
+      onClick={() => onClick && onClick()}
       className={`
         px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
         ${active ? "text-primary" : "text-muted"}
@@ -193,7 +187,7 @@ function DesktopNavItem({ to, icon, label, active, isOpen }) {
 }
 
 /* ------------ Mobile Nav Item ------------ */
-function MobileNavItem({ to, icon, label, active }) {
+function MobileNavItem({ to, icon, label, active, onClick }) {
   return (
     <Link
       to={to}
