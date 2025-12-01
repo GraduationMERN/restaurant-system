@@ -4,7 +4,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
-
+import { frontendUrl } from "./src/config/env.js";
 // Middlewares
 import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
 import requestLogger from "./src/middlewares/requestLogger.middleware.js";
@@ -31,9 +31,10 @@ dotenv.config();
 const app = express();
 
 // --- Global Middlewares ---
+console.log(frontendUrl)
 app.use(cors({
-  origin: '*', // Correctly allows all origins
-  credentials: false, // Must be false if origin is '*'
+  origin: frontendUrl, 
+  credentials: true,
 }));
 
 // Fix for preflight requests
