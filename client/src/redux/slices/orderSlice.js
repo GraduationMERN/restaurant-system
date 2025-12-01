@@ -1,24 +1,14 @@
-// src/redux/slices/orderSlice.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../api/axios";
 
-/**
- * Helper to normalize backend response.
- * Some endpoints return { success: true, data: ... } while others may return raw.
- */
-const unwrap = (payload) => {
-  if (!payload) return payload;
-  return payload.data ?? payload;
-};
+// Helper to normalize backend response
+const unwrap = (payload) => payload?.data ?? payload ?? null;
 
 /* ===========================
-   THUNKS (async API calls)
-   =========================== */
+   THUNKS
+=========================== */
 
-/**
- * Create order from cart (checkout flow)
- * POST /api/orders/from-cart
- */
+// Create order from cart (checkout flow)
 export const createOrderFromCart = createAsyncThunk(
   "order/createFromCart",
   async (orderPayload, { rejectWithValue }) => {
@@ -31,10 +21,7 @@ export const createOrderFromCart = createAsyncThunk(
   }
 );
 
-/**
- * Create direct order (kiosk / direct)
- * POST /api/orders/direct
- */
+// Create direct order (kiosk / direct)
 export const createDirectOrder = createAsyncThunk(
   "order/createDirect",
   async (payload, { rejectWithValue }) => {
@@ -47,9 +34,7 @@ export const createDirectOrder = createAsyncThunk(
   }
 );
 
-/**
- * Fetch single order by id (tracking)
- */
+// Fetch single order by id
 export const fetchOrderById = createAsyncThunk(
   "order/fetchById",
   async (orderId, { rejectWithValue }) => {
@@ -62,29 +47,12 @@ export const fetchOrderById = createAsyncThunk(
   }
 );
 
-/**
- * Fetch order by cart id
- */
-export const fetchOrderByCartId = createAsyncThunk(
-  "order/fetchByCartId",
-  async (cartId, { rejectWithValue }) => {
-    try {
-      const res = await api.get(`/api/orders/cart/${cartId}`);
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
-    }
-  }
-);
-
-/**
- * Fetch orders for a specific user
- */
+// Fetch orders for a specific user
 export const fetchUserOrders = createAsyncThunk(
   "order/fetchUserOrders",
-  async (userId, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/api/orders/user/${userId}`);
+      const res = await api.get("/api/orders/user"); // backend uses auth session
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -92,9 +60,7 @@ export const fetchUserOrders = createAsyncThunk(
   }
 );
 
-/**
- * Cancel own order (customer)
- */
+// Cancel own order
 export const cancelOwnOrder = createAsyncThunk(
   "order/cancelOwn",
   async (orderId, { rejectWithValue }) => {
@@ -107,9 +73,7 @@ export const cancelOwnOrder = createAsyncThunk(
   }
 );
 
-/**
- * Admin: fetch all orders
- */
+// Admin: fetch all orders
 export const fetchAllOrders = createAsyncThunk(
   "order/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -122,10 +86,7 @@ export const fetchAllOrders = createAsyncThunk(
   }
 );
 
-/**
- * Admin: update order status
- * PATCH /api/orders/:id/status  body: { status }
- */
+// Admin: update order status
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
   async ({ orderId, status }, { rejectWithValue }) => {
@@ -140,15 +101,15 @@ export const updateOrderStatus = createAsyncThunk(
 
 /* ===========================
    SLICE
-   =========================== */
+=========================== */
 
 const orderSlice = createSlice({
   name: "order",
   initialState: {
-    userOrders: [],     // orders for the logged in user
-    allOrders: [],      // admin: all orders
-    activeOrders: [],   // kitchen: active orders
-    singleOrder: null,  // the created / currently-tracked order
+    userOrders: [],
+    allOrders: [],
+    activeOrders: [],
+    singleOrder: null,
     loading: false,
     error: null,
     successMessage: null,
@@ -164,9 +125,7 @@ const orderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      /* ---------------------------
-         CREATE ORDER FROM CART
-      --------------------------- */
+      // CREATE ORDER FROM CART
       .addCase(createOrderFromCart.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -181,9 +140,7 @@ const orderSlice = createSlice({
         state.error = action.payload || "Failed to create order";
       })
 
-      /* ---------------------------
-         CREATE DIRECT ORDER
-      --------------------------- */
+      // CREATE DIRECT ORDER
       .addCase(createDirectOrder.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -198,9 +155,7 @@ const orderSlice = createSlice({
         state.error = action.payload || "Failed to create direct order";
       })
 
-      /* ---------------------------
-         FETCH ORDER BY ID
-      --------------------------- */
+      // FETCH ORDER BY ID
       .addCase(fetchOrderById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -214,42 +169,23 @@ const orderSlice = createSlice({
         state.error = action.payload || "Failed to fetch order";
       })
 
-      /* ---------------------------
-         FETCH ORDER BY CART ID
-      --------------------------- */
-      .addCase(fetchOrderByCartId.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchOrderByCartId.fulfilled, (state, action) => {
-        state.loading = false;
-        state.singleOrder = unwrap(action.payload);
-      })
-      .addCase(fetchOrderByCartId.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch order by cart";
-      })
-
-      /* ---------------------------
-         FETCH USER ORDERS
-      --------------------------- */
+      // FETCH USER ORDERS
       .addCase(fetchUserOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        const data = unwrap(action.payload);
-        state.userOrders = Array.isArray(data) ? data : [];
+        state.userOrders = Array.isArray(unwrap(action.payload))
+          ? unwrap(action.payload)
+          : [];
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch user orders";
       })
 
-      /* ---------------------------
-         CANCEL OWN ORDER
-      --------------------------- */
+      // CANCEL OWN ORDER
       .addCase(cancelOwnOrder.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -264,45 +200,44 @@ const orderSlice = createSlice({
         state.error = action.payload || "Failed to cancel order";
       })
 
-      /* ---------------------------
-         FETCH ALL ORDERS (ADMIN)
-      --------------------------- */
+      // FETCH ALL ORDERS (ADMIN)
       .addCase(fetchAllOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        const data = unwrap(action.payload);
-        state.allOrders = Array.isArray(data) ? data : [];
+        state.allOrders = Array.isArray(unwrap(action.payload))
+          ? unwrap(action.payload)
+          : [];
       })
       .addCase(fetchAllOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch all orders";
       })
 
-      /* ---------------------------
-         UPDATE ORDER STATUS (ADMIN)
-      --------------------------- */
+      // UPDATE ORDER STATUS (ADMIN)
       .addCase(updateOrderStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const data = unwrap(action.payload);
+        const updatedOrder = unwrap(action.payload);
         state.successMessage = "Order status updated";
 
-        if (data && data._id) {
-          if (state.singleOrder && String(state.singleOrder._id) === String(data._id)) {
-            state.singleOrder = data;
+        if (updatedOrder?._id) {
+          // update singleOrder if it matches
+          if (state.singleOrder && state.singleOrder._id === updatedOrder._id) {
+            state.singleOrder = updatedOrder;
           }
-          state.allOrders = state.allOrders?.map((o) =>
-            String(o._id) === String(data._id) ? data : o
-          ) ?? [];
-          state.userOrders = state.userOrders?.map((o) =>
-            String(o._id) === String(data._id) ? data : o
-          ) ?? [];
+          // update in userOrders and allOrders
+          state.userOrders = state.userOrders.map((o) =>
+            o._id === updatedOrder._id ? updatedOrder : o
+          );
+          state.allOrders = state.allOrders.map((o) =>
+            o._id === updatedOrder._id ? updatedOrder : o
+          );
         }
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
