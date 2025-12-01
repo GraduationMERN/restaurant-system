@@ -78,7 +78,7 @@ export default function CombinedNavbar() {
               </>
             )}
 
-            <div className="px-2 py-2">
+            <div className="">
               <ThemeToggleButton />
             </div>
           </div>
