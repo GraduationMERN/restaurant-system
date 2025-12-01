@@ -4,11 +4,11 @@ import {
   Clock4,
   Star,
   Gift,
-  Moon,
   LogInIcon,
   Menu,
   X,
 } from "lucide-react";
+import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
@@ -78,9 +78,9 @@ export default function CombinedNavbar() {
               </>
             )}
 
-            <button className="px-2 py-2 hover:bg-gray-100 rounded-md">
-              <Moon size={20} />
-            </button>
+            <div className="px-2 py-2">
+              <ThemeToggleButton />
+            </div>
           </div>
 
           {/* Navigation Items */}
@@ -144,7 +144,7 @@ export default function CombinedNavbar() {
 
       {/* MOBILE NAV (fixed bottom) */}
       <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
-        <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
+          <div className="w-full h-14 flex justify-around items-center px-4">
           {/* Language toggles (mobile) */}
           {i18n.language === "en" && (
             <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
@@ -152,6 +152,11 @@ export default function CombinedNavbar() {
           {i18n.language === "ar" && (
             <button onClick={() => i18n.changeLanguage("en")}>EN</button>
           )}
+
+          {/* Theme toggle (mobile) */}
+          <div className="flex items-center">
+            <ThemeToggleButton />
+          </div>
 
           <MobileNavItem to="/" icon={<Home size={20} />} label={t("home")} active={isActive("/")} onClick={handleNavClick} />
 
