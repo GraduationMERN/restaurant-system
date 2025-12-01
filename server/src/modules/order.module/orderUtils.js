@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 /**
  * formatCartItemsForOrder
- * Converts cart products into a format suitable for creating an order
  * @param {Array} cartProducts - array of cart items
  * @returns {Array} formatted order items
  */
@@ -67,7 +66,7 @@ export function calculateOrderTotals(items, taxRate = 0.14, deliveryFee = 0, dis
 
 /**
  * generateOrderNumber
- * Simple order number generator (e.g. ORD20251130XXXX)
+ 
  * @returns {String} order number
  */
 export function generateOrderNumber() {
