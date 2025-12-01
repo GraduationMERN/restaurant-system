@@ -9,16 +9,12 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen w-full flex flex-col bg-white">
       
-      {/* Desktop navbar */}
+    
       {!isAdmin && <DesktopNav />}
 
       {/* Main content with correct spacing */}
-      <div
-        className={`w-full flex justify-center ${
-          !isAdmin ? "pt-20 pb-20 md:pt-[22vh] md:pb-4" : ""
-        }`}
-      >
-        <div className="w-full max-w-xl px-4 md:max-w-4xl md:px-8">
+      <div className="w-full flex">
+        <div className="w-full px-0 md:px-0">
           {children}
         </div>
       </div>
@@ -26,9 +22,9 @@ export default function Layout({ children }) {
       {/* Mobile bottom navbar */}
       {!isAdmin && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50">
-          <div className="w-full max-w-xl mx-auto h-16 flex justify-between items-center px-4">
-            <Navbar />
-          </div>
+            <div className="w-full h-16 flex justify-between items-center px-4">
+              <Navbar />
+            </div>
         </div>
       )}
 
