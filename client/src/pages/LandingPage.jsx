@@ -2,8 +2,10 @@ import React from "react";
 import { Utensils, Clock, ArrowRight, ChefHat, MapPin, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useSettings } from "../context/SettingContext";
 
 export default function LandingPage() {
+  const {settings} = useSettings();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
@@ -15,16 +17,16 @@ export default function LandingPage() {
         <div className="text-center mb-10">
           <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
             <img
-              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=256&h=256&fit=crop"
+              src={settings.logo||"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=256&h=256&fit=crop"}
               alt={t('welcome')}
               className="w-full h-full object-cover"
             />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            {t('welcome')}
+            {settings.restaurantName || t('welcome')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
-            {t('authentic_cuisine')}
+            {settings.description || t('welcome_message')}
           </p>
         </div>
 
@@ -36,9 +38,9 @@ export default function LandingPage() {
           >
             <div className={`flex items-start justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Utensils className="w-8 h-8 text-orange-500 dark:text-orange-400" />
+                <Utensils className="w-8 h-8 text-secondary dark:text-orange-400" />
               </div>
-              <ArrowRight className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+              <ArrowRight className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${isRTL ? 'rotate-180' : ''}`} />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               {t('browse_menu')}
@@ -68,7 +70,7 @@ export default function LandingPage() {
         </div>
 
         {/* Special Offer Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 shadow-xl text-white mb-8">
+        <div className="bg-primary to-primary rounded-2xl p-8 shadow-xl text-white mb-8">
           <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <ChefHat className="w-12 h-12" />
             <div className={`text-right ${isRTL ? 'text-left' : ''}`}>
@@ -77,12 +79,12 @@ export default function LandingPage() {
             </div>
           </div>
           <h3 className="text-2xl font-bold mb-3">{t('special_offer')}</h3>
-          <p className="text-orange-100 mb-6 opacity-90">
+          <p className="text-orange-500 mb-6 opacity-90">
             {t('first_order_discount')}
           </p>
           <button 
             onClick={() => navigate('/register')}
-            className="w-full bg-white text-orange-500 font-semibold py-4 px-6 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all duration-300 transform hover:scale-[1.02]"
+            className="w-full bg-white text-secondary font-semibold py-4 px-6 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all duration-300 transform hover:scale-[1.02]"
           >
             {t('claim_now')}
           </button>
@@ -99,7 +101,7 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   {t('location')}
                 </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">123 Main St, City</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{settings.address}</p>
               </div>
             </div>
             <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -110,7 +112,7 @@ export default function LandingPage() {
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   {t('call_us')}
                 </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">(555) 123-4567</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{settings.phone}</p>
               </div>
             </div>
           </div>

@@ -27,6 +27,7 @@ import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
 import chatRoutes from "./src/modules/chat/chat.routes.js";
+import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
 // Import PaymentController if needed
@@ -85,6 +86,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", optionalAuthMiddleware, cartRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/restaurant", restaurantRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 
