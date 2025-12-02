@@ -5,7 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
-
+import { env } from "./src/config/env.js";
 // Middlewares
 import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
 import requestLogger from "./src/middlewares/requestLogger.middleware.js";
@@ -36,6 +36,12 @@ dotenv.config();
 const app = express();
 
 // --- Global Middlewares ---
+const allowedOrigins = [
+  env.frontendUrl,            // Production
+  "http://localhost:5173",    // Local frontend
+  "http://localhost:3000",    // Alternate local
+];
+
 app.use(cors({
   origin: ["http://localhost:5173","https://brand-bite.vercel.app/"],
   credentials: true,

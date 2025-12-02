@@ -21,7 +21,6 @@ export const env = {
     dbName: process.env.DB_NAME,
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-
     // Cloudinary config
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     cloudApiKey: process.env.CLOUDINARY_API_KEY,
