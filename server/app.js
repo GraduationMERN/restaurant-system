@@ -37,7 +37,7 @@ const app = express();
 
 // --- Global Middlewares ---
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173","https://brand-bite.vercel.app/"],
   credentials: true,
 }));
 
@@ -55,7 +55,7 @@ app.post(
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestIdMiddleware);
-app.use(requestLogger);
+// app.use(requestLogger);
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan("dev"));
@@ -96,6 +96,6 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // --- Startup Log ---
-logger.info("server_initialized", { env: process.env.NODE_ENV || "development" });
+// logger.info("server_initialized", { env: process.env.NODE_ENV || "development" });
 
 export default app;

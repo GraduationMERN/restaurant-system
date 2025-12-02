@@ -42,7 +42,17 @@ const userSchema = new mongoose.Schema(
         },
         message: "Points must be a non-negative number",
       },
+      
     },
+    coupon: {
+        usedCoupons: [
+          {
+            couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+            code: String,
+            usedAt: { type: Date, default: Date.now }
+          }
+        ]
+      },
     otp: String,
     otpExpires: Date,
     refreshToken: String,
