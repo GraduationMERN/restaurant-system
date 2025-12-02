@@ -21,19 +21,32 @@ export const createStripeSession = createAsyncThunk(
 );
 
 // In-store / Cashier payment
+// export const payInStore = createAsyncThunk(
+//   "payment/payInStore",
+//   async ({ orderId }, { rejectWithValue }) => {
+//     try {
+//       // This should match your backend route
+//       const res = await api.post(`/api/orders/${orderId}/pay-instore`);
+//       return res.data; // expects updated order object
+//     } catch (err) {
+//       return rejectWithValue(err.response?.data?.message || err.message);
+//     }
+//   }
+// );
+// In paymentSlice.js - fix the endpoint
 export const payInStore = createAsyncThunk(
   "payment/payInStore",
   async ({ orderId }, { rejectWithValue }) => {
     try {
-      // This should match your backend route
-      const res = await api.post(`/api/orders/${orderId}/pay-instore`);
-      return res.data; // expects updated order object
+      // Changed from /api/orders/:id/pay-instore to /api/checkout/:id/pay-instore
+      const res = await api.post(`/api/checkout/${orderId}/pay-instore`);
+      return res.data;
     } catch (err) {
+      console.error("Pay in store error details:", err.response?.data || err.message);
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
-
 // ===========================
 // SLICE
 // ===========================

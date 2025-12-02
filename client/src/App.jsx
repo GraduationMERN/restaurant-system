@@ -22,6 +22,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 
+import CashierConfirmation from "./pages/CashierConfirmation";
 function App() {
   const dispatch = useDispatch();
 
@@ -41,6 +42,7 @@ function App() {
           <Route path="/verifyOtp" element={<VerifyOtpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/orders" element={<CheckoutPage />} /> 
           <Route path="/cart" element={<CartPage />} />
           <Route path="/menu" element={<MenuPage />} />
 
@@ -48,7 +50,7 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-cancel" element={<PaymentCancel />} />
-
+          <Route path="/cashier-confirmation" element={<CashierConfirmation />} />
           {/* Single Admin Page with section sub-route */}
           <Route element={<AppLayout />}>
             <Route path="/admin/:section?" element={<Admin />} />
