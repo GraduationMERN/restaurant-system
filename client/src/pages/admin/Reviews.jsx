@@ -8,17 +8,32 @@ import io from "socket.io-client";
 import { format } from "timeago.js";
 
 export default function Reviews() {
-  const [filter, setFilter] = useState("all");
+  // UI state
+  const [filter, setFilter] = useState("newest"); // default: show most recent
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  // Socket ref for live updates
   const socketRef = useRef(null);
 
-  // Fetch data
+  // Fetch all reviews once (we'll paginate on the client)
   async function loadReviews() {
-    const { data } = await api.get("/api/reviews");
-    setReviews(data.reviews);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data } = await api.get("/api/reviews");
+      setReviews(data.reviews || []);
+      setPage(1); // reset to first page
+    } catch (error) {
+      console.error("Failed to load reviews:", error);
+      alert("Failed to load reviews. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -89,6 +104,7 @@ export default function Reviews() {
       ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
       : 0;
 
+  // Filtering
   let filtered = reviews.filter((r) => {
     if (filter === "positive") return r.rating >= 4;
     if (filter === "negative") return r.rating <= 2;
@@ -107,6 +123,13 @@ export default function Reviews() {
       (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
   }
+
+  // Client-side pagination over the filtered list
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+  const paginated = filtered.slice(startIndex, endIndex);
 
   async function approveReview(review) {
     const confirmApprove = window.confirm(
@@ -177,7 +200,20 @@ export default function Reviews() {
       : (parts[0][0] + parts[1][0]).toUpperCase();
   };
 
-  if (loading) return <p className="text-center">Loading reviews...</p>;
+  const handleNextPage = () => {
+    if (currentPage < totalPages && !loading) {
+      setPage((p) => Math.min(totalPages, p + 1));
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1 && !loading) {
+      setPage((p) => Math.max(1, p - 1));
+    }
+  };
+
+  if (loading && reviews.length === 0)
+    return <p className="text-center">Loading reviews...</p>;
 
   return (
     <>
@@ -185,33 +221,69 @@ export default function Reviews() {
       <PageBreadcrumb pageTitle="Reviews & Feedback" />
 
       <ComponentCard>
-        <div className="flex items-center justify-between">
-          <Select
-            options={[
-              { value: "all", label: "All Reviews" },
-              { value: "positive", label: "Positive" },
-              { value: "negative", label: "Negative" },
-              { value: "newest", label: "Most Recent" },
-              { value: "oldest", label: "Oldest" },
-            ]}
-            defaultValue="all"
-            onChange={setFilter}
-            className="w-40"
-          />
-          <span className="ms-2 text-sm text-gray-500 dark:text-gray-400">
-            Average Rating: {avg}/5
-          </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Select
+              options={[
+                { value: "all", label: "All Reviews" },
+                { value: "positive", label: "Positive (4★+)" },
+                { value: "negative", label: "Negative (≤2★)" },
+                { value: "newest", label: "Most Recent" },
+                { value: "oldest", label: "Oldest" },
+              ]}
+              defaultValue="newest"
+              onChange={setFilter}
+              className="w-44"
+            />
+            <span className="ms-2 text-sm text-gray-500 dark:text-gray-400">
+              Average Rating: {avg}/5
+            </span>
+          </div>
+
+          {/* Simple server-backed pagination controls */}
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1 || loading}
+              className={`px-3 py-1 text-sm rounded-md border ${
+                currentPage === 1 || loading
+                  ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "text-gray-700 border-gray-300 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-800"
+              }`}
+            >
+              Previous
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage >= totalPages || loading}
+              className={`px-3 py-1 text-sm rounded-md border ${
+                currentPage >= totalPages || loading
+                  ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "text-gray-700 border-gray-300 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-800"
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </ComponentCard>
 
       <div className="space-y-4">
-        {filtered.map((r) => (
+        {paginated.length === 0 && !loading && (
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            No reviews found for this page.
+          </p>
+        )}
+
+        {paginated.map((r) => (
           <div
             key={r._id}
             className="rounded-2xl border border-gray-200 bg-white p-5 dark:bg-white/[0.03]"
           >
             <div className="flex items-start gap-4">
-              {/* <Avatar src={r.userImage} size="small" /> */}
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
                 {getInitials(r.user?.name)}
               </div>
@@ -266,16 +338,15 @@ export default function Reviews() {
                     >
                       ✓
                     </button>
-                    
                   </>
                 )}
                 <button
-                      onClick={() => rejectReview(r)}
-                      className="text-yellow-500"
-                      title="Reject"
-                    >
-                      ✗
-                    </button>
+                  onClick={() => rejectReview(r)}
+                  className="text-yellow-500"
+                  title="Reject"
+                >
+                  ✗
+                </button>
                 <button
                   onClick={() => deleteReview(r._id, r.user?.name)}
                   className="text-red-500"
