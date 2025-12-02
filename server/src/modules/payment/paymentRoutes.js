@@ -1,6 +1,7 @@
 // src/modules/payment/paymentRoutes.js
 import express from "express";
 import PaymentController from "./paymentController.js";
+import OrderRepository from "../order.module/order.repository.js"; // CORRECT PATH
 
 const router = express.Router();
 
@@ -12,15 +13,24 @@ router.post("/:id/pay-instore", async (req, res) => {
   try {
     const orderId = req.params.id;
     
-    console.log(`Marking order ${orderId} for in-store payment`);
+    // Check if OrderRepository exists
+    if (!OrderRepository || !OrderRepository.updatePayment) {
+      throw new Error("OrderRepository is not properly configured");
+    }
     
-    // Simple response for in-store payment
+    // Update order with instore payment method
+    const updatedOrder = await OrderRepository.updatePayment(orderId, {
+      paymentMethod: "instore",
+      paymentStatus: "pending"
+    });
+    
     res.json({ 
       success: true, 
       message: "Order marked for in-store payment successfully",
       orderId: orderId,
       paymentMethod: "instore",
-      status: "pending"
+      status: "pending",
+      order: updatedOrder
     });
     
   } catch (err) {

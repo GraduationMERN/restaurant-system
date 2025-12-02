@@ -3,7 +3,25 @@ import Cart from "../cart/Cart.js";
 import mongoose from "mongoose";
 import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
 // import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
-
+const calculateEstimatedReadyTime = (serviceType, itemsCount, baseTime = 15) => {
+  const now = new Date();
+  
+  // Base preparation time (in minutes)
+  let preparationTime = baseTime;
+  
+  // Add time based on order type
+  if (serviceType === "delivery") preparationTime += 10;
+  else if (serviceType === "dine-in") preparationTime += 5;
+  else if (serviceType === "pickup") preparationTime += 3;
+  
+  // Add time based on items count
+  preparationTime += Math.floor(itemsCount / 2) * 5;
+  
+  // Set maximum
+  preparationTime = Math.min(preparationTime, 45);
+  
+  return new Date(now.getTime() + preparationTime * 60000);
+};
 class OrderService {
 
   // Create order from cart
@@ -113,6 +131,7 @@ class OrderService {
     if (newStatus === "completed") { await earningPoints(orderId); }
     return orderRepo.updateStatus(orderId, newStatus);
   }
+  
 
   async updatePayment(orderId, paymentStatus, paymentMethod = null) {
     const validPaymentStatuses = ["pending", "paid", "failed", "refunded"];

@@ -81,45 +81,86 @@ class PaymentService {
   }
 
   // Internal: process checkout session completion
-  async _onCheckoutSessionCompleted(sessionObject) {
-    const orderId = sessionObject.metadata?.orderId;
-    const sessionId = sessionObject.id;
+  // async _onCheckoutSessionCompleted(sessionObject) {
+  //   const orderId = sessionObject.metadata?.orderId;
+  //   const sessionId = sessionObject.id;
 
-    if (!orderId) {
-      logger.error("Webhook session missing orderId metadata", { sessionId });
-      throw new Error("Missing orderId in session metadata");
-    }
+  //   if (!orderId) {
+  //     logger.error("Webhook session missing orderId metadata", { sessionId });
+  //     throw new Error("Missing orderId in session metadata");
+  //   }
 
-    const order = await OrderRepository.findById(orderId);
-    if (!order) throw new Error("Order not found");
+  //   const order = await OrderRepository.findById(orderId);
+  //   if (!order) throw new Error("Order not found");
 
-    if (order.paymentStatus === "paid") {
-      logger.info("Order already paid - skipping", { orderId });
-      return;
-    }
+  //   if (order.paymentStatus === "paid") {
+  //     logger.info("Order already paid - skipping", { orderId });
+  //     return;
+  //   }
 
-    const mongoSession = await mongoose.startSession();
-    mongoSession.startTransaction();
+  //   const mongoSession = await mongoose.startSession();
+  //   mongoSession.startTransaction();
 
-    try {
-      await OrderRepository.updatePayment(orderId, { 
-        paymentStatus: "paid", 
-        paymentMethod: "card", 
-        paidAt: new Date(),
-        stripeSessionId: sessionId
-      }, { session: mongoSession });
+  //   try {
+  //     await OrderRepository.updatePayment(orderId, { 
+  //       paymentStatus: "paid", 
+  //       paymentMethod: "card", 
+  //       paidAt: new Date(),
+  //       stripeSessionId: sessionId
+  //     }, { session: mongoSession });
 
-      await mongoSession.commitTransaction();
-      mongoSession.endSession();
+  //     await mongoSession.commitTransaction();
+  //     mongoSession.endSession();
 
-      logger.info("Processed checkout.session.completed", { orderId, sessionId });
-    } catch (err) {
-      await mongoSession.abortTransaction();
-      mongoSession.endSession();
-      logger.error("Failed to process checkout.session.completed", { orderId, message: err.message });
-      throw err;
-    }
+  //     logger.info("Processed checkout.session.completed", { orderId, sessionId });
+  //   } catch (err) {
+  //     await mongoSession.abortTransaction();
+  //     mongoSession.endSession();
+  //     logger.error("Failed to process checkout.session.completed", { orderId, message: err.message });
+  //     throw err;
+  //   }
+  // }
+  // In paymentService.js - update _onCheckoutSessionCompleted
+async _onCheckoutSessionCompleted(sessionObject) {
+  const orderId = sessionObject.metadata?.orderId;
+  const sessionId = sessionObject.id;
+
+  if (!orderId) {
+    logger.error("Webhook session missing orderId metadata", { sessionId });
+    throw new Error("Missing orderId in session metadata");
+  }
+
+  const order = await OrderRepository.findById(orderId);
+  if (!order) throw new Error("Order not found");
+
+  if (order.paymentStatus === "paid") {
+    logger.info("Order already paid - skipping", { orderId });
+    return;
+  }
+
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
+
+  try {
+    await OrderRepository.updatePayment(orderId, { 
+      paymentStatus: "paid", 
+      paymentMethod: "card", // Explicitly set payment method
+      paidAt: new Date(),
+      stripeSessionId: sessionId
+    }, { session: mongoSession });
+
+    await mongoSession.commitTransaction();
+    mongoSession.endSession();
+
+    logger.info("Processed checkout.session.completed", { orderId, sessionId });
+  } catch (err) {
+    await mongoSession.abortTransaction();
+    mongoSession.endSession();
+    logger.error("Failed to process checkout.session.completed", { orderId, message: err.message });
+    throw err;
   }
 }
+}
+
 
 export default new PaymentService();

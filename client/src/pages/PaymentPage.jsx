@@ -1,249 +1,329 @@
+// src/pages/PaymentPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createStripeSession, payInStore } from "../redux/slices/paymentSlice";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, CreditCard, Store, CheckCircle } from "lucide-react";
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  // Debug: Log the full structure
-  console.log("Full location state:", location.state);
-  console.log("Order object:", location.state?.order);
-  console.log("Order data:", location.state?.order?.data);
+  // Debug: Log the full location state to see what's being passed
+  console.log("PaymentPage - location.state:", location.state);
   
-  // Extract orderId from the nested structure
-  // The structure is: location.state.order.data.id or location.state.order.data._id
-  const orderData = location.state?.order?.data;
-  const orderId = orderData?.id || orderData?._id || orderData?.orderId;
+  // Get order from navigation state - handle both response structures
+  const orderResponse = location.state?.order;
+  const orderData = orderResponse?.data || orderResponse; // Try .data first, then the whole response
+  const orderId = location.state?.orderId || orderData?.id || orderData?._id;
   
-  // Also check if there's a direct orderId (though it's undefined in your case)
-  const directOrderId = location.state?.orderId;
+  console.log("PaymentPage - orderResponse:", orderResponse);
+  console.log("PaymentPage - orderData:", orderData);
+  console.log("PaymentPage - orderId:", orderId);
   
-  console.log("Extracted orderId:", orderId);
-  console.log("Direct orderId:", directOrderId);
-  
-  // Add safe destructuring with fallbacks
+  // Get cart data as fallback
   const { products = [], totalPrice = 0 } = useSelector((state) => state.cart || {});
-  
-  // Add safe destructuring for payment state with fallbacks
   const paymentState = useSelector((state) => state.payment || {});
-  const { 
-    loading = false, 
-    error = null, 
-    successMessage = null, 
-    stripeSession = null 
-  } = paymentState;
+  const { loading = false, error = null, stripeSession = null } = paymentState;
   
+  // State
   const [paymentMethod, setPaymentMethod] = useState("online");
-  const [isChecking, setIsChecking] = useState(true);
+  const [branchName, setBranchName] = useState("El Shatby Outlet");
+  const [localError, setLocalError] = useState("");
 
+  // Handle stripe redirect
   useEffect(() => {
-    console.log("Checking for orderId:", orderId);
-    
-    if (orderId) {
-      console.log("Order found! ID:", orderId);
-      setIsChecking(false);
-    } else {
-      console.warn("No orderId found. Full location state:", location.state);
-      
-      // Try to extract more deeply
-      const deepOrderId = location.state?.order?.data?.id || 
-                          location.state?.order?.data?._id ||
-                          location.state?.order?.id;
-      
-      if (deepOrderId) {
-        console.log("Found orderId deeply:", deepOrderId);
-        setIsChecking(false);
-        // We could set a state to use this, but for now we'll let the component handle it
-      } else {
-        console.error("No order ID found at all. Redirecting to checkout.");
-        alert("No order found. Please complete checkout first.");
-        navigate("/checkout");
-      }
-    }
-
-    // Redirect to Stripe if session URL is available
     if (stripeSession?.url) {
       window.location.href = stripeSession.url;
     }
-  }, [stripeSession, orderId, navigate, location.state]);
+  }, [stripeSession]);
 
-//   const handlePayment = async () => {
-//     if (!orderId) {
-//       alert("Order not found. Please complete checkout first.");
-//       navigate("/checkout");
-//       return;
-//     }
-
-//     try {
-//       if (paymentMethod === "online") {
-//         await dispatch(createStripeSession({ orderId })).unwrap();
-//       } else {
-//         await dispatch(payInStore({ orderId })).unwrap();
-//         alert("Order confirmed for in-store payment!");
-//         navigate("/");
-//       }
-//     } catch (err) {
-//       console.error("Payment failed:", err);
-//       alert(err.message || "Payment failed. Please try again.");
-//     }
-//   };
-const handlePayment = async () => {
-  if (!orderId) {
-    alert("Order not found. Please complete checkout first.");
-    navigate("/checkout");
-    return;
-  }
-
-  console.log("Attempting payment with orderId:", orderId);
-  console.log("Payment method:", paymentMethod);
-
-  try {
-    if (paymentMethod === "online") {
-      console.log("Calling createStripeSession with orderId:", orderId);
-      const result = await dispatch(createStripeSession({ orderId })).unwrap();
-      console.log("Stripe session result:", result);
-    } else {
-      console.log("Calling payInStore with orderId:", orderId);
-      const result = await dispatch(payInStore({ orderId })).unwrap();
-      console.log("Pay in store result:", result);
-      alert("Order confirmed for in-store payment!");
-      navigate("/");
+  // Check for orderId on component mount
+  useEffect(() => {
+    if (!orderId) {
+      console.error("No orderId found. Location state:", location.state);
+      setLocalError("Order not found. Please complete checkout first.");
+      
+      // Redirect after 3 seconds
+      const timer = setTimeout(() => {
+        navigate("/checkout");
+      }, 3000);
+      
+      return () => clearTimeout(timer);
     }
-  } catch (err) {
-    console.error("Payment failed:", err);
-    console.error("Error details:", err.message, err.stack);
-    alert(err.message || "Payment failed. Please try again.");
-  }
-};
-  // Show loading/checking state
-  if (isChecking) {
+  }, [orderId, navigate, location.state]);
+
+  // Handle payment
+  const handlePayment = async () => {
+    if (!orderId) {
+      setLocalError("Order not found. Please complete checkout first.");
+      return;
+    }
+
+    try {
+      if (paymentMethod === "online") {
+        await dispatch(createStripeSession({ orderId })).unwrap();
+      } else {
+        await dispatch(payInStore({ orderId })).unwrap();
+        navigate("/cashier-confirmation", { 
+          state: { 
+            orderId, 
+            order: orderData 
+          } 
+        });
+      }
+    } catch (err) {
+      console.error("Payment failed:", err);
+      setLocalError(err.message || "Payment failed. Please try again.");
+    }
+  };
+
+  // If there's an error with orderId, show error message
+  if (localError && !orderId) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600">Loading order details...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="h-16 w-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-500 dark:text-red-400 text-2xl font-bold">!</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Order Error</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{localError}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
+            Redirecting to checkout in a few seconds...
+          </p>
+          <button
+            onClick={() => navigate("/checkout")}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            Go to Checkout Now
+          </button>
         </div>
       </div>
     );
   }
 
+  // Calculate totals - use order data if available, otherwise use cart
+  const orderItems = orderData?.items || products;
+  const subtotal = orderData?.subtotal || orderData?.totalAmount || totalPrice;
+  const vat = orderData?.vat || 0;
+  const total = subtotal + vat;
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Complete Payment</h1>
-
-      {/* Error display */}
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
-          {error}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </button>
+          </div>
         </div>
-      )}
-      
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded">
-          {successMessage}
-        </div>
-      )}
+      </div>
 
-      {/* Order ID Display */}
-      {orderId && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-          <p className="font-medium text-blue-800">
-            Order Reference: <span className="font-bold">{orderId}</span>
-          </p>
-          {orderData?.totalAmount && (
-            <p className="font-medium text-blue-800 mt-1">
-              Order Total: <span className="font-bold">EGP {orderData.totalAmount}</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Order ID Display */}
+        {orderId && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+            <p className="text-blue-800 dark:text-blue-300 text-center font-medium">
+              Order Reference: <span className="font-bold">{orderId}</span>
             </p>
-          )}
-        </div>
-      )}
-
-      <div className="border rounded-lg p-4 mb-6">
-        <h2 className="text-xl font-semibold mb-2">Order Summary</h2>
-        {products.length === 0 ? (
-          <p className="text-gray-500">No items in order</p>
-        ) : (
-          <ul>
-            {products.map((item) => (
-              <li key={item.productId} className="flex justify-between mb-2 py-2 border-b">
-                <span className="font-medium">{item.name} × {item.quantity}</span>
-                <span className="font-medium">EGP {item.price * item.quantity}</span>
-              </li>
-            ))}
-          </ul>
+          </div>
         )}
-        <div className="flex justify-between font-bold mt-4 pt-4 border-t">
-          <span className="text-lg">Total Amount:</span>
-          <span className="text-lg">EGP {totalPrice}</span>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Branch Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Branch</h2>
+              <div className="flex items-start">
+                <div className="bg-orange-100 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 rounded-lg p-3 mr-4">
+                  <Store className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">From Branch:</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{branchName}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Payment Methods</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Online Payment Option */}
+                <button
+                  onClick={() => setPaymentMethod("online")}
+                  className={`p-6 rounded-xl border-2 transition-all ${
+                    paymentMethod === "online"
+                      ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
+                      : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg mr-4 ${
+                      paymentMethod === "online"
+                        ? "bg-orange-500 dark:bg-orange-400 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    }`}>
+                      <CreditCard className="w-6 h-6" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className={`font-semibold ${
+                        paymentMethod === "online"
+                          ? "text-orange-500 dark:text-orange-400"
+                          : "text-gray-900 dark:text-white"
+                      }`}>
+                        Online
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pay securely online</p>
+                    </div>
+                    {paymentMethod === "online" && (
+                      <div className="ml-auto">
+                        <CheckCircle className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+
+                {/* In-store Payment Option */}
+                <button
+                  onClick={() => setPaymentMethod("instore")}
+                  className={`p-6 rounded-xl border-2 transition-all ${
+                    paymentMethod === "instore"
+                      ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
+                      : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg mr-4 ${
+                      paymentMethod === "instore"
+                        ? "bg-orange-500 dark:bg-orange-400 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    }`}>
+                      <Store className="w-6 h-6" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className={`font-semibold ${
+                        paymentMethod === "instore"
+                          ? "text-orange-500 dark:text-orange-400"
+                          : "text-gray-900 dark:text-white"
+                      }`}>
+                        In-store
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pay at the cashier</p>
+                    </div>
+                    {paymentMethod === "instore" && (
+                      <div className="ml-auto">
+                        <CheckCircle className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              </div>
+
+              {/* Notification Message */}
+              <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <p className="text-blue-800 dark:text-blue-300 text-center">
+                  We will notify you once your order is ready.{" "}
+                  {paymentMethod === "instore" && (
+                    <span className="font-semibold">Kindly pay at the cashier.</span>
+                  )}
+                </p>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="lg:col-span-5">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-4">
+              {/* Order Summary */}
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Total bill</h2>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">EGP {subtotal.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">VAT</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">EGP {vat.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
+                  <span className="text-lg font-bold text-orange-500 dark:text-orange-400">EGP {total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Payment Button */}
+              <button
+                onClick={handlePayment}
+                disabled={loading || !orderId}
+                className={`w-full mt-8 py-4 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
+                  paymentMethod === "online"
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : paymentMethod === "online" ? (
+                  "Pay Online"
+                ) : (
+                  "Pay at the cashier"
+                )}
+              </button>
+
+              {/* Order Items Summary */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400">
+                    <span className="font-medium">Order Items ({orderItems.length})</span>
+                    <svg className="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    {orderItems.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div className="flex items-center">
+                          <span className="text-gray-600 dark:text-gray-400">{item.quantity}x</span>
+                          <span className="ml-2 text-gray-800 dark:text-gray-200 truncate max-w-[150px]">{item.name}</span>
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          EGP {(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="border rounded-lg p-4 mb-6">
-        <h2 className="text-xl font-semibold mb-2">Select Payment Method</h2>
-        <div className="flex flex-col gap-3">
-          <label className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="online"
-              checked={paymentMethod === "online"}
-              onChange={() => setPaymentMethod("online")}
-              className="h-5 w-5"
-            />
-            <div>
-              <span className="font-medium">Online Payment</span>
-              <p className="text-sm text-gray-500">Pay securely with credit/debit card</p>
-            </div>
-          </label>
-          
-          <label className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="instore"
-              checked={paymentMethod === "instore"}
-              onChange={() => setPaymentMethod("instore")}
-              className="h-5 w-5"
-            />
-            <div>
-              <span className="font-medium">Pay at Cashier</span>
-              <p className="text-sm text-gray-500">Pay when you pick up your order</p>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <button
-        onClick={handlePayment}
-        disabled={loading || !orderId}
-        className={`${
-          paymentMethod === "online" 
-            ? "bg-blue-600 hover:bg-blue-700" 
-            : "bg-green-600 hover:bg-green-700"
-        } text-white py-3 px-4 rounded-lg w-full disabled:opacity-50 font-medium transition-colors`}
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            Processing...
-          </span>
-        ) : paymentMethod === "online" ? (
-          "Pay Online with Stripe"
-        ) : (
-          "Confirm Pay at Cashier"
-        )}
-      </button>
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate("/checkout")}
-        className="mt-4 text-gray-600 hover:text-gray-800 font-medium"
-      >
-        ← Back to Checkout
-      </button>
     </div>
   );
 };
