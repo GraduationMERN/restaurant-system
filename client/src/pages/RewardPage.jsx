@@ -32,7 +32,13 @@ export default function RewardPage() {
 
   const maxMilestone = milestones[milestones.length - 1] || 1;
   const progress = Math.min((points / maxMilestone) * 100, 100);
+  const sortedRewards = [...rewards].sort((a, b) => a.pointsRequired - b.pointsRequired);
 
+  const groupedRewards = sortedRewards.reduce((acc, item) => {
+    if (!acc[item.pointsRequired]) acc[item.pointsRequired] = [];
+    acc[item.pointsRequired].push(item);
+    return acc;
+  }, {});
   const canRedeem = (required) => points >= required;
 
   const handleRedeem = async (item) => {
@@ -106,70 +112,79 @@ export default function RewardPage() {
         {rewards.length === 0 ? (
           <p className="text-gray-500 text-center mt-10 dark:text-gray-200">No rewards found.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+          Object.entries(groupedRewards).map(([pointsRequired, items]) => (
+              <div key={pointsRequired} className="mb-10">
 
-            {rewards.map((item) => {
-              const product = item.productId;
+                {/* Title */}
+                <h2 className="text-xl font-bold text-secondary mb-4 flex items-center gap-2">
+                  {pointsRequired}
+                  <FaStarOfLife className="text-secondary" />
+                </h2>
 
-              return (
-                <div
-                  onClick={() => {
-                    setSelectedReward(item);
-                    setShowConfirm(true);
-                  }
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+                  {items.map((item) => {
+                    const product = item.productId;
+                    return (
+                      <div
+                        onClick={() => {
+                          setSelectedReward(item);
+                          setShowConfirm(true);
+                        }
 
-                  }
-                  key={item._id}
-                  className={`${canRedeem(item.pointsRequired) ? "opacity-100" : "opacity-70"
-                    } group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2
+                        }
+                        key={item._id}
+                        className={`${canRedeem(item.pointsRequired) ? "opacity-100" : "opacity-70"
+                          } group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2
                     h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col lg:justify-between
                     hover:shadow-lg transition duration-200 overflow-hidden`}
-                >
-
-                  <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center gap-4">
-                    {product?.imgURL ? (
-                      <img
-                        src={product.imgURL}
-                        alt={product.name}
-                        className="rounded-xl object-cover shadow-sm"
-                      />
-                    ) : (
-                      <div className="object-cover bg-gray-100 rounded-xl flex items-center justify-center shadow-inner">
-                        <Gift className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* RIGHT SIDE */}
-                  <div className="flex lg:flex-col justify-between w-1/2 lg:w-full lg:relative">
-
-                    <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-secondary">
-
-                      <span
-                        className={`text-sm font-semibold flex-1 ${canRedeem(item.pointsRequired)
-                          ? "text-on-surface"
-                          : "text-muted"
-                          }`}
                       >
-                        {product?.name || "Reward"}
-                      </span>
-                      {item.pointsRequired}
-                    </h3>
-                    {/* FULL HEIGHT BUTTON */}
-                    <button
-                      disabled={!canRedeem(item.pointsRequired)}
-                      className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl  ${canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-                    >
-                      <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
-                        +
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
 
-          </div>
+                        <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center gap-4">
+                          {product?.imgURL ? (
+                            <img
+                              src={product.imgURL}
+                              alt={product.name}
+                              className="rounded-xl object-cover shadow-sm"
+                            />
+                          ) : (
+                            <div className="object-cover bg-gray-100 rounded-xl flex items-center justify-center shadow-inner">
+                              <Gift className="text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* RIGHT SIDE */}
+                        <div className="flex lg:flex-col justify-between w-1/2 lg:w-full lg:relative">
+
+                          <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-secondary">
+
+                            <span
+                              className={`text-sm font-semibold flex-1 ${canRedeem(item.pointsRequired)
+                                ? "text-on-surface"
+                                : "text-muted"
+                                }`}
+                            >
+                              {product?.name || "Reward"}
+                            </span>
+                            {item.pointsRequired}
+                          </h3>
+                          {/* FULL HEIGHT BUTTON */}
+                          <button
+                            disabled={!canRedeem(item.pointsRequired)}
+                            className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl  ${canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                          >
+                            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
+                              +
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          
         )}
 
       </div>

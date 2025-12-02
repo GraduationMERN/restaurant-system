@@ -81,10 +81,15 @@ export default function RewardOrders() {
 
                       <TableCell>
                         <Select
-
+                          className="w-32"
+                          variant="pill"
+                          size="sm"
+                          color={row.status === "pending" ? "warning" : row.status === "ready" ? "success" : "info"}
                           options={STATUS_OPTIONS}
                           defaultValue={row.status}
-                          onChange={(val) => updateOrderStatus(row._id, val)}
+                          onChange={(val) => updateOrderStatus(row._id, val)
+
+                          }
                         />
                       </TableCell>
 
