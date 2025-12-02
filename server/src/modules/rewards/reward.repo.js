@@ -28,5 +28,18 @@ const createRewardRedemption = async (data, session = null) => {
   }
   return RewardRedemption.create(data);
 };
+const getAllRewardOrderRepo = async() =>{
+  return await RewardOrder.find()
+  .populate({
+    path: "rewardId",
+    populate: { path: "productId" }
+  })
+  .populate("userId")
+}
+
+const getRewardOrderByIdRepo = async (id) => {
+  return await RewardOrder.findById(id).populate('rewardId').populate('productId').populate('userId');
+}
+export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward,createRewardOrderRepo,getAllRewardOrderRepo,getRewardOrderByIdRepo};
 
 export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward, createRewardRedemption};
