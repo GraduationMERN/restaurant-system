@@ -1,22 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
-import Avatar from "../../components/ui/avatar/Avatar";
 import Select from "../../components/form/Select";
 import api from "../../api/axios";
 import io from "socket.io-client";
 import { format } from "timeago.js";
-// import Stars from "../../components/ui/Stars";
-import { Stars, X } from "lucide-react";
-
-const socket = io("http://localhost:8000");
 
 export default function Reviews() {
   const [filter, setFilter] = useState("all");
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const socketRef = useRef(null);
 
   // Fetch data
   async function loadReviews() {
@@ -26,14 +22,66 @@ export default function Reviews() {
   }
 
   useEffect(() => {
+    // Initialize socket connection
+    socketRef.current = io("http://localhost:8000");
+
+    const socket = socketRef.current;
+
+    // Register with admin room when connected
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      // Join admin room for notifications
+      socket.emit("joinAdmin");
+    });
+
+    // Load initial reviews
     loadReviews();
 
-    // Listen for new reviews live
-    // socket.on("new_review", (newReview) => {
-    //   setReviews((prev) => [newReview, ...prev]);
-    // });
+    // Listen for new reviews
+    socket.on("new_review", (newReview) => {
+      console.log("New review received:", newReview);
+      setReviews((prev) => {
+        // Check if review already exists to avoid duplicates
+        const exists = prev.some((r) => r._id === newReview._id);
+        if (exists) return prev;
+        return [newReview, ...prev];
+      });
+    });
 
-    return () => socket.off("new_review");
+    // Listen for review updates (status changes, etc.)
+    socket.on("review_updated", (updatedReview) => {
+      console.log("Review updated:", updatedReview);
+      setReviews((prev) =>
+        prev.map((r) =>
+          r._id === updatedReview._id ? { ...r, ...updatedReview } : r
+        )
+      );
+    });
+
+    // Listen for review deletions
+    socket.on("review_deleted", (reviewId) => {
+      console.log("Review deleted:", reviewId);
+      setReviews((prev) => prev.filter((r) => r._id !== reviewId));
+    });
+
+    // Listen for admin notifications
+    socket.on("notification", (notification) => {
+      console.log("Admin notification:", notification);
+      // You can show a toast notification here if needed
+      if (notification.type === "review") {
+        // Handle review-specific notifications
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("new_review");
+      socket.off("review_updated");
+      socket.off("review_deleted");
+      socket.off("notification");
+      socket.off("connect");
+      socket.disconnect();
+    };
   }, []);
 
   const avg =
