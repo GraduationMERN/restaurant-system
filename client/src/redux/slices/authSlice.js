@@ -142,6 +142,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.error = null;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loadingVerifyOtp = false;
@@ -159,6 +162,9 @@ const authSlice = createSlice({
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
         state.error = null;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loadingLogin = false;
@@ -177,11 +183,19 @@ const authSlice = createSlice({
         state.loadingGetMe = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loadingGetMe = false;
         state.user = null;
         state.isAuthenticated = false;
+        if (typeof window !== "undefined") {
+          if (action.payload === "Unauthorized") {
+            window.localStorage.removeItem("hasSession");
+          }
+        }
         if (action.payload && action.payload !== "Unauthorized") {
           state.error = action.payload;
         }
@@ -198,6 +212,9 @@ const authSlice = createSlice({
         if (action.payload?.user) {
           state.user = action.payload.user;
           state.isAuthenticated = true;
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem("hasSession", "true");
+          }
         }
         state.error = null;
       })
@@ -205,6 +222,9 @@ const authSlice = createSlice({
         state.loadingRefresh = false;
         state.user = null;
         state.isAuthenticated = false;
+         if (typeof window !== "undefined") {
+          window.localStorage.removeItem("hasSession");
+        }
         if (action.payload && action.payload !== "Unauthorized") {
           state.error = action.payload;
         }
@@ -221,6 +241,9 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.error = null;
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("hasSession");
+        }
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loadingLogout = false;

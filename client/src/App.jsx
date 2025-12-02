@@ -28,8 +28,15 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getMe());
-  }, []);
+    // Only try to auto-fetch the current user if we know
+    // there was a previous authenticated session.
+    if (typeof window !== "undefined") {
+      const hasSession = window.localStorage.getItem("hasSession") === "true";
+      if (hasSession) {
+        dispatch(getMe());
+      }
+    }
+  }, [dispatch]);
 
   return (
     <BrowserRouter>

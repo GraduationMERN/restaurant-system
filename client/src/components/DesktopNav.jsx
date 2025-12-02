@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   ShoppingCart,
+  User,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
@@ -15,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import LogoutButton from "./ui/button/LogoutButton";
+import LoginButton from "./ui/button/LoginButton";
 
 export default function CombinedNavbar() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -105,7 +107,7 @@ export default function CombinedNavbar() {
 
           <DesktopNavItem
             to="/cart"
-            icon={<ShoppingCart  size={20} />}
+            icon={<ShoppingCart size={20} />}
             label={t("cart")}
             active={isActive("/cart")}
             isOpen={isOpen}
@@ -139,22 +141,16 @@ export default function CombinedNavbar() {
             onClick={handleNavClick}
           />
           {isAuthenticated ? (
-            <LogoutButton />
+            <LogoutButton isOpen={isOpen} />
           ) : (
-            <DesktopNavItem
-              to="/login"
-              icon={<LogInIcon size={20} />}
-              label={t("Login")}
-              active={isActive("/login")}
-              isOpen={isOpen}
-            />
+            <LoginButton isOpen={isOpen} />
           )}
         </div>
       </aside>
 
       {/* MOBILE NAV (fixed bottom) */}
       <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
-          <div className="w-full h-14 flex justify-around items-center px-4">
+        <div className="w-full h-14 flex justify-around items-center px-4">
           {/* Language toggles (mobile) */}
           {i18n.language === "en" && (
             <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
@@ -168,15 +164,45 @@ export default function CombinedNavbar() {
             <ThemeToggleButton />
           </div>
 
-          <MobileNavItem to="/" icon={<Home size={20} />} label={t("home")} active={isActive("/")} onClick={handleNavClick} />
+          <MobileNavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t("home")}
+            active={isActive("/")}
+            onClick={handleNavClick}
+          />
 
-          <MobileNavItem to="/menu" icon={<Utensils size={20} />} label={t("menu")} active={isActive("/menu")} onClick={handleNavClick} />
+          <MobileNavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label={t("menu")}
+            active={isActive("/menu")}
+            onClick={handleNavClick}
+          />
 
-          <MobileNavItem to="/orders" icon={<Clock4 size={20} />} label={t("orders")} active={isActive("/orders")} onClick={handleNavClick} />
+          <MobileNavItem
+            to="/orders"
+            icon={<Clock4 size={20} />}
+            label={t("orders")}
+            active={isActive("/orders")}
+            onClick={handleNavClick}
+          />
 
-          <MobileNavItem to="/reviews" icon={<Star size={20} />} label={t("reviews")} active={isActive("/reviews")} onClick={handleNavClick} />
+          <MobileNavItem
+            to="/reviews"
+            icon={<Star size={20} />}
+            label={t("reviews")}
+            active={isActive("/reviews")}
+            onClick={handleNavClick}
+          />
 
-          <MobileNavItem to="/rewards" icon={<Gift size={20} />} label={t("rewards")} active={isActive("/rewards")} onClick={handleNavClick} />
+          <MobileNavItem
+            to="/rewards"
+            icon={<Gift size={20} />}
+            label={t("rewards")}
+            active={isActive("/rewards")}
+            onClick={handleNavClick}
+          />
         </div>
       </div>
     </>
