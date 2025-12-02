@@ -4,6 +4,46 @@ import { notificationService } from "../../../server.js";
 // ==============================
 // CREATE ORDER FROM CART
 // ==============================
+// export const createOrderFromCart = async (req, res) => {
+//   try {
+//     const { 
+//       cartId, 
+//       serviceType,
+//       tableNumber,
+//       notes,
+//       paymentMethod,
+//       customerInfo 
+//     } = req.body;
+
+//     if (!cartId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "cartId is required"
+//       });
+//     }
+
+//     const order = await orderService.createOrderFromCart({
+//       cartId,
+//       serviceType,
+//       tableNumber,
+//       notes,
+//       paymentMethod,
+//       customerInfo,
+//     });
+
+//     // Optional Notification
+//     await notificationService?.sendToAdmin({
+//       title: "New Order",
+//       message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
+//       orderId: order._id,
+//     });
+
+//     res.status(201).json({ success: true, data: order });
+//   } catch (err) {
+//     console.error("Create order from cart error:", err);
+//     res.status(400).json({ success: false, message: err.message });
+//   }
+// };
 export const createOrderFromCart = async (req, res) => {
   try {
     const { 
@@ -36,9 +76,18 @@ export const createOrderFromCart = async (req, res) => {
       title: "New Order",
       message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
       orderId: order._id,
+      estimatedReadyTime: order.formattedEstimatedTime, // Add estimated time to notification
     });
 
-    res.status(201).json({ success: true, data: order });
+    res.status(201).json({ 
+      success: true, 
+      data: {
+        ...order.toObject(),
+        formattedEstimatedTime: order.formattedEstimatedTime, // Include formatted time in response
+        remainingMinutes: order.remainingMinutes, // Include remaining minutes
+        timeStatus: order.getTimeStatus(), // Include user-friendly time status
+      }
+    });
   } catch (err) {
     console.error("Create order from cart error:", err);
     res.status(400).json({ success: false, message: err.message });
