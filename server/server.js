@@ -24,10 +24,19 @@ io.on("connection", (socket) => {
     socket.join(userId);
     console.log(`User ${userId} joined room ${userId}`);
   });
+
+  // Allow admins to join the admin room
+  socket.on("joinAdmin", () => {
+    socket.join("admin");
+    console.log(`Socket ${socket.id} joined admin room`);
+  });
 });
 
 // Create global notification service
 export const notificationService = new NotificationService(io);
+
+// Export io instance for use in other modules
+export { io };
 
 // Start the HTTP + Socket.IO server
 server.listen(PORT, () => {

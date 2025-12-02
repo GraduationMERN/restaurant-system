@@ -1,4 +1,5 @@
 import { SidebarProvider, useSidebar } from "../../context/SidebarContext";
+import { NotificationProvider } from "../../context/NotificationContext";
 import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
@@ -29,7 +30,9 @@ const LayoutContent = () => {
 const AppLayout = () => {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <NotificationProvider>
+        <LayoutContent />
+      </NotificationProvider>
     </SidebarProvider>
   );
 };

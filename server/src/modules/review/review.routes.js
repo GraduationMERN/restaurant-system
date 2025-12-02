@@ -25,7 +25,7 @@ router.get("/user/:userId", getReviewsByUser);
 
 // Protected routes
 router.post("/",optionalAuthMiddleware,  uploadCloud.array("photos", 3), createReview);
-router.put("/:id",roleMiddleware('admin'),  updateReview);
-router.delete("/:id",roleMiddleware('admin'), deleteReview);
+router.put("/:id",  updateReview);
+router.delete("/:id", deleteReview);
 
 export default router;
