@@ -23,6 +23,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 
 import CashierConfirmation from "./pages/CashierConfirmation";
+import { SettingsProvider } from "./context/SettingContext";
 function App() {
   const dispatch = useDispatch();
 
@@ -33,6 +34,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+       <SettingsProvider>
       <Layout>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -57,6 +59,7 @@ function App() {
           </Route>
         </Routes>
       </Layout>
+      </SettingsProvider>
       <Chatbot />
     </BrowserRouter>
   );
