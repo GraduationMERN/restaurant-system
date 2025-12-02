@@ -37,8 +37,24 @@ class NotificationService {
       });
     }
     async sendToAdmin(notification) {
-        this.io.to("admin").emit("notification", notification);
+      if (!this.io) return null;
+
+      // Persist admin notification for listing and mark-as-read features
+      try {
+        const created = await NotificationRepository.create({
+          ...notification,
+          // admin-wide notifications have no userId
+          userId: null,
+        });
+
+        // Emit created notification (with _id and createdAt) to admin room
+        this.io.to("admin").emit("notification", created);
+        return created;
+      } catch (e) {
+        console.error("Failed to persist admin notification", e);
+        return null;
       }
+    }
   
     getUserNotifications(userId) {
       return NotificationRepository.getUserNotifications(userId);

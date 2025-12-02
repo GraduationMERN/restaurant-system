@@ -33,7 +33,7 @@ export default function Rewards() {
   const dispatch = useDispatch()
   const { reward, loading, error } = useSelector((state) => state.reward);
   const { list } = useSelector((state) => state.product);
-
+  
   const rewards = reward || []
   useEffect(() => {
     dispatch(getAllRewards())
