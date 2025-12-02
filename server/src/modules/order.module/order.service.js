@@ -124,7 +124,7 @@ class OrderService {
   async getOrderByCartId(cartId) { return orderRepo.findByCartId(cartId); }
   async getActiveOrders() { return orderRepo.findActiveOrders(); }
   async getAllOrders() { return orderRepo.getAllOrders(); }
-
+  async orderUpdate(orderId, updates) { return orderRepo.update(orderId, updates); }
   async updateStatus(orderId, newStatus) {
     const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
     if (!validStatuses.includes(newStatus)) {throw new Error("Invalid order status");}
