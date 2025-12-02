@@ -21,11 +21,19 @@ export default function Reviews() {
   // Socket ref for live updates
   const socketRef = useRef(null);
 
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Fetch all reviews once (we'll paginate on the client)
   async function loadReviews() {
     try {
       setLoading(true);
-      const { data } = await api.get("/api/reviews");
+      const { data } = await api.get("/api/reviews", {
+        params: {
+          // ask backend for a large batch so admin can paginate client-side
+          limit: 1000,
+          sort: "-createdAt", // newest first
+        },
+      });
       setReviews(data.reviews || []);
       setPage(1); // reset to first page
     } catch (error) {
@@ -38,7 +46,7 @@ export default function Reviews() {
 
   useEffect(() => {
     // Initialize socket connection
-    socketRef.current = io("http://localhost:8000");
+    socketRef.current = io(BASE_URL);
 
     const socket = socketRef.current;
 
