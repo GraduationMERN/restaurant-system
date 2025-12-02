@@ -1,4 +1,4 @@
-import { Home, Utensils, Clock4, Star, Gift } from "lucide-react";
+import { Home, Utensils, Clock4, Star, Gift,ShoppingCart  } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 
@@ -44,6 +44,16 @@ export default function Navbar() {
         }`}
       >
         <Utensils size={20} />
+        <span className="text-xs">{t("menu")}</span>
+      </Link>
+
+      <Link 
+        to="/cart" 
+        className={`flex flex-col items-center transition-colors ${
+          isActive('/cart') ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'
+        }`}
+      >
+        <ShoppingCart  size={20} />
         <span className="text-xs">{t("menu")}</span>
       </Link>
 

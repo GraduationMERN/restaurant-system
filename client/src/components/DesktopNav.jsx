@@ -7,6 +7,7 @@ import {
   LogInIcon,
   Menu,
   X,
+  ShoppingCart,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
@@ -78,7 +79,7 @@ export default function CombinedNavbar() {
               </>
             )}
 
-            <div className="px-2 py-2">
+            <div className="">
               <ThemeToggleButton />
             </div>
           </div>
@@ -98,6 +99,15 @@ export default function CombinedNavbar() {
             icon={<Utensils size={20} />}
             label={t("menu")}
             active={isActive("/menu")}
+            isOpen={isOpen}
+            onClick={handleNavClick}
+          />
+
+          <DesktopNavItem
+            to="/cart"
+            icon={<ShoppingCart  size={20} />}
+            label={t("cart")}
+            active={isActive("/cart")}
             isOpen={isOpen}
             onClick={handleNavClick}
           />

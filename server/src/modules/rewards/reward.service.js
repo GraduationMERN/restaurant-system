@@ -93,7 +93,6 @@ export async function earningPoints(orderId) {
     } catch (error) {
         throw new Error(`Earning points failed: ${error.message}`);
     }
-
 }
 
 // Reward order

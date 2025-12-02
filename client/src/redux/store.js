@@ -7,12 +7,15 @@ import cartReducer from "./slices/cartSlice";
 import reviewReducer from "./slices/reviewSlice";
 import chatbotReducer from "./slices/chatbotSlice";
 import orderReducer from "./slices/orderSlice";
+import paymentReducer from "./slices/paymentSlice";
 
+import rewardOrderReducer from "./slices/rewardOrderSlice";
 
 
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
+    rewardOrders: rewardOrderReducer,
     auth: authReducer,
     product: productReducer,
     category: categoryReducer,
@@ -20,5 +23,6 @@ export const store = configureStore({
     reviews: reviewReducer,
     chatbot: chatbotReducer,
     order: orderReducer,
+    payment: paymentReducer,
   },
 });

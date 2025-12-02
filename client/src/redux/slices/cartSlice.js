@@ -1,17 +1,14 @@
+// src/redux/slices/cartSlice.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "../../api/axios";
 
-/* ==========================
-   ASYNC THUNKS
-   ========================== */
-
-// Fetch cart for user/guest
+// Get user or guest cart
 export const getCartForUser = createAsyncThunk("cart/fetch", async () => {
   const res = await api.get("/api/cart");
   return res.data;
 });
 
-// Add product to cart
+// Add product to cart (or update if exists)
 export const addToCart = createAsyncThunk(
   "cart/add",
   async ({ productId, quantity, selectedOptions }) => {
@@ -24,76 +21,39 @@ export const addToCart = createAsyncThunk(
   }
 );
 
-// Remove product
+// Remove product from cart
 export const deleteProductFromCart = createAsyncThunk(
-  "cart/remove",
+  "cart/deleteProduct",
   async (productId) => {
     const res = await api.delete(`/api/cart/${productId}`);
-    return res.data.cart;
+    return res.data;
   }
 );
 
-// Update quantity
+// Update quantity of item
 export const updateCartQuantity = createAsyncThunk(
-  "cart/updateQty",
+  "cart/updateQuantity",
   async ({ productId, newQuantity }) => {
     const res = await api.put(`/api/cart/${productId}`, { newQuantity });
-    return res.data.cart;
+    return res.data;
   }
 );
 
-// Clear cart
+// Clear whole cart
 export const clearCart = createAsyncThunk("cart/clear", async () => {
-  const res = await api.delete("/api/cart/clear");
-  return res.data.cart;
+  const res = await api.delete("/api/cart/clear/");
+  return res.data;
 });
 
-/* ==========================
-   HELPER
-   ========================== */
-const calculateTotal = (products) => {
-  return products.reduce((acc, item) => acc + item.price * item.quantity, 0);
-};
-
-/* ==========================
-   SLICE
-   ========================== */
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    products: [
-      // Static items for testing
-      {
-        _id: "item1",
-        productId: {
-          _id: "prod1",
-          name: "Cheeseburger",
-          imgURL: "https://via.placeholder.com/150",
-          price: 50,
-          options: [],
-        },
-        quantity: 2,
-        price: 50,
-        selectedOptions: {},
-      },
-      {
-        _id: "item2",
-        productId: {
-          _id: "prod2",
-          name: "Coke",
-          imgURL: "https://via.placeholder.com/150",
-          price: 15,
-          options: [],
-        },
-        quantity: 1,
-        price: 15,
-        selectedOptions: {},
-      },
-    ],
-    totalPrice: 50 * 2 + 15 * 1, // 115
+    products: [],
+    totalPrice: 0,
     loading: false,
     error: null,
     successMessage: null,
+    _id: null,
   },
   reducers: {
     clearAlerts(state) {
@@ -110,7 +70,8 @@ const cartSlice = createSlice({
       .addCase(getCartForUser.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload?.products || [];
-        state.totalPrice = calculateTotal(state.products);
+        state.totalPrice = action.payload?.totalPrice || 0;
+        state._id = action.payload?._id || null;
       })
       .addCase(getCartForUser.rejected, (state, action) => {
         state.loading = false;
@@ -124,7 +85,7 @@ const cartSlice = createSlice({
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload.products;
-        state.totalPrice = calculateTotal(state.products);
+        state.totalPrice = action.payload.totalPrice;
         state.successMessage = "Added to cart successfully";
       })
       .addCase(addToCart.rejected, (state, action) => {
@@ -139,7 +100,7 @@ const cartSlice = createSlice({
       .addCase(deleteProductFromCart.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload.products;
-        state.totalPrice = calculateTotal(state.products);
+        state.totalPrice = action.payload.totalPrice;
         state.successMessage = "Item removed";
       })
       .addCase(deleteProductFromCart.rejected, (state, action) => {
@@ -154,7 +115,7 @@ const cartSlice = createSlice({
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload.products;
-        state.totalPrice = calculateTotal(state.products);
+        state.totalPrice = action.payload.totalPrice;
       })
       .addCase(updateCartQuantity.rejected, (state, action) => {
         state.loading = false;

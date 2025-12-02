@@ -8,10 +8,9 @@ export const createCoupon = async (couponData) => {
   return await coupon.save();
 };
 
-export const findCouponByCode = async (code, restaurantId) => {
+export const findCouponByCode = async (code) => {
   return await Coupon.findOne({ 
     code: code.toUpperCase(), 
-    restaurantId 
   });
 };
 
@@ -19,8 +18,8 @@ export const findCouponById = async (couponId) => {
   return await Coupon.findById(couponId);
 };
 
-export const getAllCoupons = async (restaurantId) => {
-  return await Coupon.find({ restaurantId }).sort({ createdAt: -1 });
+export const getAllCoupons = async () => {
+  return await Coupon.find().sort({ createdAt: -1 });
 };
 
 export const updateCoupon = async (couponId, updateData) => {
