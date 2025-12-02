@@ -40,6 +40,6 @@ const getAllRewardOrderRepo = async() =>{
 const getRewardOrderByIdRepo = async (id) => {
   return await RewardOrder.findById(id).populate('rewardId').populate('productId').populate('userId');
 }
-export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward,createRewardOrderRepo,getAllRewardOrderRepo,getRewardOrderByIdRepo};
+// export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward,createRewardOrderRepo,getAllRewardOrderRepo,getRewardOrderByIdRepo};
 
 export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward, createRewardRedemption};
