@@ -20,6 +20,8 @@ import Chatbot from "./components/chatbot/Chatbot";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import MenuPage from "./pages/MenuPage";
+
 import CashierConfirmation from "./pages/CashierConfirmation";
 function App() {
   const dispatch = useDispatch();
@@ -42,6 +44,7 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/orders" element={<CheckoutPage />} /> 
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/menu" element={<MenuPage />} />
 
           {/* Payment Flow */}
           <Route path="/payment" element={<PaymentPage />} />
