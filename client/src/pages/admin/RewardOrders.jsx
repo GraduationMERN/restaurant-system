@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { getAllRewardOrders, updateRewardOrder, deleteRewardOrder } from "../../redux/slices/rewardOrderSlice";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
-import { Modal } from "../../components/ui/modal";
 import Select from "../../components/form/Select";
-
+import io from "socket.io-client";
+import api from "../../api/axios";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -18,10 +18,66 @@ const STATUS_OPTIONS = [
 
 export default function RewardOrders() {
   const dispatch = useDispatch();
-
+   const socketRef = useRef(null);
   const { items = [], loading } = useSelector((state) => state.rewardOrders);
-
+  const [rewards, setRewards] = useState([]);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [viewOrder, setViewOrder] = useState(null);
+  
+    async function loadRewards() {
+      try {
+        const {items} = await api.get("/api/reward/reward-order");
+        setRewards(items || []);
+      } catch (error) {
+        console.error("Failed to load reviews:", error);
+        alert("Failed to load reviews. Please try again.");
+      } 
+    }
+
+    useEffect(() => {
+    // Initialize socket connection
+    socketRef.current = io(BASE_URL);
+
+    const socket = socketRef.current;
+
+    // Register with admin room when connected
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      // Join admin room for notifications
+      socket.emit("joinAdmin");
+    });
+
+    // Load initial reviews
+    loadRewards();
+     socket.on("notification", (notification) => {
+      console.log("Admin notification:", notification);
+      // You can show a toast notification here if needed
+      if (notification.type === "reward") {
+        // Handle review-specific notifications
+        dispatch(getAllRewardOrders());
+
+      }
+    });
+    // Listen for new reviews
+    socket.on("new_reward", (newReview) => {
+      console.log("Redeemed reward:", newReview);
+      setRewards((prev) => {
+        // Check if review already exists to avoid duplicates
+        const exists = prev.some((r) => r._id === newReview._id);
+        if (exists) return prev;
+        return [newReview, ...prev];
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("new_reward");
+
+      socket.off("notification");
+      socket.off("connect");
+      socket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(getAllRewardOrders());

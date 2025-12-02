@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useNotifications } from "../../context/NotificationContext";
 import { format } from "timeago.js";
 
@@ -25,7 +25,7 @@ export default function NotificationDropdown() {
   };
 
   const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
+    markAsRead(notification.id || notification._id);
     closeDropdown();
   };
   return (
@@ -66,7 +66,7 @@ export default function NotificationDropdown() {
       >
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
           <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-            Notification
+            Notifications
           </h5>
           <button
             onClick={toggleDropdown}
@@ -94,44 +94,62 @@ export default function NotificationDropdown() {
               <span>No notifications</span>
             </li>
           ) : (
-            notifications.map((notification) => (
-              <li key={notification.id}>
-                <DropdownItem
-                  onItemClick={() => handleNotificationClick(notification)}
-                  to={notification.reviewId ? "/admin/reviews" : undefined}
-                  className={`flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
-                    !notification.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                  }`}
-                >
-                  <span className="relative block w-full h-10 rounded-full z-1 max-w-10 flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
-                      ⭐
-                    </div>
-                    {!notification.isRead && (
-                      <span className="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white bg-blue-500 dark:border-gray-900"></span>
-                    )}
-                  </span>
+            notifications.map((notification) => {
+              const to =
+                notification.type === "review"
+                  ? "/admin/reviews"
+                  : notification.type === "reward"
+                  ? "/admin/reward-orders"
+                  : undefined;
 
-                  <span className="block flex-1 min-w-0">
-                    <span className="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-medium text-gray-800 dark:text-white/90">
-                        {notification.title}
+              return (
+                <li key={notification.id || notification._id}>
+                  <DropdownItem
+                    onItemClick={() => handleNotificationClick(notification)}
+                    to={to}
+                    className={`flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
+                      !notification.isRead ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
+                    }`}
+                  >
+                    <span className="relative block w-full h-10 rounded-full z-1 max-w-10 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                        ⭐
+                      </div>
+                      {!notification.isRead && (
+                        <span className="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white bg-blue-500 dark:border-gray-900"></span>
+                      )}
+                    </span>
+
+                    <span className="block flex-1 min-w-0">
+                      <span className="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-medium text-gray-800 dark:text-white/90">
+                          {notification.title}
+                        </span>
+                        <span className="ml-1">{notification.message}</span>
                       </span>
-                      <span className="ml-1">{notification.message}</span>
-                    </span>
 
-                    <span className="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-                      <span>Review</span>
-                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
-                      <span>{format(notification.createdAt)}</span>
+                      <span className="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
+                        <span>{notification.type === "review" ? "Review" : notification.type === "reward" ? "Reward" : "Notification"}</span>
+                        <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                        <span>{format(notification.createdAt)}</span>
+                      </span>
                     </span>
-                  </span>
-                </DropdownItem>
-              </li>
-            ))
+                  </DropdownItem>
+                </li>
+              );
+            })
           )}
         </ul>
         {notifications.length > 0 && (
+          <div>
+          
+           <Link
+            to="/admin/reward-orders"
+            onClick={closeDropdown}
+            className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+          >
+            View All Reward Orders
+          </Link>
           <Link
             to="/admin/reviews"
             onClick={closeDropdown}
@@ -139,6 +157,7 @@ export default function NotificationDropdown() {
           >
             View All Reviews
           </Link>
+          </div>
         )}
       </Dropdown>
     </div>

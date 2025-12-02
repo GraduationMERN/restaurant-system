@@ -2,6 +2,7 @@
 import orderService from "../order.module/order.service.js";
 import { getProductById } from "../product/product.repository.js";
 import User from "../user/model/User.js";
+import { io, notificationService } from "../../../server.js";
 import { getUserByIdService } from "../user/service/user.service.js";
 import { createReward, getAllRewardsRepo, deleteReward, getRewardById, updateReward, getAllRewardOrderRepo, getRewardOrderByIdRepo, createRewardOrderRepo } from "./reward.repo.js";
 
@@ -42,21 +43,36 @@ export const redeemRewardService = async (rewardId, userId) => {
 
         // 2. Check if user has enough points
         if (user.points < reward.pointsRequired) throw new Error("Insufficient points to redeem this reward");
-
         // 3. Deduct points and create reward order
-      console.log(`user points -  ${user.points} `)
-      console.log(`reward points -  ${reward.pointsRequired} `)
+            await User.findByIdAndUpdate(
+                        userId,
+                        { $inc: { points: -reward.pointsRequired } },
+                        { new: true }
+                );
 
-      await User.findByIdAndUpdate(
-            userId,
-            { $inc: { points: -reward.pointsRequired } },
-            { new: true }
-        );
-        return await createRewardOrderRepo({
-            userId,
-            rewardId,
-            pointsUsed: reward.pointsRequired
-        });
+                const created = await createRewardOrderRepo({
+                        userId,
+                        rewardId,
+                        pointsUsed: reward.pointsRequired
+                });
+
+                // Simple notification for admin: persist and emit
+                try {
+                    if (io) {
+                        io.to("admin").emit("new_reward", created);
+                    }
+                    await notificationService?.sendToAdmin({
+                        title: "Reward Redeemed",
+                        message: `${reward.productId?.name || 'Reward item'} redeemed by ${user?.name || 'User'}`,
+                        type: "reward",
+                        rewardId: created._id,
+                        createdAt: new Date(),
+                    });
+                } catch (e) {
+                    console.error("Failed to send admin reward notification", e);
+                }
+
+                return created;
     } catch (error) {
         throw new Error(`Redemption failed: ${error.message}`);
     }
@@ -93,6 +109,7 @@ export async function earningPoints(orderId) {
     } catch (error) {
         throw new Error(`Earning points failed: ${error.message}`);
     }
+
 }
 
 // Reward order

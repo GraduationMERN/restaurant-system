@@ -66,7 +66,6 @@ export async function redeemReward(req, res) {
         // Prefer authenticated user id (secure) — fall back to payload if present
       
         const userId = req.user?.id;
-        console.log("UserID:"+userId)
         const { rewardId } = req.body;
         const result = await redeemRewardService(rewardId, userId);
         // if redemption and order are returned, provide them as part of the response
