@@ -25,6 +25,7 @@ import api from "../api/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllCategories } from "../redux/slices/CategorySlice";
 import { fetchProductList } from "../redux/slices/ProductSlice";
+import CardComponent from "../components/Card/CardComponent";
 
 
 function MenuPage() {
@@ -36,27 +37,27 @@ function MenuPage() {
 
 
   const [openPopup, setOpenPopup] = useState(false);
-const [selectedProduct, setSelectedProduct] = useState(null);
-const [quantity, setQuantity] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
 
 
-  const categories  = useSelector((state) => state.category.list);
+  const categories = useSelector((state) => state.category.list);
   const categoriesTabs = categories.map(cat => cat.name.toUpperCase());
 
-//   const products = useSelector((state) => state.product.list);
-const products = useSelector((state) => state.product.filtered);
+  //   const products = useSelector((state) => state.product.list);
+  const products = useSelector((state) => state.product.filtered);
 
-// console.log("Products from Redux:", products);
-// console.log(products[0]);
+  // console.log("Products from Redux:", products);
+  // console.log(products[0]);
 
   const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(getAllCategories());
-    }, [dispatch]);
+  useEffect(() => {
+    dispatch(getAllCategories());
+  }, [dispatch]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].name.toUpperCase());
     }
@@ -64,21 +65,21 @@ const products = useSelector((state) => state.product.filtered);
 
 
   useEffect(() => {
-  if (categories.length > 0) {
-    const category = categories.find(c => c.name.toUpperCase() === activeCategory);
-    if(category){  
-      console.log("Category ID:", category._id);
-      dispatch(fetchProductList({ 
-        categoryId: category._id, 
-        searchTerm: search, 
-        page: 1, 
-        pageSize: 1000 
-      }));
-    } else {
-      console.log("Category not found for:", activeCategory);
+    if (categories.length > 0) {
+      const category = categories.find(c => c.name.toUpperCase() === activeCategory);
+      if (category) {
+        console.log("Category ID:", category._id);
+        dispatch(fetchProductList({
+          categoryId: category._id,
+          searchTerm: search,
+          page: 1,
+          pageSize: 1000
+        }));
+      } else {
+        console.log("Category not found for:", activeCategory);
+      }
     }
-}
-}, [activeCategory, search, categories]);
+  }, [activeCategory, search, categories]);
 
 
   useEffect(() => {
@@ -87,47 +88,47 @@ const products = useSelector((state) => state.product.filtered);
 
   const filterProducts = () => {
     const f = products.filter(
-    (p) =>
-    {
+      (p) => {
         // console.log("p",p)
         // console.log("categ",categories.find(c => c._id === p.categoryId)?.name.toUpperCase());
-        
+
         return categories.find(c => c._id === p.categoryId)?.name.toUpperCase() === activeCategory &&
-        p.name.toLowerCase().includes(search.toLowerCase())}
+          p.name.toLowerCase().includes(search.toLowerCase())
+      }
     );
     setFiltered(f);
   };
 
-const handelClick = (product, qty) => {
-  console.log("Add to cart clicked:", product.name, "Quantity:", qty);
-};
+  const handelClick = (product, qty) => {
+    console.log("Add to cart clicked:", product.name, "Quantity:", qty);
+  };
 
 
-    //for Popup
-const handleOpenPopup = (product) => {
-  setSelectedProduct(product);
-  setQuantity(1); // reset quantity
-  setOpenPopup(true);
-};
+  //for Popup
+  const handleOpenPopup = (product) => {
+    setSelectedProduct(product);
+    setQuantity(1); // reset quantity
+    setOpenPopup(true);
+  };
 
-const handleClosePopup = () => {
-  setOpenPopup(false);
-  setSelectedProduct(null);
-};
+  const handleClosePopup = () => {
+    setOpenPopup(false);
+    setSelectedProduct(null);
+  };
 
-const [selectedSizes, setSelectedSizes] = useState({});
+  const [selectedSizes, setSelectedSizes] = useState({});
 
-const handleSizeChange = (productId, size) => {
-  setSelectedSizes((prev) => ({
-    ...prev,
-    [productId]: size,
-  }));
-};
+  const handleSizeChange = (productId, size) => {
+    setSelectedSizes((prev) => ({
+      ...prev,
+      [productId]: size,
+    }));
+  };
 
 
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 9, mb: 5 }}>
+    <>
       {/* Page Title */}
       <Typography variant="h4" fontWeight={700} mb={3}>
         Menu
@@ -203,259 +204,125 @@ const handleSizeChange = (productId, size) => {
         {activeCategory}
       </Typography>
 
-      {/* LIST view */}
-      {view === "list" && (
-        <Box>
+
+
+      {/* Products Grid */}
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
           {filtered.map((p) => (
-            <Box
-              key={p._id}
-              display="flex"
-              alignItems="center"
-              borderBottom="1px solid #eee"
-              py={2}
-              flexWrap="wrap"
-              onClick={() => handleOpenPopup(p)}
-            >
-              <CardMedia
+            <CardComponent onClick={() => { handleOpenPopup(p); }}
+              product={p} key={p._id} disabled={false} isReward={false} />
+          ))}
+       </div>
+     
+
+      {/* Popup Dialog */}
+      <Dialog
+        open={openPopup}
+        onClose={handleClosePopup}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+          },
+        }}
+      >
+        {selectedProduct && (
+          <>
+            <DialogTitle sx={{ fontWeight: 700 }}>{selectedProduct.name}</DialogTitle>
+            <DialogContent>
+              {/* الصورة فوق */}
+              <Box
                 component="img"
-                image={p.imgURL}
-                alt={p.name}
-                sx={{
-                  width: 90,
-                  height: 90,
-                  borderRadius: 2,
-                  mr: 2,
-                  mb: { xs: 1, md: 0 },
-                }}
+                src={selectedProduct.imgURL}
+                alt={selectedProduct.name}
+                sx={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 2, mb: 2 }}
               />
 
-              <Box flex={1} minWidth={0}>
-                <Typography fontSize={18} fontWeight={600}>
-                  {p.name}
-                </Typography>
-                <Typography color="text.secondary" sx={{ width: { xs: "100%", md: "80%" } }}>
-                  {p.desc}
-                  
-                </Typography>
-                
+              {/* الجزء الأفقي: الوصف + الأزرار */}
+              <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={2}>
+                {/* الوصف والسعر */}
+                <Box flex={1}>
+                  <Typography color="text.secondary" mb={1}>{selectedProduct.desc}</Typography>
+                  <Typography fontWeight={700}>EGP {selectedProduct.basePrice}</Typography>
+                </Box>
+
+                <Box display="flex" flexDirection="column" alignItems="center" ml={2}>
+                  <Button
+                    variant="contained"
+                    sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                  <Typography fontWeight={700} my={1}>{quantity}</Typography>
+                  <Button
+                    variant="contained"
+                    sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </Button>
+                </Box>
               </Box>
 
-              <Typography fontWeight={600} mr={2}>
-                EGP {p.basePrice}
+              {/* Size options */}
+              <ToggleButtonGroup
+                value={selectedSizes[selectedProduct._id] || "M"}
+                exclusive
+                onChange={(e, val) => val && handleSizeChange(selectedProduct._id, val)}
+                size="small"
+                sx={{
+                  mb: 2,
+                  "& .MuiToggleButton-root": {
+                    borderRadius: "20px",
+                    border: `1px solid #e27e36`,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "#e27e36",
+                    px: 3,
+                    py: 0.5,
+                    mx: 0.3,
+                    minWidth: 40,
+                  },
+                  "& .Mui-selected": {
+                    bgcolor: "#e27e36 !important",
+                    color: "#fff !important",
+                  },
+                }}
+              >
+                <ToggleButton value="S">S</ToggleButton>
+                <ToggleButton value="M">M</ToggleButton>
+                <ToggleButton value="L">L</ToggleButton>
+              </ToggleButtonGroup>
+
+              {/* Total Price */}
+              <Typography fontWeight={700} mb={2}>
+                Total: EGP {selectedProduct.basePrice * quantity}
               </Typography>
 
-
-            <IconButton
-                sx={{
-                // position: "absolute",
-                bottom: 0,
-                top: 0,
-                width: 50,
-                height: "100%",
-                borderRadius: "16px ",
-                bgcolor: "#e27e36",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "32px",
-                transition: "0.5s ease",
-                "&:hover": {
-                    transform: "rotate(360deg)",
-                    bgcolor: "#e27e36",
-                },
+              {/* Add to Cart */}
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                onClick={() => {
+                  handelClick(selectedProduct, quantity);
+                  handleClosePopup();
                 }}
-                
-            >
-                +
-            </IconButton>
-              
-            </Box>
-          ))}
-        </Box>
-      )}
+              >
+                Add to Cart
+              </Button>
+            </DialogContent>
+          </>
+        )}
 
-      {/* GRID view */}
-      {view === "grid" && (
-  <Grid container spacing={3}>
-    {filtered.map((p) => (
-      <Grid item xs={12} sm={6} md={4} key={p._id}>
+      </Dialog>
 
-        <Card
-          sx={{
-            position: "relative",
-            borderRadius: 4,
-            boxShadow: "0px 4px 14px rgba(0,0,0,0.1)",
-            p: 2,
-            overflow: "hidden",
-            transition: "0.3s ease",
-            "&:hover": {
-            //   transform: "translateY(-6px)",
-              boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-            },
-          }}
-          onClick={() => handleOpenPopup(p)}
-        >
-          <CardMedia
-            component="img"
-            image={p.imgURL}
-            sx={{
-              height: 200,
-              borderRadius: 3,
-              mb: 2,
-              objectFit: "cover",
-            }}
-          />
+    </>
 
-          <CardContent sx={{ pr: 7 }}>
-            <Typography variant="h6" fontWeight={700}>
-              {p.name}
-            </Typography>
-            <Typography color="text.secondary" mb={1}>
-              {p.desc}
-            </Typography>
-            <Typography fontWeight={700}>EGP {p.basePrice}</Typography>
-          </CardContent>
-
-          {/* FULL HEIGHT BUTTON ON RIGHT */}
-          <IconButton
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              right: 0,
-              width: 55,
-              height: "10%",
-              borderRadius: "16px 16px 0 0",
-              bgcolor: "#e27e36",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "32px",
-              transition: "0.5s ease",
-              "&:hover": {
-                // transform: "rotate(360deg)",
-                bgcolor: "#e27e36",
-              },
-            }}
-            
-          >
-            +
-          </IconButton>
-        </Card>
-
-      </Grid>
-    ))}
-  </Grid>
-)}
-
-{/* Popup Dialog */}
-<Dialog 
-  open={openPopup}
-  onClose={handleClosePopup}
-  maxWidth="sm"
-  fullWidth 
-  PaperProps={{  
-    sx: {
-      borderRadius: 3,
-      p: 2,
-    },
-  }}
->
-  {selectedProduct && (
-  <>
-    <DialogTitle sx={{ fontWeight: 700 }}>{selectedProduct.name}</DialogTitle>
-    <DialogContent>
-      {/* الصورة فوق */}
-      <Box
-        component="img"
-        src={selectedProduct.imgURL}
-        alt={selectedProduct.name}
-        sx={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 2, mb: 2 }}
-      />
-
-      {/* الجزء الأفقي: الوصف + الأزرار */}
-      <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={2}>
-        {/* الوصف والسعر */}
-        <Box flex={1}>
-          <Typography color="text.secondary" mb={1}>{selectedProduct.desc}</Typography>
-          <Typography fontWeight={700}>EGP {selectedProduct.basePrice}</Typography>
-        </Box>
-
-        <Box display="flex" flexDirection="column" alignItems="center" ml={2}>
-          <Button
-            variant="contained"
-            sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
-            onClick={() => setQuantity(quantity + 1)}
-          >
-            +
-          </Button>
-          <Typography fontWeight={700} my={1}>{quantity}</Typography>
-          <Button
-            variant="contained"
-            sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          >
-            -
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Size options */}
-      <ToggleButtonGroup
-        value={selectedSizes[selectedProduct._id] || "M"}
-        exclusive
-        onChange={(e, val) => val && handleSizeChange(selectedProduct._id, val)}
-        size="small"
-        sx={{
-          mb: 2,
-          "& .MuiToggleButton-root": {
-            borderRadius: "20px",
-            border: `1px solid #e27e36`,
-            textTransform: "none",
-            fontWeight: 600,
-            color: "#e27e36",
-            px: 3,
-            py: 0.5,
-            mx: 0.3,
-            minWidth: 40,
-          },
-          "& .Mui-selected": {
-            bgcolor: "#e27e36 !important",
-            color: "#fff !important",
-          },
-        }}
-      >
-        <ToggleButton value="S">S</ToggleButton>
-        <ToggleButton value="M">M</ToggleButton>
-        <ToggleButton value="L">L</ToggleButton>
-      </ToggleButtonGroup>
-
-      {/* Total Price */}
-      <Typography fontWeight={700} mb={2}>
-        Total: EGP {selectedProduct.basePrice * quantity}
-      </Typography>
-
-      {/* Add to Cart */}
-      <Button
-        fullWidth
-        variant="contained"
-        sx={{ bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
-        onClick={() => {
-          handelClick(selectedProduct, quantity);
-          handleClosePopup();
-        }}
-      >
-        Add to Cart
-      </Button>
-    </DialogContent>
-  </>
-)}
-
-</Dialog>
-
-    </Container>
-    
   );
 }
 
