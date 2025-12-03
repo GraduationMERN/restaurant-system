@@ -23,8 +23,8 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import GridViewIcon from "@mui/icons-material/GridView";
 import api from "../api/axios";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllCategories } from "../redux/slices/CategorySlice";
-import { fetchProductList } from "../redux/slices/ProductSlice";
+import { getAllCategories } from "../redux/slices/categorySlice";
+import { fetchProductList } from "../redux/slices/productSlice";
 import CardComponent from "../components/Card/CardComponent";
 
 

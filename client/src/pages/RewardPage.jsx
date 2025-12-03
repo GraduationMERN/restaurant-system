@@ -56,10 +56,10 @@ export default function RewardPage() {
     <>
 
       {/* HEADER */}
-      <div className="fixed z-10  top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
+      <div className="fixed z-10  top-0 w-full md:w-9/10 dark:bg-primary/40 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
         <h1 className="text-3xl font-bold mb-4">Rewards</h1>
 
-        <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-md">
+        <div className="bg-white/20 dark:bg-primary/40 p-4 rounded-2xl backdrop-blur-md">
 
           <div className="flex justify-between items-center mb-2">
             <span className="text-lg font-semibold">Hello, {userName}</span>
@@ -72,7 +72,7 @@ export default function RewardPage() {
             {/* Base line */}
             <div className="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden">
               <div
-                className="bg-secondary-200 h-full rounded-full transition-all duration-500"
+                className="bg-secondary/90 h-full rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
