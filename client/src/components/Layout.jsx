@@ -7,8 +7,8 @@ export default function Layout({ children }) {
   const isAdmin = location.pathname.startsWith("/admin");
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white dark:bg-gray-900">
-      
+   
+       <div className="lg:mx-20 md:ml-20 min-h-screen bg-white pb-10 transition-all dark:bg-gray-900 dark:text-white">
     
       {!isAdmin && <DesktopNav />}
 
@@ -27,7 +27,7 @@ export default function Layout({ children }) {
             </div>
         </div>
       )}
+  </div>
 
-    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, redeemReward } from '../redux/slices/rewardSlice';
 import { useToast } from '../hooks/useToast';
 import { FaStarOfLife } from "react-icons/fa";
+import CardComponent from '../components/Card/CardComponent';
 
 export default function RewardPage() {
   const dispatch = useDispatch();
@@ -52,7 +53,7 @@ export default function RewardPage() {
     }
   };
   return (
-    <div className="lg:mx-20 md:ml-20 min-h-screen bg-white pb-10 transition-all dark:bg-gray-900 dark:text-white">
+    <>
 
       {/* HEADER */}
       <div className="fixed z-10  top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
@@ -125,60 +126,8 @@ export default function RewardPage() {
                   {items.map((item) => {
                     const product = item.productId;
                     return (
-                      <div
-                        onClick={() => {
-                          setSelectedReward(item);
-                          setShowConfirm(true);
-                        }
-
-                        }
-                        key={item._id}
-                        className={`${canRedeem(item.pointsRequired) ? "opacity-100" : "opacity-70"
-                          } group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2
-                    h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col lg:justify-between
-                    hover:shadow-lg transition duration-200 overflow-hidden`}
-                      >
-
-                        <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center gap-4">
-                          {product?.imgURL ? (
-                            <img
-                              src={product.imgURL}
-                              alt={product.name}
-                              className="rounded-xl object-cover shadow-sm"
-                            />
-                          ) : (
-                            <div className="object-cover bg-gray-100 rounded-xl flex items-center justify-center shadow-inner">
-                              <Gift className="text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* RIGHT SIDE */}
-                        <div className="flex lg:flex-col justify-between w-1/2 lg:w-full lg:relative">
-
-                          <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-secondary">
-
-                            <span
-                              className={`text-sm font-semibold flex-1 ${canRedeem(item.pointsRequired)
-                                ? "text-on-surface"
-                                : "text-muted"
-                                }`}
-                            >
-                              {product?.name || "Reward"}
-                            </span>
-                            {item.pointsRequired}
-                          </h3>
-                          {/* FULL HEIGHT BUTTON */}
-                          <button
-                            disabled={!canRedeem(item.pointsRequired)}
-                            className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl  ${canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-                          >
-                            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
-                              +
-                            </span>
-                          </button>
-                        </div>
-                      </div>
+                     <CardComponent onClick={()=>{setSelectedReward(item); setShowConfirm(true)}}
+                      item={item} product={product}  key={item._id} canRedeem={canRedeem} isReward={true} />
                     );
                   })}
                 </div>
@@ -218,7 +167,7 @@ export default function RewardPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
 
 
   );
