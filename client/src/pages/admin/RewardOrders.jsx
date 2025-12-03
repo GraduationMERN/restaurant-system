@@ -90,7 +90,9 @@ export default function RewardOrders() {
   const deleteOrder = (id) => {
     dispatch(deleteRewardOrder(id));
   };
-
+  const sortedItems = [...items].sort(
+  (a, b) => new Date(b.createdAt) - new Date(a.createdAt) // newest first
+);
   const formatDate = (date) => new Date(date).toLocaleString();
 
   return (
@@ -104,7 +106,7 @@ export default function RewardOrders() {
           <div className="max-w-full overflow-x-auto">
 
             <Table>
-              <TableHeader className="border-gray-100 dark:border-gray-800 dark:text-white/60 border-y">
+              <TableHeader className="border-gray-100 dark:border-gray-800  dark:text-white/60 border-y">
                 <TableRow>
                   <TableCell isHeader>ORDER ID</TableCell>
                   <TableCell isHeader>CUSTOMER</TableCell>
@@ -112,18 +114,18 @@ export default function RewardOrders() {
                   <TableCell isHeader>POINTS USED</TableCell>
                   <TableCell isHeader>STATUS</TableCell>
                   <TableCell isHeader>TIME</TableCell>
-                  <TableCell isHeader className="text-end">ACTIONS</TableCell>
+                  <TableCell isHeader className="text-end p-5">ACTIONS</TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800 dark:text-white/70 text-md ">
-                {items.map((row) => {
+                {sortedItems.map((row) => {
                   const product = row.rewardId?.productId;
                   return (
 
                     <TableRow key={row._id} className="hover:bg-gray-50  dark:hover:bg-white/5 transition-colors text-center">
 
-                      <TableCell className={"text-xs"}>{row._id}</TableCell>
+                      <TableCell className={"text-xs p-5"}>{row._id}</TableCell>
 
                       <TableCell>{row.userId?.name || "Unknown"}</TableCell>
 

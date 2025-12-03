@@ -3,7 +3,7 @@ import Reward from "./reward.model.js";
 import RewardOrder from "./rewardOrder.js";
 
 const getAllRewardsRepo = async () => {
-  return await Reward.find().populate("productId", "name basePrice desc imgURL categoryId stock isnew productPoints tags");
+  return await Reward.find().sort({ createdAt: -1 }).populate("productId", "name basePrice desc imgURL categoryId stock isnew productPoints tags");
 }
 
 const getRewardById = async (id) => {
