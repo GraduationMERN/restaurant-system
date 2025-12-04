@@ -23,8 +23,8 @@ import {
 
 import SearchIcon from "@mui/icons-material/Search";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllCategories } from "../redux/slices/categorySlice";
-import { fetchProductList } from "../redux/slices/productSlice";
+import { getAllCategories } from "../redux/slices/CategorySlice";
+import { fetchProductList } from "../redux/slices/ProductSlice";
 import CardComponent from "../components/Card/CardComponent";
 import { addToCart } from "../redux/slices/cartSlice";
 
