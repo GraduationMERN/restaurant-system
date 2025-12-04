@@ -13,8 +13,6 @@ export default function CardComponent({ item, product, isReward, disabled, onCli
                     h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col lg:justify-between
                     hover:shadow-lg transition duration-200 overflow-hidden`}
         >
-
-
             {isReward ? (
                 <div className="w-1/2  lg:w-full lg:h-1/2 flex items-center gap-4">
                     {product?.imgURL ? (
@@ -56,7 +54,7 @@ export default function CardComponent({ item, product, isReward, disabled, onCli
                     </h3>
                     <button
                         disabled={disabled}
-                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200  ${!isReward ? "bg-secondary text-white" : canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200 hover:bg-primary/80 ${!isReward ? "bg-primary text-white" : canRedeem(item.pointsRequired) ? "bg-primary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                     >
                         <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
                             +

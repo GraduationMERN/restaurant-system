@@ -44,7 +44,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: ["http://localhost:5173","https://brand-bite.vercel.app/"],
+  origin: ["http://localhost:5173",env.frontendUrl],
   credentials: true,
 }));
 
