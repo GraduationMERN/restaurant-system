@@ -26,7 +26,8 @@ import notificationRoutes from "./src/modules/notification/notification.routes.j
 import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
-import chatRoutes from "./src/modules/chat/chat.routes.js";
+import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
+import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
@@ -99,7 +100,8 @@ initializeEmbeddingModel();
 
 // --- API Routes ---
 app.use("/api", couponRoutes);
-app.use("/api/chatBot", chatRoutes);
+app.use("/api/chatBot", chatRoutes); // for AI
+app.use("/api/recommendations", recommendationRoutes); // for AI
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/reward", rewardRouter);
