@@ -2,6 +2,8 @@
 import * as couponRepo from './coupon.repository.js';
 import orderService from "../order.module/order.service.js";
 import { getUserByIdService } from "../user/service/user.service.js";
+import Cart from "../cart/Cart.js";
+import { calculateOrderTotals, formatCartItemsForOrder } from "../order.module/orderUtils.js";
 
 
 // ========== COUPON MANAGEMENT ==========
@@ -27,13 +29,11 @@ export const deleteCouponService = async (couponId) => {
 
 // ========== COUPON VALIDATION ==========
 
-export const validateCouponService = async (code, userId, orderId) => {
+export const validateCouponService = async (code, userId, cartIdOrOrderId) => {
   // 1. Find coupon by code
   const coupon = await couponRepo.findCouponByCode(code);
-  const order = await orderService.getOrder(orderId);
   const user = await getUserByIdService(userId);
-  console.log(user.coupon.usedCoupons);
-  const orderTotal = order.totalAmount;
+  
   if (!coupon) {
     return { valid: false, message: 'Coupon not found' };
   }
@@ -48,16 +48,38 @@ export const validateCouponService = async (code, userId, orderId) => {
     return { valid: false, message: 'Coupon has expired' };
   }
 
+  // 6. Check user eligibility (if user has already used this coupon)
+  if (user.coupon?.usedCoupons?.some(c => c.couponId?.equals(coupon._id))) {
+    return { valid: false, message: "You have already used this coupon" };
+  }
+
+  // Try to get order first, if it fails try cart
+  let orderTotal = 0;
+  try {
+    const order = await orderService.getOrder(cartIdOrOrderId);
+    if (order) {
+      orderTotal = order.totalAmount;
+    }
+  } catch (err) {
+    // If it's not an order, try to get cart
+    try {
+      const cart = await Cart.findById(cartIdOrOrderId).populate("products.productId");
+      if (cart) {
+        const items = formatCartItemsForOrder(cart.products);
+        const totals = calculateOrderTotals(items, 0.14, 0, 0);
+        orderTotal = totals.totalAmount;
+      }
+    } catch (cartErr) {
+      return { valid: false, message: 'Unable to validate order/cart total' };
+    }
+  }
+
   // 5. Check minimum order amount
   if (orderTotal < coupon.minOrderAmount) {
     return {
       valid: false,
       message: `Minimum order amount is ${coupon.minOrderAmount} EGP`
     };
-  }
-  // 6. Check user eligibility
-  if (user.coupon.usedCoupons.some(c => c.couponId.equals(coupon._id))) {
-    return { valid: false, message: "You have already used this coupon" };
   }
 
   // 8. Calculate discount
@@ -81,12 +103,7 @@ export const validateCouponService = async (code, userId, orderId) => {
 
   // Round to 2 decimals
   discountAmount = Math.round(discountAmount * 100) / 100;
-  await orderService.orderUpdate(orderId, 
-    { totalAmount: orderTotal - discountAmount,
-    appliedCoupon: { couponId: coupon._id, code: coupon.code, discountAmount },
-    coupon: {usedCoupons: [...user.coupon.usedCoupons,{ couponId: coupon._id, code: coupon.code, usedAt: new Date() } ]
-  }
-   });
+
   return {
     valid: true,
     coupon,

@@ -26,7 +26,17 @@ class OrderService {
 
   // Create order from cart
   async createOrderFromCart(orderData, identity = {}) {
-    const { cartId, serviceType, tableNumber, notes, paymentMethod, customerInfo } = orderData;
+    const { 
+      cartId, 
+      serviceType, 
+      tableNumber, 
+      notes, 
+      paymentMethod, 
+      customerInfo,
+      couponCode,
+      couponId,
+      discountAmount = 0
+    } = orderData;
     const { user: reqUser = null, guestId = null } = identity;
 
     // 1. Load cart with product population
@@ -38,7 +48,7 @@ class OrderService {
     const items = formatCartItemsForOrder(cart.products);
 
     // 3. Calculate totals
-    const totals = calculateOrderTotals(items, 0.14, 0, 0);
+    const totals = calculateOrderTotals(items, 0.14, 0, discountAmount || 0);
 
     // 4. Identity handling
     const orderUserIdString = cart.userId ?? (reqUser ? reqUser._id.toString() : guestId ?? null);
@@ -56,7 +66,7 @@ class OrderService {
       subtotal: totals.subtotal,
       vat: totals.tax,
       deliveryFee: totals.deliveryFee,
-      discount: totals.discount,
+      discount: discountAmount || 0,
       totalAmount: totals.totalAmount,
       paymentMethod: paymentMethod || "cash",
       paymentStatus: "pending",
@@ -68,7 +78,13 @@ class OrderService {
         name: (customerInfo && customerInfo.name) || (reqUser?.name) || "",
         phone: (customerInfo && customerInfo.phone) || (reqUser?.phoneNumber?.toString()) || "",
         email: (customerInfo && customerInfo.email) || (reqUser?.email) || "",
-      }
+      },
+      // Add coupon information if provided
+      appliedCoupon: couponCode || couponId ? {
+        couponId: couponId || null,
+        code: couponCode || null,
+        discountAmount: discountAmount || 0,
+      } : undefined
     }
     const created = await orderRepo.create(order);
     return created;

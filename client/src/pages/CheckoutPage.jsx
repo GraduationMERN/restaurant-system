@@ -427,6 +427,7 @@ import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, Edit2, Star, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import { useTranslation } from "react-i18next"; // Keep this import
+import api from "../api/axios";
 
 export default function CheckoutPage() {
   const dispatch = useDispatch();
@@ -443,6 +444,10 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [showRewardModal, setShowRewardModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   // Load cart on mount
   useEffect(() => {
@@ -464,6 +469,50 @@ export default function CheckoutPage() {
   // Handle delete product
   const handleDeleteItem = (productId) => {
     dispatch(deleteProductFromCart(productId));
+  };
+
+  // Handle apply coupon
+  const handleApplyCoupon = async () => {
+    if (!promoCode.trim()) {
+      setCouponError("Please enter a promo code");
+      return;
+    }
+
+    if (appliedCoupon?.code === promoCode.toUpperCase()) {
+      setCouponError("This coupon is already applied");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      const response = await api.post("/api/coupons/validate", {
+        code: promoCode.toUpperCase(),
+        orderId: cartId,
+      });
+
+      setAppliedCoupon({
+        code: promoCode.toUpperCase(),
+        couponId: response.data?.data?.couponId,
+      });
+      setDiscountAmount(response.data?.data?.discountAmount || 0);
+      setCouponError("");
+    } catch (err) {
+      setCouponError(
+        err.response?.data?.message || "Failed to validate promo code. Please try again."
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Handle remove coupon
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
+    setPromoCode("");
+    setCouponError("");
   };
 
   // Handle option change
@@ -492,6 +541,9 @@ export default function CheckoutPage() {
           serviceType,
           tableNumber,
           notes,
+          couponCode: appliedCoupon?.code,
+          couponId: appliedCoupon?.couponId,
+          discountAmount,
         })
       ).unwrap();
 
@@ -736,16 +788,52 @@ export default function CheckoutPage() {
                   <Tag className="w-4 h-4 mr-2" />
                   Have a promo code?
                 </h3>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter promo code"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                  />
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                </div>
+                {appliedCoupon ? (
+                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-300 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-green-700 dark:text-green-400 font-medium">Code applied: {appliedCoupon.code}</p>
+                      <p className="text-sm text-green-600 dark:text-green-500">Discount: EGP {discountAmount.toFixed(2)}</p>
+                    </div>
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => {
+                          setPromoCode(e.target.value);
+                          setCouponError("");
+                        }}
+                        placeholder="Enter promo code"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        disabled={couponLoading}
+                      />
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <button
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !promoCode.trim()}
+                      className="px-4 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-medium rounded-xl transition-colors disabled:cursor-not-allowed"
+                    >
+                      {couponLoading ? "Checking..." : "Apply"}
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-2">
+                    {couponError}
+                    {couponError.includes("Minimum") && (
+                      <span className="block text-xs mt-1">Your cart total: EGP {total.toFixed(2)}</span>
+                    )}
+                  </p>
+                )}
               </div>
 
               {/* Table Number for Dine-in */}
@@ -795,9 +883,15 @@ export default function CheckoutPage() {
                   <span className="text-gray-600 dark:text-gray-400">VAT</span>
                   <span className="font-medium text-gray-900 dark:text-white">EGP {vat.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-sm pt-2 border-t border-green-200 dark:border-green-800">
+                    <span className="text-green-600 dark:text-green-400 font-medium">Discount ({appliedCoupon?.code})</span>
+                    <span className="text-green-600 dark:text-green-400 font-medium">-EGP {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-xl font-bold text-orange-500 dark:text-orange-400">EGP {total.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-orange-500 dark:text-orange-400">EGP {Math.max(0, total - discountAmount).toFixed(2)}</span>
                 </div>
               </div>
 

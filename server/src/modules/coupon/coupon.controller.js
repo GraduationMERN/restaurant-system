@@ -5,9 +5,7 @@ import * as couponService from './coupon.service.js';
 // Create new coupon
 export const createCoupon = async (req, res) => {
   try {
-
-    const {couponData} = {...req.body};
-    const coupon = await couponService.createCouponService(couponData);
+    const coupon = await couponService.createCouponService(req.body);
     
     res.status(201).json({
       success: true,

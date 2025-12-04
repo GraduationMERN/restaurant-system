@@ -52,7 +52,10 @@ export const createOrderFromCart = async (req, res) => {
       tableNumber,
       notes,
       paymentMethod,
-      customerInfo 
+      customerInfo,
+      couponCode,
+      couponId,
+      discountAmount
     } = req.body;
 
     if (!cartId) {
@@ -69,6 +72,9 @@ export const createOrderFromCart = async (req, res) => {
       notes,
       paymentMethod,
       customerInfo,
+      couponCode,
+      couponId,
+      discountAmount,
     });
 
     // Optional Notification
