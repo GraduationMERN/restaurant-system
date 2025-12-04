@@ -24,6 +24,20 @@ export const addToCart = createAsyncThunk(
     }
   }
 );
+// Add to cartSlice.js
+export const updateCartItemOptions = createAsyncThunk(
+  "cart/updateOptions",
+  async ({ cartItemId, selectedOptions }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/api/cart/${cartItemId}/options`, { 
+        selectedOptions 
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
 
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateQuantity",
@@ -63,7 +77,7 @@ export const clearCart = createAsyncThunk(
       return rejectWithValue(err.response?.data || { message: err.message });
     }
   }
-);
+); 
 
 const cartSlice = createSlice({
   name: "cart",

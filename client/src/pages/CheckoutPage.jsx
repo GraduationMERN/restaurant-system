@@ -424,7 +424,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
-import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser } from "../redux/slices/cartSlice";
+import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser,updateCartItemOptions   } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, Edit2, Star, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import { useTranslation } from "react-i18next"; // Keep this import
 
@@ -443,6 +443,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [showRewardModal, setShowRewardModal] = useState(false);
+  
 
   // Load cart on mount
   useEffect(() => {
@@ -450,58 +451,148 @@ export default function CheckoutPage() {
   }, [dispatch]);
 
   // Handle quantity change
-  const handleQuantityChange = (productId, quantity) => {
-    if (quantity < 1) return;
-    dispatch(updateCartQuantity({ productId, newQuantity: quantity }));
-  };
+  // const handleQuantityChange = (productId, quantity) => {
+  //   if (quantity < 1) return;
+  //   dispatch(updateCartQuantity({ productId, newQuantity: quantity }));
+  // };
 
-  // Handle delete product
-  const handleDeleteItem = (productId) => {
-    dispatch(deleteProductFromCart(productId));
-  };
+  // // Handle delete product
+  // const handleDeleteItem = (productId) => {
+  //   dispatch(deleteProductFromCart(productId));
+  // };
+// Handle quantity change - FIXED
+// Handle quantity change - MATCH CART PAGE
+const handleQuantityChange = (productId, quantity) => {  // Changed parameter name
+  if (quantity < 1) return;
+  console.log("Updating quantity for productId:", productId);
+  
+  dispatch(updateCartQuantity({ 
+    cartItemId: productId,  // Using productId (matching CartPage)
+    newQuantity: quantity 
+  }));
+};
 
-  // Handle option change
-  const handleOptionChange = (product, optionName, choiceLabel) => {
-    const newSelectedOptions = { ...product.selectedOptions, [optionName]: choiceLabel };
-    dispatch(addToCart({
-      productId: product.productId._id,
-      quantity: product.quantity,
+// Handle delete product - MATCH CART PAGE
+const handleDeleteItem = (productId) => {  // Changed parameter name
+  console.log("Deleting productId:", productId);
+  dispatch(deleteProductFromCart(productId));  // Using productId (matching CartPage)
+};
+
+// Handle option change - Use productId like CartPage would
+const handleOptionChange = async (item, optionName, choiceLabel) => {
+  try {
+    const newSelectedOptions = { 
+      ...item.selectedOptions, 
+      [optionName]: choiceLabel 
+    };
+    
+    // Since we can't update options directly, we need to:
+    // 1. Delete the current item
+    // 2. Add it back with new options
+    
+    await dispatch(deleteProductFromCart(item.productId._id));  // Delete using productId
+    
+    await dispatch(addToCart({
+      productId: item.productId._id,
+      quantity: item.quantity,
       selectedOptions: newSelectedOptions
     }));
-  };
+    
+  } catch (err) {
+    console.error("Failed to update options:", err);
+  }
+};
+
 
   // Compute totals
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   const total = +(subtotal + vat).toFixed(2);
 
+  // const handleSubmit = async () => {
+  //     console.log("Cart ID:", cartId); // Check if this exists
+  // console.log("Cart products:", products); 
+  //   if (!cartId) return;
+  //   setSubmitting(true);
+
+  //   try {
+  //     const res = await dispatch(
+  //       createOrderFromCart({
+  //         cartId,
+  //         serviceType,
+  //         tableNumber,
+  //         notes,
+  //       })
+  //     ).unwrap();
+
+  //     navigate("/payment", { 
+  //       state: { 
+  //         orderId: res.id || res._id || res.orderId,
+  //         order: res 
+  //       } 
+  //     });
+
+  //   } catch (err) {
+  //     console.error("Order creation failed:", err);
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async () => {
-    if (!cartId) return;
-    setSubmitting(true);
+  if (!cartId) {
+    alert("No cart found. Please add items to cart first.");
+    return;
+  }
+  
+  if (products.length === 0) {
+    alert("Your cart is empty. Please add items before checking out.");
+    return;
+  }
+  
+  setSubmitting(true);
 
-    try {
-      const res = await dispatch(
-        createOrderFromCart({
-          cartId,
-          serviceType,
-          tableNumber,
-          notes,
-        })
-      ).unwrap();
+  try {
+    const res = await dispatch(
+      createOrderFromCart({
+        cartId,
+        serviceType,
+        tableNumber,
+        notes,
+     // Make sure this is defined
+      })
+    ).unwrap();
 
+    console.log("Order created:", res);
+
+    // Handle the API response structure
+    if (res.success && res.data) {
       navigate("/payment", { 
         state: { 
-          orderId: res.id || res._id || res.orderId,
-          order: res 
+          orderId: res.data._id || res.data.id,
+          order: res.data
         } 
       });
-
-    } catch (err) {
-      console.error("Order creation failed:", err);
-    } finally {
-      setSubmitting(false);
+    } else {
+      // Fallback if structure is different
+      navigate("/payment", { 
+        state: { 
+          orderId: res._id || res.id,
+          order: res
+        } 
+      });
     }
-  };
+
+  } catch (err) {
+    console.error("Order creation failed:", err);
+    
+    // Show user-friendly error
+    const errorMessage = err?.message || err || "Failed to create order. Please try again.";
+    alert(errorMessage);
+    
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -573,7 +664,7 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-orange-100 dark:bg-orange-900/20 rounded-full px-1">
                           <button 
-                            onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Minus className="w-4 h-4" />
@@ -582,7 +673,7 @@ export default function CheckoutPage() {
                             {item.quantity}
                           </span>
                           <button 
-                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -598,7 +689,7 @@ export default function CheckoutPage() {
                           <select
                             key={opt._id}
                             value={item.selectedOptions[opt.name] || ""}
-                            onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
+onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
                             <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
@@ -623,7 +714,7 @@ export default function CheckoutPage() {
                         Edit
                       </button>
                       <button 
-                        onClick={() => handleDeleteItem(item._id)}
+                        onClick={() => handleDeleteItem(item.productId._id)}
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4 mr-1.5" />
