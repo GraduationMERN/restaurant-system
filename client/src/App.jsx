@@ -15,7 +15,7 @@ import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import Chatbot from "./components/chatbot/Chatbot";
-
+import OrderTracking from "./pages/orderTracking";
 // New Payment Pages
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -51,7 +51,7 @@ function App() {
           <Route path="/verifyOtp" element={<VerifyOtpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/orders" element={<CheckoutPage />} /> 
+          <Route path="/orders" element={<OrderTracking />} /> 
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/cart" element={<CartPage />} />
 
