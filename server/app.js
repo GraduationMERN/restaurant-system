@@ -37,14 +37,9 @@ dotenv.config();
 const app = express();
 
 // --- Global Middlewares ---
-const allowedOrigins = [
-  env.frontendUrl,            // Production
-  "http://localhost:5173",    // Local frontend
-  "http://localhost:3000",    // Alternate local
-];
 
 app.use(cors({
-  origin: ["http://localhost:5173",env.frontendUrl],
+  origin: ["http://localhost:5173","https://brandbite-three.vercel.app",env.frontendUrl],
   credentials: true,
 }));
 
