@@ -1,6 +1,7 @@
 import orderService from "./order.service.js";
 import { notificationService } from "../../../server.js";
 import pushNotificationService from "../notification/pushNotification.service.js";
+import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 
 // ==============================
 // CREATE ORDER FROM CART
@@ -180,6 +181,13 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const order = await orderService.updateStatus(req.params.id, status);
+    // Send notifications (socket + push) using helper
+    try {
+      await sendOrderStatusNotifications(order, status);
+    } catch (e) {
+      console.error('Failed sending order status notifications:', e);
+    }
+
     res.json({ success: true, data: order });
   } catch (err) {
     console.error("Update order status error:", err);
