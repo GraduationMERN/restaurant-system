@@ -9,11 +9,10 @@ import io from "socket.io-client";
 import api from "../../api/axios";
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "ready", label: "Ready" },
-  { value: "completed", label: "Completed" },
-  { value: "failed", label: "Failed" },
-  { value: "canceled", label: "Canceled" },
+  { value: "Preparing", label: "Preparing" },
+  { value: "Confirmed", label: "Confirmed" },
+  { value: "Ready", label: "Ready" },
+  { value: "Completed", label: "Completed" },
 ];
 
 export default function RewardOrders() {
@@ -142,12 +141,16 @@ export default function RewardOrders() {
                           className="w-32"
                           variant="pill"
                           size="sm"
-                          color={row.status === "pending" ? "warning" : row.status === "ready" ? "success" : "info"}
+                          color={
+                            row.status === "Preparing" ? "warning" :
+                            row.status === "Confirmed" ? "info" :
+                            row.status === "Ready" ? "info" :
+                            row.status === "Completed" ? "success" :
+                            "neutral"
+                          }
                           options={STATUS_OPTIONS}
                           defaultValue={row.status}
-                          onChange={(val) => updateOrderStatus(row._id, val)
-
-                          }
+                          onChange={(val) => updateOrderStatus(row._id, val)}
                         />
                       </TableCell>
 

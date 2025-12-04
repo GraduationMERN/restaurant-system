@@ -23,6 +23,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 
 import CashierConfirmation from "./pages/CashierConfirmation";
+import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
 function App() {
   const dispatch = useDispatch();
@@ -54,6 +55,7 @@ function App() {
           <Route path="/orders" element={<CheckoutPage />} /> 
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/reward-order/:id" element={<RewardOrderTrackingPage />} />
 
           {/* Payment Flow */}
           <Route path="/payment" element={<PaymentPage />} />

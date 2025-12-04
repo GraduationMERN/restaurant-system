@@ -8,7 +8,7 @@ export default function Layout({ children }) {
 
   return (
    
-       <div className="lg:mx-20 md:ml-20 min-h-screen bg-white pb-10 transition-all dark:bg-gray-900 dark:text-white">
+       <div className="lg:mx-20 md:ml-20 min-h-screen bg-white pb-10 transition-all dark:bg-gray-900 dark:text-white select-none">
     
       {!isAdmin && <DesktopNav />}
 

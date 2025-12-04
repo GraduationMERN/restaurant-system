@@ -85,6 +85,18 @@ export const updatePoints = createAsyncThunk(
   }
 );
 
+export const getUserRedemptions = createAsyncThunk(
+  "reward/getUserRedemptions",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/api/reward/my-redemptions`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
 const rejected = (state, action) => {
   state.loading = false;
   state.error = action.payload;
@@ -160,6 +172,7 @@ const rewardSlice = createSlice({
     items: [],
     totalPrice: 0,
     rewardById: {},
+    userRedemptions: [],
     loading: false,
     error: null,
   },
@@ -186,7 +199,14 @@ const rewardSlice = createSlice({
       .addCase(redeemReward.rejected, rejected)
       .addCase(updatePoints.pending, pending)
       .addCase(updatePoints.fulfilled, fulfilledUpdatePoints)
-      .addCase(updatePoints.rejected, rejected);
+      .addCase(updatePoints.rejected, rejected)
+      .addCase(getUserRedemptions.pending, pending)
+      .addCase(getUserRedemptions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userRedemptions = Array.isArray(action.payload) ? action.payload : [];
+        state.error = null;
+      })
+      .addCase(getUserRedemptions.rejected, rejected);
   },
 });
 
