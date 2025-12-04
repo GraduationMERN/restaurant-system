@@ -174,14 +174,14 @@ export const deleteProductFromCart = async (req, res) => {
         const { productId } = req.params;
 
         // Get user cart
-        let cart = await addToCartService(userId);
+        let cart = await getCartForUserService(userId);
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }
 
         // Check product exists in cart
         const productIndex = cart.products.findIndex(
-            (p) => p.productId.toString() === productId
+            (p) => p.productId._id.toString() === productId || p.productId.toString() === productId
         );
 
         if (productIndex === -1) {
@@ -233,10 +233,9 @@ export const deleteProductFromCart = async (req, res) => {
         await product.save();
         await cart.save();
 
-        res.status(200).json({
-            message: 'Product removed from cart successfully',
-            cart,
-        });
+        res.status(200).json(
+            cart
+        );
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -254,11 +253,11 @@ export const updateCartQuantity = async (req, res) => {
             return res.status(400).json({ message: "Quantity must be at least 1" });
         }
 
-        let cart = await addToCartService(userId);
+        let cart = await getCartForUserService(userId);
         if (!cart) return res.status(404).json({ message: "Cart not found" });
 
         const productIndex = cart.products.findIndex(
-            (p) => p.productId.toString() === productId
+            (p) => p.productId._id.toString() === productId || p.productId.toString() === productId
         );
 
         if (productIndex === -1) {
@@ -344,10 +343,9 @@ export const updateCartQuantity = async (req, res) => {
         await product.save();
         await cart.save();
 
-        res.status(200).json({
-            message: "Quantity updated successfully",
+        res.status(200).json(
             cart
-        });
+        );
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -358,7 +356,7 @@ export const updateCartQuantity = async (req, res) => {
 export const clearCart = async (req, res) => {
     try {
         const userId = getCartUserId(req, res);
-        let cart = await addToCartService(userId);
+        let cart = await getCartForUserService(userId);
         
         if (!cart) {
             return res.status(404).json({ message: "Cart not found" });
