@@ -66,11 +66,12 @@ const PaymentPage = () => {
         await dispatch(createStripeSession({ orderId })).unwrap();
       } else {
         await dispatch(payInStore({ orderId })).unwrap();
-        navigate("/cashier-confirmation", { 
-          state: { 
-            orderId, 
-            order: orderData 
-          } 
+        // After marking as pay-in-store, go to the order tracking page with orderId in URL
+        navigate(`/orders/${orderId}`, {
+          state: {
+            orderId,
+            order: orderData,
+          },
         });
       }
     } catch (err) {

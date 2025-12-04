@@ -55,6 +55,24 @@ class NotificationService {
         return null;
       }
     }
+
+      // Send a notification to a role room (e.g., 'cashier', 'kitchen')
+      async sendToRole(role, notification) {
+        if (!this.io) return null;
+
+        try {
+          const created = await NotificationRepository.create({
+            ...notification,
+            role,
+          });
+
+          this.io.to(role).emit("notification", created);
+          return created;
+        } catch (e) {
+          console.error("Failed to persist role notification", e);
+          return null;
+        }
+      }
   
     getUserNotifications(userId) {
       return NotificationRepository.getUserNotifications(userId);

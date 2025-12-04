@@ -50,9 +50,15 @@ export const fetchOrderById = createAsyncThunk(
 // Fetch orders for a specific user
 export const fetchUserOrders = createAsyncThunk(
   "order/fetchUserOrders",
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue, getState }) => {
     try {
-      const res = await api.get("/api/orders/user"); // backend uses auth session
+      // If userId not provided, attempt to read from auth state
+      const state = getState();
+      const id = userId || state?.auth?.user?._id;
+      if (!id) {
+        return rejectWithValue("User ID not available");
+      }
+      const res = await api.get(`/api/orders/user/${id}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -67,6 +73,19 @@ export const cancelOwnOrder = createAsyncThunk(
     try {
       const res = await api.patch(`/api/orders/${orderId}/cancel`);
       return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+// Delete order (admin/cashier only, for cancelled/completed orders)
+export const deleteOrder = createAsyncThunk(
+  "order/delete",
+  async (orderId, { rejectWithValue }) => {
+    try {
+      const res = await api.delete(`/api/orders/${orderId}`);
+      return orderId; // Return orderId to remove from lists
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -89,9 +108,25 @@ export const fetchAllOrders = createAsyncThunk(
 // Admin: update order status
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
-  async ({ orderId, status }, { rejectWithValue }) => {
+  async ({ orderId, status, estimatedTime }, { rejectWithValue }) => {
     try {
-      const res = await api.patch(`/api/orders/${orderId}/status`, { status });
+      const body = {};
+      if (typeof status !== "undefined") body.status = status;
+      if (typeof estimatedTime !== "undefined") body.estimatedTime = estimatedTime;
+      const res = await api.patch(`/api/orders/${orderId}/status`, body);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+// Kitchen/Cashier: fetch active orders (pending/ready)
+export const fetchActiveOrders = createAsyncThunk(
+  "order/fetchActive",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/orders/kitchen/active");
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -118,6 +153,28 @@ const orderSlice = createSlice({
     clearOrderMessages(state) {
       state.error = null;
       state.successMessage = null;
+    },
+    // Set singleOrder (used by socket handlers)
+    setSingleOrder(state, action) {
+      state.singleOrder = action.payload;
+    },
+    // Update or insert order into lists (userOrders, allOrders, activeOrders)
+    upsertOrder(state, action) {
+      const updated = action.payload;
+      if (!updated || !updated._id) return;
+      state.singleOrder = state.singleOrder && state.singleOrder._id === updated._id ? updated : state.singleOrder;
+      state.userOrders = state.userOrders.map((o) => (o._id === updated._id ? updated : o));
+      if (!state.userOrders.find((o) => o._id === updated._id) && updated.customerId) {
+        state.userOrders.push(updated);
+      }
+      state.allOrders = state.allOrders.map((o) => (o._id === updated._id ? updated : o));
+      if (!state.allOrders.find((o) => o._id === updated._id)) {
+        state.allOrders.push(updated);
+      }
+      state.activeOrders = state.activeOrders.map((o) => (o._id === updated._id ? updated : o));
+      if (updated.status && ["pending", "confirmed", "preparing", "ready"].includes(updated.status) && !state.activeOrders.find((o) => o._id === updated._id)) {
+        state.activeOrders.push(updated);
+      }
     },
     clearSingleOrder(state) {
       state.singleOrder = null;
@@ -209,6 +266,28 @@ const orderSlice = createSlice({
         state.error = action.payload || "Failed to cancel order";
       })
 
+      // DELETE ORDER (ADMIN/CASHIER)
+      .addCase(deleteOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        const orderId = action.payload;
+        // Remove from all order lists
+        state.userOrders = state.userOrders.filter((o) => o._id !== orderId);
+        state.allOrders = state.allOrders.filter((o) => o._id !== orderId);
+        state.activeOrders = state.activeOrders.filter((o) => o._id !== orderId);
+        if (state.singleOrder?._id === orderId) {
+          state.singleOrder = null;
+        }
+        state.successMessage = "Order deleted successfully";
+      })
+      .addCase(deleteOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to delete order";
+      })
+
       // FETCH ALL ORDERS (ADMIN)
       .addCase(fetchAllOrders.pending, (state) => {
         state.loading = true;
@@ -252,9 +331,25 @@ const orderSlice = createSlice({
       .addCase(updateOrderStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to update order status";
+      })
+
+      // FETCH ACTIVE ORDERS (KITCHEN/CASHIER)
+      .addCase(fetchActiveOrders.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchActiveOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.activeOrders = Array.isArray(unwrap(action.payload))
+          ? unwrap(action.payload)
+          : [];
+      })
+      .addCase(fetchActiveOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch active orders";
       });
   },
 });
 
-export const { clearOrderMessages, clearSingleOrder } = orderSlice.actions;
+export const { clearOrderMessages, clearSingleOrder, setSingleOrder, upsertOrder } = orderSlice.actions;
 export default orderSlice.reducer;
