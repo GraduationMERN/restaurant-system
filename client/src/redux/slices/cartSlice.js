@@ -11,39 +11,59 @@ export const getCartForUser = createAsyncThunk("cart/fetch", async () => {
 // Add product to cart (or update if exists)
 export const addToCart = createAsyncThunk(
   "cart/add",
-  async ({ productId, quantity, selectedOptions }) => {
-    const res = await api.post("/api/cart/add", {
-      productId,
-      quantity,
-      selectedOptions,
-    });
-    return res.data;
+  async ({ productId, quantity, selectedOptions }, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/api/cart/add", {
+        productId,
+        quantity,
+        selectedOptions,
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
   }
 );
 
-// Remove product from cart
-export const deleteProductFromCart = createAsyncThunk(
-  "cart/deleteProduct",
-  async (productId) => {
-    const res = await api.delete(`/api/cart/${productId}`);
-    return res.data;
-  }
-);
-
-// Update quantity of item
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateQuantity",
-  async ({ productId, newQuantity }) => {
-    const res = await api.put(`/api/cart/${productId}`, { newQuantity });
-    return res.data;
+  async ({ cartItemId, newQuantity }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/api/cart/${cartItemId}`, { newQuantity });
+      return res.data;
+    } catch (err) {
+      // ✅ هنا بنرسل رسالة الخطأ من الباك للفِرونت
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
+
+export const deleteProductFromCart = createAsyncThunk(
+  "cart/deleteProduct",
+  async (cartItemId, { rejectWithValue }) => {
+    try {
+      const res = await api.delete(`/api/cart/${cartItemId}`);
+      return res.data;
+    } catch (err) {
+      // ✅ هنا بنرسل رسالة الخطأ من الباك للفِرونت
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
   }
 );
 
 // Clear whole cart
-export const clearCart = createAsyncThunk("cart/clear", async () => {
-  const res = await api.delete("/api/cart/clear/");
-  return res.data;
-});
+export const clearCart = createAsyncThunk(
+  "cart/clear",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.delete("/api/cart/clear/");
+      return res.data;
+    } catch (err) {
+      // بجيب رسالة الخطأ من response.data لو موجودة، أو fallback على err.message
+      return rejectWithValue(err.response?.data || { message: err.message });
+    }
+  }
+);
 
 const cartSlice = createSlice({
   name: "cart",
@@ -75,7 +95,10 @@ const cartSlice = createSlice({
       })
       .addCase(getCartForUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          "Something went wrong";
       })
 
       // addToCart
@@ -90,7 +113,10 @@ const cartSlice = createSlice({
       })
       .addCase(addToCart.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          "Something went wrong";
       })
 
       // deleteProductFromCart
@@ -105,7 +131,10 @@ const cartSlice = createSlice({
       })
       .addCase(deleteProductFromCart.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          "Something went wrong";
       })
 
       // updateCartQuantity
@@ -119,7 +148,10 @@ const cartSlice = createSlice({
       })
       .addCase(updateCartQuantity.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          "Something went wrong";
       })
 
       // clearCart
@@ -134,7 +166,10 @@ const cartSlice = createSlice({
       })
       .addCase(clearCart.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          "Something went wrong";
       });
   },
 });
