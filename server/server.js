@@ -30,6 +30,19 @@ io.on("connection", (socket) => {
     socket.join("admin");
     console.log(`Socket ${socket.id} joined admin room`);
   });
+
+  // Allow users to join reward order specific room for real-time updates
+  socket.on("join_reward_order", (data) => {
+    const { orderId } = data;
+    if (orderId) {
+      socket.join(`reward_order_${orderId}`);
+      console.log(`Socket ${socket.id} joined reward order room: reward_order_${orderId}`);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
 
 // Create global notification service

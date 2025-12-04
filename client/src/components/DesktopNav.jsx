@@ -134,7 +134,7 @@ export default function CombinedNavbar() {
 
           <DesktopNavItem
             to="/rewards"
-            icon={<Gift size={20} />}
+            icon={<Gift size={20} className="text-secondary"/>}
             label={t("rewards")}
             active={isActive("/rewards")}
             isOpen={isOpen}
@@ -198,7 +198,7 @@ export default function CombinedNavbar() {
 
           <MobileNavItem
             to="/rewards"
-            icon={<Gift size={20} />}
+            icon={<Gift size={20} className="text-secondary" />}
             label={t("rewards")}
             active={isActive("/rewards")}
             onClick={handleNavClick}
@@ -222,7 +222,7 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick }) {
       `}
     >
       {icon}
-      {isOpen && <span className="text-sm">{label}</span>}
+      {isOpen && <span className={`text-sm ${label === "Rewards" ? "text-secondary":""}`}>{label}</span>}
     </Link>
   );
 }
