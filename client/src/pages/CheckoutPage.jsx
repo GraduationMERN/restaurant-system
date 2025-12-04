@@ -4,7 +4,7 @@ import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser,updateCartItemOptions   } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, Edit2, Star, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
-import { useTranslation } from "react-i18next"; // Keep this import
+import { useTranslation } from "react-i18next"; // 
 
 export default function CheckoutPage() {
   const dispatch = useDispatch();
@@ -66,7 +66,7 @@ const handleOptionChange = async (item, optionName, choiceLabel) => {
     }));
     
   } catch (err) {
-    console.error("Failed to update options:", err);
+    console.error("options didnt update:", err);
   }
 };
 
