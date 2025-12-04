@@ -49,7 +49,6 @@ export const NotificationProvider = ({ children }) => {
 
       // Register with admin room when connected
       socket.on("connect", () => {
-        console.log("Notification socket connected:", socket.id);
         socket.emit("joinAdmin");
       });
 

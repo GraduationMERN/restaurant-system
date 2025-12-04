@@ -10,6 +10,20 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ToastProvider } from './components/ui/toast/ToastProvider';
 import { Provider } from 'react-redux';
 import { store } from "./redux/store";
+import { registerServiceWorker, requestNotificationPermission } from './utils/notificationUtils.js';
+
+// Register Service Worker and request notification permission
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      await registerServiceWorker();
+      await requestNotificationPermission();
+    } catch (error) {
+      console.error('Failed to setup PWA:', error);
+    }
+  });
+}
+
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
   <ThemeProvider>

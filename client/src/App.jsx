@@ -23,7 +23,9 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 
 import CashierConfirmation from "./pages/CashierConfirmation";
+import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
+import { requestNotificationPermission } from './utils/notifications';
 function App() {
   const dispatch = useDispatch();
 
@@ -37,6 +39,11 @@ function App() {
       }
     }
   }, [dispatch]);
+
+  // Request notification permission on app load (centralized)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   return (
     <BrowserRouter>
@@ -54,6 +61,7 @@ function App() {
           <Route path="/orders" element={<OrderTracking />} /> 
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/reward-order/:id" element={<RewardOrderTrackingPage />} />
 
           {/* Payment Flow */}
           <Route path="/payment" element={<PaymentPage />} />
