@@ -23,6 +23,9 @@ export default function CombinedNavbar() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const cartItem = useSelector(state => state.cart.products);
+  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
+
 
   const isActive = (path) => location.pathname === path;
 
@@ -112,6 +115,7 @@ export default function CombinedNavbar() {
             active={isActive("/cart")}
             isOpen={isOpen}
             onClick={handleNavClick}
+            badge={totalItems}
           />
 
           <DesktopNavItem
@@ -179,6 +183,15 @@ export default function CombinedNavbar() {
             active={isActive("/menu")}
             onClick={handleNavClick}
           />
+          <MobileNavItem
+            to="/cart"
+            icon={<ShoppingCart size={20} />}
+            label={t("cart")}
+            active={isActive("/cart")}
+            onClick={handleNavClick}
+            badge={totalItems}
+          />
+
 
           <MobileNavItem
             to="/orders"
@@ -210,7 +223,7 @@ export default function CombinedNavbar() {
 }
 
 /* ------------ Desktop Nav Item ------------ */
-function DesktopNavItem({ to, icon, label, active, isOpen, onClick }) {
+function DesktopNavItem({ to, icon, label, active, isOpen, onClick , badge}) {
   // Note: onClick used to optionally close sidebar or perform other actions
   return (
     <Link
@@ -228,15 +241,34 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick }) {
 }
 
 /* ------------ Mobile Nav Item ------------ */
-function MobileNavItem({ to, icon, label, active, onClick }) {
+function MobileNavItem({ to, icon, label, active, onClick,badge  }) {
   return (
     <Link
       to={to}
+      onClick={() => onClick && onClick()}
       className={`flex flex-col items-center ${
         active ? "text-primary" : "text-muted"
       }`}
     >
-      {icon}
+      <div className="relative">
+        {icon}
+        {/* Badge */}
+        {badge > 0 && (
+          <span
+            className="absolute -top-2 -right-3 text-white text-[10px] font-bold flex items-center justify-center"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              borderRadius: "50%",
+              height: "16px",
+              minWidth: "16px",
+              padding: "0 4px",
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+
       <span className="text-xs">{label}</span>
     </Link>
   );

@@ -14,42 +14,39 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Container,
-  Dialog, DialogContent, DialogTitle, Button,
-  Stack
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Button,
+  Stack,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import GridViewIcon from "@mui/icons-material/GridView";
-import api from "../api/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllCategories } from "../redux/slices/categorySlice";
 import { fetchProductList } from "../redux/slices/productSlice";
 import CardComponent from "../components/Card/CardComponent";
-
+import { addToCart } from "../redux/slices/cartSlice";
 
 function MenuPage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("list"); // list | grid
-
-
+  // const [view, setView] = useState("list"); // list | grid
 
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-
-
   const categories = useSelector((state) => state.category.list);
-  const categoriesTabs = categories.map(cat => cat.name.toUpperCase());
+  const categoriesTabs = categories.map((cat) => cat.name.toUpperCase());
 
-  //   const products = useSelector((state) => state.product.list);
+  //   const products = useSelector((state) => state.product.list)
   const products = useSelector((state) => state.product.filtered);
+  const [selectedSizes, setSelectedSizes] = useState({});
 
-  // console.log("Products from Redux:", products);
-  // console.log(products[0]);
+  console.log("Products from Redux:", products);
+  console.log(products[0]);
 
   const dispatch = useDispatch();
 
@@ -63,51 +60,80 @@ function MenuPage() {
     }
   }, [categories]);
 
-
   useEffect(() => {
     if (categories.length > 0) {
-      const category = categories.find(c => c.name.toUpperCase() === activeCategory);
+      const category = categories.find(
+        (c) => c.name.toUpperCase() === activeCategory
+      );
       if (category) {
         console.log("Category ID:", category._id);
-        dispatch(fetchProductList({
-          categoryId: category._id,
-          searchTerm: search,
-          page: 1,
-          pageSize: 1000
-        }));
+        dispatch(
+          fetchProductList({
+            categoryId: category._id,
+            searchTerm: search,
+            page: 1,
+            pageSize: 1000,
+          })
+        );
       } else {
         console.log("Category not found for:", activeCategory);
       }
     }
   }, [activeCategory, search, categories]);
 
-
   useEffect(() => {
     filterProducts();
   }, [products, activeCategory, search]);
 
   const filterProducts = () => {
-    const f = products.filter(
-      (p) => {
-        // console.log("p",p)
-        // console.log("categ",categories.find(c => c._id === p.categoryId)?.name.toUpperCase());
+    const f = products.filter((p) => {
+      // console.log("p",p)
+      // console.log("categ",categories.find(c => c._id === p.categoryId)?.name.toUpperCase());
 
-        return categories.find(c => c._id === p.categoryId)?.name.toUpperCase() === activeCategory &&
-          p.name.toLowerCase().includes(search.toLowerCase())
-      }
-    );
+      return (
+        categories.find((c) => c._id === p.categoryId)?.name.toUpperCase() ===
+          activeCategory && p.name.toLowerCase().includes(search.toLowerCase())
+      );
+    });
     setFiltered(f);
   };
 
   const handelClick = (product, qty) => {
-    console.log("Add to cart clicked:", product.name, "Quantity:", qty);
+    let optionsPayload = {};
+
+    // لو في خيارات موجودة للمنتج
+    if (product.options && product.options.length > 0) {
+      product.options.forEach((option) => {
+        const key = `${product._id}_${option.name}`;
+        const selectedValue =
+          selectedSizes[key] || // إذا المستخدم اختار
+          option.choices[0]?.label; // default choice
+
+        if (selectedValue) {
+          optionsPayload[option.name] = selectedValue;
+        }
+      });
+    }
+
+    dispatch(
+      addToCart({
+        productId: product._id,
+        quantity: qty,
+        selectedOptions: optionsPayload,
+      })
+    );
+
+    console.log("SENT TO CART:", {
+      productId: product._id,
+      quantity: qty,
+      selectedOptions: optionsPayload,
+    });
   };
 
-
-  //for Popup
+  //for Popup dialog
   const handleOpenPopup = (product) => {
     setSelectedProduct(product);
-    setQuantity(1); // reset quantity
+    setQuantity(1);
     setOpenPopup(true);
   };
 
@@ -116,26 +142,27 @@ function MenuPage() {
     setSelectedProduct(null);
   };
 
-  const [selectedSizes, setSelectedSizes] = useState({});
-
-  const handleSizeChange = (productId, size) => {
+  const handleSizeChange = (key, size) => {
     setSelectedSizes((prev) => ({
       ...prev,
-      [productId]: size,
+      [key]: size,
     }));
   };
 
-
-
   return (
     <>
-      {/* Page Title */}
-      <Typography variant="h4" fontWeight={700} mb={3}>
+      <Typography variant="h4" fontWeight={700} ml={4} mt={2} mb={3}>
         Menu
       </Typography>
 
       {/* Search + View Switch */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+        flexWrap="wrap"
+      >
         <TextField
           placeholder="Search"
           value={search}
@@ -149,24 +176,15 @@ function MenuPage() {
             ),
           }}
         />
-
-        <ToggleButtonGroup
-          value={view}
-          exclusive
-          onChange={(e, v) => v && setView(v)}
-        >
-          <ToggleButton value="list">
-            <ViewListIcon />
-          </ToggleButton>
-          <ToggleButton value="grid">
-            <GridViewIcon />
-          </ToggleButton>
-        </ToggleButtonGroup>
       </Box>
 
       {/* Tabs */}
       <Tabs
-        value={categoriesTabs.indexOf(activeCategory) === -1 ? 0 : categoriesTabs.indexOf(activeCategory)}
+        value={
+          categoriesTabs.indexOf(activeCategory) === -1
+            ? 0
+            : categoriesTabs.indexOf(activeCategory)
+        }
         onChange={(e, idx) => setActiveCategory(categoriesTabs[idx])}
         variant="scrollable"
         scrollButtons
@@ -204,17 +222,25 @@ function MenuPage() {
         {activeCategory}
       </Typography>
 
-
-
-      {/* Products Grid */}
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
-          {filtered.map((p) => (
-            <CardComponent onClick={() => { handleOpenPopup(p); }}
-              product={p} key={p._id} disabled={false} isReward={false} />
-          ))}
-       </div>
-     
+      {/* Products in Grid */}
+      {/* <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"> */}
+      <div
+        className={
+          "grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
+        }
+      >
+        {filtered.map((p) => (
+          <CardComponent
+            onClick={() => {
+              handleOpenPopup(p);
+            }}
+            product={p}
+            key={p._id}
+            disabled={false}
+            isReward={false}
+          />
+        ))}
+      </div>
 
       {/* Popup Dialog */}
       <Dialog
@@ -231,78 +257,122 @@ function MenuPage() {
       >
         {selectedProduct && (
           <>
-            <DialogTitle sx={{ fontWeight: 700 }}>{selectedProduct.name}</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 700 }}>
+              {selectedProduct.name}
+            </DialogTitle>
             <DialogContent>
-              {/* الصورة فوق */}
               <Box
                 component="img"
                 src={selectedProduct.imgURL}
                 alt={selectedProduct.name}
-                sx={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 2, mb: 2 }}
+                sx={{
+                  width: "100%",
+                  maxHeight: 300,
+                  objectFit: "cover",
+                  borderRadius: 2,
+                  mb: 2,
+                }}
               />
-
-              {/* الجزء الأفقي: الوصف + الأزرار */}
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={2}>
+              <Box
+                display="flex"
+                alignItems="flex-start"
+                justifyContent="space-between"
+                mb={2}
+              >
                 {/* الوصف والسعر */}
                 <Box flex={1}>
-                  <Typography color="text.secondary" mb={1}>{selectedProduct.desc}</Typography>
-                  <Typography fontWeight={700}>EGP {selectedProduct.basePrice}</Typography>
+                  <Typography color="text.secondary" mb={1}>
+                    {selectedProduct.desc}
+                  </Typography>
+                  <Typography fontWeight={700} sx={{ color: "#e27e36" }}>
+                    EGP {selectedProduct.basePrice}
+                  </Typography>
                 </Box>
 
-                <Box display="flex" flexDirection="column" alignItems="center" ml={2}>
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  ml={2}
+                >
                   <Button
                     variant="contained"
-                    sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                    sx={{
+                      minWidth: 40,
+                      bgcolor: "#e27e36",
+                      borderRadius: 3,
+                      "&:hover": { bgcolor: "#d26c2c" },
+                    }}
                     onClick={() => setQuantity(quantity + 1)}
                   >
                     +
                   </Button>
-                  <Typography fontWeight={700} my={1}>{quantity}</Typography>
+                  <Typography fontWeight={700} my={1}>
+                    {quantity}
+                  </Typography>
                   <Button
                     variant="contained"
-                    sx={{ minWidth: 40, bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                    sx={{
+                      minWidth: 40,
+                      bgcolor: "#e27e36",
+                      borderRadius: 3,
+                      "&:hover": { bgcolor: "#d26c2c" },
+                    }}
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   >
                     -
                   </Button>
                 </Box>
               </Box>
-
               {/* Size options */}
-              <ToggleButtonGroup
-                value={selectedSizes[selectedProduct._id] || "M"}
-                exclusive
-                onChange={(e, val) => val && handleSizeChange(selectedProduct._id, val)}
-                size="small"
-                sx={{
-                  mb: 2,
-                  "& .MuiToggleButton-root": {
-                    borderRadius: "20px",
-                    border: `1px solid #e27e36`,
-                    textTransform: "none",
-                    fontWeight: 600,
-                    color: "#e27e36",
-                    px: 3,
-                    py: 0.5,
-                    mx: 0.3,
-                    minWidth: 40,
-                  },
-                  "& .Mui-selected": {
-                    bgcolor: "#e27e36 !important",
-                    color: "#fff !important",
-                  },
-                }}
-              >
-                <ToggleButton value="S">S</ToggleButton>
-                <ToggleButton value="M">M</ToggleButton>
-                <ToggleButton value="L">L</ToggleButton>
-              </ToggleButtonGroup>
 
+              {selectedProduct.options &&
+                selectedProduct.options.length > 0 &&
+                selectedProduct.options.map((option) => {
+                  const key = `${selectedProduct._id}_${option.name}`;
+                  return (
+                    <Box key={option.name} sx={{ mb: 2 }}>
+                      <Typography sx={{ mb: 1, fontWeight: 600 }}>
+                        {option.name}
+                      </Typography>
+
+                      <ToggleButtonGroup
+                        value={selectedSizes[key] || option.choices[0]?.label}
+                        exclusive
+                        onChange={(e, val) => val && handleSizeChange(key, val)}
+                        size="small"
+                        sx={{
+                          mb: 1,
+                          "& .MuiToggleButton-root": {
+                            borderRadius: "20px",
+                            border: `1px solid #e27e36`,
+                            textTransform: "none",
+                            fontWeight: 600,
+                            color: "#e27e36",
+                            px: 3,
+                            py: 0.5,
+                            mx: 0.3,
+                            minWidth: 40,
+                          },
+                          "& .Mui-selected": {
+                            bgcolor: "#e27e36 !important",
+                            color: "#fff !important",
+                          },
+                        }}
+                      >
+                        {option.choices.map((choice) => (
+                          <ToggleButton key={choice._id} value={choice.label}>
+                            {choice.label}
+                          </ToggleButton>
+                        ))}
+                      </ToggleButtonGroup>
+                    </Box>
+                  );
+                })}
               {/* Total Price */}
               <Typography fontWeight={700} mb={2}>
                 Total: EGP {selectedProduct.basePrice * quantity}
               </Typography>
-
               {/* Add to Cart */}
               <Button
                 fullWidth
@@ -318,11 +388,8 @@ function MenuPage() {
             </DialogContent>
           </>
         )}
-
       </Dialog>
-
     </>
-
   );
 }
 

@@ -278,7 +278,11 @@ export default function Chatbot() {
             <div className="chatbot-window">
                 <div className="chatbot-header">
                     <div className="bot-avatar">
-                        <img src="/images/bot-logo.png" alt="Bot" />
+                        <img 
+                          src="/images/bot-logo.png" 
+                          alt="Bot"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
                     </div>
                     <div className="header-info">
                         <h3>Bella Assistant</h3>
