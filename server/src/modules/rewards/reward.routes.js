@@ -1,11 +1,13 @@
 import express from 'express';
-import { AddReward, deleteReward, getAllRewards, getRewardById, redeemReward, updateReward, getAllRewardOrder, getRewardOrderById, updateRewardOrder, deleteRewardOrder } from './reward.controller.js';
+import { AddReward, deleteReward, getAllRewards, getRewardById, redeemReward, updateReward, getAllRewardOrder, getRewardOrderById, updateRewardOrder, deleteRewardOrder, getUserRedemptions } from './reward.controller.js';
 import authMiddleware from '../../middlewares/auth.middleware.js';
 import roleMiddleware from '../../middlewares/role.middleware.js';
 import { uploadCloud } from '../../middlewares/uploadCloudinary.middleware.js';
 const router = express.Router();
 
 router.get('/', getAllRewards);
+// Authenticated users can view their own redemptions - MUST be before /:id
+router.get('/my-redemptions', authMiddleware, getUserRedemptions);
 // Reward order management (admin) - must be placed before `/:id` to avoid conflict
 router.get('/reward-order', authMiddleware, roleMiddleware('admin'), getAllRewardOrder);
 router.get('/reward-order/:id', authMiddleware, roleMiddleware('admin'), getRewardOrderById);

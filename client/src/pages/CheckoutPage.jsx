@@ -86,7 +86,7 @@
 
 //     // navigate to Payment page instead of order-tracking
 //     // passing orderId in query params or state
-    
+
 //     navigate("/payment", { state: {  orderId: res.id || res._id || res.orderId,
 //         order: res } });
 
@@ -450,9 +450,15 @@ export default function CheckoutPage() {
   }, [dispatch]);
 
   // Handle quantity change
-  const handleQuantityChange = (productId, quantity) => {
+  const handleQuantityChange = (item, quantity) => {
     if (quantity < 1) return;
-    dispatch(updateCartQuantity({ productId, newQuantity: quantity }));
+    dispatch(
+      updateCartQuantity({
+        cartItemId: item._id,
+        newQuantity: item.quantity - 1,
+      })
+    );
+
   };
 
   // Handle delete product
@@ -489,11 +495,11 @@ export default function CheckoutPage() {
         })
       ).unwrap();
 
-      navigate("/payment", { 
-        state: { 
+      navigate("/payment", {
+        state: {
           orderId: res.id || res._id || res.orderId,
-          order: res 
-        } 
+          order: res
+        }
       });
 
     } catch (err) {
@@ -519,12 +525,12 @@ export default function CheckoutPage() {
       {/* Header with Back Button */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-          {t("Back") }
+            {t("Back")}
           </button>
         </div>
       </div>
@@ -550,14 +556,14 @@ export default function CheckoutPage() {
 
             {/* Cart Items */}
             {products.length ? products.map((item) => (
-              <div 
-                key={item._id} 
+              <div
+                key={item._id}
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4">
-                  <img 
-                    src={item.productId.imgURL} 
-                    alt={item.productId.name} 
+                  <img
+                    src={item.productId.imgURL}
+                    alt={item.productId.name}
                     className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-xl flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
@@ -572,8 +578,8 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-orange-100 dark:bg-orange-900/20 rounded-full px-1">
-                          <button 
-                            onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                          <button
+                            onClick={() => handleQuantityChange(item, item.quantity - 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Minus className="w-4 h-4" />
@@ -581,8 +587,8 @@ export default function CheckoutPage() {
                           <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
-                          <button 
-                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                          <button
+                            onClick={() => handleQuantityChange(item, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -603,8 +609,8 @@ export default function CheckoutPage() {
                           >
                             <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
                             {opt.choices.map((choice) => (
-                              <option 
-                                key={choice._id} 
+                              <option
+                                key={choice._id}
                                 value={choice.label}
                                 className="bg-white dark:bg-gray-700"
                               >
@@ -622,7 +628,7 @@ export default function CheckoutPage() {
                         <Edit2 className="w-4 h-4 mr-1.5" />
                         Edit
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteItem(item._id)}
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
                       >
@@ -639,7 +645,7 @@ export default function CheckoutPage() {
                   <Gift className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">Your cart is empty</p>
-                <button 
+                <button
                   onClick={() => navigate('/')}
                   className="mt-4 text-orange-500 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 font-medium"
                 >
@@ -656,7 +662,7 @@ export default function CheckoutPage() {
                   View all
                 </button>
               </div>
-              <div 
+              <div
                 onClick={() => setShowRewardModal(true)}
                 className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all duration-300 relative overflow-hidden group border border-orange-100 dark:border-orange-800"
               >
@@ -681,7 +687,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Add Other Items Button */}
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-orange-300 dark:border-orange-600 text-orange-500 dark:text-orange-400 rounded-2xl py-4 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all duration-300"
             >

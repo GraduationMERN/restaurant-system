@@ -151,7 +151,7 @@ function MenuPage() {
 
   return (
     <>
-      <Typography variant="h4" fontWeight={700} mb={3}>
+      <Typography variant="h4" fontWeight={700} ml={4} mt={2} mb={3}>
         Menu
       </Typography>
 

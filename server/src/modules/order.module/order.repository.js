@@ -56,7 +56,7 @@ class OrderRepository {
 
   async getAllOrders() {
     return Order.find()
-      .populate("items.productId")
+      .populate("items.productId", "name price")
       .populate("userId", "name email phone")
       .sort({ createdAt: -1 })
       .exec();
