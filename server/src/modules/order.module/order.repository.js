@@ -56,7 +56,7 @@ class OrderRepository {
 
   async getAllOrders() {
     return Order.find()
-      .populate("items.productId", "name price")
+      .populate("items.productId")
       .populate("userId", "name email phone")
       .sort({ createdAt: -1 })
       .exec();
@@ -186,15 +186,6 @@ class OrderRepository {
     );
   }
 
-  /**
-   * Create a Payment Log for auditing
-   */
-  // async createPaymentLog(orderId, payload, opts = {}) {
-  //   if (!PaymentLog) return null; // optional
-  //   return PaymentLog.create([{ orderId, ...payload }], {
-  //     ...(opts.session && { session: opts.session })
-  //   });
-  // }
 }
 
 export default new OrderRepository();

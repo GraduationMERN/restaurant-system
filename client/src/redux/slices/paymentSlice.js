@@ -9,12 +9,35 @@ import api from "../../api/axios";
 // Online Stripe payment
 export const createStripeSession = createAsyncThunk(
   "payment/createStripeSession",
-  async ({ orderId }, { rejectWithValue }) => {
+  async ({ orderId, paymentMethod = "card" }, { rejectWithValue }) => {
     try {
-      // Changed from /api/payment/checkout to /api/checkout/create
-      const res = await api.post(`/api/checkout/create`, { orderId });
-      return res.data; // expects Stripe session object
+      // TEST: Send only absolutely essential data
+      const payload = { 
+        orderId,
+        paymentMethod
+        // NO userId, NO user data
+      };
+      
+      console.log("TEST: Sending minimal payload:", payload);
+      
+      const res = await api.post(`/api/checkout/create`, payload);
+      return res.data;
     } catch (err) {
+      console.error("Payment error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
+      // If it's still a UUID error, backend needs fixing
+      if (err.response?.data?.message?.includes('ObjectId') || 
+          err.response?.data?.message?.includes('Cast to ObjectId')) {
+        return rejectWithValue(
+          "Backend authentication issue. Please contact support. " +
+          "Error: UUID format not compatible with database."
+        );
+      }
+      
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
