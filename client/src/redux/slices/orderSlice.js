@@ -130,11 +130,20 @@ const orderSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(createOrderFromCart.fulfilled, (state, action) => {
-        state.loading = false;
-        state.singleOrder = unwrap(action.payload);
-        state.successMessage = "Order created successfully";
-      })
+    // In orderSlice.js, update the createOrderFromCart.fulfilled case:
+.addCase(createOrderFromCart.fulfilled, (state, action) => {
+  state.loading = false;
+  
+  // Handle the nested response structure
+  const response = action.payload;
+  if (response.success && response.data) {
+    state.singleOrder = response.data;  // Extract data from response
+  } else {
+    state.singleOrder = response;  // Fallback
+  }
+  
+  state.successMessage = "Order created successfully";
+})
       .addCase(createOrderFromCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to create order";
