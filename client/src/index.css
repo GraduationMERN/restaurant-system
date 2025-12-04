@@ -5,8 +5,8 @@
 /* Minimal color tokens and helpers only (per request) */
 
 @theme {
-  --color-primary: #FF5733;
-  --color-secondary: #33C3FF;
+  --color-primary: #fff;
+  --color-secondary: #fff;
   --color-accent: #7c3aed;
   /* … other tokens … */
 }
