@@ -71,8 +71,8 @@ class OrderRepository {
       { status: newStatus, updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   async updatePayment(orderId, updates) {
@@ -81,8 +81,8 @@ class OrderRepository {
       { ...updates, updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   async updateCustomerInfo(orderId, customerInfo) {
@@ -91,8 +91,8 @@ class OrderRepository {
       { customerInfo, updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   async updateUserId(orderId, newUserId) {
@@ -101,8 +101,8 @@ class OrderRepository {
       { userId: newUserId, updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   async update(orderId, updates) {
@@ -111,8 +111,8 @@ class OrderRepository {
       { ...updates, updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   async cancelOrder(orderId) {
@@ -121,8 +121,8 @@ class OrderRepository {
       { status: "cancelled", updatedAt: new Date() },
       { new: true }
     )
-    .populate("items.productId")
-    .populate("userId", "name email phone");
+      .populate("items.productId")
+      .populate("userId", "name email phone");
   }
 
   // ==============================
@@ -150,10 +150,10 @@ class OrderRepository {
     return Order.find({
       createdAt: { $gte: startDate, $lte: endDate }
     })
-    .populate("items.productId")
-    .populate("userId", "name email phone")
-    .sort({ createdAt: -1 })
-    .exec();
+      .populate("items.productId")
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   // ==============================
@@ -169,6 +169,123 @@ class OrderRepository {
         }
       }
     ]);
+  }
+
+  //for charts
+  async getOverviewStats(from = null, to = null) {
+    const match = {};
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(from);
+      if (to) match.createdAt.$lte = new Date(to);
+    }
+    const pipeline = [
+      { $match: match },
+      {
+        $facet: {
+          totals: [
+            {
+              $group: {
+                _id: null,
+                totalRevenue: { $sum: "$totalAmount" },
+                orderCount: { $sum: 1 },
+              }
+            }
+          ],
+          statusCounts: [
+            {
+              $group: { _id: "$status", count: { $sum: 1 } }
+            }
+          ],
+          customers: [
+            { $match: { userId: { $exists: true, $ne: null, $ne: "" } } },
+            { $group: { _id: "$userId" } },
+            { $count: "customersCount" }
+          ]
+        }
+      }
+    ];
+    const [res] = await Order.aggregate(pipeline);
+    const totals = (res?.totals?.[0]) || { totalRevenue: 0, orderCount: 0 };
+    const statusCounts = res?.statusCounts || [];
+    const customersCount = res?.customers?.[0]?.customersCount || 0;
+    return { ...totals, statusCounts, customersCount };
+  }
+
+  async getDailyStats(days = 7) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (Number(days) - 1));
+    return Order.aggregate([
+      { $match: { createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+  }
+
+  async getTopItems(from = null, to = null, by = "product") {
+    const match = {};
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(from);
+      if (to) match.createdAt.$lte = new Date(to);
+    }
+    const pipeline = [
+      { $match: match },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: by === "category" ? "$items.productId" : "$items.productId",
+          name: { $first: "$items.name" },
+          quantity: { $sum: "$items.quantity" },
+          revenue: { $sum: "$items.totalPrice" }
+        }
+      },
+      { $sort: { quantity: -1 } },
+      { $limit: 10 },
+      // optional lookup to product for category
+      ...(by === "category"
+        ? [
+          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+          { $group: { _id: "$product.categoryId", quantity: { $sum: "$quantity" }, revenue: { $sum: "$revenue" } } },
+          { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "category" } },
+          { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+          { $project: { label: "$category.name", quantity: 1, revenue: 1 } },
+          { $sort: { quantity: -1 } },
+        ]
+        : [
+          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+          { $project: { label: { $ifNull: ["$product.name", "$name"] }, quantity: 1, revenue: 1 } },
+        ]
+      )
+    ];
+    return Order.aggregate(pipeline);
+  }
+
+  async getRecentOrders(limit = 5) {
+    const parsed = parseInt(limit, 10);
+    const l = Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
+    return Order.find({}, {
+      orderNumber: 1,
+      customerInfo: 1,
+      items: 1,
+      totalAmount: 1,
+      status: 1,
+      createdAt: 1,
+    })
+      .populate("items.productId", "name")
+      .sort({ createdAt: -1 })
+      .limit(l)
+      .lean()
+      .exec();
   }
 
   // ==============================

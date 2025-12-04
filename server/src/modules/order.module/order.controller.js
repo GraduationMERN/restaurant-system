@@ -211,6 +211,53 @@ export const getAllOrders = async (req, res) => {
 };
 
 // ==============================
+// ANALYTICS / STATS
+// ==============================
+export const getOverviewStats = async (req, res) => {
+  try {
+    const { from = null, to = null } = req.query;
+    const data = await orderService.getOverviewStats(from, to);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get overview stats error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getDailyStats = async (req, res) => {
+  try {
+    const days = Number(req.query.days) || 7;
+    const data = await orderService.getDailyStats(days);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get daily stats error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getTopItems = async (req, res) => {
+  try {
+    const { from = null, to = null, by = "product" } = req.query;
+    const data = await orderService.getTopItems(from, to, by);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get top items error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getRecentOrdersList = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 5;
+    const data = await orderService.getRecentOrders(limit);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get recent orders error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// ==============================
 // ADMIN / CASHIER UPDATES
 // ==============================
 export const updateOrderStatus = async (req, res) => {
