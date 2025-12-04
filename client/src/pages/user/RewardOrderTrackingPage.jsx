@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
 import { io } from 'socket.io-client';
+import { showStatusNotification } from '../../utils/notifications';
 
 export default function RewardOrderTrackingPage() {
   const { id } = useParams();
@@ -37,8 +38,12 @@ export default function RewardOrderTrackingPage() {
     newSocket.on('reward_order_status_changed', (data) => {
       if (data.order) {
         setOrder(data.order);
+        // Show notification on status change
+        showStatusNotification(data.order.status);
       } else if (data.status) {
         setOrder(prev => ({ ...prev, status: data.status }));
+        // Show notification on status change
+        showStatusNotification(data.status);
       }
     });
 
@@ -76,6 +81,8 @@ export default function RewardOrderTrackingPage() {
       day: 'numeric' 
     });
   };
+
+  // status notifications are handled by shared util (showStatusNotification)
 
   // Get reward title
   const rewardTitle = order?.rewardId?.title || order?.rewardId?.productId?.name || 'Reward Item';

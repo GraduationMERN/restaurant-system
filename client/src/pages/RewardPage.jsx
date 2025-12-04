@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast';
 import { FaStarOfLife } from "react-icons/fa";
 import CardComponent from '../components/Card/CardComponent';
 import { useNavigate } from 'react-router-dom';
+import { notifyRedeemed } from '../utils/notifications';
 
 export default function RewardPage() {
   const dispatch = useDispatch();
@@ -52,6 +53,10 @@ export default function RewardPage() {
       const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
       setUserPoints(prev => prev - item.pointsRequired);
       toast.showToast({ message: 'Redeemed successfully', type: 'success' });
+      
+      // Show browser notification on successful redemption
+      notifyRedeemed(item);
+
       // If server returned the created reward order, navigate to tracking page
       if (r && (r._id || r.id)) {
         const orderId = r._id || r.id;

@@ -1,5 +1,7 @@
 import orderService from "./order.service.js";
 import { notificationService } from "../../../server.js";
+import pushNotificationService from "../notification/pushNotification.service.js";
+import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 
 // ==============================
 // CREATE ORDER FROM CART
@@ -71,13 +73,18 @@ export const createOrderFromCart = async (req, res) => {
       customerInfo,
     });
 
-    // Optional Notification
+    // Optional Notification to admin
     await notificationService?.sendToAdmin({
       title: "New Order",
       message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
       orderId: order._id,
-      estimatedReadyTime: order.formattedEstimatedTime, // Add estimated time to notification
+      estimatedReadyTime: order.formattedEstimatedTime,
     });
+
+    // Send push notification to user
+    if (order.userId) {
+      await pushNotificationService.notifyOrderCreated(order.userId, order);
+    }
 
     res.status(201).json({ 
       success: true, 
@@ -174,6 +181,13 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const order = await orderService.updateStatus(req.params.id, status);
+    // Send notifications (socket + push) using helper
+    try {
+      await sendOrderStatusNotifications(order, status);
+    } catch (e) {
+      console.error('Failed sending order status notifications:', e);
+    }
+
     res.json({ success: true, data: order });
   } catch (err) {
     console.error("Update order status error:", err);

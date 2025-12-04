@@ -25,6 +25,7 @@ import MenuPage from "./pages/MenuPage";
 import CashierConfirmation from "./pages/CashierConfirmation";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
+import { requestNotificationPermission } from './utils/notifications';
 function App() {
   const dispatch = useDispatch();
 
@@ -38,6 +39,11 @@ function App() {
       }
     }
   }, [dispatch]);
+
+  // Request notification permission on app load (centralized)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   return (
     <BrowserRouter>
