@@ -2,7 +2,7 @@ import orderRepo from "./order.repository.js";
 import Cart from "../cart/Cart.js";
 import mongoose from "mongoose";
 import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
-// import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
+import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
 const calculateEstimatedReadyTime = (serviceType, itemsCount, baseTime = 15) => {
   const now = new Date();
   

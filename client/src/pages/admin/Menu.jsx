@@ -17,8 +17,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-} from "../../redux/slices/productSlice";
-import { getAllCategories } from "../../redux/slices/categorySlice";
+} from "../../redux/slices/ProductSlice";
+import { getAllCategories } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 
 /**

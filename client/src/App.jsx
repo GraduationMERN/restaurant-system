@@ -23,11 +23,14 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import OrderHistory from "./pages/OrderHistory";
 
+import NotFound from "./pages/NotFoundPage";
 import CashierConfirmation from "./pages/CashierConfirmation";
+import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierOrders from "./pages/admin/CashierOrders";
 import KitchenOrders from "./pages/admin/KitchenOrders";
+import { requestNotificationPermission } from './utils/notifications';
 function App() {
   const dispatch = useDispatch();
 
@@ -41,6 +44,11 @@ function App() {
       }
     }
   }, [dispatch]);
+
+  // Request notification permission on app load (centralized)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   return (
     <BrowserRouter>
@@ -60,6 +68,7 @@ function App() {
             <Route path="/track-order/:orderId" element={<OrderTracking />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/reward-order/:id" element={<RewardOrderTrackingPage />} />
 
           {/* Role dashboards */}
           <Route
@@ -89,6 +98,10 @@ function App() {
           <Route element={<AppLayout />}>
             <Route path="/admin/:section?" element={<Admin />} />
           </Route>
+
+
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
       </SettingsProvider>

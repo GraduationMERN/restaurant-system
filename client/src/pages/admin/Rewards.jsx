@@ -21,7 +21,7 @@ import {
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, addReward, deleteReward, updateReward } from "../../redux/slices/rewardSlice";
-import { fetchProducts } from "../../redux/slices/productSlice";
+import { fetchProducts } from "../../redux/slices/ProductSlice";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);

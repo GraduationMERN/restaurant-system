@@ -7,7 +7,7 @@ import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
-import { getAllCategories, addCategory, updateCategory, deleteCategory } from "../../redux/slices/categorySlice";
+import { getAllCategories, addCategory, updateCategory, deleteCategory } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 
 export default function Categories() {
