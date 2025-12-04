@@ -124,6 +124,12 @@ class OrderService {
   async getOrderByCartId(cartId) { return orderRepo.findByCartId(cartId); }
   async getActiveOrders() { return orderRepo.findActiveOrders(); }
   async getAllOrders() { return orderRepo.getAllOrders(); }
+  //=========== cahrts
+  async getOverviewStats(from, to) { return orderRepo.getOverviewStats(from, to); }
+  async getDailyStats(days) { return orderRepo.getDailyStats(days); }
+  async getTopItems(from, to, by) { return orderRepo.getTopItems(from, to, by); }
+  async getRecentOrders(limit) { return orderRepo.getRecentOrders(limit); }
+  // ==========
   async orderUpdate(orderId, updates) { return orderRepo.update(orderId, updates); }
   async updateStatus(orderId, newStatus) {
     const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
