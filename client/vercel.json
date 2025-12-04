@@ -1,0 +1,25 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://restaurant-system-1-kuq6.onrender.com/api/$1"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://restaurant-system-1-kuq6.onrender.com/api/$1",
+      "statusCode": 301
+    }
+  ]
+}
