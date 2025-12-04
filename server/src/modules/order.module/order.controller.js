@@ -1,5 +1,7 @@
 import orderService from "./order.service.js";
-import { notificationService, io } from "../../../server.js";
+import { notificationService , io } from "../../../server.js";
+import pushNotificationService from "../notification/pushNotification.service.js";
+import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 
 // ==============================
 // CREATE ORDER FROM CART
@@ -73,12 +75,12 @@ export const createOrderFromCart = async (req, res) => {
       deliveryLocation,
     });
 
-    // Optional Notification
+    // Optional Notification to admin
     await notificationService?.sendToAdmin({
       title: "New Order",
       message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
       orderId: order._id,
-      estimatedReadyTime: order.formattedEstimatedTime, // Add estimated time to notification
+      estimatedReadyTime: order.formattedEstimatedTime,
     });
     // Also notify cashiers specifically
     await notificationService?.sendToRole("cashier", {
@@ -97,6 +99,11 @@ export const createOrderFromCart = async (req, res) => {
       }
     } catch (e) {
       console.error("Failed to emit order creation events", e);
+    }
+
+    // Send push notification to user
+    if (order.userId) {
+      await pushNotificationService.notifyOrderCreated(order.userId, order);
     }
 
     res.status(201).json({ 

@@ -54,7 +54,7 @@ export default function CardComponent({ item, product, isReward, disabled, onCli
                     </h3>
                     <button
                         disabled={disabled}
-                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200 hover:bg-primary/80 ${!isReward ? "bg-primary text-white" : canRedeem(item.pointsRequired) ? "bg-primary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200 ${hovered&&"bg-secondary/100"}  ${canRedeem(item.pointsRequired) ? "bg-secondary/80 text-white " : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                     >
                         <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
                             +
@@ -63,7 +63,7 @@ export default function CardComponent({ item, product, isReward, disabled, onCli
                 </div>
                  :
                 <div className='flex lg:flex-col  justify-between w-1/2 lg:w-full lg:relative'>
-                    <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-secondary">
+                    <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-primary">
                         <div
                             className={`text-sm font-semibold flex-1 `}
                         >
@@ -78,7 +78,7 @@ export default function CardComponent({ item, product, isReward, disabled, onCli
                     </h3>
                     <button
                         disabled={disabled}
-                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200  ${hovered? "bg-secondary/100" :""}   ${!isReward ? "bg-secondary/80 text-white" : canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+                        className={` px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200  ${hovered? "bg-primary/100" :""}   ${!isReward ? "bg-primary/80 text-white" : canRedeem(item.pointsRequired) ? "bg-secondary text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
                     >
                         <span className="text-2xl inline-block transform transition-transform   duration-500 group-hover:rotate-225">
                             +

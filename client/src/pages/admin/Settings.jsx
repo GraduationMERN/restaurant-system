@@ -150,7 +150,8 @@ export default function Settings() {
                 </div>
               </div>
               <div>
-                <Label>Secondary Color</Label>
+                <Label>Reward Color</Label>
+                <div>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -158,7 +159,9 @@ export default function Settings() {
                     onChange={(e) => setSecondaryColor(e.target.value)}
                     className="h-10 w-10 rounded-md border border-gray-200 bg-transparent p-0 dark:border-gray-800"
                   />
-                  <Input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />z
+                  <Input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
+                  </div>
+                  <h2 className="mt-2 text-xs block auto  text-[#888]">Recommended <span className=" text-[#FFA500] select-text"> #FFA500</span></h2>
                 </div>
               </div>
               <div>
