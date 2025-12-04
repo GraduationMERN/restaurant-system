@@ -1,5 +1,5 @@
 import app from "./app.js";
-import { env } from "./src/config/env.js"; 
+import { env } from "./src/config/env.js";
 import http from "http";
 import { Server } from "socket.io";
 import NotificationService from "./src/modules/notification/notification.service.js";
@@ -35,7 +35,7 @@ io.on("connection", (socket) => {
     if (!role) return;
     socket.join(role);
     console.log(`Socket ${socket.id} joined role room ${role}`);
-    });
+  });
 
   // Allow users to join reward order specific room for real-time updates
   socket.on("join_reward_order", (data) => {
@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
-
+});
 
 // Create global notification service
 export const notificationService = new NotificationService(io);
