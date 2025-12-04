@@ -107,6 +107,7 @@ export default function CartPage() {
                       .map(([key, value]) => `${key}: ${value}`)
                       .join(", ")
                   : "No options selected"}
+                  {console.log("OPTIONS:", item.selectedOptions)}
               </Typography>
 
               <Stack direction="row" gap={1} alignItems="center" mt={1}>

@@ -107,8 +107,9 @@ function MenuPage() {
     // لو في خيارات موجودة للمنتج
     if (product.options && product.options.length > 0) {
       product.options.forEach((option) => {
+        const key = `${product._id}_${option.name}`;
         const selectedValue =
-          selectedSizes[product._id + option.name] || // إذا المستخدم اختار
+          selectedSizes[key] || // إذا المستخدم اختار
           option.choices[0]?.label; // default choice
 
         if (selectedValue) {
@@ -144,10 +145,10 @@ function MenuPage() {
     setSelectedProduct(null);
   };
 
-  const handleSizeChange = (productId, size) => {
+  const handleSizeChange = (key, size) => {
     setSelectedSizes((prev) => ({
       ...prev,
-      [productId]: size,
+      [key]: size,
     }));
   };
 
@@ -178,19 +179,6 @@ function MenuPage() {
             ),
           }}
         />
-
-        {/* <ToggleButtonGroup
-          value={view}
-          exclusive
-          onChange={(e, v) => v && setView(v)}
-        >
-          <ToggleButton value="list">
-            <ViewListIcon />
-          </ToggleButton>
-          <ToggleButton value="grid">
-            <GridViewIcon />
-          </ToggleButton>
-        </ToggleButtonGroup> */}
       </Box>
 
       {/* Tabs */}
@@ -288,7 +276,6 @@ function MenuPage() {
                   mb: 2,
                 }}
               />
-
               <Box
                 display="flex"
                 alignItems="flex-start"
@@ -340,52 +327,55 @@ function MenuPage() {
                   </Button>
                 </Box>
               </Box>
-
               {/* Size options */}
-              {selectedProduct.options &&
-                selectedProduct.options.length > 0 && (
-                  <ToggleButtonGroup
-                    value={
-                      selectedSizes[selectedProduct._id] ||
-                      selectedProduct.options[0].choices[0].label
-                    }
-                    exclusive
-                    onChange={(e, val) =>
-                      val && handleSizeChange(selectedProduct._id, val)
-                    }
-                    size="small"
-                    sx={{
-                      mb: 2,
-                      "& .MuiToggleButton-root": {
-                        borderRadius: "20px",
-                        border: `1px solid #e27e36`,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        color: "#e27e36",
-                        px: 3,
-                        py: 0.5,
-                        mx: 0.3,
-                        minWidth: 40,
-                      },
-                      "& .Mui-selected": {
-                        bgcolor: "#e27e36 !important",
-                        color: "#fff !important",
-                      },
-                    }}
-                  >
-                    {selectedProduct.options[0].choices.map((choice) => (
-                      <ToggleButton key={choice._id} value={choice.label}>
-                        {choice.label}
-                      </ToggleButton>
-                    ))}
-                  </ToggleButtonGroup>
-                )}
 
+              {selectedProduct.options &&
+                selectedProduct.options.length > 0 &&
+                selectedProduct.options.map((option) => {
+                  const key = `${selectedProduct._id}_${option.name}`;
+                  return (
+                    <Box key={option.name} sx={{ mb: 2 }}>
+                      <Typography sx={{ mb: 1, fontWeight: 600 }}>
+                        {option.name}
+                      </Typography>
+
+                      <ToggleButtonGroup
+                        value={selectedSizes[key] || option.choices[0]?.label}
+                        exclusive
+                        onChange={(e, val) => val && handleSizeChange(key, val)}
+                        size="small"
+                        sx={{
+                          mb: 1,
+                          "& .MuiToggleButton-root": {
+                            borderRadius: "20px",
+                            border: `1px solid #e27e36`,
+                            textTransform: "none",
+                            fontWeight: 600,
+                            color: "#e27e36",
+                            px: 3,
+                            py: 0.5,
+                            mx: 0.3,
+                            minWidth: 40,
+                          },
+                          "& .Mui-selected": {
+                            bgcolor: "#e27e36 !important",
+                            color: "#fff !important",
+                          },
+                        }}
+                      >
+                        {option.choices.map((choice) => (
+                          <ToggleButton key={choice._id} value={choice.label}>
+                            {choice.label}
+                          </ToggleButton>
+                        ))}
+                      </ToggleButtonGroup>
+                    </Box>
+                  );
+                })}
               {/* Total Price */}
               <Typography fontWeight={700} mb={2}>
                 Total: EGP {selectedProduct.basePrice * quantity}
               </Typography>
-
               {/* Add to Cart */}
               <Button
                 fullWidth
