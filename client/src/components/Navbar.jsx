@@ -11,6 +11,8 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   const { isAuthenticated, user } = useSelector(state => state.auth);
+  const cartItem = useSelector(state => state.cart.products);
+  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
 
   const isActive = (path) => location.pathname === path;
 
@@ -59,13 +61,41 @@ export default function Navbar() {
       </Link>
 
       {/* Cart */}
-      <Link 
-        to="/cart" 
-        className={`flex flex-col items-center transition-colors ${isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      <Link
+        to="/cart"
+        className={`relative flex flex-col items-center transition-colors ${
+          isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+        }`}
       >
         <ShoppingCart size={20} />
+
+        {totalItems > 0 && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "-6px",
+              backgroundColor: "var(--color-primary)", 
+              color: "#fff",
+              fontSize: "10px",
+              fontWeight: "bold",
+              borderRadius: "50%",
+              height: "18px",
+              minWidth: "18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 4px",
+              lineHeight: 1,
+            }}
+          >
+            {totalItems}
+          </span>
+        )}
+
         <span className="text-xs">{t("cart")}</span>
       </Link>
+
 
       {/* Orders */}
       <Link 

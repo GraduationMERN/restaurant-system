@@ -23,6 +23,16 @@
   --warning: #f59e0b; /* amber 500 */
   --danger: #ef4444; /* red 500 */
 }
+/* Dark mode overrides */
+.dark {
+  --color-primary: #FF8A65;      /* فاتح شويه على Dark Mode */
+  --color-secondary: #66D9FF;
+  --color-on-surface: #f9fafb;
+  --bg-default: #1F2937;         /* dark gray-800 */
+  --surface: #374151;            /* gray-700 */
+  --color-muted: #9CA3AF;        /* gray-400 */
+  --danger: #F87171;             /* red-400 */
+}
 
 /* Text colors */
 .text-muted { color: var(--color-muted) !important; }
