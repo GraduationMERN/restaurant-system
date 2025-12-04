@@ -21,7 +21,7 @@ import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
-
+import NotFound from "./pages/NotFoundPage";
 import CashierConfirmation from "./pages/CashierConfirmation";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
@@ -72,6 +72,10 @@ function App() {
           <Route element={<AppLayout />}>
             <Route path="/admin/:section?" element={<Admin />} />
           </Route>
+
+
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
       </SettingsProvider>
