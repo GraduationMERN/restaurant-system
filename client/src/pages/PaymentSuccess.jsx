@@ -49,7 +49,7 @@ const PaymentSuccess = () => {
     };
 
     fetchOrderDetails();
-  }, [sessionId, currentOrder]);
+  }, [sessionId, currentOrder, navigate]);
 
   const formatTime = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -197,6 +197,21 @@ const PaymentSuccess = () => {
                 >
                   <Phone className="h-5 w-5" />
                   Call the restaurant
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    const id = orderDetails?._id || orderDetails?.id || orderDetails?.orderNumber;
+                    if (id) {
+                      navigate("/orders", { state: { orderId: id, order: orderDetails } });
+                    } else {
+                      navigate("/orders");
+                    }
+                  }}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 dark:bg-orange-400 text-white rounded-xl font-medium hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors"
+                >
+                  <Clock className="h-5 w-5" />
+                  Track Order
                 </button>
                 
                 <button 

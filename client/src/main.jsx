@@ -10,6 +10,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ToastProvider } from './components/ui/toast/ToastProvider';
 import { Provider } from 'react-redux';
 import { store } from "./redux/store";
+import SocketInitializer from './components/socket/SocketInitializer';
 import { registerServiceWorker, requestNotificationPermission } from './utils/notificationUtils.js';
 
 // Register Service Worker and request notification permission
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")).render(
       <Provider store={store}>
         <ToastProvider>
           <App />
+          <SocketInitializer />
         </ToastProvider>
       </Provider>
     </AppWrapper>

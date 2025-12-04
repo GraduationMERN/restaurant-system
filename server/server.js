@@ -30,6 +30,12 @@ io.on("connection", (socket) => {
     socket.join("admin");
     console.log(`Socket ${socket.id} joined admin room`);
   });
+  // Allow any role to join a role-specific room (e.g., 'cashier', 'kitchen')
+  socket.on("joinRole", (role) => {
+    if (!role) return;
+    socket.join(role);
+    console.log(`Socket ${socket.id} joined role room ${role}`);
+    });
 
   // Allow users to join reward order specific room for real-time updates
   socket.on("join_reward_order", (data) => {
@@ -43,7 +49,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
-});
+
 
 // Create global notification service
 export const notificationService = new NotificationService(io);

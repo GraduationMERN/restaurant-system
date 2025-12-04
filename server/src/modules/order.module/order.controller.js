@@ -1,5 +1,5 @@
 import orderService from "./order.service.js";
-import { notificationService } from "../../../server.js";
+import { notificationService , io } from "../../../server.js";
 import pushNotificationService from "../notification/pushNotification.service.js";
 import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 
@@ -56,6 +56,7 @@ export const createOrderFromCart = async (req, res) => {
       paymentMethod,
       customerInfo 
     } = req.body;
+    const { deliveryLocation } = req.body;
 
     if (!cartId) {
       return res.status(400).json({
@@ -71,6 +72,7 @@ export const createOrderFromCart = async (req, res) => {
       notes,
       paymentMethod,
       customerInfo,
+      deliveryLocation,
     });
 
     // Optional Notification to admin
@@ -80,6 +82,24 @@ export const createOrderFromCart = async (req, res) => {
       orderId: order._id,
       estimatedReadyTime: order.formattedEstimatedTime,
     });
+    // Also notify cashiers specifically
+    await notificationService?.sendToRole("cashier", {
+      title: "New Order",
+      message: `New pending order from ${order.customerInfo?.name || "Guest"}`,
+      orderId: order._id,
+      estimatedReadyTime: order.formattedEstimatedTime,
+    });
+
+    // Emit order creation to rooms for real-time updates
+    try {
+      if (io) {
+        io.to("cashier").emit("order:update", order);
+        io.to("kitchen").emit("order:update", order);
+        if (order?.customerId) io.to(order.customerId.toString()).emit("order:update", order);
+      }
+    } catch (e) {
+      console.error("Failed to emit order creation events", e);
+    }
 
     // Send push notification to user
     if (order.userId) {
@@ -113,6 +133,22 @@ export const createDirectOrder = async (req, res) => {
       message: `A new direct order was created by ${order.customerInfo?.name || "Guest"}`,
       orderId: order._id,
     });
+    // Notify cashiers as well
+    await notificationService?.sendToRole("cashier", {
+      title: "New Direct Order",
+      message: `Direct order created by ${order.customerInfo?.name || "Guest"}`,
+      orderId: order._id,
+    });
+
+    try {
+      if (io) {
+        io.to("cashier").emit("order:update", order);
+        io.to("kitchen").emit("order:update", order);
+        if (order?.customerId) io.to(order.customerId.toString()).emit("order:update", order);
+      }
+    } catch (e) {
+      console.error("Failed to emit direct order creation events", e);
+    }
 
     res.status(201).json({ success: true, data: order });
   } catch (err) {
@@ -179,13 +215,46 @@ export const getAllOrders = async (req, res) => {
 // ==============================
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { status } = req.body;
-    const order = await orderService.updateStatus(req.params.id, status);
-    // Send notifications (socket + push) using helper
+    const { status, estimatedTime } = req.body;
+
+    let order = null;
+
+    // If estimatedTime provided, apply it first
+    if (typeof estimatedTime !== "undefined" && estimatedTime !== null) {
+      order = await orderService.orderUpdate(req.params.id, { estimatedTime });
+    }
+
+    if (typeof status !== "undefined") {
+      order = await orderService.updateStatus(req.params.id, status);
+    }
+
+    // Emit notifications and socket events
     try {
-      await sendOrderStatusNotifications(order, status);
+      // Notify customer via notification service
+      if (order?.customerId) {
+        await notificationService?.sendToUser(
+          order.customerId,
+          "Order Update",
+          `Your order status is now ${order.status}${order.estimatedTime ? `. Estimated time: ${order.estimatedTime} minutes` : ""}`,
+          "order",
+          order._id
+        );
+      }
+
+      // Emit order:update to customer + cashier + kitchen rooms
+      if (io) {
+        if (order?.customerId) io.to(order.customerId.toString()).emit("order:update", order);
+        io.to("cashier").emit("order:update", order);
+        io.to("kitchen").emit("order:update", order);
+
+        // If estimatedTime changed, emit specialized event
+        if (typeof estimatedTime !== "undefined") {
+          if (order?.customerId) io.to(order.customerId.toString()).emit("order:estimatedTime", { orderId: order._id, estimatedTime: order.estimatedTime });
+          io.to("cashier").emit("order:estimatedTime", { orderId: order._id, estimatedTime: order.estimatedTime });
+        }
+      }
     } catch (e) {
-      console.error('Failed sending order status notifications:', e);
+      console.error("Failed to emit order update events", e);
     }
 
     res.json({ success: true, data: order });

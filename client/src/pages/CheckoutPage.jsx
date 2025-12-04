@@ -18,6 +18,9 @@ export default function CheckoutPage() {
   const [serviceType, setServiceType] = useState("dine-in");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [showRewardModal, setShowRewardModal] = useState(false);
@@ -95,6 +98,7 @@ const handleOptionChange = async (item, optionName, choiceLabel) => {
         serviceType,
         tableNumber,
         notes,
+          deliveryLocation,
       })
     ).unwrap();
 
@@ -128,6 +132,53 @@ const handleOptionChange = async (item, optionName, choiceLabel) => {
   } finally {
     setSubmitting(false);
   }
+};
+
+
+const shareMyLocation = () => {
+  if (!navigator.geolocation) {
+    setLocationError("Geolocation is not supported by your browser");
+    return;
+  }
+  
+  setLocationLoading(true);
+  setLocationError(null);
+  
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      let address = "";
+      
+      try {
+        // Use Nominatim (OpenStreetMap) for reverse geocoding to get address from coordinates
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+          { headers: { "User-Agent": "RestaurantApp" } }
+        );
+        const data = await resp.json();
+        address = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      } catch (e) {
+        console.warn("Reverse geocoding failed, using coordinates:", e);
+        address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      }
+      
+      setDeliveryLocation({ lat, lng, address });
+      setLocationLoading(false);
+    },
+    (err) => {
+      console.error("Geolocation error:", err);
+      if (err.code === 1) {
+        setLocationError("Location access denied. Please enable location permissions and try again.");
+      } else if (err.code === 2) {
+        setLocationError("Position unavailable. Please try again or check your location settings.");
+      } else {
+        setLocationError("Failed to get location: " + err.message);
+      }
+      setLocationLoading(false);
+    },
+    { timeout: 10000, enableHighAccuracy: false }
+  );
 };
 
   if (loading) {
@@ -332,6 +383,65 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 </div>
               </div>
+
+              {serviceType === "delivery" && (
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Delivery Location
+                  </h4>
+                  
+                  {locationError && (
+                    <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-700 dark:text-red-300">{locationError}</p>
+                    </div>
+                  )}
+                  
+                  {deliveryLocation ? (
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Location Saved</p>
+                          <p className="text-sm text-green-700 dark:text-green-400 break-words">
+                            {deliveryLocation.address}
+                          </p>
+                          <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                            {deliveryLocation.lat.toFixed(4)}, {deliveryLocation.lng.toFixed(4)}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setDeliveryLocation(null);
+                          setLocationError(null);
+                        }}
+                        className="mt-3 text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
+                      >
+                        ✏️ Change Location
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={shareMyLocation}
+                      disabled={locationLoading}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Getting location...
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-5 h-5" />
+                          Share My Location
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Offers Section */}
               <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl p-4 border border-amber-200 dark:border-amber-800">

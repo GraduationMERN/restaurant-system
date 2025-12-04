@@ -18,7 +18,8 @@ export const NotificationProvider = ({ children }) => {
   const socketRef = useRef(null);
   const location = useLocation();
   const isOnReviewsPage = location.pathname === "/admin/reviews";
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const envBase = import.meta.env.VITE_API_BASE_URL;
+  const BASE_URL = envBase || `${window.location.protocol}//${window.location.hostname}:5000`;
   useEffect(() => {
     // Only initialize socket for admin pages
     if (!location.pathname.startsWith("/admin")) {
@@ -28,7 +29,8 @@ export const NotificationProvider = ({ children }) => {
     // Fetch persisted notifications for admin area
     const fetchNotifications = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/notifications`, { credentials: "include" });
+        const url = BASE_URL.replace(/\/$/, "") + "/api/notifications";
+        const res = await fetch(url, { credentials: "include" });
         const json = await res.json();
         if (json && json.notifications) {
           // Normalize ids and set as current notifications
