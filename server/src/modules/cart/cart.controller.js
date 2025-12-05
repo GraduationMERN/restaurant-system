@@ -19,9 +19,18 @@ function getCartUserId(req, res) {
 export const getCartForUser = async (req, res) => {
     try {
         const userId = getCartUserId(req, res);
-        const cart = await getCartForUserService(userId);
+        let cart = await getCartForUserService(userId);
+        // if (!cart) {
+        //     return res.status(404).json({ message: 'Cart not found' });
+        // }
+        // لو الكارت مش موجود → ننشئ واحدة فارغة
         if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
+            cart = new Cart({
+                userId,
+                products: [],
+                totalPrice: 0
+            });
+            await cart.save();
         }
         res.status(200).json(cart);
     } catch (err) {
@@ -175,8 +184,17 @@ export const deleteProductFromCart = async (req, res) => {
 
         // Get user cart
         let cart = await getCartForUserService(userId);
+        // if (!cart) {
+        //     return res.status(404).json({ message: 'Cart not found' });
+        // }
+        // لو الكارت مش موجود → ننشئ واحدة فارغة
         if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
+            cart = new Cart({
+                userId,
+                products: [],
+                totalPrice: 0
+            });
+            await cart.save();
         }
 
         // Check product exists in cart
@@ -254,8 +272,16 @@ export const updateCartQuantity = async (req, res) => {
         }
 
         let cart = await getCartForUserService(userId);
-        if (!cart) return res.status(404).json({ message: "Cart not found" });
-
+        // if (!cart) return res.status(404).json({ message: "Cart not found" });
+        // لو الكارت مش موجود → ننشئ واحدة فارغة
+        if (!cart) {
+            cart = new Cart({
+                userId,
+                products: [],
+                totalPrice: 0
+            });
+            await cart.save();
+        }
         const productIndex = cart.products.findIndex(
             (p) => p.productId._id.toString() === productId || p.productId.toString() === productId
         );
@@ -358,8 +384,17 @@ export const clearCart = async (req, res) => {
         const userId = getCartUserId(req, res);
         let cart = await getCartForUserService(userId);
         
+        // if (!cart) {
+        //     return res.status(404).json({ message: "Cart not found" });
+        // }
+        // لو الكارت مش موجود → ننشئ واحدة فارغة
         if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
+            cart = new Cart({
+                userId,
+                products: [],
+                totalPrice: 0
+            });
+            await cart.save();
         }
 
         // لو الكارت فاضي أصلاً
