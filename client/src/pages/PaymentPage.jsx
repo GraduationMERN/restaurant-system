@@ -169,7 +169,15 @@ const PaymentPage = () => {
       }
     } catch (err) {
       console.error("Payment failed:", err);
-      setLocalError(err.message || "Payment failed. Please try again.");
+      
+      // Check for 403 authorization errors
+      if (err.message && err.message.includes("403")) {
+        setLocalError("Oops! We encountered an authorization issue. This might be a temporary issue. Please try again or contact support.");
+      } else if (err.message && err.message.includes("Not authorized")) {
+        setLocalError("You are not authorized to pay for this order. Please check your order and try again.");
+      } else {
+        setLocalError(err.message || "Payment failed. Please try again.");
+      }
     }
   };
 
@@ -430,8 +438,8 @@ const PaymentPage = () => {
                 disabled={loading || !displayOrderId || paymentStatus === 'paid' || paymentStatus === 'success'}
                 className={`w-full mt-8 py-4 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
                   paymentMethod === "online"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                    ? "bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                    : "bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {loading ? (

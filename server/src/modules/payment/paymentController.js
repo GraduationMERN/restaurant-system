@@ -29,19 +29,30 @@ class PaymentController {
         });
       }
 
-      // Verify ownership
-      const userIdentifier = user?._id || user?.customerId;
-      if (order.customerId !== userIdentifier) {
+      // Verify ownership - handle both registered users and guests
+      const isRegisteredUser = user?._id && !user?.isGuest;
+      const userIdentifier = isRegisteredUser ? user._id.toString() : null;
+      
+      // Allow payment if:
+      // 1. Registered user matches order.customerId
+      // 2. OR guest user (always allow - guest orders have guest_* customerId)
+      // 3. OR admin/cashier roles
+      const isAuthorized = 
+        (isRegisteredUser && order.customerId === userIdentifier) ||
+        user?.isGuest ||
+        ["admin", "cashier", "kitchen"].includes(user?.role);
+      
+      if (!isAuthorized) {
         return res.status(403).json({
           success: false,
           error: "Not authorized to pay for this order"
         });
       }
 
-      // Create session with user metadata
+      // Create session with user metadata - use customerId for tracking
       const session = await PaymentService.createCheckoutSession(orderId, {
         user: {
-          id: userIdentifier,
+          id: order.customerId, // Use order's customerId which handles both registered and guest
           email: order.customerInfo?.email || user?.email,
           name: order.customerInfo?.name || user?.name,
           isGuest: user?.isGuest || false

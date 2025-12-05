@@ -9,14 +9,17 @@ const router = express.Router();
 // ============= PUBLIC/GUEST ROUTES =============
 router.post("/from-cart", optionalAuthMiddleware, orderController.createOrderFromCart);
 router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder);
-router.get("/session/:sessionId", optionalAuthMiddleware, orderController.getOrderByStripeSession);
-router.get("/:id", optionalAuthMiddleware, orderController.getOrder);
-router.get("/user/:userId", optionalAuthMiddleware, orderController.getUserOrders);
-router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
-router.patch("/:id/payment", optionalAuthMiddleware, orderController.updatePaymentStatus);
 
 // ============= CUSTOMER ROUTES =============
-// (Protected by authMiddleware - logged in users only)
+router.get("/active", optionalAuthMiddleware, orderController.getActiveOrder);
+router.get("/history", optionalAuthMiddleware, orderController.getOrderHistoryForUser);
+
+// ============= PUBLIC/GUEST ROUTES (continued) =============
+router.get("/session/:sessionId", optionalAuthMiddleware, orderController.getOrderByStripeSession);
+router.get("/user/:userId", optionalAuthMiddleware, orderController.getUserOrders);
+router.get("/:id", optionalAuthMiddleware, orderController.getOrder);
+router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
+router.patch("/:id/payment", optionalAuthMiddleware, orderController.updatePaymentStatus);
 
 // ============= CASHIER ROUTES =============
 router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);

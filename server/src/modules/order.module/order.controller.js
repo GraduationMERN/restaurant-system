@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import orderService from "./order.service.js";
 import PaymentService from "../payment/paymentService.js";
 import Order from "../order.module/orderModel.js";
@@ -36,6 +37,18 @@ export const createOrderFromCart = async (req, res) => {
     // Get user info from middleware
     const user = req.user;
     
+    // Generate customerId: use user._id for registered, or generate UUID for guests
+    let customerId;
+    if (user?.isGuest) {
+      // Generate a consistent guest ID from IP + timestamp
+      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+      customerId = `guest_${clientIp.replace(/[^a-zA-Z0-9]/g, '')}_${Date.now()}`;
+    } else if (user?._id) {
+      customerId = user._id.toString();
+    } else {
+      customerId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
     const orderData = {
       cartId,
       serviceType,
@@ -45,7 +58,7 @@ export const createOrderFromCart = async (req, res) => {
       customerInfo,
       deliveryLocation,
       // Pass user info based on authentication
-      customerId: user?._id?.toString() || null,
+      customerId: customerId,
       isGuest: user?.isGuest || false,
       customerType: user?.isGuest ? "guest" : "registered",
       user: user?.isGuest ? null : user?._id
@@ -137,8 +150,30 @@ export const createDirectOrder = async (req, res) => {
       });
     }
 
+    // Validate and transform items - ensure productId and totalPrice
+    const transformedItems = items.map(item => {
+      if (!item.productId && !item.name) {
+        throw new Error("Each item must have either productId or name");
+      }
+      
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 1;
+      const totalPrice = price * quantity;
+      
+      return {
+        productId: item.productId || new mongoose.Types.ObjectId(), // Generate temp ID if not provided
+        name: item.name || "Custom Item",
+        price: price,
+        quantity: quantity,
+        totalPrice: totalPrice,
+        image: item.image || "",
+        selectedOptions: item.selectedOptions || {},
+        totalPoints: item.totalPoints || 0
+      };
+    });
+
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = transformedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     const vat = subtotal * 0.15; // 15% VAT example
     const totalAmount = subtotal + vat;
 
@@ -146,9 +181,9 @@ export const createDirectOrder = async (req, res) => {
     const guestId = `walkin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const orderData = {
-      items,
+      items: transformedItems,
       serviceType,
-      tableNumber,
+      tableNumber: serviceType === "dine-in" ? tableNumber : undefined,
       customerInfo: {
         name: customerInfo?.name || "Walk-in Customer",
         phone: customerInfo?.phone || "",
@@ -169,16 +204,21 @@ export const createDirectOrder = async (req, res) => {
     };
 
     const order = await Order.create(orderData);
+    
+    // Populate full order details
+    const populatedOrder = await Order.findById(order._id)
+      .populate('createdBy', 'name email')
+      .lean();
 
     // Socket events (use global.io)
     if (global.io) {
-      global.io.to("kitchen").emit("order:new", order);
-      global.io.to("cashier").emit("order:direct", order);
+      global.io.to("kitchen").emit("order:new", populatedOrder);
+      global.io.to("cashier").emit("order:direct", populatedOrder);
     }
 
     res.status(201).json({
       success: true,
-      data: order
+      data: populatedOrder
     });
   } catch (err) {
     console.error("Create direct order error:", err);
@@ -595,6 +635,7 @@ export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { paymentStatus } = req.body;
+    const user = req.user;
 
     const validStatuses = ["pending", "paid", "failed", "refunded"];
     if (!validStatuses.includes(paymentStatus)) {
@@ -612,24 +653,42 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
+    // Authorization: Only cashier/admin can manually update payment status
+    const isCashierOrAdmin = ["cashier", "admin"].includes(user?.role);
+    if (!isCashierOrAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Only cashier or admin can update payment status"
+      });
+    }
+
+    // Validation: Only allow manual updates for non-online payment methods
+    const onlinePaymentMethods = ["online", "stripe", "card"];
+    const isOnlinePayment = onlinePaymentMethods.includes(order.paymentMethod?.toLowerCase());
+    
+    if (isOnlinePayment && paymentStatus === "paid") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot manually update payment status for ${order.paymentMethod} payments. Status updates automatically via payment gateway.`
+      });
+    }
+
     order.paymentStatus = paymentStatus;
     order.paidAt = paymentStatus === "paid" ? new Date() : null;
     await order.save();
 
-    // Socket event (use global.io)
+    // Emit socket events to notify all interested parties
     if (global.io) {
-      global.io.emit("order:payment-updated", {
-        orderId: order._id,
-        paymentStatus: order.paymentStatus,
-        orderNumber: order.orderNumber
-      });
-
+      // Cashier gets generic event
+      global.io.to("cashier").emit("order:payment-updated", order);
+      
+      // Customer gets personalized event
       if (order.customerId) {
-        global.io.to(`user:${order.customerId}`).emit("order:your-payment-updated", {
-          orderId: order._id,
-          paymentStatus: order.paymentStatus
-        });
+        global.io.to(`user:${order.customerId}`).emit("order:your-payment-updated", order);
       }
+      
+      // Kitchen gets kitchen-specific update
+      global.io.to("kitchen").emit("order:payment-updated", order);
     }
 
     res.json({
@@ -639,6 +698,92 @@ export const updatePaymentStatus = async (req, res) => {
     });
   } catch (err) {
     console.error("Update payment status error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// ==============================
+// GET ACTIVE ORDER (First non-completed)
+// ==============================
+export const getActiveOrder = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Get the user's identifier
+    const userId = user._id?.toString() || user.customerId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot determine user identity"
+      });
+    }
+
+    // Find the first non-completed order
+    const activeOrder = await Order.findOne({
+      customerId: userId,
+      status: { $in: ["pending", "confirmed", "preparing", "ready"] }
+    })
+      .sort({ createdAt: -1 })
+      .populate('user', 'name email phone')
+      .lean();
+
+    res.json({
+      success: true,
+      data: activeOrder || null
+    });
+  } catch (err) {
+    console.error("Get active order error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// ==============================
+// GET ORDER HISTORY FOR USER
+// ==============================
+export const getOrderHistoryForUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Get the user's identifier
+    const userId = user._id?.toString() || user.customerId;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot determine user identity"
+      });
+    }
+
+    // Find all completed/past orders
+    const orderHistory = await Order.find({
+      customerId: userId,
+      status: { $in: ["completed", "cancelled", "refunded"] }
+    })
+      .sort({ createdAt: -1 })
+      .populate('user', 'name email phone')
+      .lean();
+
+    res.json({
+      success: true,
+      data: orderHistory || []
+    });
+  } catch (err) {
+    console.error("Get order history error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 };

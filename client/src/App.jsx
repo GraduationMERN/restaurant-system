@@ -15,13 +15,11 @@ import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import Chatbot from "./components/chatbot/Chatbot";
-import OrderTracking from "./pages/orderTracking";
-import OrderHistory from "./pages/OrderHistory";
+import OrdersPage from "./pages/orders/OrdersPage";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
-import CashierConfirmation from "./pages/CashierConfirmation";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierOrders from "./pages/admin/CashierOrders";
@@ -66,11 +64,8 @@ function App() {
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             
             {/* Order Listing and Tracking */}
-            <Route path="/orders" element={<OrderTracking />} />
-            <Route path="/orders/:id" element={<OrderTracking />} />
-            <Route path="/track-order/:id" element={<OrderTracking />} />
-            {/* Legacy route for order history (kept for compatibility) */}
-            <Route path="/order-history" element={<OrderHistory />} />
+            <Route path="/orders" element={<OrdersPage />} />
+
 
             {/* Cashier & Kitchen Dashboards */}
             <Route

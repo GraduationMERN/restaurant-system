@@ -444,7 +444,7 @@ const PaymentSuccess = () => {
         
         if (order?._id) {
           // Redirect to the real tracking page
-          navigate(`/track-order/${order._id}`, {
+          navigate(`/orders/${order._id}`, {
             state: { order },
             replace: true  // Replace history so back button works
           });

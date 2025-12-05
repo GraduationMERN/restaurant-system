@@ -22,7 +22,8 @@ import {
   searchOrders,
   clearNewOrderNotification
 } from "../../redux/slices/cashierSlice";
-import { fetchProducts } from "../../redux/slices/ProductSlice";
+// import { fetchProducts } from "../redux/slices/ProductSlice";
+import { fetchProducts } from "../../redux/slices/productSlice";
 import { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
 import socketClient from "../../utils/socketRedux";
 import { useToast } from "../../hooks/useToast";
@@ -178,6 +179,7 @@ export default function CashierOrders() {
       serviceType: formData.serviceType,
       tableNumber: formData.serviceType === "dine-in" ? formData.tableNumber : undefined,
       items: formData.items.map(item => ({
+        productId: item.productId || undefined,
         name: item.name,
         price: parseFloat(item.price) || 0,
         quantity: parseInt(item.quantity) || 1
@@ -512,38 +514,110 @@ export default function CashierOrders() {
                 </div>
               </div>
 
-              {/* Product Picker Modal (local draft items) */}
+              {/* Product Picker Modal - Caribu POS Style */}
               <Modal open={showProductPicker} onClose={() => setShowProductPicker(false)}>
-                <div className="p-4">
-                  <h3 className="font-semibold mb-3">Add product to order draft</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-auto">
-                    {products && products.length > 0 ? products.map((p) => (
-                      <div key={p._id} className="p-3 border rounded-lg flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">{p.name}</div>
-                          <div className="text-sm text-gray-500">EGP {p.price || p.basePrice}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Append to local formData.items
-                              const newItem = { name: p.name, price: p.price || p.basePrice || 0, quantity: 1 };
-                              setFormData((fd) => ({ ...fd, items: [...fd.items, newItem] }));
-                              toast.showToast({ message: `${p.name} added to draft`, type: 'success' });
-                            }}
-                            className="px-3 py-2 bg-orange-500 text-white rounded-lg"
+                <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-xl overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-xl font-bold">Select Products to Add</h2>
+                    <button
+                      onClick={() => setShowProductPicker(false)}
+                      className="text-white hover:bg-orange-700 rounded-lg p-2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Product Grid */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {products && products.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {products.map((p) => (
+                          <div
+                            key={p._id}
+                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow hover:border-orange-400 dark:hover:border-orange-400"
                           >
-                            Add
-                          </button>
+                            {/* Product Image */}
+                            <div className="bg-gray-200 dark:bg-gray-700 h-40 flex items-center justify-center overflow-hidden">
+                              {p.image ? (
+                                <img
+                                  src={p.image}
+                                  alt={p.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="text-gray-400 text-4xl">🍽️</div>
+                              )}
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="p-4">
+                              <h3 className="font-semibold text-gray-800 dark:text-gray-200 line-clamp-2">
+                                {p.name}
+                              </h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                                {p.description || "No description"}
+                              </p>
+
+                              {/* Price and Availability */}
+                              <div className="mt-3 flex items-center justify-between">
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                  EGP {p.price || p.basePrice || 0}
+                                </span>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full ${
+                                    p.available !== false
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
+                                      : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                                  }`}
+                                >
+                                  {p.available !== false ? "In Stock" : "Out"}
+                                </span>
+                              </div>
+
+                              {/* Add Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newItem = {
+                                    productId: p._id,
+                                    name: p.name,
+                                    price: p.price || p.basePrice || 0,
+                                    quantity: 1
+                                  };
+                                  setFormData((fd) => ({ ...fd, items: [...fd.items, newItem] }));
+                                  toast.showToast({
+                                    message: `✓ ${p.name} added to order`,
+                                    type: "success"
+                                  });
+                                }}
+                                disabled={p.available === false}
+                                className="w-full mt-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition"
+                              >
+                                + Add to Order
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                          <p className="text-xl text-gray-500 dark:text-gray-400 mb-2">📭</p>
+                          <p className="text-gray-600 dark:text-gray-300">No products available</p>
                         </div>
                       </div>
-                    )) : (
-                      <div className="col-span-1 text-center text-gray-500 p-4">No products found</div>
                     )}
                   </div>
-                  <div className="mt-4 text-right">
-                    <button onClick={() => setShowProductPicker(false)} className="px-4 py-2 rounded-lg border">Close</button>
+
+                  {/* Footer */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800">
+                    <button
+                      onClick={() => setShowProductPicker(false)}
+                      className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               </Modal>
@@ -756,7 +830,7 @@ export default function CashierOrders() {
       </div>
 
       {/* Order Details Modal */}
-      <Modal isOpen={!!viewOrder} onClose={() => setViewOrder(null)} className="max-w-2xl">
+      <Modal Open={!!viewOrder} onClose={() => setViewOrder(null)} className="max-w-2xl">
         {viewOrder && (
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -872,7 +946,7 @@ export default function CashierOrders() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="max-w-sm">
+      <Modal Open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="max-w-sm">
         {deleteConfirm && (
           <div className="p-6 text-center">
             <Trash2 className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -902,39 +976,82 @@ export default function CashierOrders() {
       </Modal>
 
       {/* Payment Modal */}
-      <Modal isOpen={!!paymentModalOrder} onClose={() => setPaymentModalOrder(null)} className="max-w-sm">
+      <Modal open={!!paymentModalOrder} onClose={() => setPaymentModalOrder(null)}>
         {paymentModalOrder && (
-          <div className="p-6 text-center">
+          <div className="p-6">
             <DollarSign className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Mark as Paid
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Payment Status
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Mark order <span className="font-medium">{paymentModalOrder.orderNumber}</span> as paid?
+            <p className="text-gray-600 dark:text-gray-400 mb-6 text-center">
+              Order <span className="font-medium">{paymentModalOrder.orderNumber}</span>
             </p>
-            <div className="space-y-3">
-              <select
-                onChange={(e) => handleMarkPayment(paymentModalOrder._id, e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
-              >
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-              </select>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setPaymentModalOrder(null)}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => handleMarkPayment(paymentModalOrder._id, "cash")}
-                  className="flex-1"
-                >
-                  Confirm Paid
-                </Button>
+
+            {/* Current Status */}
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Current Payment Method:</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                {paymentModalOrder.paymentMethod}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Payment Status:</p>
+              <p className={`text-lg font-semibold capitalize ${
+                paymentModalOrder.paymentStatus === 'paid' 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-orange-600 dark:text-orange-400'
+              }`}>
+                {paymentModalOrder.paymentStatus}
+              </p>
+            </div>
+
+            {/* Payment Info Box */}
+            {['cash', 'card', 'pay_at_counter'].includes(paymentModalOrder.paymentMethod) ? (
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  ✓ You can manually update payment status for <strong>{paymentModalOrder.paymentMethod}</strong> payments
+                </p>
+                <div className="space-y-2 mt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentStatus"
+                      value="paid"
+                      checked={true}
+                      onChange={() => handleMarkPayment(paymentModalOrder._id, paymentModalOrder.paymentMethod)}
+                      className="rounded-full"
+                    />
+                    <span className="text-sm font-medium">Mark as Paid</span>
+                  </label>
+                </div>
               </div>
+            ) : (
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  ⓘ <strong>{paymentModalOrder.paymentMethod}</strong> payments are handled automatically via payment gateway.
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Payment status will update when the customer completes the transaction.
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setPaymentModalOrder(null)}
+                variant="outline"
+                className="flex-1"
+              >
+                Close
+              </Button>
+              {['cash', 'card', 'pay_at_counter'].includes(paymentModalOrder.paymentMethod) && (
+                <Button
+                  onClick={() => handleMarkPayment(paymentModalOrder._id, paymentModalOrder.paymentMethod)}
+                  disabled={paymentModalOrder.paymentStatus === 'paid'}
+                  className="flex-1"
+                >
+                  {paymentModalOrder.paymentStatus === 'paid' ? '✓ Already Paid' : 'Mark as Paid'}
+                </Button>
+              )}
             </div>
           </div>
         )}
