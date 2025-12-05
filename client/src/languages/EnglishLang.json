@@ -3,5 +3,17 @@
     "menu": "Menu",
     "orders": "Orders",
     "reviews": "Reviews",
-    "rewards": "Rewards"
+    "rewards": "Rewards",
+    "reviews_title": "Reviews",
+    "write_review": "Write a Review",
+    "rating": "Rating",
+    "comment": "Comment",
+    "upload_photos": "Upload Photos",
+    "submit": "Submit",
+    "no_reviews": "No reviews yet.",
+    "no_comment": "No comment",
+    "anonymous": "Anonymous",
+    "loading": "loading...",
+    "choose_your_photos": "Choose your photos",
+    "share_experience": "Share your experience"
 }
