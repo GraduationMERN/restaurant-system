@@ -15,13 +15,23 @@ import LoginPage from "./pages/LoginPage";
 import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
 import Chatbot from "./components/chatbot/Chatbot";
+import LoadingSpinner from "./components/LoadingSpinner";
+import GoogleSuccess from "./components/GoogleSuccess";
+import ForgotPassword from "./pages/ForgetPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
+  const { loadingGetMe } = useSelector((state) => state.auth);
+
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(getMe());
   }, []);
+
+  if (loadingGetMe) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <BrowserRouter>
@@ -34,7 +44,9 @@ function App() {
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/verifyOtp" element={<VerifyOtpPage />} />
           <Route path="/login" element={<LoginPage />} />
-
+          <Route path="/auth/google/success" element={<GoogleSuccess />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/cart" element={<CartPage />} />
           {/* Single Admin Page with section sub-route */}
           <Route element={<AppLayout />}>
