@@ -125,7 +125,7 @@ export const createDirectOrder = async (req, res) => {
       customerInfo,
       paymentMethod = "cash",
       notes,
-      estimatedTime = 25
+      estimatedTime = 25,
     } = req.body;
 
     // Validation
@@ -179,8 +179,14 @@ export const createDirectOrder = async (req, res) => {
 
     // Create guest customer ID for walk-in
     const guestId = `walkin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Generate order number
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const orderNumber = `ORD-${timestamp}-${random}`;
 
     const orderData = {
+      orderNumber, // Explicitly set orderNumber
       items: transformedItems,
       serviceType,
       tableNumber: serviceType === "dine-in" ? tableNumber : undefined,
@@ -198,12 +204,17 @@ export const createDirectOrder = async (req, res) => {
       estimatedTime,
       customerId: guestId,
       customerType: "guest",
-      isDirectOrder: true,
+      status: "confirmed", // Skip pending for direct orders
       createdBy: req.user?._id, // Cashier who created
-      status: "confirmed" // Skip pending for direct orders
     };
 
     const order = await Order.create(orderData);
+    
+    // Verify order was created with orderNumber
+    if (!order.orderNumber) {
+      console.error("Order created without orderNumber:", order);
+      throw new Error("Failed to generate orderNumber");
+    }
     
     // Populate full order details
     const populatedOrder = await Order.findById(order._id)
@@ -337,16 +348,17 @@ export const updateOrderStatus = async (req, res) => {
 
     // Socket events (use global.io)
     if (global.io) {
-      // General update for all listeners
+      // Emit full order data to all listeners
       global.io.emit("order:status-changed", {
-        orderId: order._id,
-        status: order.status,
-        orderNumber: order.orderNumber,
-        estimatedReadyTime: order.estimatedReadyTime,
+        orderId: populatedOrder._id,
+        _id: populatedOrder._id,
+        status: populatedOrder.status,
+        orderNumber: populatedOrder.orderNumber,
+        estimatedReadyTime: populatedOrder.estimatedReadyTime,
         updatedBy: user?.name || "System"
       });
 
-      // Room-specific events
+      // Room-specific events with full order data
       if (["preparing", "ready"].includes(status)) {
         global.io.to("kitchen").emit("order:kitchen-update", populatedOrder);
       }
@@ -356,11 +368,13 @@ export const updateOrderStatus = async (req, res) => {
       }
 
       // Customer notification (standardize to `user:<id>`)
-      if (order.customerId) {
-        global.io.to(`user:${order.customerId}`).emit("order:your-status-changed", {
-          orderId: order._id,
-          status: order.status,
-          estimatedTime: order.estimatedTime
+      if (populatedOrder.customerId) {
+        global.io.to(`user:${populatedOrder.customerId}`).emit("order:your-status-changed", {
+          orderId: populatedOrder._id,
+          _id: populatedOrder._id,
+          status: populatedOrder.status,
+          estimatedTime: populatedOrder.estimatedTime,
+          estimatedReadyTime: populatedOrder.estimatedReadyTime
         });
       }
     }
@@ -677,23 +691,34 @@ export const updatePaymentStatus = async (req, res) => {
     order.paidAt = paymentStatus === "paid" ? new Date() : null;
     await order.save();
 
+    // Populate for response
+    const populatedOrder = await Order.findById(order._id)
+      .populate('user', 'name email')
+      .populate('createdBy', 'name')
+      .lean();
+
     // Emit socket events to notify all interested parties
     if (global.io) {
-      // Cashier gets generic event
-      global.io.to("cashier").emit("order:payment-updated", order);
+      // Broadcast to cashier
+      global.io.to("cashier").emit("order:payment-updated", populatedOrder);
       
       // Customer gets personalized event
-      if (order.customerId) {
-        global.io.to(`user:${order.customerId}`).emit("order:your-payment-updated", order);
+      if (populatedOrder.customerId) {
+        global.io.to(`user:${populatedOrder.customerId}`).emit("order:your-payment-updated", {
+          orderId: populatedOrder._id,
+          _id: populatedOrder._id,
+          paymentStatus: populatedOrder.paymentStatus,
+          paidAt: populatedOrder.paidAt
+        });
       }
       
-      // Kitchen gets kitchen-specific update
-      global.io.to("kitchen").emit("order:payment-updated", order);
+      // Kitchen gets update
+      global.io.to("kitchen").emit("order:payment-updated", populatedOrder);
     }
 
     res.json({
       success: true,
-      data: order,
+      data: populatedOrder,
       message: `Payment status updated to ${paymentStatus}`
     });
   } catch (err) {

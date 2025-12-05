@@ -27,7 +27,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching products:", error);
-        toast.error("Failed to load menu items");
+        toast.showToast({ message: "Failed to load menu items", type: "error" });
       } finally {
         setLoading(false);
       }
@@ -120,7 +120,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
 
                   <div className="flex justify-between items-center mb-3">
                     <span className="font-bold text-amber-600">
-                      ${product.price?.toFixed(2) || "0.00"}
+                      ${(product.basePrice || product.price)?.toFixed(2) || "0.00"}
                     </span>
                     {product.category && (
                       <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
@@ -136,9 +136,9 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
                         onItemSelect({
                           productId: product._id,
                           name: product.name,
-                          price: product.price,
+                          price: product.basePrice || product.price,
                           quantity: 1,
-                          totalPrice: product.price,
+                          totalPrice: product.basePrice || product.price,
                         })
                       }
                       className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"

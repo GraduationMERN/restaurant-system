@@ -52,8 +52,8 @@ const OrderSchema = new mongoose.Schema(
     // ============= SERVICE INFORMATION =============
     serviceType: {
       type: String,
-      enum: ["dine-in", "pickup", "delivery"],
-      required: true,
+      enum: ["dine-in", "takeaway", "pickup", "delivery"],
+      required: false,
     },
 
     tableNumber: {
