@@ -5,7 +5,7 @@ const OrderItemSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: false,
+      required: true,
     },
     name: { type: String, required: true },
     image: { type: String, default: "" },
@@ -20,267 +20,319 @@ const OrderItemSchema = new mongoose.Schema(
 
 const OrderSchema = new mongoose.Schema(
   {
-    // Order Identification
+    // ============= ORDER IDENTIFICATION =============
     orderNumber: {
       type: String,
       required: true,
       unique: true,
     },
-    
-    // User & Cart References
-    userId: { 
-      // type: mongoose.Schema.Types.ObjectId,
-      type: String, 
-      ref: "User",
-      required: false,
-      index: true 
+
+    // ============= CUSTOMER IDENTIFICATION =============
+    // SINGLE customer identifier field - Supports both guest and registered
+    customerId: {
+      type: String, // Changed: Always String (UUID for guest, ObjectId string for registered)
+      required: true,
+      index: true,
     },
-    cartId: {
+
+    // User reference ONLY for registered users
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Cart",
-      required: function() {
-        return !this.isDirectOrder;
-      }
+      ref: "User",
+      default: null,
     },
-    isDirectOrder: { type: Boolean, default: false },
 
-    // Service Information
-    serviceType: { 
-      type: String, 
-      enum: ["dine-in", "pickup", "delivery"], 
-      required: true 
+    // Customer type (guest or registered)
+    customerType: {
+      type: String,
+      enum: ["guest", "registered"],
+      required: true,
     },
-    tableNumber: { type: String, default: null },
 
-    // Order Items
+    // ============= SERVICE INFORMATION =============
+    serviceType: {
+      type: String,
+      enum: ["dine-in", "pickup", "delivery"],
+      required: true,
+    },
+
+    tableNumber: {
+      type: String,
+      default: null,
+      required: function () {
+        return this.serviceType === "dine-in";
+      },
+    },
+
+    // ============= DELIVERY (Only for delivery type) =============
+    deliveryAddress: {
+      type: String,
+      default: "",
+      required: function () {
+        return this.serviceType === "delivery";
+      },
+    },
+
+    // ============= ORDER ITEMS =============
     items: [OrderItemSchema],
 
-    // Pricing & Totals
+    // ============= PRICING & TOTALS =============
     subtotal: { type: Number, required: true, default: 0 },
     vat: { type: Number, required: true, default: 0 },
-    deliveryFee: { type: Number, required: true, default: 0 },
-    discount: { type: Number, required: true, default: 0 },
+    deliveryFee: {
+      type: Number,
+      default: 0,
+      required: function () {
+        return this.serviceType === "delivery";
+      },
+    },
+    discount: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true, default: 0 },
 
-    // Payment Information
-    paymentStatus: { 
-      type: String, 
+    // ============= PAYMENT INFORMATION =============
+    paymentStatus: {
+      type: String,
       enum: ["pending", "paid", "failed", "refunded"],
-      default: "pending" 
+      default: "pending",
     },
-    paymentMethod: { 
-      type: String, 
-      enum: ["cash","instore", "card", "online"], 
+
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "card", "online"],
       required: true,
-      default: "cash"
+      default: "cash",
     },
+
     paidAt: { type: Date, default: null },
 
-    // Refund metadata
-    refundAmount: { type: Number, default: 0 },
-    refundedAt: { type: Date, default: null },
-
     // Stripe
-    stripeSessionId: {
-      type: String,
-      default: null
-    },
-    stripePaymentIntent: {
-      type: String,
-      default: null
-    },
+    stripeSessionId: { type: String, default: null },
+    stripePaymentIntent: { type: String, default: null },
 
-    // Customer Information
+    // ============= CUSTOMER INFORMATION (For guests & contact) =============
     customerInfo: {
       name: { type: String, default: "" },
       phone: { type: String, default: "" },
       email: { type: String, default: "" },
     },
 
-    // Coupon Information
-    appliedCoupon: {
-      couponId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Coupon',
-        default: null,
-      },
-      code: { type: String, default: null },
-      discountAmount: { type: Number, default: 0 },
+    // ============= COUPON =============
+    couponCode: { type: String, default: null },
+    couponDiscount: { type: Number, default: 0 },
+
+    // ============= ORDER STATUS & TRACKING =============
+    status: {
+      type: String,
+      enum: [
+        "pending",
+        "confirmed",
+        "preparing",
+        "ready",
+        "completed",
+        "cancelled",
+      ],
+      default: "pending",
     },
 
-    // Order Status & Tracking
-    status: {
-      type: String, 
-      enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],
-      default: "pending" 
+    // ============= TIME ESTIMATES =============
+    estimatedTime: {
+      type: Number, // Minutes
+      default: null, // Will be set by cashier
     },
-    
-    // Time Estimates
-    estimatedTime: { 
-      type: Number, 
-      default: 25, // Estimated preparation time in minutes
-      min: 5,
-      max: 120
-    },
+
     estimatedReadyTime: {
       type: Date,
-      default: null // Will be calculated automatically
+      default: null,
     },
-    
+
+    // ============= NOTES =============
     notes: { type: String, default: "" },
 
-    // Applied reward metadata for reward-based orders
-    appliedReward: {
-      rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
-      rewardRedemptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'RewardOrder' },
-    }
+    // ============= CREATED BY (Cashier/Admin) =============
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // ============= DIRECT ORDER FLAG =============
+    isDirectOrder: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { 
+  {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
   }
 );
 
-// Virtual for order duration
-OrderSchema.virtual('duration').get(function() {
-  if (this.createdAt && this.updatedAt) {
-    return this.updatedAt - this.createdAt;
-  }
-  return null;
-});
+// ============= VIRTUALS (SIMPLIFIED) =============
 
-// Virtual for formatted estimated ready time
-OrderSchema.virtual('formattedEstimatedTime').get(function() {
-  if (!this.estimatedReadyTime) return null;
-  return this.estimatedReadyTime.toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-});
-
-// Virtual for remaining time in minutes
-OrderSchema.virtual('remainingMinutes').get(function() {
-  if (!this.estimatedReadyTime) return this.estimatedTime || 25;
-  
-  const now = new Date();
-  const diffMs = this.estimatedReadyTime - now;
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60))); // Convert to minutes
-});
-
-// Virtual for order progress percentage
-OrderSchema.virtual('progressPercentage').get(function() {
-  const statusProgress = {
-    "pending": 0,
-    "confirmed": 33,
-    "preparing": 66,
-    "ready": 100,
-    "completed": 100,
-    "cancelled": 0
+// Progress based on status
+OrderSchema.virtual("progressPercentage").get(function () {
+  const progressMap = {
+    pending: 0,
+    confirmed: 25,
+    preparing: 50,
+    ready: 75,
+    completed: 100,
+    cancelled: 0,
   };
-  return statusProgress[this.status] || 0;
+  return progressMap[this.status] || 0;
 });
 
-// Pre-save middleware to generate order number and calculate estimatedReadyTime
-OrderSchema.pre('save', async function(next) {
-  // Generate order number for new orders
-  if (this.isNew && !this.orderNumber) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderNumber = `ORD-${Date.now()}-${count + 1}`;
-  }
-  
-  // Calculate estimatedReadyTime for new orders or when estimatedTime changes
-  if (this.isNew || this.isModified('estimatedTime')) {
-    const estimatedReadyTime = calculateEstimatedReadyTime(
-      this.serviceType,
-      this.items.length,
-      this.estimatedTime || 25
-    );
-    this.estimatedReadyTime = estimatedReadyTime;
-  }
-  
-  next();
+// Human-readable status
+OrderSchema.virtual("statusText").get(function () {
+  const statusText = {
+    pending: "Pending",
+    confirmed: "Confirmed",
+    preparing: "Preparing",
+    ready: "Ready for Pickup",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+  return statusText[this.status] || this.status;
 });
 
-// Helper function to calculate estimated ready time
-const calculateEstimatedReadyTime = (serviceType, itemsCount, baseTime = 25) => {
-  const now = new Date();
-  
-  // Base preparation time (in minutes)
-  let preparationTime = baseTime;
-  
-  // Add time based on order type
-  if (serviceType === "delivery") preparationTime += 10;
-  else if (serviceType === "dine-in") preparationTime += 5;
-  else if (serviceType === "pickup") preparationTime += 3;
-  
-  // Add time based on items count
-  preparationTime += Math.floor(itemsCount / 2) * 5;
-  
-  // Set reasonable limits
-  preparationTime = Math.max(15, Math.min(preparationTime, 60)); // 15-60 minutes
-  
-  return new Date(now.getTime() + preparationTime * 60000);
-};
+// Customer name (with fallback)
+OrderSchema.virtual("displayName").get(function () {
+  if (this.customerInfo?.name) return this.customerInfo.name;
+  if (this.user?.name) return this.user.name;
+  return "Guest Customer";
+});
 
-// Static method to find active orders
-OrderSchema.statics.findActiveOrders = function() {
-  return this.find({
-    status: { $in: ["pending", "confirmed", "preparing"] }
-  }).sort({ createdAt: 1 });
-};
-
-// Static method to calculate estimated ready time (can be used externally)
-OrderSchema.statics.calculateEstimatedReadyTime = calculateEstimatedReadyTime;
-
-// Instance method to check if order can be cancelled
-OrderSchema.methods.canBeCancelled = function() {
-  return ["pending", "confirmed"].includes(this.status);
-};
-
-// Instance method to calculate estimated completion time (backward compatibility)
-OrderSchema.methods.getEstimatedCompletion = function() {
-  if (this.estimatedReadyTime) {
-    return this.estimatedReadyTime;
-  }
-  
-  // Fallback to old calculation
-  const completionTime = new Date(this.createdAt);
-  completionTime.setMinutes(completionTime.getMinutes() + (this.estimatedTime || 25));
-  return completionTime;
-};
-
-// Instance method to update estimated time and recalculate
-OrderSchema.methods.updateEstimatedTime = function(newEstimatedTime) {
-  this.estimatedTime = newEstimatedTime;
-  this.estimatedReadyTime = calculateEstimatedReadyTime(
-    this.serviceType,
-    this.items.length,
-    newEstimatedTime
-  );
-  return this.save();
-};
-
-// Instance method to get time status
-OrderSchema.methods.getTimeStatus = function() {
-  if (!this.estimatedReadyTime) return "Not estimated";
-  
+// Estimated ready time text
+OrderSchema.virtual("estimatedTimeText").get(function () {
+  if (!this.estimatedReadyTime) return "Not set";
   const now = new Date();
   const diffMs = this.estimatedReadyTime - now;
   const diffMinutes = Math.ceil(diffMs / (1000 * 60));
-  
-  if (diffMinutes <= 0) return "Ready";
-  if (diffMinutes <= 5) return "Almost ready";
-  if (diffMinutes <= 15) return "Coming soon";
-  return `In ${diffMinutes} minutes`;
+
+  if (diffMinutes <= 0) return "Ready now";
+  if (diffMinutes < 60) return `Ready in ${diffMinutes} min`;
+  const hours = Math.floor(diffMinutes / 60);
+  const mins = diffMinutes % 60;
+  return `Ready in ${hours}h ${mins}m`;
+});
+
+// ============= PRE-SAVE MIDDLEWARE =============
+OrderSchema.pre("save", async function (next) {
+  // Generate order number
+  if (this.isNew && !this.orderNumber) {
+    const date = new Date();
+    const timestamp = date.getTime();
+    const random = Math.floor(Math.random() * 1000);
+    this.orderNumber = `ORD-${timestamp}-${random}`;
+  }
+
+  // Set customerType based on user reference
+  if (this.isNew) {
+    if (this.user) {
+      this.customerType = "registered";
+      // Ensure customerId matches user._id as string
+      this.customerId = this.user.toString();
+    } else {
+      this.customerType = "guest";
+      // If no customerId, generate one
+      if (!this.customerId) {
+        this.customerId = `guest_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+      }
+    }
+  }
+
+  // Calculate estimatedReadyTime if estimatedTime changed
+  if (this.isModified("estimatedTime") && this.estimatedTime) {
+    const now = new Date();
+    this.estimatedReadyTime = new Date(
+      now.getTime() + this.estimatedTime * 60000
+    );
+  }
+
+  next();
+});
+
+// ============= STATIC METHODS =============
+
+// Find active orders (for kitchen/cashier)
+OrderSchema.statics.findActiveOrders = function () {
+  return this.find({
+    status: { $in: ["confirmed", "preparing", "ready"] },
+  })
+    .sort({ createdAt: 1 })
+    .populate("user", "name email phone")
+    .populate("createdBy", "name");
 };
 
-// Indexes
-OrderSchema.index({ userId: 1, createdAt: -1 });
-OrderSchema.index({ status: 1 });
-OrderSchema.index({ createdAt: 1 });
-OrderSchema.index({ "customerInfo.phone": 1 });
-OrderSchema.index({ estimatedReadyTime: 1 }); // New index for time-based queries
-OrderSchema.index({ serviceType: 1, status: 1 }); // For filtering by service type
+// Find orders by customer (works for both guest and registered)
+OrderSchema.statics.findByCustomerId = function (customerId) {
+  return this.find({ customerId })
+    .sort({ createdAt: -1 })
+    .populate("user", "name email phone")
+    .populate("createdBy", "name");
+};
+
+// Find pending orders (for cashier confirmation)
+OrderSchema.statics.findPendingOrders = function () {
+  return this.find({ status: "pending", paymentStatus: "paid" })
+    .sort({ createdAt: 1 })
+    .populate("user", "name email phone");
+};
+
+// ============= INSTANCE METHODS =============
+
+// Check if order can be cancelled
+OrderSchema.methods.canCancel = function () {
+  return ["pending", "confirmed"].includes(this.status);
+};
+
+// Update estimated time (cashier dashboard)
+OrderSchema.methods.updateEstimate = function (minutes) {
+  this.estimatedTime = minutes;
+  this.estimatedReadyTime = new Date(Date.now() + minutes * 60000);
+  return this.save();
+};
+
+// Update status with validation
+OrderSchema.methods.updateStatus = function (newStatus) {
+  const validTransitions = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["preparing", "cancelled"],
+    preparing: ["ready"],
+    ready: ["completed"],
+    completed: [],
+    cancelled: [],
+  };
+
+  if (!validTransitions[this.status]?.includes(newStatus)) {
+    throw new Error(`Invalid status transition from ${this.status} to ${newStatus}`);
+  }
+
+  this.status = newStatus;
+  return this.save();
+};
+
+// Link guest order to registered user
+OrderSchema.methods.linkToUser = function (userId) {
+  if (this.customerType === "guest") {
+    this.user = userId;
+    this.customerType = "registered";
+    this.customerId = userId.toString();
+    return this.save();
+  }
+  throw new Error("Order is already linked to a user");
+};
+
+// ============= INDEXES (OPTIMIZED) =============
+OrderSchema.index({ customerId: 1, createdAt: -1 }); // Customer order history
+OrderSchema.index({ status: 1, createdAt: 1 }); // Active orders
+OrderSchema.index({ orderNumber: 1 }); // Quick lookup
+OrderSchema.index({ "customerInfo.phone": 1 }); // Phone lookup
+OrderSchema.index({ estimatedReadyTime: 1 }); // Time-based queries
+OrderSchema.index({ createdBy: 1 }); // Cashier orders
+OrderSchema.index({ stripeSessionId: 1 }, { sparse: true }); // Payment lookup
 
 export default mongoose.model("Order", OrderSchema);

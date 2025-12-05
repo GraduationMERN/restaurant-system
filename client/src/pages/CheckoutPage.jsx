@@ -1,17 +1,17 @@
+// src/pages/CheckoutPage.jsx
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
-import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser,updateCartItemOptions   } from "../redux/slices/cartSlice";
-import { ArrowLeft, Plus, Minus, Trash2, Edit2, Star, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
-import { useTranslation } from "react-i18next"; // 
-// Leaflet (OpenStreetMap) map picker
+import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
+import { ArrowLeft, Plus, Minus, Trash2, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
+
+// Leaflet imports (same as before)
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix default icon paths for Leaflet in many bundlers
-// Fix default icon paths for Leaflet in ESM (Vite) by resolving URLs via import.meta
+// Fix default icon paths
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL("../node_modules/leaflet/dist/images/marker-icon-2x.png", import.meta.url).href,
   iconUrl: new URL("../node_modules/leaflet/dist/images/marker-icon.png", import.meta.url).href,
@@ -21,7 +21,6 @@ L.Icon.Default.mergeOptions({
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const { products, totalPrice, loading, _id: cartId } = useSelector(
     (state) => state.cart
@@ -42,217 +41,262 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [showRewardModal, setShowRewardModal] = useState(false);
-  
+  const [orderError, setOrderError] = useState("");
 
   // Load cart on mount
   useEffect(() => {
     dispatch(getCartForUser());
   }, [dispatch]);
 
- 
-const handleQuantityChange = (productId, quantity) => {  // Changed parameter name
-  if (quantity < 1) return;
-  console.log("Updating quantity for productId:", productId);
-  
-  dispatch(updateCartQuantity({ 
-    cartItemId: productId,  // Using productId (matching CartPage)
-    newQuantity: quantity 
-  }));
-};
+  // Auto-fill contact info from auth user
+  useEffect(() => {
+    if (authUser && !contactName && !contactPhone) {
+      setContactName(authUser.name || "");
+      setContactPhone(authUser.phoneNumber || "");
+    }
+  }, [authUser]);
 
-// Handle delete product - MATCH CART PAGE
-const handleDeleteItem = (productId) => {  // Changed parameter name
-  console.log("Deleting productId:", productId);
-  dispatch(deleteProductFromCart(productId));  // Using productId (matching CartPage)
-};
-
-// Handle option change - Use productId like CartPage would
-const handleOptionChange = async (item, optionName, choiceLabel) => {
-  try {
-    const newSelectedOptions = { 
-      ...item.selectedOptions, 
-      [optionName]: choiceLabel 
-    };
+  const handleQuantityChange = (productId, quantity) => {
+    if (quantity < 1) return;
+    console.log("Updating quantity for productId:", productId);
     
-    // Since we can't update options directly, we need to:
-    // 1. Delete the current item
-    // 2. Add it back with new options
-    
-    await dispatch(deleteProductFromCart(item.productId._id));  // Delete using productId
-    
-    await dispatch(addToCart({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      selectedOptions: newSelectedOptions
+    dispatch(updateCartQuantity({ 
+      cartItemId: productId,
+      newQuantity: quantity 
     }));
-    
-  } catch (err) {
-    console.error("options didnt update:", err);
-  }
-};
+  };
 
+  const handleDeleteItem = (productId) => {
+    console.log("Deleting productId:", productId);
+    dispatch(deleteProductFromCart(productId));
+  };
+
+  const handleOptionChange = async (item, optionName, choiceLabel) => {
+    try {
+      const newSelectedOptions = { 
+        ...item.selectedOptions, 
+        [optionName]: choiceLabel 
+      };
+      
+      await dispatch(deleteProductFromCart(item.productId._id));
+      
+      await dispatch(addToCart({
+        productId: item.productId._id,
+        quantity: item.quantity,
+        selectedOptions: newSelectedOptions
+      }));
+      
+    } catch (err) {
+      console.error("Options didn't update:", err);
+    }
+  };
 
   // Compute totals
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   const total = +(subtotal + vat).toFixed(2);
+
+  // Handle order submission
   const handleSubmit = async () => {
-  if (!cartId) {
-    alert("No cart found. Please add items to cart first.");
-    return;
-  }
-  
-  if (products.length === 0) {
-    alert("Your cart is empty. Please add items before checking out.");
-    return;
-  }
-  
-  setSubmitting(true);
-
-  try {
-    const res = await dispatch(
-      createOrderFromCart({
-        cartId,
-        serviceType,
-        tableNumber,
-        notes,
-          deliveryLocation,
-          customerInfo: {
-            name: contactName,
-            phone: contactPhone,
-            address: contactAddress,
-          },
-      })
-    ).unwrap();
-
-    console.log("Order created:", res);
-
-    // Handle the API response structure
-    if (res.success && res.data) {
-      navigate("/payment", { 
-        state: { 
-          orderId: res.data._id || res.data.id,
-          order: res.data
-        } 
-      });
-    } else {
-      // Fallback if structure is different
-      navigate("/payment", { 
-        state: { 
-          orderId: res._id || res.id,
-          order: res
-        } 
-      });
+    if (!cartId) {
+      setOrderError("No cart found. Please add items to cart first.");
+      return;
+    }
+    
+    if (products.length === 0) {
+      setOrderError("Your cart is empty. Please add items before checking out.");
+      return;
     }
 
-  } catch (err) {
-    console.error("Order creation failed:", err);
-    
-    // Show user-friendly error
-    const errorMessage = err?.message || err || "Failed to create order. Please try again.";
-    alert(errorMessage);
-    
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-
-const shareMyLocation = () => {
-  if (!navigator.geolocation) {
-    setLocationError("Geolocation is not supported by your browser");
-    return;
-  }
-  
-  setLocationLoading(true);
-  setLocationError(null);
-  
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      let address = "";
-      
-      try {
-        // Use Nominatim (OpenStreetMap) for reverse geocoding to get address from coordinates
-        const resp = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-          { headers: { "User-Agent": "RestaurantApp" } }
-        );
-        const data = await resp.json();
-        address = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      } catch (e) {
-        console.warn("Reverse geocoding failed, using coordinates:", e);
-        address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    // Validate service type requirements
+    if (serviceType === "delivery") {
+      if (!deliveryLocation) {
+        setOrderError("Please select a delivery location.");
+        return;
       }
-      
-      setDeliveryLocation({ lat, lng, address });
-      // Prefill contact address and user info if available
-      setContactAddress(address || "");
-      if (authUser) {
-        setContactName(authUser.name || "");
-        setContactPhone(authUser.phone || "");
+      if (!contactName.trim() || !contactPhone.trim()) {
+        setOrderError("Please provide your name and phone number for delivery.");
+        return;
       }
-      setLocationLoading(false);
-    },
-    (err) => {
-      console.error("Geolocation error:", err);
-      if (err.code === 1) {
-        setLocationError("Location access denied. Please enable location permissions and try again.");
-      } else if (err.code === 2) {
-        setLocationError("Position unavailable. Please try again or check your location settings.");
+    }
+
+    if (serviceType === "dine-in" && !tableNumber.trim()) {
+      setOrderError("Please enter your table number for dine-in service.");
+      return;
+    }
+
+    setSubmitting(true);
+    setOrderError("");
+
+    try {
+      // Prepare order data
+      const orderData = {
+        cartId,
+        serviceType,
+        tableNumber: serviceType === "dine-in" ? tableNumber : undefined,
+        notes: notes.trim() || undefined,
+        customerInfo: {
+          name: contactName.trim() || undefined,
+          phone: contactPhone.trim() || undefined,
+          email: authUser?.email || undefined,
+          address: contactAddress.trim() || undefined
+        }
+      };
+
+      // Include promo code if provided (backend will validate/apply)
+      if (promoCode && promoCode.trim()) {
+        orderData.promoCode = promoCode.trim();
+      }
+
+      // Add delivery location if applicable
+      if (serviceType === "delivery" && deliveryLocation) {
+        orderData.deliveryLocation = {
+          address: deliveryLocation.address,
+          lat: deliveryLocation.lat,
+          lng: deliveryLocation.lng,
+          notes: notes.trim() || undefined
+        };
+      }
+
+      console.log("Submitting order data:", orderData);
+
+      // Dispatch order creation
+      const result = await dispatch(createOrderFromCart(orderData)).unwrap();
+
+      console.log("Order creation response:", result);
+
+      // Handle response based on backend structure
+      if (result.success && result.data) {
+        // Clear the cart on the client since order was created successfully
+        try {
+          await dispatch(clearCart()).unwrap();
+        } catch (clearErr) {
+          // Non-blocking: log and continue to navigate to payment
+          console.warn("Failed to clear cart after order creation:", clearErr);
+        }
+
+        // Navigate to payment page with order data
+        navigate("/payment", { 
+          state: { 
+            orderId: result.data._id,
+            order: result.data
+          } 
+        });
       } else {
-        setLocationError("Failed to get location: " + err.message);
+        // Handle error response
+        setOrderError(result.message || "Failed to create order. Please try again.");
       }
-      setLocationLoading(false);
-    },
-    { timeout: 10000, enableHighAccuracy: false }
-  );
-};
 
-// Simple component to capture map clicks and update marker position
-function MapClick({ onClick }) {
-  useMapEvents({
-    click(e) {
-      onClick(e.latlng);
-    },
-  });
-  return null;
-}
+    } catch (err) {
+      console.error("Order creation failed:", err);
+      
+      // Handle different error formats
+      if (err.message) {
+        setOrderError(err.message);
+      } else if (typeof err === 'string') {
+        setOrderError(err);
+      } else {
+        setOrderError("Failed to create order. Please try again.");
+      }
+      
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-const reverseGeocode = async (lat, lng) => {
-  try {
-    const resp = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-      { headers: { "User-Agent": "RestaurantApp" } }
+  const shareMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    setLocationLoading(true);
+    setLocationError(null);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        let address = "";
+        
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+            { headers: { "User-Agent": "RestaurantApp" } }
+          );
+          const data = await resp.json();
+          address = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        } catch (e) {
+          console.warn("Reverse geocoding failed:", e);
+          address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        }
+        
+        setDeliveryLocation({ lat, lng, address });
+        setContactAddress(address || "");
+        if (authUser) {
+          setContactName(authUser.name || "");
+          setContactPhone(authUser.phoneNumber || "");
+        }
+        setLocationLoading(false);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        if (err.code === 1) {
+          setLocationError("Location access denied. Please enable location permissions.");
+        } else if (err.code === 2) {
+          setLocationError("Position unavailable. Please check your location settings.");
+        } else {
+          setLocationError("Failed to get location: " + err.message);
+        }
+        setLocationLoading(false);
+      },
+      { timeout: 10000, enableHighAccuracy: false }
     );
-    const data = await resp.json();
-    return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  } catch (e) {
-    console.warn("Reverse geocode failed:", e);
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  }
-};
+  };
 
-const confirmMapSelection = async () => {
-  if (!mapSelectedPos) return;
-  const { lat, lng } = mapSelectedPos;
-  const address = await reverseGeocode(lat, lng);
-  setDeliveryLocation({ lat, lng, address });
-  setContactAddress(address || "");
-  if (authUser) {
-    setContactName(authUser.name || "");
-    setContactPhone(authUser.phone || "");
+  // Simple component to capture map clicks
+  function MapClick({ onClick }) {
+    useMapEvents({
+      click(e) {
+        onClick(e.latlng);
+      },
+    });
+    return null;
   }
-  setShowMapPicker(false);
-};
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+        { headers: { "User-Agent": "RestaurantApp" } }
+      );
+      const data = await resp.json();
+      return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    } catch (e) {
+      console.warn("Reverse geocode failed:", e);
+      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  };
+
+  const confirmMapSelection = async () => {
+    if (!mapSelectedPos) return;
+    const { lat, lng } = mapSelectedPos;
+    const address = await reverseGeocode(lat, lng);
+    setDeliveryLocation({ lat, lng, address });
+    setContactAddress(address || "");
+    if (authUser) {
+      setContactName(authUser.name || "");
+      setContactPhone(authUser.phoneNumber || "");
+    }
+    setShowMapPicker(false);
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">{t("Loading cart...")}</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading cart...</p>
         </div>
       </div>
     );
@@ -268,25 +312,25 @@ const confirmMapSelection = async () => {
             className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-          {t("Back") }
+            Back
           </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Error Display */}
+        {orderError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <p className="text-red-700 dark:text-red-300 text-center font-medium">{orderError}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          {/* Left Column - Cart Items (45% width on large screens) */}
+          {/* Left Column - Cart Items */}
           <div className="lg:col-span-7 space-y-6 pl-0 lg:pl-5">
             {/* Header Section */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">My Order</h1>
-              <div className="flex items-center text-gray-600 dark:text-gray-400 mb-2">
-                <MapPin className="w-4 h-4 mr-2" />
-                <select className="bg-transparent border-none focus:outline-none focus:ring-0 text-gray-700 dark:text-gray-300 cursor-pointer appearance-none pr-6">
-                  <option className="bg-white dark:bg-gray-800">Select Branch</option>
-                </select>
-                <ChevronDown className="w-4 h-4 -ml-5 pointer-events-none text-gray-400" />
-              </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Confirm your order so we can prep it.
               </p>
@@ -342,7 +386,7 @@ const confirmMapSelection = async () => {
                           <select
                             key={opt._id}
                             value={item.selectedOptions[opt.name] || ""}
-onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
+                            onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
                             <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
@@ -362,7 +406,6 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
 
                     {/* Action Buttons */}
                     <div className="flex gap-4 mt-4 text-sm">
-                      
                       <button 
                         onClick={() => handleDeleteItem(item.productId._id)}
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
@@ -389,38 +432,6 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
               </div>
             )}
 
-            {/* Rewards Section */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Rewards</h3>
-                <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
-                  View all
-                </button>
-              </div>
-              <div 
-                onClick={() => setShowRewardModal(true)}
-                className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all duration-300 relative overflow-hidden group border border-orange-100 dark:border-orange-800"
-              >
-                <div className="absolute top-3 right-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <Star className="w-4 h-4 text-white" fill="white" />
-                  </div>
-                </div>
-                <div className="absolute bottom-3 right-3">
-                  <div className="w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Plus className="w-3 h-3 text-white" />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-4xl font-bold text-orange-600 dark:text-orange-400 mb-1">2x</p>
-                  <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">your points</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    Confirm your order to earn double points
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Add Other Items Button */}
             <button 
               onClick={() => navigate('/')}
@@ -431,7 +442,7 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
             </button>
           </div>
 
-          {/* Right Column - Order Summary (45% width on large screens) */}
+          {/* Right Column - Order Summary */}
           <div className="lg:col-span-5">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 lg:sticky lg:top-4">
               {/* Service Type Dropdown */}
@@ -450,6 +461,7 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                 </div>
               </div>
 
+              {/* Delivery Section */}
               {serviceType === "delivery" && (
                 <div className="mb-6">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
@@ -480,12 +492,24 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                         </div>
 
                         <div className="mt-3 space-y-2">
-                          <label className="text-xs text-gray-600 dark:text-gray-400">Recipient name</label>
-                          <input value={contactName} onChange={(e)=>setContactName(e.target.value)} placeholder="Full name" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                          <label className="text-xs text-gray-600 dark:text-gray-400">Phone</label>
-                          <input value={contactPhone} onChange={(e)=>setContactPhone(e.target.value)} placeholder="Phone number" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                          <label className="text-xs text-gray-600 dark:text-gray-400">Address</label>
-                          <textarea value={contactAddress} onChange={(e)=>setContactAddress(e.target.value)} placeholder="Address details" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                          <input 
+                            value={contactName} 
+                            onChange={(e)=>setContactName(e.target.value)} 
+                            placeholder="Full name" 
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          />
+                          <input 
+                            value={contactPhone} 
+                            onChange={(e)=>setContactPhone(e.target.value)} 
+                            placeholder="Phone number" 
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          />
+                          <textarea 
+                            value={contactAddress} 
+                            onChange={(e)=>setContactAddress(e.target.value)} 
+                            placeholder="Address details" 
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          />
                         </div>
 
                         <div className="flex gap-3 mt-3">
@@ -533,47 +557,11 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             Pick on map
                           </button>
                         </div>
-                        {locationError && (
-                          <div className="text-sm text-red-600">{locationError}</div>
-                        )}
                       </div>
                     )}
                   </div>
                 </div>
               )}
-
-              {/* Offers Section */}
-              <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <Star className="w-8 h-8 text-amber-500 dark:text-amber-400" fill="currentColor" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">2x your points</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Confirm your order to earn +2,388 points instead of 1,194 points.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Promo Code */}
-              <div className="mb-6">
-                <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
-                  <Tag className="w-4 h-4 mr-2" />
-                  Have a promo code?
-                </h3>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter promo code"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                  />
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                </div>
-              </div>
 
               {/* Table Number for Dine-in */}
               {serviceType === "dine-in" && (
@@ -604,19 +592,35 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                 />
               </div>
 
+              {/* Promo / Coupon */}
+              <div className="mb-6">
+                <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Coupon / Promo Code
+                </h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter promo code"
+                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { /* UI-only apply: backend will validate on submit */ }}
+                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
               {/* Price Breakdown */}
               <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                   <span className="font-medium text-gray-900 dark:text-white">EGP {subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-green-600 dark:text-green-400">You earned</span>
-                  <span className="text-green-600 dark:text-green-400 font-medium">2x your points</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Service</span>
-                  <span className="font-medium text-gray-900 dark:text-white">EGP 55.68</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-600 dark:text-gray-400">VAT</span>
@@ -640,7 +644,7 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Processing...
+                    Creating Order...
                   </span>
                 ) : "Confirm Order"}
               </button>
@@ -649,47 +653,6 @@ onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
         </div>
       </div>
 
-      {/* Reward Modal */}
-      {showRewardModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full relative animate-slideUp">
-            <button
-              onClick={() => setShowRewardModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center mb-4">
-                <Star className="w-20 h-20 text-amber-500 dark:text-amber-400" fill="currentColor" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">2x your points</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Are you sure you want to remove <span className="font-semibold text-amber-500 dark:text-amber-400">2x your points</span> from cart?
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => setShowRewardModal(false)}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-xl transition-all duration-300 hover:shadow-lg"
-              >
-                Keep offer
-              </button>
-              <button
-                onClick={() => {
-                  setShowRewardModal(false);
-                  // Add logic to remove reward here
-                }}
-                className="w-full bg-white dark:bg-gray-700 border-2 border-orange-300 dark:border-orange-600 text-orange-500 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10 font-semibold py-3 rounded-xl transition-all duration-300"
-              >
-                Remove offer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Map Picker Modal */}
       {showMapPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

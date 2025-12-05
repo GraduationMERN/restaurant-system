@@ -11,7 +11,6 @@ import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
 import requestLogger from "./src/middlewares/requestLogger.middleware.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import optionalAuthMiddleware from "./src/middlewares/optionalAuthMiddleware.js";
-import { stripeWebhookMiddleware } from "./src/modules/payment/stripeWebhookMiddleware.js";
 import logger from "./src/utils/logger.js";
 
 // Routes
@@ -53,8 +52,7 @@ app.options("/", cors()); // Handle preflight for all routes
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
   "/api/checkout/webhook",
-  express.raw({ type: "application/json" }), // Use raw body for webhook
-  stripeWebhookMiddleware,
+  express.raw({ type: "application/json" }),
   PaymentController.handleWebhook
 );
 

@@ -65,11 +65,11 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             
-            {/* Order Tracking & History (merged into single page) */}
+            {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrderTracking />} />
             <Route path="/orders/:id" element={<OrderTracking />} />
             <Route path="/track-order/:id" element={<OrderTracking />} />
-            {/* Explicit route for order history (separate listing) */}
+            {/* Legacy route for order history (kept for compatibility) */}
             <Route path="/order-history" element={<OrderHistory />} />
 
             {/* Cashier & Kitchen Dashboards */}

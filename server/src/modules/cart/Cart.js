@@ -4,7 +4,7 @@ const cartSchema = new mongoose.Schema({
     userId :{
                 // type:mongoose.Schema.Types.ObjectId,
                 type: String, // بدل ObjectId عشان يدعم guest UUID
-                ref:'User',   
+                // ref:'User',   
                 required:true,
     },
     products:[

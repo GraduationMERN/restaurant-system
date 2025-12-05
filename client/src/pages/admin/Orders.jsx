@@ -8,10 +8,10 @@ import DatePicker from "../../components/form/date-picker";
 import { useMemo, useState, useEffect } from "react";
 import { Modal } from "../../components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllOrders, updateOrderStatus, deleteOrder, clearOrderMessages } from "../../redux/slices/orderSlice";
+import { fetchAllOrders, updateOrderStatus, deleteOrder, clearOrderMessages, upsertOrder } from "../../redux/slices/orderSlice";
 import { useRole } from "../../hooks/useRole";
-import socketClient from "../../utils/socket";
-import { upsertOrder } from "../../redux/slices/orderSlice";
+import socketClient from "../../utils/socketRedux";
+import { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
 import { useToast } from "../../hooks/useToast";
 
 export default function AdminOrders() {
@@ -46,10 +46,12 @@ export default function AdminOrders() {
       dispatch(fetchAllOrders());
     };
 
+    // Listen for canonical backend events
     s.on("order:created", handleUpdate);
     s.on("order:updated", handleUpdate);
-    s.on("order:update", handleUpdate);
-    s.on("order:paid", handleUpdate);
+    s.on("order:status-changed", handleUpdate);
+    s.on("order:payment:success", handleUpdate);
+    s.on("order:payment-updated", handleUpdate);
     s.on("order:refunded", handleUpdate);
     s.on("order:deleted", (payload) => {
       const id = payload && (payload.orderId || payload._id || payload);
@@ -59,8 +61,9 @@ export default function AdminOrders() {
     return () => {
       s.off("order:created", handleUpdate);
       s.off("order:updated", handleUpdate);
-      s.off("order:update", handleUpdate);
-      s.off("order:paid", handleUpdate);
+      s.off("order:status-changed", handleUpdate);
+      s.off("order:payment:success", handleUpdate);
+      s.off("order:payment-updated", handleUpdate);
       s.off("order:refunded", handleUpdate);
       s.off("order:deleted");
     };

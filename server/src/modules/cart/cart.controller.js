@@ -21,7 +21,13 @@ export const getCartForUser = async (req, res) => {
         const userId = getCartUserId(req, res);
         const cart = await getCartForUserService(userId);
         if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
+            // Return an empty but consistent cart structure instead of 404
+            const emptyCart = {
+                products: [],
+                totalPrice: 0,
+                _id: null
+            };
+            return res.status(200).json(emptyCart);
         }
         res.status(200).json(cart);
     } catch (err) {

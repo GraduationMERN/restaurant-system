@@ -1,61 +1,18 @@
-// // src/modules/payment/paymentController.js
-// import PaymentService from "./paymentService.js";
-
-// class PaymentController {
-//   async createCheckoutSession(req, res) {
-//     try {
-//       const { orderId } = req.body;
-      
-//       if (!orderId) {
-//         return res.status(400).json({ error: "orderId is required" });
-//       }
-
-//       const session = await PaymentService.createCheckoutSession(orderId, {
-//         traceId: req.requestId
-//       });
-
-//       res.json({
-//         url: session.url,
-//         sessionId: session.id,
-//         orderId: orderId
-//       });
-
-//     } catch (error) {
-//       console.error("Checkout session error:", error);
-//       res.status(500).json({ 
-//         error: error.message || "Failed to create checkout session" 
-//       });
-//     }
-//   }
-
-//   async handleWebhook(req, res) {
-//     try {
-//       const result = await PaymentService.handleWebhook(req);
-//       res.status(result.statusCode).json(result.body);
-//     } catch (error) {
-//       console.error("Webhook processing error:", error);
-//       res.status(500).json({ error: error.message });
-//     }
-//   }
-// }
-
-// export default new PaymentController();
-
-// src/modules/payment/paymentController.js
+// paymentController.js - Updated for your server structure
 import PaymentService from "./paymentService.js";
-import OrderRepository from "../order.module/order.repository.js";
+import Order from "../order.module/orderModel.js";
 
 class PaymentController {
   async createCheckoutSession(req, res) {
     try {
       const { orderId } = req.body;
-      
-      console.log("=== CHECKOUT SESSION DEBUG ===");
-      console.log("Order ID from request:", orderId);
-      console.log("User from middleware:", req.user);
-      console.log("Is guest?", req.user?.isGuest);
-      console.log("User ID:", req.user?._id);
-      
+      const user = req.user;
+
+      console.log("=== CHECKOUT SESSION REQUEST ===");
+      console.log("Order ID:", orderId);
+      console.log("User:", user?._id || "guest");
+      console.log("Is guest:", user?.isGuest || false);
+
       if (!orderId) {
         return res.status(400).json({ 
           success: false,
@@ -63,11 +20,33 @@ class PaymentController {
         });
       }
 
-      // Pass user info to service
+      // Verify order exists
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: "Order not found"
+        });
+      }
+
+      // Verify ownership
+      const userIdentifier = user?._id || user?.customerId;
+      if (order.customerId !== userIdentifier) {
+        return res.status(403).json({
+          success: false,
+          error: "Not authorized to pay for this order"
+        });
+      }
+
+      // Create session with user metadata
       const session = await PaymentService.createCheckoutSession(orderId, {
-        traceId: req.requestId,
-        user: req.user, // Pass user object to service
-        isGuest: req.user?.isGuest || false
+        user: {
+          id: userIdentifier,
+          email: order.customerInfo?.email || user?.email,
+          name: order.customerInfo?.name || user?.name,
+          isGuest: user?.isGuest || false
+        },
+        traceId: req.requestId // from your requestIdMiddleware
       });
 
       res.json({
@@ -75,7 +54,7 @@ class PaymentController {
         url: session.url,
         sessionId: session.id,
         orderId: orderId,
-        isGuest: req.user?.isGuest || false
+        orderNumber: order.orderNumber
       });
 
     } catch (error) {
@@ -89,7 +68,12 @@ class PaymentController {
 
   async handleWebhook(req, res) {
     try {
-      const result = await PaymentService.handleWebhook(req);
+      // Use the global io and notificationService from your server.js
+      const result = await PaymentService.handleWebhook(req, {
+        io: global.io,
+        notificationService: global.notificationService
+      });
+      
       res.status(result.statusCode).json(result.body);
     } catch (error) {
       console.error("Webhook processing error:", error);
@@ -100,17 +84,52 @@ class PaymentController {
     }
   }
 
-  // GET order by Stripe session id
   async getOrderBySession(req, res) {
     try {
       const { sessionId } = req.params;
-      if (!sessionId) return res.status(400).json({ success: false, message: "sessionId is required" });
-      const order = await OrderRepository.findByStripeSessionId(sessionId);
-      if (!order) return res.status(404).json({ success: false, message: "Order not found for session" });
-      return res.json({ success: true, data: order });
+      const user = req.user;
+
+      if (!sessionId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "sessionId is required" 
+        });
+      }
+
+      const order = await Order.findOne({ stripeSessionId: sessionId })
+        .populate('user', 'name email phone')
+        .lean();
+
+      if (!order) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Order not found for this session" 
+        });
+      }
+
+      // Check permissions
+      const userIdentifier = user?._id || user?.customerId;
+      const canView = 
+        order.customerId === userIdentifier ||
+        ["admin", "cashier"].includes(user?.role);
+
+      if (!canView) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to view this order"
+        });
+      }
+
+      return res.json({ 
+        success: true, 
+        data: order 
+      });
     } catch (err) {
       console.error("Get order by session error:", err);
-      res.status(500).json({ success: false, message: err.message });
+      res.status(500).json({ 
+        success: false, 
+        message: err.message 
+      });
     }
   }
 }
