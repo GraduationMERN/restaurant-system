@@ -13,7 +13,6 @@ export default function RegistrationForm() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
-
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 

@@ -8,10 +8,11 @@ import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import RegistrationPage from "./pages/RegisterationPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { getMe } from "./redux/slices/authSlice";
 import LoginPage from "./pages/LoginPage";
+import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
   const dispatch = useDispatch();
@@ -19,6 +20,7 @@ function App() {
   useEffect(() => {
     dispatch(getMe());
   }, []);
+
   return (
     <BrowserRouter>
       <ScrollToTop />

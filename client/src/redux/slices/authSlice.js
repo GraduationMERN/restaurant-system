@@ -7,6 +7,7 @@ export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (payload, { rejectWithValue }) => {
     try {
+      console.log(payload);
       const res = await api.post("/auth/register", payload);
       return res.data;
     } catch (err) {
@@ -58,19 +59,19 @@ export const getMe = createAsyncThunk(
   }
 );
 
-export const refreshToken = createAsyncThunk(
-  "auth/refreshToken",
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await api.post("/auth/refresh");
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "Could not refresh token"
-      );
-    }
-  }
-);
+// export const refreshToken = createAsyncThunk(
+//   "auth/refreshToken",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const res = await api.post("/auth/refresh");
+//       return res.data;
+//     } catch (err) {
+//       return rejectWithValue(
+//         err.response?.data?.message || "Could not refresh token"
+//       );
+//     }
+//   }
+// );
 
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
@@ -174,11 +175,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(getMe.fulfilled, (state, action) => {
+        console.log("fulfilled");
         state.loadingGetMe = false;
         state.user = action.payload;
         state.isAuthenticated = true;
       })
       .addCase(getMe.rejected, (state, action) => {
+        console.log("rejected");
+
         state.loadingGetMe = false;
         state.user = null;
         state.isAuthenticated = false;
@@ -188,27 +192,27 @@ const authSlice = createSlice({
       });
 
     // --- REFRESH TOKEN ---
-    builder
-      .addCase(refreshToken.pending, (state) => {
-        state.loadingRefresh = true;
-        state.error = null;
-      })
-      .addCase(refreshToken.fulfilled, (state, action) => {
-        state.loadingRefresh = false;
-        if (action.payload?.user) {
-          state.user = action.payload.user;
-          state.isAuthenticated = true;
-        }
-        state.error = null;
-      })
-      .addCase(refreshToken.rejected, (state, action) => {
-        state.loadingRefresh = false;
-        state.user = null;
-        state.isAuthenticated = false;
-        if (action.payload && action.payload !== "Unauthorized") {
-          state.error = action.payload;
-        }
-      });
+    // builder
+    //   .addCase(refreshToken.pending, (state) => {
+    //     state.loadingRefresh = true;
+    //     state.error = null;
+    //   })
+    //   .addCase(refreshToken.fulfilled, (state, action) => {
+    //     state.loadingRefresh = false;
+    //     if (action.payload?.user) {
+    //       state.user = action.payload.user;
+    //       state.isAuthenticated = true;
+    //     }
+    //     state.error = null;
+    //   })
+    //   .addCase(refreshToken.rejected, (state, action) => {
+    //     state.loadingRefresh = false;
+    //     state.user = null;
+    //     state.isAuthenticated = false;
+    //     if (action.payload && action.payload !== "Unauthorized") {
+    //       state.error = action.payload;
+    //     }
+    //   });
 
     // --- LOGOUT ---
     builder
