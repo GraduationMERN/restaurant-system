@@ -7,6 +7,7 @@ import Menu from "./Menu";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
+import RewardOrders from "./RewardOrders";
 import Users from "./Users";
 
 export default function Admin() {
@@ -20,6 +21,7 @@ export default function Admin() {
     "settings",
     "profile",
     "users",
+    "reward-orders",
   ]);
   const section =
     rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
@@ -55,6 +57,11 @@ export default function Admin() {
           <Rewards />
         </section>
       )}
+      {section === "reward-orders" && (
+        <section id="reward-orders" className="mt-8">
+          <RewardOrders />
+        </section>
+      )}
 
       {section === "settings" && (
         <section id="settings" className="mt-8">
@@ -70,6 +77,11 @@ export default function Admin() {
       {section === "profile" && (
         <section id="profile" className="mt-8">
           <UserProfiles />
+        </section>
+      )}
+      {section === "users" && (
+        <section id="users" className="mt-8">
+          <Users />
         </section>
       )}
     </>
