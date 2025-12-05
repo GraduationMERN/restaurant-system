@@ -277,7 +277,5 @@ export default function RewardPage() {
         </div>
       )}
     </>
-
-
   );
 }

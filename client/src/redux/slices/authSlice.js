@@ -33,9 +33,9 @@ export const verifyOtp = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
+  async ({ email, password,points }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password,points });
       return res.data;
     } catch (err) {
       return rejectWithValue(

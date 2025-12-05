@@ -175,7 +175,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../redux/slices/authSlice";
+import { loginUser, getMe } from "../redux/slices/authSlice";
 import { Mail, Lock, ArrowLeft, ChefHat } from "lucide-react";
 
 export default function LoginPage() {
@@ -239,6 +239,8 @@ export default function LoginPage() {
     if (Object.keys(newErrors).length === 0) {
       const resultAction = await dispatch(loginUser(formData));
       if (loginUser.fulfilled.match(resultAction)) {
+        // Fetch full user profile (includes points)
+        await dispatch(getMe());
         navigate("/");
       }
     }
