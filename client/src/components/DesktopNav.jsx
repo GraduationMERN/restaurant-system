@@ -234,7 +234,24 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick , badge}) {
         ${active ? "text-primary" : "text-muted"}
       `}
     >
-      {icon}
+      <div className="relative">
+        {icon}
+        {/* Badge */}
+        {badge > 0 && (
+          <span
+            className="absolute -top-2 -right-2 text-white text-[10px] font-bold flex items-center justify-center"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              borderRadius: "50%",
+              height: "18px",
+              minWidth: "18px",
+              padding: "0 4px",
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
       {isOpen && <span className={`text-sm ${label === "Rewards" ? "text-secondary":""}`}>{label}</span>}
     </Link>
   );
