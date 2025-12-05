@@ -16,6 +16,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import Chatbot from "./components/chatbot/Chatbot";
 import OrdersPage from "./pages/orders/OrdersPage";
+import OrderDetailsPage from "./pages/orders/OrderDetailsPage";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -65,6 +66,7 @@ function App() {
             
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailsPage />} />
 
 
             {/* Cashier & Kitchen Dashboards */}
