@@ -16,13 +16,13 @@ router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder
 
 // ---- GET ----
 router.get("/:id", optionalAuthMiddleware, orderController.getOrder);
-router.get("/user/:userId", authMiddleware, orderController.getUserOrders);
+router.get("/user/:userId", optionalAuthMiddleware, orderController.getUserOrders);
 router.get("/cart/:cartId", optionalAuthMiddleware, orderController.getOrderByCartId);
 router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getActiveOrders);
 router.get("/", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
 
 // ---- CUSTOMER ---- 
-router.patch("/:id/cancel", authMiddleware, orderController.cancelOrder);
+router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
 // ---- ADMIN/CASHIER ----
@@ -34,6 +34,11 @@ router.patch("/:id/link-user", authMiddleware, roleMiddleware("cashier", "admin"
 
 // ---- MANAGEMENT ----
 router.post("/search", authMiddleware, roleMiddleware("cashier", "admin"), orderController.searchOrders);
-router.delete("/:id", authMiddleware, roleMiddleware("admin"), orderController.deleteOrder);
+router.delete("/:id", authMiddleware, roleMiddleware("cashier", "admin"), orderController.deleteOrder);
+
+// Development-only route to simulate cashier/kitchen status updates without auth
+if (process.env.NODE_ENV !== 'production') {
+	router.post("/dev/:id/status", orderController.updateOrderStatusDev);
+}
 
 export default router;

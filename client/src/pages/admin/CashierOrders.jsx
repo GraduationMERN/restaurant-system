@@ -6,12 +6,15 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../compon
 import { useEffect, useState } from "react";
 import { Modal } from "../../components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchActiveOrders, createDirectOrder, updateOrderStatus, deleteOrder, clearOrderMessages } from "../../redux/slices/orderSlice";
+import { fetchActiveOrders, createDirectOrder, updateOrderStatus, deleteOrder, clearOrderMessages, upsertOrder, updatePayment } from "../../redux/slices/orderSlice";
+import socketClient from "../../utils/socket";
+import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
 
 export default function CashierOrders() {
   const dispatch = useDispatch();
   const { isCashier, isAdmin } = useRole();
+  const toast = useToast();
 
   const { activeOrders, loading, error, successMessage } = useSelector((state) => state.order);
 
@@ -21,22 +24,86 @@ export default function CashierOrders() {
   const [estimatedMinutes, setEstimatedMinutes] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [paymentModalOrder, setPaymentModalOrder] = useState(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [refundModalOrder, setRefundModalOrder] = useState(null);
+  const [refundAmount, setRefundAmount] = useState(0);
+  const [isRefunding, setIsRefunding] = useState(false);
   const [formData, setFormData] = useState({
     customerName: "",
     customerEmail: "",
     items: [],
     totalAmount: 0,
+    serviceType: "dine-in",
+    tableNumber: "",
   });
 
   // Fetch active orders on mount
   useEffect(() => {
     if (isCashier || isAdmin) {
       dispatch(fetchActiveOrders());
-      const interval = setInterval(() => {
-        dispatch(fetchActiveOrders());
-      }, 10000); // Refresh every 10 seconds
 
-      return () => clearInterval(interval);
+      const s = socketClient.getSocket() || socketClient.initSocket();
+      if (!s) return;
+
+      const onCreated = (order) => {
+        dispatch(upsertOrder(order));
+        dispatch(fetchActiveOrders());
+      };
+      const onUpdated = (order) => {
+        dispatch(upsertOrder(order));
+        dispatch(fetchActiveOrders());
+      };
+
+      const onDeleted = (payload) => {
+        // payload may be orderId or order object; remove from active list locally
+        const id = payload && (payload._id || payload);
+        if (id) {
+          dispatch({ type: deleteOrder.fulfilled.type, payload: id });
+          toast.showToast({ message: `Order ${String(id).substring(0,8)} deleted`, type: 'success' });
+        } else {
+          dispatch(fetchActiveOrders());
+        }
+      };
+
+      const onEstimated = (payload) => {
+        // payload may contain order id and estimatedTime; refresh single order or active list
+        if (payload && payload._id) {
+          dispatch(upsertOrder(payload));
+          const mins = payload.estimatedTime || payload.estimatedMinutes || payload.eta;
+          if (mins) {
+            toast.showToast({ message: `ETA updated: ${mins} min for ${payload._id?.substring(0,8)}`, type: 'success' });
+          }
+        } else {
+          dispatch(fetchActiveOrders());
+        }
+      };
+
+      const onRefunded = (order) => {
+        dispatch(upsertOrder(order));
+        toast.showToast({ message: `Order ${order._id?.substring(0,8)} refunded`, type: 'success' });
+        dispatch(fetchActiveOrders());
+      };
+
+      s.on("order:created", onCreated);
+      s.on("order:updated", onUpdated);
+      s.on("order:confirmed", onUpdated);
+      s.on("order:ready", onUpdated);
+      s.on("order:completed", onUpdated);
+      s.on("order:refunded", onRefunded);
+      s.on("order:deleted", onDeleted);
+      s.on("order:estimatedTime", onEstimated);
+
+      return () => {
+        s.off("order:created", onCreated);
+        s.off("order:updated", onUpdated);
+        s.off("order:confirmed", onUpdated);
+        s.off("order:ready", onUpdated);
+        s.off("order:completed", onUpdated);
+        s.off("order:refunded", onRefunded);
+        s.off("order:deleted", onDeleted);
+        s.off("order:estimatedTime", onEstimated);
+      };
     }
   }, [dispatch, isCashier, isAdmin]);
 
@@ -64,10 +131,12 @@ export default function CashierOrders() {
         customerEmail: formData.customerEmail,
         items: formData.items,
         totalAmount: formData.totalAmount,
+        serviceType: formData.serviceType,
+        tableNumber: formData.tableNumber || undefined,
       })
     );
 
-    setFormData({ customerName: "", customerEmail: "", items: [], totalAmount: 0 });
+    setFormData({ customerName: "", customerEmail: "", items: [], totalAmount: 0, serviceType: 'dine-in', tableNumber: '' });
     setShowCreateForm(false);
   };
 
@@ -79,6 +148,8 @@ export default function CashierOrders() {
         { name: "", price: 0, quantity: 1 },
       ],
     }));
+    // ensure total recalculates after adding a new item
+    setTimeout(() => calculateTotal(), 0);
   };
 
   const removeItem = (idx) => {
@@ -111,6 +182,42 @@ export default function CashierOrders() {
       alert("Failed to delete order: " + (err?.message || "Please try again"));
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleMarkPaid = async (order) => {
+    setPaymentProcessing(true);
+    try {
+      await dispatch(updatePayment({ orderId: order._id, paymentMethod: 'instore', paymentStatus: 'paid' })).unwrap();
+      // Refresh
+      dispatch(fetchActiveOrders());
+      setPaymentModalOrder(null);
+    } catch (err) {
+      console.error('Failed to mark paid', err);
+      alert('Failed to mark order as paid: ' + (err?.message || 'Please try again'));
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  const openRefundModal = (order) => {
+    setRefundModalOrder(order);
+    // default refund = full amount
+    setRefundAmount(order?.totalAmount || 0);
+  };
+
+  const handleRefund = async () => {
+    if (!refundModalOrder) return;
+    setIsRefunding(true);
+    try {
+      await dispatch(updatePayment({ orderId: refundModalOrder._id, paymentStatus: 'refunded', refundAmount: parseFloat(refundAmount) || 0 })).unwrap();
+      dispatch(fetchActiveOrders());
+      setRefundModalOrder(null);
+    } catch (err) {
+      console.error('Refund failed', err);
+      alert('Refund failed: ' + (err?.message || 'Please try again'));
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -186,6 +293,35 @@ export default function CashierOrders() {
                     className="mt-1 w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
                     placeholder="john@example.com"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Service Type</label>
+                  <select
+                    value={formData.serviceType}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, serviceType: e.target.value }))}
+                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
+                  >
+                    <option value="dine-in">Dine-in</option>
+                    <option value="pickup">Pickup</option>
+                    <option value="delivery">Delivery</option>
+                  </select>
+                </div>
+                <div>
+                  {formData.serviceType === 'dine-in' && (
+                    <>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Table Number (optional)</label>
+                      <input
+                        type="text"
+                        value={formData.tableNumber}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, tableNumber: e.target.value }))}
+                        className="mt-1 w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
+                        placeholder="e.g. 12"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -345,20 +481,36 @@ export default function CashierOrders() {
                       </TableCell>
                       <TableCell className="py-3 text-right">
                         <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => setViewOrder(row)}
-                            className="text-brand-500 hover:text-brand-700 dark:hover:text-brand-400"
-                          >
-                            View
-                          </button>
-                          {(row.status === "completed" || row.status === "canceled") && (
                             <button
-                              onClick={() => setDeleteConfirm(row)}
-                              className="text-error-500 hover:text-error-700 dark:hover:text-error-400"
+                              onClick={() => setViewOrder(row)}
+                              className="text-brand-500 hover:text-brand-700 dark:hover:text-brand-400"
                             >
-                              Delete
+                              View
                             </button>
-                          )}
+                            {row.paymentStatus !== 'paid' && (
+                              <button
+                                onClick={() => setPaymentModalOrder(row)}
+                                className="text-emerald-600 hover:text-emerald-800"
+                              >
+                                Mark Paid
+                              </button>
+                            )}
+                            {row.paymentStatus === 'paid' && (
+                              <button
+                                onClick={() => openRefundModal(row)}
+                                className="text-orange-600 hover:text-orange-800"
+                              >
+                                Refund
+                              </button>
+                            )}
+                            {(row.status === "completed" || row.status === "canceled") && (
+                              <button
+                                onClick={() => setDeleteConfirm(row)}
+                                className="text-error-500 hover:text-error-700 dark:hover:text-error-400"
+                              >
+                                Delete
+                              </button>
+                            )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -395,6 +547,36 @@ export default function CashierOrders() {
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Mark Paid Modal */}
+      <Modal isOpen={!!paymentModalOrder} onClose={() => setPaymentModalOrder(null)} className="max-w-sm p-6">
+        {paymentModalOrder && (
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Mark Order as Paid</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Are you sure you want to mark order <span className="font-mono">{paymentModalOrder._id?.substring(0,8)}</span> as paid?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setPaymentModalOrder(null)} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded">Cancel</button>
+              <button onClick={() => handleMarkPaid(paymentModalOrder)} disabled={paymentProcessing} className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded">{paymentProcessing ? 'Processing...' : 'Confirm Paid'}</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Refund Modal */}
+      <Modal isOpen={!!refundModalOrder} onClose={() => setRefundModalOrder(null)} className="max-w-sm p-6">
+        {refundModalOrder && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Refund Payment</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Order: <span className="font-mono">{refundModalOrder._id?.substring(0,8)}</span></p>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Refund Amount</label>
+            <input type="number" value={refundAmount} onChange={(e)=>setRefundAmount(e.target.value)} className="w-full rounded border px-3 py-2 mb-4 dark:bg-gray-800" />
+            <div className="flex gap-3">
+              <button onClick={() => setRefundModalOrder(null)} disabled={isRefunding} className="flex-1 px-4 py-2 bg-gray-200 rounded">Cancel</button>
+              <button onClick={handleRefund} disabled={isRefunding} className="flex-1 px-4 py-2 bg-orange-600 text-white rounded">{isRefunding ? 'Refunding...' : 'Issue Refund'}</button>
             </div>
           </div>
         )}

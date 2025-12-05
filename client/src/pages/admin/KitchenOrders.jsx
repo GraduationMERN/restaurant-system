@@ -5,8 +5,10 @@ import Button from "../../components/ui/button/Button";
 import { useEffect, useState } from "react";
 import { Modal } from "../../components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchActiveOrders, updateOrderStatus, clearOrderMessages } from "../../redux/slices/orderSlice";
+import { fetchActiveOrders, updateOrderStatus, clearOrderMessages, upsertOrder } from "../../redux/slices/orderSlice";
+import socketClient from "../../utils/socket";
 import { useRole } from "../../hooks/useRole";
+import { useToast } from "../../hooks/useToast";
 
 export default function KitchenOrders() {
   const dispatch = useDispatch();
@@ -16,17 +18,57 @@ export default function KitchenOrders() {
 
   const [viewOrder, setViewOrder] = useState(null);
   const [filterStatus, setFilterStatus] = useState("pending");
+  const toast = useToast();
 
   // Fetch active orders on mount and refresh periodically
   useEffect(() => {
     if (isKitchen || isAdmin) {
       dispatch(fetchActiveOrders());
-      // Auto-refresh every 5 seconds for kitchen view
-      const interval = setInterval(() => {
-        dispatch(fetchActiveOrders());
-      }, 5000);
 
-      return () => clearInterval(interval);
+      const s = socketClient.getSocket() || socketClient.initSocket();
+      if (!s) return;
+
+      const handleCreated = (order) => {
+        dispatch(upsertOrder(order));
+        dispatch(fetchActiveOrders());
+        toast.showToast({ message: `New order ${String(order._id).substring(0,8)} created`, type: 'success' });
+      };
+
+      const handleUpdated = (order) => {
+        dispatch(upsertOrder(order));
+        dispatch(fetchActiveOrders());
+      };
+
+      s.on("order:created", handleCreated);
+      s.on("order:updated", handleUpdated);
+      s.on("order:update", handleUpdated);
+      s.on("order:paid", handleUpdated);
+      s.on("order:confirmed", handleUpdated);
+      s.on("order:preparing", handleUpdated);
+      s.on("order:ready", handleUpdated);
+      s.on("order:completed", handleUpdated);
+      s.on("order:refunded", (order) => { dispatch(upsertOrder(order)); toast.showToast({ message: `Order ${String(order._id).substring(0,8)} refunded`, type: 'success' }); });
+      s.on("order:deleted", (payload) => {
+        const id = payload && (payload.orderId || payload._id || payload);
+        if (id) dispatch({ type: 'order/delete/fulfilled', payload: id });
+      });
+      s.on("order:estimatedTime", (payload) => {
+        if (payload && payload.orderId) dispatch(fetchOrderById ? fetchOrderById(payload.orderId) : fetchActiveOrders());
+      });
+
+      return () => {
+        s.off("order:created", handleCreated);
+        s.off("order:updated", handleUpdated);
+        s.off("order:update", handleUpdated);
+        s.off("order:paid", handleUpdated);
+        s.off("order:confirmed", handleUpdated);
+        s.off("order:preparing", handleUpdated);
+        s.off("order:ready", handleUpdated);
+        s.off("order:completed", handleUpdated);
+        s.off("order:refunded");
+        s.off("order:deleted");
+        s.off("order:estimatedTime");
+      };
     }
   }, [dispatch, isKitchen, isAdmin]);
 

@@ -256,6 +256,13 @@ class OrderRepository {
       .exec();
   }
 
+  // Find order by human-friendly order number
+  async findByOrderNumber(orderNumber) {
+    return Order.findOne({ orderNumber })
+      .populate("items.productId")
+      .exec();
+  }
+
   async getAllOrders() {
     return Order.find()
       .populate("items.productId")
@@ -436,6 +443,13 @@ class OrderRepository {
     }
     
     return order;
+  }
+
+  // Find an order by its Stripe Checkout Session ID
+  async findByStripeSessionId(sessionId) {
+    return Order.findOne({ stripeSessionId: sessionId })
+      .populate("items.productId")
+      .exec();
   }
 
 }

@@ -43,6 +43,7 @@
 
 // src/modules/payment/paymentController.js
 import PaymentService from "./paymentService.js";
+import OrderRepository from "../order.module/order.repository.js";
 
 class PaymentController {
   async createCheckoutSession(req, res) {
@@ -96,6 +97,20 @@ class PaymentController {
         success: false,
         error: error.message 
       });
+    }
+  }
+
+  // GET order by Stripe session id
+  async getOrderBySession(req, res) {
+    try {
+      const { sessionId } = req.params;
+      if (!sessionId) return res.status(400).json({ success: false, message: "sessionId is required" });
+      const order = await OrderRepository.findByStripeSessionId(sessionId);
+      if (!order) return res.status(404).json({ success: false, message: "Order not found for session" });
+      return res.json({ success: true, data: order });
+    } catch (err) {
+      console.error("Get order by session error:", err);
+      res.status(500).json({ success: false, message: err.message });
     }
   }
 }

@@ -16,18 +16,18 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import Chatbot from "./components/chatbot/Chatbot";
 import OrderTracking from "./pages/orderTracking";
-// New Payment Pages
+import OrderHistory from "./pages/OrderHistory";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
-import OrderHistory from "./pages/OrderHistory";
-
 import CashierConfirmation from "./pages/CashierConfirmation";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierOrders from "./pages/admin/CashierOrders";
 import KitchenOrders from "./pages/admin/KitchenOrders";
+import SocketProvider from "./components/socket/SocketProvider";
+import AdminDashboard from "./pages/admin/Admin";
 function App() {
   const dispatch = useDispatch();
 
@@ -45,56 +45,86 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-       <SettingsProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/reviews" element={<ReviewsPage />} />
-          <Route path="/rewards" element={<RewardPage />} />
-          <Route path="/register" element={<RegistrationPage />} />
-          <Route path="/verifyOtp" element={<VerifyOtpPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+      <SettingsProvider>
+        <SocketProvider />
+        <Layout>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/rewards" element={<RewardPage />} />
+            <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/verifyOtp" element={<VerifyOtpPage />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Customer Routes */}
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancel" element={<PaymentCancel />} />
+            
+            {/* Order Tracking & History (merged into single page) */}
             <Route path="/orders" element={<OrderTracking />} />
-            <Route path="/orders/:orderId" element={<OrderTracking />} />
-            <Route path="/track-order/:orderId" element={<OrderTracking />} />
-          <Route path="/menu" element={<MenuPage />} />
-          <Route path="/cart" element={<CartPage />} />
+            <Route path="/orders/:id" element={<OrderTracking />} />
+            <Route path="/track-order/:id" element={<OrderTracking />} />
+            {/* Explicit route for order history (separate listing) */}
+            <Route path="/order-history" element={<OrderHistory />} />
 
-          {/* Role dashboards */}
-          <Route
-            path="/cashier"
-            element={
-              <ProtectedRoute roles={["cashier", "admin"]}>
-                <CashierOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/kitchen"
-            element={
-              <ProtectedRoute roles={["kitchen", "admin"]}>
-                <KitchenOrders />
-              </ProtectedRoute>
-            }
-          />
+            {/* Cashier & Kitchen Dashboards */}
+            <Route
+              path="/cashier"
+              element={
+                <ProtectedRoute roles={["cashier", "admin"]}>
+                  <CashierOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/kitchen"
+              element={
+                <ProtectedRoute roles={["kitchen", "admin"]}>
+                  <KitchenOrders />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Payment Flow */}
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/payment-cancel" element={<PaymentCancel />} />
-          <Route path="/cashier-confirmation" element={<CashierConfirmation />} />
-          <Route path="/order-history" element={<OrderHistory />} />
-          {/* Single Admin Page with section sub-route */}
-          <Route element={<AppLayout />}>
-            <Route path="/admin/:section?" element={<Admin />} />
-          </Route>
-        </Routes>
-      </Layout>
+            {/* Admin Dashboard with nested routes */}
+            <Route element={<AppLayout />}>
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/kitchen"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <KitchenOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/:section"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+
+            {/* Legacy routes redirects (removed) */}
+          </Routes>
+        </Layout>
       </SettingsProvider>
       <Chatbot />
     </BrowserRouter>
   );
-}
+};
 
 export default App;

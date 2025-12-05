@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { CheckCircle, Clock, Store, CreditCard, Star, Phone, Home, ArrowLeft } from "lucide-react";
+import socketClient from "../utils/socket";
+import api from "../api/axios";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -15,41 +17,88 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch order details based on sessionId or get from state
+    let mounted = true;
     const fetchOrderDetails = async () => {
       try {
-        // You would typically fetch order details from backend
-        // For now, we'll simulate with currentOrder or mock data
         if (currentOrder) {
           setOrderDetails(currentOrder);
+          return;
+        }
+
+        if (!sessionId) {
+          setOrderDetails(null);
+          return;
+        }
+
+        const res = await api.get(`/api/checkout/session/${sessionId}/order`);
+        const payload = res.data;
+        if (payload && payload.success && payload.data) {
+          if (mounted) setOrderDetails(payload.data);
+        } else if (payload && payload._id) {
+          if (mounted) setOrderDetails(payload);
         } else {
-          // Mock data for demonstration
-          setOrderDetails({
-            id: "114858",
-            orderNumber: "ORD-114858",
-            items: [
-              { name: "Turkish Coffee Single Turkish S", quantity: 2, price: 80 }
-            ],
-            totalAmount: 160,
-            subtotal: 160,
-            vat: 0,
-            paymentMethod: "card", // or "instore"
-            serviceType: "pickup", // or "delivery", "dine-in"
-            branch: "El Shatiy Outlet",
-            estimatedTime: 25,
-            estimatedReadyTime: new Date(Date.now() + 25 * 60000),
-            createdAt: new Date()
-          });
+          if (mounted) setOrderDetails(null);
         }
       } catch (error) {
-        console.error("Failed to fetch order details:", error);
+        console.error("Failed to fetch order by session:", error);
+        if (mounted) setOrderDetails(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchOrderDetails();
-  }, [sessionId, currentOrder, navigate]);
+
+    const s = socketClient.getSocket() || socketClient.initSocket();
+    if (!s) return () => { mounted = false };
+
+    const handleOrderEvent = (updated) => {
+      try {
+        const id = orderDetails?._id || orderDetails?.id || updated?._id;
+        if (!id) return;
+        if (updated && (updated._id === id || updated.orderNumber === orderDetails?.orderNumber)) {
+          setOrderDetails(updated);
+        }
+      } catch (e) {}
+    };
+
+    s.on("order:updated", handleOrderEvent);
+    s.on("order:update", handleOrderEvent);
+    s.on("order:paid", handleOrderEvent);
+    s.on("order:confirmed", handleOrderEvent);
+    s.on("order:ready", handleOrderEvent);
+    s.on("order:completed", handleOrderEvent);
+    s.on("order:refunded", handleOrderEvent);
+    s.on("order:deleted", (payload) => {
+      const id = payload && (payload.orderId || payload._id || payload);
+      const idMatch = orderDetails?._id || orderDetails?.id;
+      if (id && idMatch && String(id) === String(idMatch)) {
+        // mark as deleted/removed
+        setOrderDetails(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      s.off("order:updated", handleOrderEvent);
+      s.off("order:confirmed", handleOrderEvent);
+      s.off("order:ready", handleOrderEvent);
+      s.off("order:completed", handleOrderEvent);
+      s.off("order:refunded", handleOrderEvent);
+    };
+  }, [sessionId, currentOrder, orderDetails]);
+
+  // Auto-redirect to live tracking after a short delay when order is available
+  useEffect(() => {
+    if (!orderDetails || !orderDetails._id) return;
+    const id = orderDetails._id;
+    const t = setTimeout(() => {
+      // Prefer track-specific route with ID
+      navigate(`/track-order/${id}`, { state: { order: orderDetails, orderId: id } });
+    }, 3000);
+
+    return () => clearTimeout(t);
+  }, [orderDetails, navigate]);
 
   const formatTime = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

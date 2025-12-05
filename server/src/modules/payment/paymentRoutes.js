@@ -86,4 +86,8 @@ router.post("/:id/pay-instore", optionalAuthMiddleware, async (req, res) => {
     });
   }
 });
+
+// Route to fetch order by Stripe session id
+router.get("/session/:sessionId/order", PaymentController.getOrderBySession);
+
 export default router;

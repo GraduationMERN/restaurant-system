@@ -76,8 +76,16 @@ const OrderSchema = new mongoose.Schema(
     },
     paidAt: { type: Date, default: null },
 
+    // Refund metadata
+    refundAmount: { type: Number, default: 0 },
+    refundedAt: { type: Date, default: null },
+
     // Stripe
     stripeSessionId: {
+      type: String,
+      default: null
+    },
+    stripePaymentIntent: {
       type: String,
       default: null
     },

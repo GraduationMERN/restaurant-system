@@ -26,7 +26,7 @@ class OrderService {
 
   // Create order from cart
   async createOrderFromCart(orderData, identity = {}) {
-    const { cartId, serviceType, tableNumber, notes, paymentMethod, customerInfo } = orderData;
+    const { cartId, serviceType, tableNumber, notes, paymentMethod, customerInfo, deliveryLocation } = orderData;
     const { user: reqUser = null, guestId = null } = identity;
 
     // 1. Load cart with product population
@@ -71,6 +71,15 @@ class OrderService {
       }
     }
     const created = await orderRepo.create(order);
+
+    // Remove the cart once order is created (user confirmed order)
+    try {
+      await Cart.findByIdAndDelete(cartId).exec();
+    } catch (e) {
+      // Log but don't fail the order creation if cart deletion fails
+      console.error("Failed to delete cart after order creation:", e);
+    }
+
     return created;
   }
   //////////////////////////////////////////////////////////////////////////diresct order
@@ -119,7 +128,17 @@ class OrderService {
 
 
   // ===== Other service methods =====
-  async getOrder(orderId) { return orderRepo.findById(orderId, true); }
+  // Get order by id or order number. If `orderId` looks like a Mongo ObjectId, use findById.
+  // Otherwise treat it as an orderNumber and search by that field.
+  async getOrder(identifier) {
+    if (!identifier) return null;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(String(identifier));
+    if (isObjectId) {
+      return orderRepo.findById(identifier, true);
+    }
+    // Fallback: search by orderNumber
+    return orderRepo.findByOrderNumber(identifier);
+  }
   async getOrdersByUser(userId) { return orderRepo.findByUserId(userId); }
   async getOrderByCartId(cartId) { return orderRepo.findByCartId(cartId); }
   async getActiveOrders() { return orderRepo.findActiveOrders(); }
@@ -139,7 +158,63 @@ class OrderService {
     const updates = { paymentStatus };
     if (paymentMethod) updates.paymentMethod = paymentMethod;
     if (paymentStatus === "paid") updates.paidAt = new Date();
+    // If refunded, record refund timestamp - refundAmount can be passed via paymentMethod or separate call
     return orderRepo.updatePayment(orderId, updates);
+  }
+
+  // Enhanced payment update that accepts refund amount and returns order with user
+  async updatePaymentWithOptions(orderId, paymentStatus, paymentMethod = null, options = {}) {
+    const validPaymentStatuses = ["pending", "paid", "failed", "refunded"];
+    if (!validPaymentStatuses.includes(paymentStatus)) throw new Error("Invalid payment status");
+
+    const updates = { paymentStatus };
+    if (paymentMethod) updates.paymentMethod = paymentMethod;
+    if (paymentStatus === "paid") updates.paidAt = new Date();
+    if (paymentStatus === "refunded") {
+      updates.refundAmount = typeof options.refundAmount === "number" ? options.refundAmount : 0;
+      updates.refundedAt = new Date();
+    }
+
+    // Use repository helper that also returns basic user data for convenience
+    return orderRepo.updatePaymentWithUser(orderId, updates);
+  }
+
+  // Flexible cancel for authenticated users or guests using provided identity info
+  async cancelOrderByIdentity(orderId, identity = {}) {
+    const order = await orderRepo.findById(orderId);
+    if (!order) throw new Error("Order not found");
+
+    const { userId: requesterUserId = null, guestId = null, phone = null } = identity;
+
+    // If order belongs to a registered user and requester provided userId, compare
+    if (order.userId) {
+      if (requesterUserId && order.userId.toString() === requesterUserId.toString()) {
+        // ok
+      } else if (guestId && order.userId.toString() === guestId.toString()) {
+        // ok (guest id match)
+      } else {
+        // If phone provided and matches customer info
+        if (phone && order.customerInfo && order.customerInfo.phone && order.customerInfo.phone.toString() === phone.toString()) {
+          // ok
+        } else {
+          throw new Error("You can only cancel your own order");
+        }
+      }
+    } else {
+      // order.userId not set, fallback to phone or guestId
+      if (guestId && (order.userId === guestId)) {
+        // ok
+      } else if (phone && order.customerInfo && order.customerInfo.phone && order.customerInfo.phone.toString() === phone.toString()) {
+        // ok
+      } else if (!requesterUserId && !guestId && !phone) {
+        throw new Error("Unable to verify ownership for cancellation");
+      }
+    }
+
+    const cancellableStatuses = ["pending", "confirmed"];
+    if (!cancellableStatuses.includes(order.status)) throw new Error(`Cannot cancel order with status: ${order.status}`);
+
+    return orderRepo.cancelOrder(orderId);
   }
 
   async updateCustomerInfo(orderId, customerInfo) {

@@ -130,7 +130,20 @@ export const NotificationProvider = ({ children }) => {
     // Persist mark as read to server
     (async () => {
       try {
-        await fetch(`${BASE_URL}/api/notifications/${notificationId}/read`, { method: "PATCH", credentials: "include" });
+        // Try the conventional endpoint first
+        let res = await fetch(`${BASE_URL}/api/notifications/${notificationId}/read`, { method: "PATCH", credentials: "include" });
+        if (res.status === 404) {
+          // Fallback: some backends expect a read endpoint that accepts body
+          res = await fetch(`${BASE_URL}/api/notifications/read`, {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: notificationId }),
+          });
+        }
+        if (!res.ok) {
+          console.warn("markAsRead returned non-ok status", res.status);
+        }
       } catch (err) {
         console.error("Failed to mark notification as read", err);
       }
@@ -147,7 +160,18 @@ export const NotificationProvider = ({ children }) => {
       try {
         const unread = notifications.filter((n) => !n.isRead);
         await Promise.all(
-          unread.map((n) => fetch(`${BASE_URL}/api/notifications/${n._id || n.id}/read`, { method: "PATCH", credentials: "include" }))
+          unread.map(async (n) => {
+            let res = await fetch(`${BASE_URL}/api/notifications/${n._id || n.id}/read`, { method: "PATCH", credentials: "include" });
+            if (res.status === 404) {
+              res = await fetch(`${BASE_URL}/api/notifications/read`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: n._id || n.id }),
+              });
+            }
+            if (!res.ok) console.warn("markAllAsRead item returned non-ok", res.status);
+          })
         );
       } catch (err) {
         console.error("Failed to mark all notifications as read", err);

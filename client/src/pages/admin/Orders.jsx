@@ -10,12 +10,16 @@ import { Modal } from "../../components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllOrders, updateOrderStatus, deleteOrder, clearOrderMessages } from "../../redux/slices/orderSlice";
 import { useRole } from "../../hooks/useRole";
+import socketClient from "../../utils/socket";
+import { upsertOrder } from "../../redux/slices/orderSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function AdminOrders() {
   const dispatch = useDispatch();
   const { isAdmin } = useRole();
   
   const { allOrders, loading, error, successMessage } = useSelector((state) => state.order);
+  const toast = useToast();
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState(null);
@@ -29,6 +33,38 @@ export default function AdminOrders() {
       dispatch(fetchAllOrders());
     }
   }, [dispatch, isAdmin]);
+
+  // Socket sync for admin dashboard
+  useEffect(() => {
+    if (!isAdmin) return;
+    const s = socketClient.getSocket() || socketClient.initSocket();
+    if (!s) return;
+
+    const handleUpdate = (order) => {
+      dispatch(upsertOrder(order));
+      toast.showToast({ message: `Order ${String(order._id).substring(0,8)} updated`, type: 'success' });
+      dispatch(fetchAllOrders());
+    };
+
+    s.on("order:created", handleUpdate);
+    s.on("order:updated", handleUpdate);
+    s.on("order:update", handleUpdate);
+    s.on("order:paid", handleUpdate);
+    s.on("order:refunded", handleUpdate);
+    s.on("order:deleted", (payload) => {
+      const id = payload && (payload.orderId || payload._id || payload);
+      if (id) dispatch({ type: deleteOrder.fulfilled.type, payload: id });
+    });
+
+    return () => {
+      s.off("order:created", handleUpdate);
+      s.off("order:updated", handleUpdate);
+      s.off("order:update", handleUpdate);
+      s.off("order:paid", handleUpdate);
+      s.off("order:refunded", handleUpdate);
+      s.off("order:deleted");
+    };
+  }, [isAdmin, dispatch, toast]);
 
   // Clear messages after 3 seconds
   useEffect(() => {

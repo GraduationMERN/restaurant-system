@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import PageMeta from "../components/common/PageMeta";
 import { fetchUserOrders } from "../redux/slices/orderSlice";
+import socketClient from "../utils/socket";
+import { upsertOrder } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 
 export default function OrderHistory() {
@@ -12,6 +14,45 @@ export default function OrderHistory() {
 
   useEffect(() => {
     dispatch(fetchUserOrders());
+  }, [dispatch]);
+
+  // Subscribe to socket updates so history refreshes in real-time
+  useEffect(() => {
+    const s = socketClient.getSocket() || socketClient.initSocket();
+    if (!s) return;
+
+    const handleUpdated = (order) => {
+      try {
+        dispatch(upsertOrder(order));
+        // If this order belongs to current user, refresh list
+        const userId = order?.customerId;
+        if (userId) dispatch(fetchUserOrders(userId));
+      } catch (e) {}
+    };
+
+    s.on("order:created", handleUpdated);
+    s.on("order:updated", handleUpdated);
+    s.on("order:update", handleUpdated);
+    s.on("order:paid", handleUpdated);
+    s.on("order:confirmed", handleUpdated);
+    s.on("order:ready", handleUpdated);
+    s.on("order:completed", handleUpdated);
+    s.on("order:refunded", handleUpdated);
+    s.on("order:deleted", (payload) => {
+      const id = payload && (payload.orderId || payload._id || payload);
+      if (id) {
+        dispatch({ type: deleteOrder.fulfilled.type, payload: id });
+      }
+    });
+
+    return () => {
+      s.off("order:created", handleUpdated);
+      s.off("order:updated", handleUpdated);
+      s.off("order:confirmed", handleUpdated);
+      s.off("order:ready", handleUpdated);
+      s.off("order:completed", handleUpdated);
+      s.off("order:refunded", handleUpdated);
+    };
   }, [dispatch]);
 
   return (

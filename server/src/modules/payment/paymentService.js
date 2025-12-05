@@ -3,6 +3,7 @@ import stripe from "stripe";
 import mongoose from "mongoose";
 import OrderRepository from "../order.module/order.repository.js";
 import logger from "../../utils/logger.js";
+import { notificationService, io } from "../../../server.js";
 
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -144,15 +145,58 @@ async _onCheckoutSessionCompleted(sessionObject) {
   try {
     await OrderRepository.updatePayment(orderId, { 
       paymentStatus: "paid", 
+      
       paymentMethod: "card", // Explicitly set payment method
       paidAt: new Date(),
-      stripeSessionId: sessionId
+        stripeSessionId: sessionId,
+        stripePaymentIntent: sessionObject.payment_intent || sessionObject.payment_intent_id || null
     }, { session: mongoSession });
 
     await mongoSession.commitTransaction();
     mongoSession.endSession();
 
     logger.info("Processed checkout.session.completed", { orderId, sessionId });
+    // Fetch the updated order and emit notifications/events to roles and customer
+    try {
+      const updated = await OrderRepository.findById(orderId);
+      if (notificationService) {
+        // Notify customer
+        if (updated?.customerId) {
+          await notificationService.sendToUser(
+            updated.customerId,
+            "Payment Received",
+            `Payment received for order ${updated.orderNumber}`,
+            "order",
+            updated._id
+          );
+        }
+        // Notify admin and cashier
+        await notificationService.sendToAdmin({
+          title: "Order Paid",
+          message: `Order ${updated.orderNumber} was paid via Stripe`,
+          orderId: updated._id,
+        });
+        await notificationService.sendToRole("cashier", {
+          title: "Order Paid",
+          message: `Order ${updated.orderNumber} has been paid`,
+          orderId: updated._id,
+        });
+      }
+
+      if (io) {
+        // Emit paid and updated events
+        io.to("cashier").emit("order:paid", updated);
+        io.to("kitchen").emit("order:paid", updated);
+        io.to("cashier").emit("order:updated", updated);
+        io.to("kitchen").emit("order:updated", updated);
+        if (updated?.customerId) {
+          io.to(updated.customerId.toString()).emit("order:paid", updated);
+          io.to(updated.customerId.toString()).emit("order:updated", updated);
+        }
+      }
+    } catch (emitErr) {
+      logger.error("Failed to emit payment notifications/events", { message: emitErr.message });
+    }
   } catch (err) {
     await mongoSession.abortTransaction();
     mongoSession.endSession();
@@ -160,6 +204,76 @@ async _onCheckoutSessionCompleted(sessionObject) {
     throw err;
   }
 }
+
+  // Refund a payment using Stripe and persist refund metadata
+  async refundPayment(orderId, refundAmount = 0) {
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error("Stripe secret key not configured for refunds");
+
+    const order = await OrderRepository.findById(orderId);
+    if (!order) throw new Error("Order not found");
+
+    const paymentIntent = order.stripePaymentIntent || null;
+    if (!paymentIntent) throw new Error("No Stripe payment intent associated with this order");
+
+    // Amount in cents (assumes currency with 100 minor units)
+    const amount = typeof refundAmount === 'number' && refundAmount > 0 ? Math.round(refundAmount * 100) : undefined;
+
+    try {
+      const refundParams = {};
+      if (amount) refundParams.amount = amount;
+      // Refund by payment_intent
+      refundParams.payment_intent = paymentIntent;
+
+      const refund = await stripeClient.refunds.create(refundParams);
+
+      // Persist refund metadata to order
+      const updates = {
+        paymentStatus: "refunded",
+        refundAmount: typeof refundAmount === 'number' ? refundAmount : 0,
+        refundedAt: new Date()
+      };
+
+      const updated = await OrderRepository.updatePayment(orderId, updates);
+
+      // Emit events/notifications similar to webhook
+      try {
+        if (notificationService) {
+          if (updated?.customerId) {
+            await notificationService.sendToUser(
+              updated.customerId,
+              "Payment Refunded",
+              `A refund of ${updates.refundAmount} has been processed for order ${updated.orderNumber}`,
+              "order",
+              updated._id
+            );
+          }
+          await notificationService.sendToAdmin({
+            title: "Order Refunded",
+            message: `Order ${updated.orderNumber} was refunded`,
+            orderId: updated._id,
+          });
+        }
+
+        if (io) {
+          io.to("cashier").emit("order:refunded", updated);
+          io.to("kitchen").emit("order:refunded", updated);
+          io.to("cashier").emit("order:updated", updated);
+          io.to("kitchen").emit("order:updated", updated);
+          if (updated?.customerId) {
+            io.to(updated.customerId.toString()).emit("order:refunded", updated);
+            io.to(updated.customerId.toString()).emit("order:updated", updated);
+          }
+        }
+      } catch (emitErr) {
+        logger.error("Failed to emit refund events", { message: emitErr.message });
+      }
+
+      return { refund, updated };
+    } catch (err) {
+      logger.error("Stripe refund failed", { message: err.message });
+      throw err;
+    }
+  }
 }
 
 

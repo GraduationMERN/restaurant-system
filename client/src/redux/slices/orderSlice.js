@@ -42,6 +42,10 @@ export const fetchOrderById = createAsyncThunk(
       const res = await api.get(`/api/orders/${orderId}`);
       return res.data;
     } catch (err) {
+      // If order not found, resolve with null so UI can handle "not found" gracefully
+      if (err.response && err.response.status === 404) {
+        return null;
+      }
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
@@ -114,6 +118,23 @@ export const updateOrderStatus = createAsyncThunk(
       if (typeof status !== "undefined") body.status = status;
       if (typeof estimatedTime !== "undefined") body.estimatedTime = estimatedTime;
       const res = await api.patch(`/api/orders/${orderId}/status`, body);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+// Update payment information (mark paid, refund, etc.)
+export const updatePayment = createAsyncThunk(
+  "order/updatePayment",
+  async ({ orderId, paymentMethod, paymentStatus, refundAmount }, { rejectWithValue }) => {
+    try {
+      const body = {};
+      if (typeof paymentMethod !== "undefined") body.paymentMethod = paymentMethod;
+      if (typeof paymentStatus !== "undefined") body.paymentStatus = paymentStatus;
+      if (typeof refundAmount !== "undefined") body.refundAmount = refundAmount;
+      const res = await api.patch(`/api/orders/${orderId}/payment`, body);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -228,7 +249,8 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrderById.fulfilled, (state, action) => {
         state.loading = false;
-        state.singleOrder = unwrap(action.payload);
+        // If payload is null, it means order was not found (404) - set singleOrder to null
+        state.singleOrder = action.payload === null ? null : unwrap(action.payload);
       })
       .addCase(fetchOrderById.rejected, (state, action) => {
         state.loading = false;
@@ -331,6 +353,30 @@ const orderSlice = createSlice({
       .addCase(updateOrderStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to update order status";
+      })
+
+      // UPDATE PAYMENT (mark paid / refund)
+      .addCase(updatePayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updatePayment.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedOrder = unwrap(action.payload);
+        state.successMessage = "Payment updated";
+
+        if (updatedOrder?._id) {
+          if (state.singleOrder && state.singleOrder._id === updatedOrder._id) {
+            state.singleOrder = updatedOrder;
+          }
+          state.userOrders = state.userOrders.map((o) => (o._id === updatedOrder._id ? updatedOrder : o));
+          state.allOrders = state.allOrders.map((o) => (o._id === updatedOrder._id ? updatedOrder : o));
+          state.activeOrders = state.activeOrders.map((o) => (o._id === updatedOrder._id ? updatedOrder : o));
+        }
+      })
+      .addCase(updatePayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update payment";
       })
 
       // FETCH ACTIVE ORDERS (KITCHEN/CASHIER)
