@@ -11,10 +11,12 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState("pending");
+  const [paymentStatus, setPaymentStatus] = useState("paid");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [loading, setLoading] = useState(false);
   const [walkIn, setWalkIn] = useState(false);
+  const [serviceType, setServiceType] = useState("takeaway"); // takeaway or dine-in
+  const [tableNumber, setTableNumber] = useState("");
 
   const subtotal = selectedItems.reduce((sum, item) => sum + (item.totalPrice || item.price * item.quantity), 0);
   const tax = subtotal * 0.1; // 10% tax
@@ -48,12 +50,17 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
   const handleSubmitOrder = async () => {
     // Validation
     if (selectedItems.length === 0) {
-      toast.error("Add at least one item to the order");
+      toast.showToast({ message: "Add at least one item to the order", type: "error" });
       return;
     }
 
     if (!walkIn && !customerName.trim()) {
-      toast.error("Enter customer name or mark as Walk-In");
+      toast.showToast({ message: "Enter customer name or mark as Walk-In", type: "error" });
+      return;
+    }
+
+    if (serviceType === "dine-in" && !tableNumber.trim()) {
+      toast.showToast({ message: "Enter table number for dine-in orders", type: "error" });
       return;
     }
 
@@ -68,33 +75,37 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
           quantity: item.quantity,
           totalPrice: item.totalPrice,
         })),
-        customerName: walkIn ? "Walk-In Customer" : customerName,
-        customerPhone: customerPhone || undefined,
-        paymentStatus: paymentStatus,
+        serviceType: serviceType,
+        tableNumber: serviceType === "dine-in" ? tableNumber : undefined,
+        customerInfo: {
+          name: walkIn ? "Walk-In Customer" : customerName,
+          phone: customerPhone || "",
+          email: ""
+        },
         paymentMethod: paymentMethod,
-        subtotal,
-        tax,
-        totalAmount: total,
-        orderType: "direct",
+        notes: `Payment Method: ${paymentMethod}`
       };
 
       const response = await api.post("/api/orders/direct", orderData);
       
       if (response.data) {
-        toast.success(`Order #${response.data._id?.slice(-6).toUpperCase()} created successfully!`);
+        toast.showToast({ message: `✅ Order created successfully!`, type: "success" });
         onOrderCreated(response.data);
         // Reset form
         setSelectedItems([]);
         setCustomerName("");
         setCustomerPhone("");
-        setPaymentStatus("pending");
+        setPaymentStatus("paid");
         setPaymentMethod("cash");
         setWalkIn(false);
+        setServiceType("takeaway");
+        setTableNumber("");
         setStep(1);
       }
     } catch (error) {
       console.error("Error creating order:", error);
-      toast.error(error?.response?.data?.message || "Failed to create order");
+      const errorMsg = error?.response?.data?.message || error?.message || "Failed to create order";
+      toast.showToast({ message: errorMsg, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -177,6 +188,47 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Service Type Selection */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Service Type</h3>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <button
+                    onClick={() => {
+                      setServiceType("takeaway");
+                      setTableNumber("");
+                    }}
+                    className={`px-4 py-3 rounded-lg font-bold transition-all border-2 ${
+                      serviceType === "takeaway"
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-white text-slate-700 border-slate-300 hover:border-green-600"
+                    }`}
+                  >
+                    📦 Takeaway
+                  </button>
+                  <button
+                    onClick={() => setServiceType("dine-in")}
+                    className={`px-4 py-3 rounded-lg font-bold transition-all border-2 ${
+                      serviceType === "dine-in"
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-white text-slate-700 border-slate-300 hover:border-green-600"
+                    }`}
+                  >
+                    🍽️ Dine-In
+                  </button>
+                </div>
+
+                {/* Table Number for Dine-In */}
+                {serviceType === "dine-in" && (
+                  <input
+                    type="text"
+                    placeholder="Table Number"
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 mb-6"
+                  />
+                )}
+              </div>
+
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-blue-600" />
@@ -224,7 +276,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                   Payment Information
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 gap-4 mb-4">
                   {/* Payment Method */}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -235,27 +287,15 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                     >
-                      <option value="cash">Cash</option>
-                      <option value="card">Card</option>
-                      <option value="online">Online Payment</option>
+                      <option value="cash">💵 Cash</option>
+                      <option value="card">💳 Card</option>
+                      <option value="online">🌐 Online Payment</option>
                     </select>
                   </div>
+                </div>
 
-                  {/* Payment Status */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                      Payment Status
-                    </label>
-                    <select
-                      value={paymentStatus}
-                      onChange={(e) => setPaymentStatus(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="failed">Failed</option>
-                    </select>
-                  </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700 font-medium">
+                  ✅ Direct orders are marked as paid immediately
                 </div>
               </div>
 

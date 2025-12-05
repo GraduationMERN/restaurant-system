@@ -51,7 +51,7 @@ export default function LandingPage() {
           </button>
 
           <button 
-            onClick={() => navigate('/track-order')}
+            onClick={() => navigate('/orders')}
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
             <div className={`flex items-start justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>

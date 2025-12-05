@@ -139,7 +139,7 @@ class PaymentService {
         break;
         
       case "checkout.session.expired":
-        await this._onCheckoutSessionExpired(event.data.object);
+        await this._onCheckoutSessionExpired(event.data.object, { io, notificationService });
         break;
         
       case "payment_intent.succeeded":
@@ -147,11 +147,11 @@ class PaymentService {
         break;
         
       case "payment_intent.payment_failed":
-        await this._onPaymentFailed(event.data.object);
+        await this._onPaymentFailed(event.data.object, { io, notificationService });
         break;
         
       case "charge.refunded":
-        await this._onChargeRefunded(event.data.object);
+        await this._onChargeRefunded(event.data.object, { io, notificationService });
         break;
         
       default:
@@ -267,7 +267,7 @@ class PaymentService {
   }
 
   // Process expired session
-  async _onCheckoutSessionExpired(sessionObject) {
+  async _onCheckoutSessionExpired(sessionObject, { io, notificationService } = {}) {
     const orderId = sessionObject.metadata?.orderId;
     if (!orderId) return;
 
@@ -277,12 +277,26 @@ class PaymentService {
 
       // Only update if still pending
       if (order.paymentStatus === "pending" && order.stripeSessionId === sessionObject.id) {
-        await OrderRepository.updatePayment(orderId, {
+        const updatedOrder = await OrderRepository.updatePayment(orderId, {
           paymentStatus: "failed",
           updatedAt: new Date()
         });
 
         logger.info("Marked order as failed due to expired session", { orderId });
+
+        // 🔥 Broadcast payment failure to all parties
+        if (io) {
+          io.to("cashier").emit("order:payment-updated", updatedOrder);
+          if (updatedOrder.customerId) {
+            io.to(`user:${updatedOrder.customerId}`).emit("order:your-payment-updated", {
+              orderId: updatedOrder._id,
+              _id: updatedOrder._id,
+              paymentStatus: "failed",
+              message: "Payment session expired"
+            });
+          }
+          io.to("kitchen").emit("order:payment-updated", updatedOrder);
+        }
       }
     } catch (error) {
       logger.error("Failed to process expired session", { orderId, error: error.message });
@@ -290,17 +304,31 @@ class PaymentService {
   }
 
   // Process failed payment
-  async _onPaymentFailed(paymentIntent) {
+  async _onPaymentFailed(paymentIntent, { io, notificationService } = {}) {
     const metadata = paymentIntent.metadata;
     const orderId = metadata?.orderId;
 
     if (orderId) {
       try {
-        await OrderRepository.updatePayment(orderId, {
+        const updatedOrder = await OrderRepository.updatePayment(orderId, {
           paymentStatus: "failed",
           updatedAt: new Date()
         });
         logger.info("Marked order as failed", { orderId });
+
+        // 🔥 Broadcast payment failure
+        if (io) {
+          io.to("cashier").emit("order:payment-updated", updatedOrder);
+          if (updatedOrder.customerId) {
+            io.to(`user:${updatedOrder.customerId}`).emit("order:your-payment-updated", {
+              orderId: updatedOrder._id,
+              _id: updatedOrder._id,
+              paymentStatus: "failed",
+              message: "Payment failed"
+            });
+          }
+          io.to("kitchen").emit("order:payment-updated", updatedOrder);
+        }
       } catch (error) {
         logger.error("Failed to update order payment status", { orderId, error: error.message });
       }
@@ -308,19 +336,53 @@ class PaymentService {
   }
 
   // Process refund
-  async _onChargeRefunded(charge) {
+  async _onChargeRefunded(charge, { io, notificationService } = {}) {
     const paymentIntent = charge.payment_intent;
     
     // Find order by payment intent
     const order = await OrderRepository.findByStripePaymentIntent(paymentIntent);
     if (order) {
-      await OrderRepository.updatePayment(order._id, {
+      const updatedOrder = await OrderRepository.updatePayment(order._id, {
         paymentStatus: "refunded",
         refundAmount: charge.amount_refunded / 100,
         refundedAt: new Date(),
         updatedAt: new Date()
       });
+      
       logger.info("Updated order as refunded", { orderId: order._id });
+
+      // 🔥 Broadcast refund status to all interested parties
+      if (io) {
+        // Notify cashier
+        io.to("cashier").emit("order:payment-updated", updatedOrder);
+        
+        // Notify customer
+        if (updatedOrder.customerId) {
+          io.to(`user:${updatedOrder.customerId}`).emit("order:your-payment-updated", {
+            orderId: updatedOrder._id,
+            _id: updatedOrder._id,
+            paymentStatus: "refunded",
+            refundAmount: charge.amount_refunded / 100,
+            refundedAt: new Date()
+          });
+        }
+        
+        // Notify kitchen
+        io.to("kitchen").emit("order:payment-updated", updatedOrder);
+      }
+
+      // Send notification
+      if (notificationService && updatedOrder.customerInfo?.email) {
+        await notificationService.sendEmail({
+          to: updatedOrder.customerInfo.email,
+          subject: `Refund Processed - Order ${updatedOrder.orderNumber}`,
+          template: 'refund-confirmed',
+          data: {
+            orderNumber: updatedOrder.orderNumber,
+            refundAmount: charge.amount_refunded / 100
+          }
+        });
+      }
     }
   }
 

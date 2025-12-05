@@ -7,6 +7,12 @@ import {
 } from "../redux/slices/orderSlice";
 
 import {
+  handlePaymentUpdate,
+  handleStatusUpdate,
+  updateActiveOrderFromSocket,
+} from "../redux/slices/ordersSlice";
+
+import {
   socketPaymentSuccess,
   socketPaymentFailed,
   socketPaymentRefunded,
@@ -125,7 +131,10 @@ export const setupSocketListeners = (socket) => {
     console.log("Socket: order:payment-updated", id);
     const payload = { _id: id, ...order };
     store.dispatch(socketPaymentUpdated(payload));
+    store.dispatch(socketOrderUpdated(payload));
     store.dispatch(cashierSocketPaymentUpdated(payload));
+    store.dispatch(cashierSocketOrderUpdated(payload));
+    store.dispatch(kitchenSocketOrderUpdated(payload));
   });
 
   socket.on("order:refunded", (order) => {
@@ -145,6 +154,29 @@ export const setupSocketListeners = (socket) => {
     const payload = { _id: id, ...order };
     store.dispatch(socketPaymentUpdated(payload));
     store.dispatch(socketPaymentRefunded(payload));
+  });
+
+  /* ----------------------------------------
+     ORDERS SLICE LISTENERS (for user order tracking)
+  ---------------------------------------- */
+  
+  // Customer payment update
+  socket.on("order:your-payment-updated", (data) => {
+    const id = data._id || data.orderId || data.id;
+    console.log("Socket: order:your-payment-updated", id);
+    const paymentStatus = data.paymentStatus || "pending";
+    store.dispatch(handlePaymentUpdate({ orderId: id, paymentStatus }));
+  });
+
+  // Customer status update
+  socket.on("order:your-status-changed", (data) => {
+    const id = data._id || data.orderId || data.id;
+    console.log("Socket: order:your-status-changed", id);
+    store.dispatch(handleStatusUpdate({
+      orderId: id,
+      status: data.status,
+      estimatedReadyTime: data.estimatedReadyTime
+    }));
   });
 
   /* ----------------------------------------

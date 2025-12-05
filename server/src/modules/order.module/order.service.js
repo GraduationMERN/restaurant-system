@@ -79,7 +79,6 @@ class OrderService {
   async createDirectOrder(orderData) {
     const {
       items,
-      serviceType,
       tableNumber,
       customerInfo,
       paymentMethod = "cash",

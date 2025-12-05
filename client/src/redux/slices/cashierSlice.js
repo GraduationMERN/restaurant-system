@@ -175,7 +175,6 @@ const cashierSlice = createSlice({
         orderId: newOrder._id,
         orderNumber: newOrder.orderNumber,
         customerName: newOrder.customerInfo?.name || "Guest",
-        serviceType: newOrder.serviceType,
         timestamp: new Date()
       };
     },

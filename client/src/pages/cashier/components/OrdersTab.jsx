@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, Trash2, AlertCircle } from "lucide-react";
 import api from "../../../api/axios";
+import socketClient, { setupSocketListeners, joinSocketRooms } from "../../../utils/socketRedux";
 import { useToast } from "../../../hooks/useToast";
+import { useSelector } from "react-redux";
 import FilterBar from "./FilterBar";
 import SortBar from "./SortBar";
 import OrderCard from "./OrderCard";
@@ -12,6 +14,7 @@ import PaymentUpdateModal from "./PaymentUpdateModal";
 
 export default function OrdersTab() {
   const toast = useToast();
+  const { user } = useSelector((state) => state.auth);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -27,6 +30,107 @@ export default function OrdersTab() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    const socket = socketClient.getSocket() || socketClient.initSocket();
+    if (!socket) return;
+
+    // Setup global socket listeners (handles Redux dispatches)
+    setupSocketListeners(socket);
+
+    // Join socket rooms
+    if (user) {
+      joinSocketRooms(socket, user);
+    }
+
+    // Listen for order status changes
+    const handleStatusChange = (data) => {
+      console.log("Cashier: Order status changed", data);
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === (data.orderId || data._id)
+            ? {
+                ...order,
+                status: data.status,
+                estimatedReadyTime: data.estimatedReadyTime || order.estimatedReadyTime,
+              }
+            : order
+        )
+      );
+      // Show toast
+      toast.showToast({
+        message: `Order #${data.orderNumber || "updated"}: ${data.status.toUpperCase()}`,
+        type: "info",
+        duration: 2000,
+      });
+      // Update modal if open
+      if (statusUpdateOrder && statusUpdateOrder._id === (data.orderId || data._id)) {
+        setStatusUpdateOrder((prev) => ({
+          ...prev,
+          status: data.status,
+          estimatedReadyTime: data.estimatedReadyTime || prev.estimatedReadyTime,
+        }));
+      }
+    };
+
+    // Listen for payment status changes
+    const handlePaymentChange = (data) => {
+      console.log("Cashier: Order payment changed", data);
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === (data.orderId || data._id)
+            ? {
+                ...order,
+                paymentStatus: data.paymentStatus,
+                paidAt: data.paidAt || order.paidAt,
+              }
+            : order
+        )
+      );
+      // Show toast
+      if (data.paymentStatus === "paid") {
+        toast.showToast({
+          message: "✅ Payment received",
+          type: "success",
+          duration: 2000,
+        });
+      }
+      // Update modal if open
+      if (paymentUpdateOrder && paymentUpdateOrder._id === (data.orderId || data._id)) {
+        setPaymentUpdateOrder((prev) => ({
+          ...prev,
+          paymentStatus: data.paymentStatus,
+          paidAt: data.paidAt || prev.paidAt,
+        }));
+      }
+    };
+
+    // Listen for new orders
+    const handleNewOrder = (order) => {
+      console.log("Cashier: New order received", order);
+      setOrders((prevOrders) => [order, ...prevOrders]);
+      toast.showToast({
+        message: `📋 New order: #${order.orderNumber}`,
+        type: "success",
+        duration: 3000,
+      });
+    };
+
+    socket.on("order:status-changed", handleStatusChange);
+    socket.on("order:your-status-changed", handleStatusChange);
+    socket.on("order:payment-updated", handlePaymentChange);
+    socket.on("order:your-payment-updated", handlePaymentChange);
+    socket.on("order:new", handleNewOrder);
+
+    return () => {
+      socket.off("order:status-changed", handleStatusChange);
+      socket.off("order:your-status-changed", handleStatusChange);
+      socket.off("order:payment-updated", handlePaymentChange);
+      socket.off("order:your-payment-updated", handlePaymentChange);
+      socket.off("order:new", handleNewOrder);
+    };
+  }, [statusUpdateOrder, paymentUpdateOrder, toast, user]);
 
   const fetchOrders = async () => {
     try {
@@ -77,7 +181,8 @@ export default function OrdersTab() {
         status: newStatus,
       });
 
-      setOrders(orders.map((o) => (o._id === orderId ? response.data : o)));
+      const updatedOrder = response.data.data || response.data;
+      setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
       toast.success("Order status updated");
       setStatusUpdateOrder(null);
     } catch (error) {
@@ -95,7 +200,8 @@ export default function OrdersTab() {
         paymentStatus: newPaymentStatus,
       });
 
-      setOrders(orders.map((o) => (o._id === orderId ? response.data : o)));
+      const updatedOrder = response.data.data || response.data;
+      setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
       toast.success("Payment status updated");
       setPaymentUpdateOrder(null);
     } catch (error) {

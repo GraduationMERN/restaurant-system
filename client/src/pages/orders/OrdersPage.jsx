@@ -11,7 +11,7 @@ import {
   handlePaymentUpdate,
   handleStatusUpdate,
 } from "../../redux/slices/ordersSlice";
-import socketClient from "../../utils/socketRedux";
+import socketClient, { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
 import { useToast } from "../../hooks/useToast";
 import ActiveOrderComponent from "./ActiveOrderComponent";
 import OrderHistoryComponent from "./OrderHistoryComponent";
@@ -40,57 +40,67 @@ export default function OrdersPage() {
   // Determine if user is logged in
   const isLoggedIn = !!user && !user.isGuest;
 
-  // Initialize socket listeners
+  // Initialize socket with proper setup
   useEffect(() => {
     const socket = socketClient.getSocket() || socketClient.initSocket();
     if (!socket) return;
 
-    // Listen for order status updates
-    const handleOrderUpdate = (updatedOrder) => {
-      dispatch(
-        updateActiveOrderFromSocket(updatedOrder)
-      );
-      // Also show toast notification
-      toast.showToast({
-        message: `Order ${updatedOrder.orderNumber}: ${updatedOrder.status}`,
-        type: "info",
-        duration: 3000,
-      });
+    // Setup global socket listeners (handles all Redux dispatches)
+    setupSocketListeners(socket);
+
+    // Join socket rooms for this user
+    if (user) {
+      joinSocketRooms(socket, user);
+    }
+
+    // Additional listeners for toast notifications
+    const handleStatusNotification = (data) => {
+      const orderId = data.orderId || data._id;
+      if (activeOrder && activeOrder._id === orderId) {
+        toast.showToast({
+          message: `Order status: ${data.status.toUpperCase()}`,
+          type: "info",
+          duration: 3000,
+        });
+      }
     };
 
-    // Listen for payment updates
-    const handlePaymentUpdate = (data) => {
-      dispatch(
-        handlePaymentUpdate({
-          orderId: data.orderId || data._id,
-          paymentStatus: data.paymentStatus,
-        })
-      );
+    const handlePaymentNotification = (data) => {
+      const orderId = data.orderId || data._id;
+      if (activeOrder && activeOrder._id === orderId) {
+        if (data.paymentStatus === "paid") {
+          toast.showToast({
+            message: "✅ Payment confirmed!",
+            type: "success",
+            duration: 3000,
+          });
+        } else if (data.paymentStatus === "failed") {
+          toast.showToast({
+            message: "❌ Payment failed",
+            type: "error",
+            duration: 3000,
+          });
+        } else if (data.paymentStatus === "refunded") {
+          toast.showToast({
+            message: "💰 Order refunded",
+            type: "success",
+            duration: 3000,
+          });
+        }
+      }
     };
 
-    // Listen for status changes
-    const handleStatusChange = (data) => {
-      dispatch(
-        handleStatusUpdate({
-          orderId: data.orderId || data._id,
-          status: data.status,
-          estimatedReadyTime: data.estimatedReadyTime,
-        })
-      );
-    };
-
-    socket.on("order:updated", handleOrderUpdate);
-    socket.on("order:your-payment-updated", handlePaymentUpdate);
-    socket.on("order:your-status-changed", handleStatusChange);
-    socket.on("order:status-changed", handleStatusChange);
+    // Listen for status changes with notifications
+    socket.on("order:your-status-changed", handleStatusNotification);
+    socket.on("order:status-changed", handleStatusNotification);
+    socket.on("order:your-payment-updated", handlePaymentNotification);
 
     return () => {
-      socket.off("order:updated", handleOrderUpdate);
-      socket.off("order:your-payment-updated", handlePaymentUpdate);
-      socket.off("order:your-status-changed", handleStatusChange);
-      socket.off("order:status-changed", handleStatusChange);
+      socket.off("order:your-status-changed", handleStatusNotification);
+      socket.off("order:status-changed", handleStatusNotification);
+      socket.off("order:your-payment-updated", handlePaymentNotification);
     };
-  }, [dispatch, toast]);
+  }, [activeOrder, toast, user]);
 
   // Fetch data on mount
   useEffect(() => {
