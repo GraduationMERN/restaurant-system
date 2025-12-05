@@ -45,6 +45,14 @@ function MenuPage() {
   const products = useSelector((state) => state.product.filtered);
   const [selectedSizes, setSelectedSizes] = useState({});
 
+  const isProductOutOfStock = (product) => {
+    if (!product.options || product.options.length === 0) return false;
+
+    return product.options.every((option) =>
+      option.choices.every((choice) => choice.stock === 0)
+    );
+  };
+
   console.log("Products from Redux:", products);
   console.log(products[0]);
 
@@ -329,6 +337,9 @@ function MenuPage() {
               {selectedProduct.options &&
                 selectedProduct.options.length > 0 &&
                 selectedProduct.options.map((option) => {
+                  const allChoicesOutOfStock = option.choices.every(
+                    (c) => c.stock === 0
+                  );
                   const key = `${selectedProduct._id}_${option.name}`;
                   return (
                     <Box key={option.name} sx={{ mb: 2 }}>
@@ -337,6 +348,7 @@ function MenuPage() {
                       </Typography>
 
                       <ToggleButtonGroup
+                        disabled={allChoicesOutOfStock}
                         value={selectedSizes[key] || option.choices[0]?.label}
                         exclusive
                         onChange={(e, val) => val && handleSizeChange(key, val)}
@@ -361,7 +373,16 @@ function MenuPage() {
                         }}
                       >
                         {option.choices.map((choice) => (
-                          <ToggleButton key={choice._id} value={choice.label}>
+                          <ToggleButton
+                            key={choice._id}
+                            value={choice.label}
+                            disabled={choice.stock === 0}
+                            sx={{
+                              opacity: choice.stock === 0 ? 0.4 : 1, // يفتح شوية لو خلصان
+                              textDecoration:
+                                choice.stock === 0 ? "line-through" : "none",
+                            }}
+                          >
                             {choice.label}
                           </ToggleButton>
                         ))}
@@ -377,7 +398,17 @@ function MenuPage() {
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ bgcolor: "#e27e36", "&:hover": { bgcolor: "#d26c2c" } }}
+                disabled={isProductOutOfStock(selectedProduct)}
+                sx={{
+                  bgcolor: isProductOutOfStock(selectedProduct)
+                    ? "grey.400"
+                    : "#e27e36",
+                  "&:hover": {
+                    bgcolor: isProductOutOfStock(selectedProduct)
+                      ? "grey.400"
+                      : "#d26c2c",
+                  },
+                }}
                 onClick={() => {
                   handelClick(selectedProduct, quantity);
                   handleClosePopup();
