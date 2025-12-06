@@ -1,121 +1,294 @@
+
+// src/pages/CashierOrders.jsx
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
 import Button from "../../components/ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../components/ui/table";
-import { useEffect, useState } from "react";
 import { Modal } from "../../components/ui/modal";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchActiveOrders, createDirectOrder, updateOrderStatus, deleteOrder, clearOrderMessages } from "../../redux/slices/orderSlice";
+import { 
+  fetchCashierOrders, 
+  createDirectOrderCashier, 
+  cashierUpdateStatus, 
+  cashierUpdateEstimatedTime,
+  cashierMarkPayment,
+  cashierDeleteOrder,
+  cashierUpdateCustomerInfo,
+  clearCashierMessages,
+  filterOrdersByStatus,
+  searchOrders,
+  clearNewOrderNotification
+} from "../../redux/slices/cashierSlice";
+// import { fetchProducts } from "../redux/slices/ProductSlice";
+import { fetchProducts } from "../../redux/slices/productSlice";
+import { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
+import socketClient from "../../utils/socketRedux";
+import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
+import { Plus, Eye, CheckCircle, Clock, Trash2, DollarSign, RefreshCw, Search, Filter } from "lucide-react";
 
 export default function CashierOrders() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { isCashier, isAdmin } = useRole();
+  const toast = useToast();
 
-  const { activeOrders, loading, error, successMessage } = useSelector((state) => state.order);
+  // Get cashier state (not order state!)
+  const { 
+    orders, 
+    filteredOrders,
+    activeOrders,
+    pendingOrders,
+    loading, 
+    error, 
+    successMessage,
+    newOrderNotification 
+  } = useSelector((state) => state.cashier);
 
+  const authUser = useSelector((state) => state.auth.user);
+
+  // State
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewOrder, setViewOrder] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [estimatedMinutes, setEstimatedMinutes] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [paymentModalOrder, setPaymentModalOrder] = useState(null);
+  const [refundModalOrder, setRefundModalOrder] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [estimatedTimeInput, setEstimatedTimeInput] = useState("");
+  
+  // Direct order form
   const [formData, setFormData] = useState({
     customerName: "",
+    customerPhone: "",
     customerEmail: "",
-    items: [],
-    totalAmount: 0,
+    serviceType: "dine-in",
+    tableNumber: "",
+    items: [{ name: "", price: 0, quantity: 1 }],
+    notes: ""
   });
+  const [showProductPicker, setShowProductPicker] = useState(false);
 
-  // Fetch active orders on mount
+  const products = useSelector((state) => state.product?.list || []);
+
+  // Initialize socket and fetch orders
   useEffect(() => {
     if (isCashier || isAdmin) {
-      dispatch(fetchActiveOrders());
-      const interval = setInterval(() => {
-        dispatch(fetchActiveOrders());
-      }, 10000); // Refresh every 10 seconds
+      // Fetch initial orders
+      dispatch(fetchCashierOrders({ status: statusFilter === "all" ? undefined : statusFilter }));
 
-      return () => clearInterval(interval);
+      // Initialize socket
+      const socket = socketClient.getSocket() || socketClient.initSocket();
+      if (socket) {
+        // Setup listeners
+        setupSocketListeners(socket);
+        
+        // Join cashier rooms
+        joinSocketRooms(socket, authUser);
+        
+        // Listen for new order notifications
+        socket.on("order:new:paid", (order) => {
+          toast.showToast({
+            message: `New paid order: ${order.orderNumber}`,
+            type: "success",
+            duration: 5000
+          });
+        });
+        
+        socket.on("order:new:online", (order) => {
+          toast.showToast({
+            message: `New online order: ${order.orderNumber}`,
+            type: "info",
+            duration: 5000
+          });
+        });
+
+        return () => {
+          socket.off("order:new:paid");
+          socket.off("order:new:online");
+        };
+      }
     }
-  }, [dispatch, isCashier, isAdmin]);
+  }, [dispatch, isCashier, isAdmin, authUser]);
 
-  // Clear messages after 3 seconds
+  // Load products when opening picker
   useEffect(() => {
-    if (successMessage || error) {
+    if (showProductPicker) {
+      dispatch(fetchProducts()).catch(() => {});
+    }
+  }, [showProductPicker, dispatch]);
+
+  // Clear messages and notifications
+  useEffect(() => {
+    if (successMessage) {
+      toast.showToast({ message: successMessage, type: "success" });
+      dispatch(clearCashierMessages());
+    }
+    if (error) {
+      toast.showToast({ message: error, type: "error" });
+      dispatch(clearCashierMessages());
+    }
+  }, [successMessage, error, dispatch, toast]);
+
+  // Auto-clear new order notification after 5 seconds
+  useEffect(() => {
+    if (newOrderNotification) {
       const timer = setTimeout(() => {
-        dispatch(clearOrderMessages());
-      }, 3000);
+        dispatch(clearNewOrderNotification());
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [successMessage, error, dispatch]);
+  }, [newOrderNotification, dispatch]);
 
-  const handleCreateOrder = (e) => {
+  // Filter and search
+  useEffect(() => {
+    if (statusFilter !== "all") {
+      dispatch(filterOrdersByStatus(statusFilter));
+    } else {
+      dispatch(filterOrdersByStatus(null));
+    }
+  }, [statusFilter, dispatch]);
+
+  useEffect(() => {
+    dispatch(searchOrders(searchQuery));
+  }, [searchQuery, dispatch]);
+
+  // Create direct order
+  const handleCreateOrder = async (e) => {
     e.preventDefault();
-
-    if (!formData.customerName || formData.items.length === 0) {
-      alert("Please enter customer name and at least one item");
+    
+    if (!formData.customerName.trim()) {
+      toast.showToast({ message: "Customer name is required", type: "error" });
       return;
     }
 
-    dispatch(
-      createDirectOrder({
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        items: formData.items,
-        totalAmount: formData.totalAmount,
-      })
-    );
+    if (formData.items.length === 0 || formData.items.some(item => !item.name.trim())) {
+      toast.showToast({ message: "Please add at least one valid item", type: "error" });
+      return;
+    }
 
-    setFormData({ customerName: "", customerEmail: "", items: [], totalAmount: 0 });
-    setShowCreateForm(false);
+    const orderData = {
+      customerInfo: {
+        name: formData.customerName,
+        phone: formData.customerPhone,
+        email: formData.customerEmail
+      },
+      serviceType: formData.serviceType,
+      tableNumber: formData.serviceType === "dine-in" ? formData.tableNumber : undefined,
+      items: formData.items.map(item => ({
+        productId: item.productId || undefined,
+        name: item.name,
+        price: parseFloat(item.price) || 0,
+        quantity: parseInt(item.quantity) || 1
+      })),
+      notes: formData.notes,
+      paymentMethod: "cash",
+      paymentStatus: "paid"
+    };
+
+    try {
+      await dispatch(createDirectOrderCashier(orderData)).unwrap();
+      toast.showToast({ message: "Direct order created successfully", type: "success" });
+      setFormData({
+        customerName: "",
+        customerPhone: "",
+        customerEmail: "",
+        serviceType: "dine-in",
+        tableNumber: "",
+        items: [{ name: "", price: 0, quantity: 1 }],
+        notes: ""
+      });
+      setShowCreateForm(false);
+    } catch (err) {
+      toast.showToast({ message: err.message || "Failed to create order", type: "error" });
+    }
   };
 
+  // Add/remove items in form
   const addItem = () => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      items: [
-        ...prev.items,
-        { name: "", price: 0, quantity: 1 },
-      ],
+      items: [...prev.items, { name: "", price: 0, quantity: 1 }]
     }));
   };
 
   const removeItem = (idx) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== idx),
+      items: prev.items.filter((_, i) => i !== idx)
     }));
-    calculateTotal();
   };
 
   const updateItem = (idx, field, value) => {
     const newItems = [...formData.items];
-    newItems[idx][field] = field === "quantity" || field === "price" ? parseFloat(value) || 0 : value;
-    setFormData((prev) => ({ ...prev, items: newItems }));
-    calculateTotal();
+    newItems[idx][field] = value;
+    setFormData(prev => ({ ...prev, items: newItems }));
   };
 
-  const calculateTotal = () => {
-    const total = formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    setFormData((prev) => ({ ...prev, totalAmount: total }));
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    setDeleting(true);
+  // Order actions
+  const handleUpdateStatus = async (orderId, status) => {
     try {
-      await dispatch(deleteOrder(orderId)).unwrap();
-      setDeleteConfirm(null);
+      await dispatch(cashierUpdateStatus({ orderId, status })).unwrap();
+      toast.showToast({ message: `Order status updated to ${status}`, type: "success" });
     } catch (err) {
-      console.error("Failed to delete order:", err);
-      alert("Failed to delete order: " + (err?.message || "Please try again"));
-    } finally {
-      setDeleting(false);
+      toast.showToast({ message: err.message || "Failed to update status", type: "error" });
     }
   };
 
-  const handleStatusUpdate = (orderId, newStatus) => {
-    dispatch(updateOrderStatus({ orderId, status: newStatus }));
+  const handleUpdateEstimatedTime = async (orderId) => {
+    if (!estimatedTimeInput || isNaN(parseInt(estimatedTimeInput))) {
+      toast.showToast({ message: "Please enter a valid time in minutes", type: "error" });
+      return;
+    }
+
+    try {
+      await dispatch(cashierUpdateEstimatedTime({ 
+        orderId, 
+        estimatedTime: parseInt(estimatedTimeInput) 
+      })).unwrap();
+      toast.showToast({ 
+        message: `Estimated time updated to ${estimatedTimeInput} minutes`, 
+        type: "success" 
+      });
+      setEstimatedTimeInput("");
+    } catch (err) {
+      toast.showToast({ message: err.message || "Failed to update estimated time", type: "error" });
+    }
+  };
+
+  const handleMarkPayment = async (orderId, paymentMethod = "cash") => {
+    try {
+      await dispatch(cashierMarkPayment({ orderId, paymentMethod })).unwrap();
+      toast.showToast({ message: "Payment marked as paid", type: "success" });
+      setPaymentModalOrder(null);
+    } catch (err) {
+      toast.showToast({ message: err.message || "Failed to mark payment", type: "error" });
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      await dispatch(cashierDeleteOrder(orderId)).unwrap();
+      toast.showToast({ message: "Order deleted successfully", type: "success" });
+      setDeleteConfirm(null);
+    } catch (err) {
+      toast.showToast({ message: err.message || "Failed to delete order", type: "error" });
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300";
+      case "confirmed": return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
+      case "preparing": return "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300";
+      case "ready": return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300";
+      case "completed": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+      case "cancelled": return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+    }
   };
 
   if (!isCashier && !isAdmin) {
@@ -128,137 +301,351 @@ export default function CashierOrders() {
 
   return (
     <>
-      <PageMeta title="Cashier Orders" description="Create and manage orders" />
-      <PageBreadcrumb pageTitle="Cashier Orders" />
+      <PageMeta title="Cashier Dashboard" description="Manage orders and payments" />
+      <PageBreadcrumb pageTitle="Cashier Dashboard" />
 
-      {/* Messages */}
-      {error && (
-        <div className="mb-4 rounded-lg bg-error-50 p-4 text-error-600 dark:bg-error-900/20">
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div className="mb-4 rounded-lg bg-success-50 p-4 text-success-600 dark:bg-success-900/20">
-          {successMessage}
+      {/* New Order Notification */}
+      {newOrderNotification && (
+        <div className="mb-4 animate-pulse">
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                  <Plus className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                </div>
+                <div>
+                  <p className="font-medium text-blue-800 dark:text-blue-300">
+                    New Order: {newOrderNotification.orderNumber}
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    {newOrderNotification.customerName} • {newOrderNotification.serviceType}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => dispatch(clearNewOrderNotification())}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       <div className="space-y-6">
+        {/* Header with Stats */}
         <ComponentCard>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Active Orders</h3>
-            <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-              {showCreateForm ? "Cancel" : "+ Create Direct Order"}
-            </Button>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Cashier Dashboard</h3>
+              <div className="mt-2 flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-blue-500"></span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Pending: <span className="font-semibold">{pendingOrders.length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-green-500"></span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Active: <span className="font-semibold">{activeOrders.length}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-gray-500"></span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Total: <span className="font-semibold">{orders.length}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {showCreateForm ? "Cancel" : "Direct Order"}
+              </Button>
+              <Button 
+                onClick={() => dispatch(fetchCashierOrders())}
+                variant="outline"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </ComponentCard>
 
-        {/* Create Order Form */}
+        {/* Create Direct Order Form */}
         {showCreateForm && (
           <ComponentCard>
-            <h4 className="mb-4 font-semibold text-gray-800 dark:text-white">Create Direct Order</h4>
-            <form onSubmit={handleCreateOrder} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form onSubmit={handleCreateOrder} className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-800 dark:text-white">Create Direct Order</h4>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Customer Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Customer Name
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Customer Name *
                   </label>
                   <input
                     type="text"
                     value={formData.customerName}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, customerName: e.target.value }))
-                    }
-                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
+                    onChange={(e) => setFormData({...formData, customerName: e.target.value})}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
                     placeholder="John Doe"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email (Optional)
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Phone
                   </label>
                   <input
-                    type="email"
-                    value={formData.customerEmail}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, customerEmail: e.target.value }))
-                    }
-                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                    placeholder="john@example.com"
+                    type="tel"
+                    value={formData.customerPhone}
+                    onChange={(e) => setFormData({...formData, customerPhone: e.target.value})}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                    placeholder="+1 234 567 8900"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Service Type
+                  </label>
+                  <select
+                    value={formData.serviceType}
+                    onChange={(e) => setFormData({...formData, serviceType: e.target.value})}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                  >
+                    <option value="dine-in">Dine-in</option>
+                    <option value="pickup">Pickup</option>
+                    <option value="delivery">Delivery</option>
+                  </select>
                 </div>
               </div>
 
+              {formData.serviceType === "dine-in" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Table Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tableNumber}
+                    onChange={(e) => setFormData({...formData, tableNumber: e.target.value})}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                    placeholder="Table 12"
+                  />
+                </div>
+              )}
+
               {/* Items */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h5 className="mb-3 font-medium text-gray-700 dark:text-gray-300">Items</h5>
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Order Items *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowProductPicker(true)}
+                    className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+                  >
+                    + Add Item
+                  </button>
+                </div>
                 <div className="space-y-3">
                   {formData.items.map((item, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Item name"
-                        value={item.name}
-                        onChange={(e) => updateItem(idx, "name", e.target.value)}
-                        className="flex-1 rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price"
-                        value={item.price}
-                        onChange={(e) => updateItem(idx, "price", e.target.value)}
-                        className="w-24 rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Qty"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(idx, "quantity", e.target.value)}
-                        className="w-20 rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        className="px-3 py-2 text-error-500 hover:text-error-700"
-                      >
-                        Remove
-                      </button>
+                    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-5">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => updateItem(idx, "name", e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                          placeholder="Item name"
+                          required
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => updateItem(idx, "price", e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                          placeholder="Price"
+                          required
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(idx, "quantity", e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                          placeholder="Qty"
+                          required
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          className="w-full px-3 py-2 text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
+                          disabled={formData.items.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <Button
-                  type="button"
-                  onClick={addItem}
-                  className="mt-3 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                >
-                  + Add Item
-                </Button>
               </div>
 
-              {/* Total */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div className="flex items-center justify-between text-lg">
-                  <span className="font-semibold">Total:</span>
-                  <span className="font-bold text-brand-500">
-                    ${formData.totalAmount.toFixed(2)}
-                  </span>
+              {/* Product Picker Modal - Caribu POS Style */}
+              <Modal open={showProductPicker} onClose={() => setShowProductPicker(false)}>
+                <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-xl overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-xl font-bold">Select Products to Add</h2>
+                    <button
+                      onClick={() => setShowProductPicker(false)}
+                      className="text-white hover:bg-orange-700 rounded-lg p-2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Product Grid */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {products && products.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {products.map((p) => (
+                          <div
+                            key={p._id}
+                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow hover:border-orange-400 dark:hover:border-orange-400"
+                          >
+                            {/* Product Image */}
+                            <div className="bg-gray-200 dark:bg-gray-700 h-40 flex items-center justify-center overflow-hidden">
+                              {p.image ? (
+                                <img
+                                  src={p.image}
+                                  alt={p.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="text-gray-400 text-4xl">🍽️</div>
+                              )}
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="p-4">
+                              <h3 className="font-semibold text-gray-800 dark:text-gray-200 line-clamp-2">
+                                {p.name}
+                              </h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                                {p.description || "No description"}
+                              </p>
+
+                              {/* Price and Availability */}
+                              <div className="mt-3 flex items-center justify-between">
+                                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                  EGP {p.price || p.basePrice || 0}
+                                </span>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full ${
+                                    p.available !== false
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
+                                      : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                                  }`}
+                                >
+                                  {p.available !== false ? "In Stock" : "Out"}
+                                </span>
+                              </div>
+
+                              {/* Add Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newItem = {
+                                    productId: p._id,
+                                    name: p.name,
+                                    price: p.price || p.basePrice || 0,
+                                    quantity: 1
+                                  };
+                                  setFormData((fd) => ({ ...fd, items: [...fd.items, newItem] }));
+                                  toast.showToast({
+                                    message: `✓ ${p.name} added to order`,
+                                    type: "success"
+                                  });
+                                }}
+                                disabled={p.available === false}
+                                className="w-full mt-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition"
+                              >
+                                + Add to Order
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                          <p className="text-xl text-gray-500 dark:text-gray-400 mb-2">📭</p>
+                          <p className="text-gray-600 dark:text-gray-300">No products available</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800">
+                    <button
+                      onClick={() => setShowProductPicker(false)}
+                      className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
+              </Modal>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  rows="2"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                  placeholder="Special instructions..."
+                />
               </div>
 
               {/* Submit */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  {loading ? "Creating..." : "Create Order"}
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button type="submit" className="flex-1">
+                  Create Order
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                  variant="outline"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
@@ -267,96 +654,168 @@ export default function CashierOrders() {
           </ComponentCard>
         )}
 
-        {/* Active Orders Table */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-          <div className="max-w-full overflow-x-auto">
-            {loading && (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-gray-500">Loading orders...</p>
+        {/* Filter and Search Bar */}
+        <ComponentCard>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by order number, customer name, or phone..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                />
               </div>
-            )}
-            {!loading && activeOrders.length === 0 && (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-gray-500">No active orders</p>
+            </div>
+            <div className="flex gap-2">
+              <Filter className="h-5 w-5 text-gray-500 mt-1" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+              >
+                <option value="all">All Orders</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="preparing">Preparing</option>
+                <option value="ready">Ready</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </ComponentCard>
+
+        {/* Orders Table */}
+        <ComponentCard>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">Loading orders...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="h-12 w-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                <Search className="h-6 w-6 text-gray-400" />
               </div>
-            )}
-            {!loading && activeOrders.length > 0 && (
+              <p className="text-gray-500">No orders found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                {searchQuery ? "Try a different search term" : "Create a new order to get started"}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      ORDER ID
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      CUSTOMER
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      ITEMS
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      TOTAL
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      STATUS
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="py-3 text-end text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-                    >
-                      ACTIONS
-                    </TableCell>
+                    <TableCell isHeader>Order #</TableCell>
+                    <TableCell isHeader>Customer</TableCell>
+                    <TableCell isHeader>Service</TableCell>
+                    <TableCell isHeader>Items</TableCell>
+                    <TableCell isHeader>Total</TableCell>
+                    <TableCell isHeader>Status</TableCell>
+                    <TableCell isHeader>Payment</TableCell>
+                    <TableCell isHeader>Actions</TableCell>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {activeOrders.map((row) => (
-                    <TableRow
-                      key={row._id}
-                      className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                    >
-                      <TableCell className="py-3 text-theme-sm font-medium text-gray-800 dark:text-white/90">
-                        {row._id?.substring(0, 8).toUpperCase() || "N/A"}
+                <TableBody>
+                  {filteredOrders.map((order) => (
+                    <TableRow key={order._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <TableCell>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {order.orderNumber}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </TableCell>
-                      <TableCell className="py-3 text-theme-sm text-gray-800 dark:text-white/90">
-                        {row.customerName || "Guest"}
+                      <TableCell>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {order.customerInfo?.name || "Guest"}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {order.customerInfo?.phone || "No phone"}
+                        </div>
                       </TableCell>
-                      <TableCell className="py-3 text-theme-sm text-gray-500 dark:text-gray-400">
-                        {row.items?.length || 0} items
+                      <TableCell>
+                        <span className="capitalize">{order.serviceType}</span>
+                        {order.tableNumber && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Table: {order.tableNumber}
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell className="py-3 text-theme-sm text-gray-800 dark:text-white/90">
-                        ${(row.totalAmount || 0).toFixed(2)}
+                      <TableCell>
+                        <div className="text-sm">{order.items?.length || 0} items</div>
+                        {order.estimatedTime && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {order.estimatedTime} min
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell className="py-3 capitalize font-medium text-gray-700 dark:text-gray-300">
-                        {row.status}
+                      <TableCell>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          EGP {order.totalAmount?.toFixed(2) || "0.00"}
+                        </div>
                       </TableCell>
-                      <TableCell className="py-3 text-right">
-                        <div className="flex gap-2 justify-end">
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          order.paymentStatus === "paid" 
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
+                        }`}>
+                          {order.paymentStatus}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                           <button
-                            onClick={() => setViewOrder(row)}
-                            className="text-brand-500 hover:text-brand-700 dark:hover:text-brand-400"
+                            onClick={() => setViewOrder(order)}
+                            className="p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                            title="View"
                           >
-                            View
+                            <Eye className="h-4 w-4" />
                           </button>
-                          {(row.status === "completed" || row.status === "canceled") && (
+                          
+                          {order.paymentStatus !== "paid" && (
                             <button
-                              onClick={() => setDeleteConfirm(row)}
-                              className="text-error-500 hover:text-error-700 dark:hover:text-error-400"
+                              onClick={() => setPaymentModalOrder(order)}
+                              className="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                              title="Mark Paid"
                             >
-                              Delete
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          )}
+
+                          {["pending", "confirmed"].includes(order.status) && (
+                            <select
+                              onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
+                              className="text-xs border rounded px-2 py-1"
+                              defaultValue=""
+                            >
+                              <option value="" disabled>Status</option>
+                              <option value="confirmed">Confirm</option>
+                              <option value="preparing">Preparing</option>
+                              <option value="ready">Ready</option>
+                              <option value="completed">Complete</option>
+                              <option value="cancelled">Cancel</option>
+                            </select>
+                          )}
+
+                          {["completed", "cancelled"].includes(order.status) && (
+                            <button
+                              onClick={() => setDeleteConfirm(order)}
+                              className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           )}
                         </div>
@@ -365,128 +824,233 @@ export default function CashierOrders() {
                   ))}
                 </TableBody>
               </Table>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </ComponentCard>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="max-w-sm p-6">
-        {deleteConfirm && (
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Delete Order?
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete this order? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
+      {/* Order Details Modal */}
+      <Modal Open={!!viewOrder} onClose={() => setViewOrder(null)} className="max-w-2xl">
+        {viewOrder && (
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Order Details: {viewOrder.orderNumber}
+              </h3>
               <button
-                onClick={() => setDeleteConfirm(null)}
-                disabled={deleting}
-                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                onClick={() => setViewOrder(null)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
-                Cancel
+                ×
               </button>
-              <button
-                onClick={() => handleDeleteOrder(deleteConfirm._id)}
-                disabled={deleting}
-                className="flex-1 px-4 py-2 bg-error-500 text-white rounded font-medium hover:bg-error-600 transition-colors disabled:opacity-50"
-              >
-                {deleting ? "Deleting..." : "Delete"}
-              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Order Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Customer</p>
+                  <p className="font-medium">{viewOrder.customerInfo?.name || "Guest"}</p>
+                  {viewOrder.customerInfo?.phone && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{viewOrder.customerInfo.phone}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Service Type</p>
+                  <p className="font-medium capitalize">{viewOrder.serviceType}</p>
+                  {viewOrder.tableNumber && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Table: {viewOrder.tableNumber}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewOrder.status)}`}>
+                    {viewOrder.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Payment</p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    viewOrder.paymentStatus === "paid" 
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
+                  }`}>
+                    {viewOrder.paymentStatus}
+                  </span>
+                </div>
+              </div>
+
+              {/* Estimated Time Control */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Update Estimated Time</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={estimatedTimeInput}
+                    onChange={(e) => setEstimatedTimeInput(e.target.value)}
+                    placeholder="Minutes"
+                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800"
+                  />
+                  <Button
+                    onClick={() => handleUpdateEstimatedTime(viewOrder._id)}
+                    variant="outline"
+                  >
+                    Update
+                  </Button>
+                </div>
+                {viewOrder.estimatedTime && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Current: {viewOrder.estimatedTime} minutes
+                  </p>
+                )}
+              </div>
+
+              {/* Items */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Items</p>
+                <div className="space-y-2">
+                  {viewOrder.items?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-2 border-b dark:border-gray-700 last:border-0">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {item.quantity} × EGP {item.price?.toFixed(2)}
+                        </p>
+                      </div>
+                      <p className="font-medium">EGP {(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                  <span>EGP {viewOrder.subtotal?.toFixed(2) || "0.00"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">VAT</span>
+                  <span>EGP {viewOrder.vat?.toFixed(2) || "0.00"}</span>
+                </div>
+                <div className="flex justify-between font-medium text-lg border-t dark:border-gray-700 pt-2">
+                  <span>Total</span>
+                  <span>EGP {viewOrder.totalAmount?.toFixed(2) || "0.00"}</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Order Details Modal */}
-      <Modal isOpen={!!viewOrder} onClose={() => setViewOrder(null)} className="max-w-2xl p-6">
-        {viewOrder && (
-          <div className="dark:text-white">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Order Details
+      {/* Delete Confirmation Modal */}
+      <Modal Open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} className="max-w-sm">
+        {deleteConfirm && (
+          <div className="p-6 text-center">
+            <Trash2 className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Delete Order?
             </h3>
-            <div className="mt-4 space-y-4 text-sm text-gray-700 dark:text-gray-300">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Order ID</p>
-                  <p>{viewOrder._id}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Customer</p>
-                  <p>{viewOrder.customerName || "Guest"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Total</p>
-                  <p className="font-semibold text-lg">
-                    ${(viewOrder.totalAmount || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Status</p>
-                  <p className="capitalize font-medium">{viewOrder.status}</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete order <span className="font-medium">{deleteConfirm.orderNumber}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setDeleteConfirm(null)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleDeleteOrder(deleteConfirm._id)}
+                className="flex-1 bg-red-500 hover:bg-red-600"
+              >
+                Delete Order
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Payment Modal */}
+      <Modal open={!!paymentModalOrder} onClose={() => setPaymentModalOrder(null)}>
+        {paymentModalOrder && (
+          <div className="p-6">
+            <DollarSign className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-center">
+              Payment Status
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 text-center">
+              Order <span className="font-medium">{paymentModalOrder.orderNumber}</span>
+            </p>
+
+            {/* Current Status */}
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Current Payment Method:</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                {paymentModalOrder.paymentMethod}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Payment Status:</p>
+              <p className={`text-lg font-semibold capitalize ${
+                paymentModalOrder.paymentStatus === 'paid' 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-orange-600 dark:text-orange-400'
+              }`}>
+                {paymentModalOrder.paymentStatus}
+              </p>
+            </div>
+
+            {/* Payment Info Box */}
+            {['cash', 'card', 'pay_at_counter'].includes(paymentModalOrder.paymentMethod) ? (
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  ✓ You can manually update payment status for <strong>{paymentModalOrder.paymentMethod}</strong> payments
+                </p>
+                <div className="space-y-2 mt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentStatus"
+                      value="paid"
+                      checked={true}
+                      onChange={() => handleMarkPayment(paymentModalOrder._id, paymentModalOrder.paymentMethod)}
+                      className="rounded-full"
+                    />
+                    <span className="text-sm font-medium">Mark as Paid</span>
+                  </label>
                 </div>
               </div>
+            ) : (
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  ⓘ <strong>{paymentModalOrder.paymentMethod}</strong> payments are handled automatically via payment gateway.
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Payment status will update when the customer completes the transaction.
+                </p>
+              </div>
+            )}
 
-              {/* Cashier controls to update status and estimated time */}
-              {(isCashier || isAdmin) && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="mb-2 font-semibold">Manage Order</h4>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="col-span-2 rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                      <option value="">-- Select status --</option>
-                      <option value="confirmed">Confirm</option>
-                      <option value="preparing">Preparing</option>
-                      <option value="ready">Ready</option>
-                      <option value="completed">Completed</option>
-                    </select>
-
-                    <input
-                      type="number"
-                      placeholder="Estimated minutes"
-                      value={estimatedMinutes}
-                      onChange={(e) => setEstimatedMinutes(e.target.value)}
-                      className="rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-800"
-                    />
-                  </div>
-                  <div className="mt-4 flex gap-3">
-                    <Button
-                      onClick={() => {
-                        const statusToSend = selectedStatus || viewOrder.status;
-                        const est = estimatedMinutes ? parseInt(estimatedMinutes, 10) : undefined;
-                        dispatch(updateOrderStatus({ orderId: viewOrder._id, status: statusToSend, estimatedTime: est }));
-                        setSelectedStatus("");
-                        setEstimatedMinutes("");
-                        setViewOrder(null);
-                      }}
-                    >
-                      Update
-                    </Button>
-                    <Button onClick={() => { setSelectedStatus(""); setEstimatedMinutes(""); }}>Reset</Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Items List */}
-              {viewOrder.items && viewOrder.items.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">Items</p>
-                  <div className="space-y-2">
-                    {viewOrder.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm">
-                        <span>{item.name || "Item"}</span>
-                        <span>
-                          {item.quantity} x ${item.price?.toFixed(2) || 0}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setPaymentModalOrder(null)}
+                variant="outline"
+                className="flex-1"
+              >
+                Close
+              </Button>
+              {['cash', 'card', 'pay_at_counter'].includes(paymentModalOrder.paymentMethod) && (
+                <Button
+                  onClick={() => handleMarkPayment(paymentModalOrder._id, paymentModalOrder.paymentMethod)}
+                  disabled={paymentModalOrder.paymentStatus === 'paid'}
+                  className="flex-1"
+                >
+                  {paymentModalOrder.paymentStatus === 'paid' ? '✓ Already Paid' : 'Mark as Paid'}
+                </Button>
               )}
             </div>
           </div>

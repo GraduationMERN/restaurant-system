@@ -99,8 +99,8 @@ export default function Navbar() {
 
       {/* Orders */}
       <Link 
-        to="/orders" 
-        className={`flex flex-col items-center transition-colors ${isActive("/orders") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+        to="/orders/:id" 
+        className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Clock4 size={20} />
         <span className="text-xs">{t("orders")}</span>
