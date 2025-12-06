@@ -5,7 +5,7 @@ let socket = null;
 export function initSocket(serverUrl) {
   if (typeof window === "undefined") return null;
   if (!socket) {
-    const url = serverUrl || import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:3000`;
+    const url = serverUrl || import.meta.env.VITE_API_BASE_URL;
     socket = io(url, { autoConnect: true });
   }
   return socket;

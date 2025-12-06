@@ -5,7 +5,6 @@ export async function registerServiceWorker() {
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });
-      console.log('Service Worker registered successfully:', registration);
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
@@ -14,22 +13,47 @@ export async function registerServiceWorker() {
 }
 
 // Request notification permission from user
+// notificationUtils.js (This function remains unchanged)
+
+// notificationUtils.js (Utility for native API)
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    console.log('This browser does not support notifications');
-    return false;
-  }
+    if (!('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+    }
 
-  if (Notification.permission === 'granted') {
-    return true;
-  }
+    // Only try to request permission if it hasn't been denied
+    if (Notification.permission !== 'denied') {
+        // THIS IS THE ONLY LINE THAT TRIGGERS THE NATIVE PROMPT
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
 
-  if (Notification.permission !== 'denied') {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
-  }
+    return false; // Permission is 'denied' or unsupported
+}
 
-  return false;
+// In a React component or utility logic that manages the UI
+async function showStyledPermissionPrompt() {
+    // 1. Check if permission is already finalized
+    if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+        console.log(`Permission is already ${Notification.permission}. Aborting soft prompt.`);
+        return;
+    }
+
+    // 2. SHOW YOUR CUSTOM, STYLED UI (e.g., a modal)
+    // NOTE: This function (displayCustomModal) must block execution until the user clicks
+    const userAgreed = await displayCustomModal({
+        title: "Stay Updated on Your Order!",
+        // ... other styling/content
+    });
+
+    // 3. If the user clicks 'Yes, notify me' in your custom UI
+    if (userAgreed) {
+        // **CRITICAL:** Call the utility function to trigger the NATIVE prompt once.
+        return requestNotificationPermission(); 
+    }
+    
+    // If user clicks 'No thanks', we do nothing, and the soft prompt is dismissed.
 }
 
 // Send a push notification (client-side)
@@ -39,15 +63,15 @@ export function sendNotification(title, options = {}) {
       // Use service worker for background notifications
       navigator.serviceWorker.ready.then(registration => {
         registration.showNotification(title, {
-          icon: '/images/logo/logo-icon.svg',
-          badge: '/images/logo/logo-icon.svg',
+          icon: '/icon.png',
+          badge: '/icon.png',
           ...options
         });
       });
     } else {
       // Fallback to regular notification
       new Notification(title, {
-        icon: '/images/logo/logo-icon.svg',
+        icon: '/icon.png',
         ...options
       });
     }

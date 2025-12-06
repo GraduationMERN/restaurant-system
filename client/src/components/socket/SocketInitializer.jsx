@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useToast } from "../../hooks/useToast";
 import socketUtils from "../../utils/socket";
-import { fetchActiveOrders, fetchOrderById } from "../../redux/slices/orderSlice";
-import { updateOrderStatus as updateOrderStatusReducer } from "../../redux/slices/orderSlice";
+import { fetchOrderById } from "../../redux/slices/orderSlice";
 
 export default function SocketInitializer() {
   const { user } = useSelector((state) => state.auth || {});
@@ -16,7 +15,6 @@ export default function SocketInitializer() {
     if (!socket) return;
 
     socket.on("connect", () => {
-      console.log("Socket connected", socket.id);
       if (user && user._id) {
         socket.emit("register", user._id);
         if (user.role === "admin") socket.emit("joinAdmin");

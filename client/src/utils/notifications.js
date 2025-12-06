@@ -23,7 +23,7 @@ export function notifyRedeemed(item) {
   if (!item) return;
   showNotification('🎉 Reward Redeemed!', {
     body: `${item.title} has been redeemed. You'll be redirected to track your order.`,
-    icon: '/favicon.ico',
+    icon: '/icon.png',
     tag: `reward-${item._id}`,
     requireInteraction: false
   });
@@ -58,7 +58,7 @@ export function showStatusNotification(status, { tag = '', keepInteractiveForRea
 
   showNotification(title, {
     body: message,
-    icon: '/favicon.ico',
+    icon: '/icon.png',
     tag: tag || `order-status-${Date.now()}`,
     requireInteraction: keepInteractiveForReady && status === 'Ready'
   });
