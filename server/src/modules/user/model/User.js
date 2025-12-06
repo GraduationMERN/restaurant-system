@@ -40,7 +40,48 @@ const userSchema = new mongoose.Schema(
           return typeof val === "number" && val >= 0;
         },
         message: "Points must be a non-negative number",
+      }
+    },
+    orderHistory: [{
+      orderId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Order',
+        required: true 
       },
+      orderNumber: { 
+        type: String, 
+        required: true 
+      },
+      totalAmount: { 
+        type: Number, 
+        required: true 
+      },
+      status: { 
+        type: String, 
+        enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],
+        default: "pending"
+      },
+      date: { 
+        type: Date, 
+        default: Date.now 
+      },
+      itemsCount: { 
+        type: Number, 
+        default: 0 
+      },
+      serviceType: {
+        type: String,
+        enum: ["dine-in", "pickup", "delivery"]
+      }
+    }],
+    coupon: {
+      usedCoupons: [
+        {
+          couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+          code: String,
+          usedAt: { type: Date, default: Date.now }
+        }
+      ]
     },
     otp: String,
     otpExpires: Date,

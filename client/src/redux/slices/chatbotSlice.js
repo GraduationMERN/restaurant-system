@@ -19,16 +19,16 @@ export const sendChatMessage = createAsyncThunk(
 
 const initialSuggestions = {
   initial: [
-    { text: "Show menu", query: "What items do you have on the menu?" },
-    { text: "Vegetarian options", query: "What vegetarian options do you have?" },
-    { text: "Desserts", query: "What desserts do you have?" },
-    { text: "Popular items", query: "What are your most popular items?" },
+    { text: "🍕 Show me pizzas", query: "What pizzas do you have?" },
+    { text: "🥗 Vegetarian options", query: "Show me vegetarian dishes" },
+    { text: "🍰 Best desserts", query: "Recommend a dessert" },
+    { text: "🔥 Trending now", query: "What are the most popular items?" },
   ],
   followup: [
-    { text: "Any specials?", query: "Do you have any specials today?" },
-    { text: "Dietary options", query: "What dietary options do you offer?" },
-    { text: "Price range", query: "What's your price range?" },
-    { text: "Spicy dishes", query: "Do you have spicy dishes?" },
+    { text: "💰 Any deals?", query: "Do you have any special offers?" },
+    { text: "🌶️ Spicy food", query: "I like spicy food, what do you suggest?" },
+    { text: "🥤 Drinks menu", query: "Show me the drinks menu" },
+    { text: "📍 Location info", query: "Where are you located?" },
   ],
 };
 

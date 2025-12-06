@@ -9,6 +9,7 @@ const navItems = [
   { icon: <GridIcon />, name: "Dashboard", path: "/admin/dashboard" },
   { icon: <BoxIconLine />, name: "Orders", path: "/admin/orders" },
   { icon: <TaskIcon />, name: "Menu Management", path: "/admin/menu" },
+  { icon: <TaskIcon />, name: "Categories", path: "/admin/categories" },
   { icon: <ShootingStarIcon />, name: "Reviews", path: "/admin/reviews" },
   { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
   { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },

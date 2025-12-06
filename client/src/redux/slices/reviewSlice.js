@@ -5,8 +5,16 @@ import api from "../../api/axios";
 export const fetchReviews = createAsyncThunk(
   "reviews/fetchReviews",
   async () => {
-    const res = await api.get("/api/reviews");
-    return res.data.reviews; // ensure this matches your backend
+    // Fetch a large batch of reviews, only approved, newest first,
+    // so the public reviews page shows all approved reviews.
+    const res = await api.get("/api/reviews", {
+      params: {
+        status: "approved",
+        limit: 1000,
+        sort: "-createdAt",
+      },
+    });
+    return res.data.reviews || [];
   }
 );
 

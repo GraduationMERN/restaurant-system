@@ -7,10 +7,18 @@ import categoryReducer from "./slices/CategorySlice";
 import cartReducer from "./slices/cartSlice";
 import reviewReducer from "./slices/reviewSlice";
 import chatbotReducer from "./slices/chatbotSlice";
+import orderReducer from "./slices/orderSlice";
+import ordersReducer from "./slices/ordersSlice";
+import paymentReducer from "./slices/paymentSlice";
+import kitchenReducer from "./slices/kitchenSlice";
+import cashierReducer from "./slices/cashierSlice";
+
+import rewardOrderReducer from "./slices/rewardOrderSlice";
 
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
+    rewardOrders: rewardOrderReducer,
     auth: authReducer,
     users: usersReducer,
     product: productReducer,
@@ -18,5 +26,10 @@ export const store = configureStore({
     cart: cartReducer,
     reviews: reviewReducer,
     chatbot: chatbotReducer,
+    order: orderReducer,
+    orders: ordersReducer,
+    payment: paymentReducer,
+    kitchen: kitchenReducer,
+    cashier: cashierReducer,
   },
 });

@@ -4,6 +4,7 @@ import Dashboard from "./Dashboard";
 import Orders from "./Orders";
 import Rewards from "./Rewards";
 import Menu from "./Menu";
+import Categories from "./Categories";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
@@ -46,11 +47,17 @@ export default function Admin() {
         </section>
       )}
 
-      {section === "reviews" && (
-        <section id="reviews" className="mt-8">
-          <Reviews />
-        </section>
-      )}
+            {section === "categories" && (
+                <section id="categories" className="mt-8">
+                    <Categories />
+                </section>
+            )}
+
+            {section === "reviews" && (
+                <section id="reviews" className="mt-8">
+                    <Reviews />
+                </section>
+            )}
 
       {section === "rewards" && (
         <section id="rewards" className="mt-8">

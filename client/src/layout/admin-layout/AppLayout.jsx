@@ -1,4 +1,5 @@
 import { SidebarProvider, useSidebar } from "../../context/SidebarContext";
+import { NotificationProvider } from "../../context/NotificationContext";
 import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
@@ -18,7 +19,7 @@ const LayoutContent = () => {
           } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader />
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div className="p-4 w-full md:p-6">
           <Outlet />
         </div>
       </div>
@@ -29,7 +30,9 @@ const LayoutContent = () => {
 const AppLayout = () => {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <NotificationProvider>
+        <LayoutContent />
+      </NotificationProvider>
     </SidebarProvider>
   );
 };
