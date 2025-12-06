@@ -239,6 +239,7 @@ export default function LoginPage() {
      if (Object.keys(newErrors).length === 0) {
       const resultAction = await dispatch(loginUser(formData));
       if (loginUser.fulfilled.match(resultAction)) {
+        // Fetch full user profile (includes points)
         await dispatch(getMe());
         navigate("/");
       }
