@@ -4,6 +4,9 @@ import PaymentService from "../payment/paymentService.js";
 import Order from "../order.module/orderModel.js";
 // Avoid importing server.js here to prevent circular imports.
 // Use `global.io` and `global.notificationService` which are set in `server.js` after initialization.
+import { notificationService , io } from "../../../server.js";
+import pushNotificationService from "../notification/pushNotification.service.js";
+import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 
 // ==============================
 // CREATE ORDER FROM CART (SIMPLIFIED)
@@ -65,6 +68,20 @@ export const createOrderFromCart = async (req, res) => {
     };
 
     const order = await orderService.createOrderFromCart(orderData);
+    // Optional Notification to admin
+    await notificationService?.sendToAdmin({
+      title: "New Order",
+      message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
+      orderId: order._id,
+      estimatedReadyTime: order.formattedEstimatedTime,
+    });
+    // Also notify cashiers specifically
+    await notificationService?.sendToRole("cashier", {
+      title: "New Order",
+      message: `New pending order from ${order.customerInfo?.name || "Guest"}`,
+      orderId: order._id,
+      estimatedReadyTime: order.formattedEstimatedTime,
+    });
 
     // Populate for response
     const populatedOrder = await Order.findById(order._id)
@@ -101,6 +118,11 @@ export const createOrderFromCart = async (req, res) => {
       if (populatedOrder.customerId) {
         global.io.to(`user:${populatedOrder.customerId}`).emit("order:created", populatedOrder);
       }
+    }
+
+    // Send push notification to user
+    if (order.userId) {
+      await pushNotificationService.notifyOrderCreated(order.userId, order);
     }
 
     res.status(201).json({ 
@@ -303,7 +325,54 @@ export const getUserOrders = async (req, res) => {
 };
 
 // ==============================
-// UPDATE ORDER STATUS
+// ANALYTICS / STATS
+// ==============================
+export const getOverviewStats = async (req, res) => {
+  try {
+    const { from = null, to = null } = req.query;
+    const data = await orderService.getOverviewStats(from, to);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get overview stats error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getDailyStats = async (req, res) => {
+  try {
+    const days = Number(req.query.days) || 7;
+    const data = await orderService.getDailyStats(days);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get daily stats error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getTopItems = async (req, res) => {
+  try {
+    const { from = null, to = null, by = "product" } = req.query;
+    const data = await orderService.getTopItems(from, to, by);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get top items error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getRecentOrdersList = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 5;
+    const data = await orderService.getRecentOrders(limit);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get recent orders error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// ==============================
+// ADMIN / CASHIER UPDATES
 // ==============================
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -533,6 +602,9 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+    export const updateOwnOrder = async (req, res, next) => {
+  // implementation to update an order
+};
 
 // ==============================
 // CANCEL ORDER (CUSTOMER)
@@ -549,6 +621,7 @@ export const cancelOrder = async (req, res) => {
         message: "Order not found"
       });
     }
+
 
     // Verify ownership
     if (order.customerId !== (user?._id || user?.customerId)) {

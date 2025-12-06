@@ -12,7 +12,7 @@
       customerInfo:{name:'Test Guest', phone:'+201000000000'},
       userId:'000000000000000000000001' // MongoDB valid ObjectId-like string
     };
-    const createRes = await fetch('http://localhost:3000/api/orders/direct', { 
+    const createRes = await fetch('http://localhost:8000/api/orders/direct', { 
       method:'POST', 
       headers:{ 'Content-Type':'application/json' }, 
       body: JSON.stringify(createBody) 

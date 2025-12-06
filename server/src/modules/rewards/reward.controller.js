@@ -1,6 +1,7 @@
 import { getUserByIdService } from '../user/service/user.service.js';
 import { createRewardService, deleteRewardService, getAllRewardOrdersServices, getAllRewardsServices, getRewardByIdService, getRewardOrderByIdService, redeemRewardService, updateRewardService } from './reward.service.js';
 import RewardOrder from './rewardOrder.js';
+import { io } from '../../../server.js';
 
 export async function getAllRewards(req, res) {
     try {
@@ -112,10 +113,27 @@ export const updateRewardOrder = async (req, res) => {
       id,
       { $set: dataToUpdate },
       { new: true }
-    );
+    ).populate({
+      path: 'rewardId',
+      populate: { path: 'productId' }
+    }).populate('userId');
 
     if (!updatedOrder) {
       return res.status(404).json({ message: "Reward order not found" });
+    }
+
+    // Emit socket event to notify user of status update
+    if (io) {
+      // Notify the specific user
+      io.to(updatedOrder.userId._id.toString()).emit('reward_order_updated', updatedOrder);
+      // Also emit status change event
+      io.to(`reward_order_${id}`).emit('reward_order_status_changed', {
+        orderId: id,
+        status: updatedOrder.status,
+        order: updatedOrder
+      });
+      // Notify admins
+      io.to('admin').emit('reward_order_updated_admin', updatedOrder);
     }
 
     res.json({ message: "Reward order updated", order: updatedOrder });
@@ -134,3 +152,24 @@ export const deleteRewardOrder = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+export async function getUserRedemptions(req, res) {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized: User not authenticated' });
+        }
+
+        const redemptions = await RewardOrder.find({ userId })
+            .populate({
+                path: 'rewardId',
+                populate: { path: 'productId' }
+            })
+            .populate('userId')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(redemptions);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}

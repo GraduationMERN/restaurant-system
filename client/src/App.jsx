@@ -21,12 +21,16 @@ import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
+
+import NotFound from "./pages/NotFoundPage";
+import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierDashboard from "./pages/cashier/CashierDashboard";
 import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
+import { requestNotificationPermission } from './utils/notifications';
 function App() {
   const dispatch = useDispatch();
 
@@ -41,6 +45,11 @@ function App() {
     }
   }, [dispatch]);
 
+  // Request notification permission on app load (centralized)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -48,14 +57,16 @@ function App() {
         <SocketProvider />
         <Layout>
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/menu" element={<MenuPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/register" element={<RegistrationPage />} />
             <Route path="/verifyOtp" element={<VerifyOtpPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/reward-order/:id" element={<RewardOrderTrackingPage />} />
 
             {/* Customer Routes */}
             <Route path="/cart" element={<CartPage />} />
@@ -63,12 +74,10 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
-            
+
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
-
-
             {/* Cashier & Kitchen Dashboards */}
             <Route
               path="/cashier"
@@ -105,16 +114,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/admin/:section"
-                element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
             </Route>
-
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancel" element={<PaymentCancel />} />
+            {/* Single Admin Page with section sub-route */}
+            <Route element={<AppLayout />}>
+              <Route path="/admin/:section?" element={<Admin />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
             {/* Legacy routes redirects (removed) */}
           </Routes>
         </Layout>

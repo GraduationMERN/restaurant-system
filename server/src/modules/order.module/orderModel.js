@@ -115,6 +115,9 @@ const OrderSchema = new mongoose.Schema(
       phone: { type: String, default: "" },
       email: { type: String, default: "" },
     },
+    stripeCheckoutSessionId: 
+    { type: String, default: null },
+
 
     // ============= COUPON =============
     couponCode: { type: String, default: null },
