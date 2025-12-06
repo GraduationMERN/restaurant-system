@@ -158,5 +158,25 @@
   "remove": "Remove",
   "close": "Close",
   "optional": "Optional",
-  "required": "Required"
+  "required": "Required",
+  "Rewards": "Rewards",
+  "redeem_points": "Redeem your points for exciting rewards!",
+  "view_redemptions": "View My Redemptions",
+  "available_rewards": "Available Rewards",
+  "points_needed": "Points Needed",
+  "redeem": "Redeem",
+  "redeeming": "Redeeming...",
+  "no_rewards": "No rewards available at the moment.",
+  "reward_redeemed": "Reward Redeemed Successfully!",
+  "you_redeemed": "You have redeemed",
+  "reward_on_its_way": "Your reward is on its way!",
+  "continue_shopping": "Continue Shopping",
+  "Hello":"Hello",
+  "Confirm":"Confirm Redeemption",
+  "Redeem":"Redeem",
+  "Yes":"Yes",
+  "No":"No",
+  "points":"points",
+  "for":"for"
+  
 }

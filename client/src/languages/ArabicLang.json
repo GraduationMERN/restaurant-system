@@ -158,5 +158,27 @@
   "remove": "إزالة",
   "close": "إغلاق",
   "optional": "اختياري",
-  "required": "مطلوب"
+  "required": "مطلوب",
+
+  "Rewards": "المكافأت",
+  "view_redemptions": "عرض مكافأتي",
+  "total_points": "إجمالي النقاط",
+  "redeem_points": "استبدل نقاطك بمكافآت مثيرة!",
+  "available_rewards": "المكافآت المتاحة",
+  "points_needed": "النقاط المطلوبة",
+  "redeem": "استبدال",
+  "redeeming": "جاري الاستبدال...",
+  "no_rewards": "لا توجد مكافآت متاحة في الوقت الحالي.",
+  "reward_redeemed": "تم استبدال المكافأة بنجاح!",
+  "you_redeemed": "لقد استبدلت",
+  "reward_on_its_way": "مكافأتك في طريقها!",
+  "continue_shopping": "متابعة التسوق",
+  "Hello": "اهلًا",
+  "Confirm": "تأكيد الاستبدال",
+  "Redeem": "استبدال",
+  "Yes": "نعم",
+  "No": "لا",
+  "points": "نقاط",
+  "for": "بـ"
+
 }
