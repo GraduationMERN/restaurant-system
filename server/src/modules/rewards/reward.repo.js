@@ -3,7 +3,7 @@ import Reward from "./reward.model.js";
 import RewardOrder from "./rewardOrder.js";
 
 const getAllRewardsRepo = async () => {
-  return await Reward.find().populate("productId", "name basePrice desc imgURL categoryId stock isnew productPoints tags");
+  return await Reward.find().sort({ createdAt: -1 }).populate("productId", "name basePrice desc imgURL categoryId stock isnew productPoints tags");
 }
 
 const getRewardById = async (id) => {
@@ -30,11 +30,15 @@ const createRewardOrderRepo = async (data, session = null) => {
   return RewardOrder.create(data);
 };
 const getAllRewardOrderRepo = async() =>{
-  return await RewardOrder.find().populate('rewardId').populate('userId');
+  return await RewardOrder.find()
+  .populate({
+    path: "rewardId",
+    populate: { path: "productId" }
+  })
+  .populate("userId")
 }
 
 const getRewardOrderByIdRepo = async (id) => {
   return await RewardOrder.findById(id).populate('rewardId').populate('productId').populate('userId');
 }
 export { getAllRewardsRepo, getRewardById, createReward ,deleteReward,updateReward,createRewardOrderRepo,getAllRewardOrderRepo,getRewardOrderByIdRepo};
-

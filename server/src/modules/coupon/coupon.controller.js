@@ -5,11 +5,8 @@ import * as couponService from './coupon.service.js';
 // Create new coupon
 export const createCoupon = async (req, res) => {
   try {
-    const couponData = {
-      ...req.body,
-      restaurantId: req.user.restaurantId, // from auth middleware
-    };
-    
+
+    const {couponData} = {...req.body};
     const coupon = await couponService.createCouponService(couponData);
     
     res.status(201).json({
@@ -98,15 +95,13 @@ export const deleteCoupon = async (req, res) => {
 // Validate coupon (called when user enters code)
 export const validateCoupon = async (req, res) => {
   try {
-    const { code, orderTotal } = req.body;
+    const { code, orderId } = req.body;
     const userId = req.user._id;
-    const restaurantId = req.user.restaurantId || req.body.restaurantId;
     
     const result = await couponService.validateCouponService(
       code,
       userId,
-      orderTotal,
-      restaurantId
+      orderId,
     );
     
     if (!result.valid) {

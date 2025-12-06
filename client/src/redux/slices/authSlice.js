@@ -50,9 +50,9 @@ export const verifyOtp = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
+  async ({ email, password,points }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password,points });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -204,6 +204,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.error = null;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loadingVerifyOtp = false;
@@ -238,6 +241,9 @@ const authSlice = createSlice({
         state.loadingGetMe = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loadingGetMe = false;

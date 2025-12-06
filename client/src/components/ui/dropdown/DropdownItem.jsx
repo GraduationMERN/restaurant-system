@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
  
 export const DropdownItem = ({
   tag = "button",
@@ -19,7 +19,7 @@ export const DropdownItem = ({
     if (onItemClick) onItemClick();
   };
 
-  if (tag === "a" && to) {
+  if (to) {
     return (
       <Link to={to} className={combinedClasses} onClick={handleClick}>
         {children}

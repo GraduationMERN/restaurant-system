@@ -1,110 +1,214 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
 import Button from "../../components/ui/button/Button";
-import Select from "../../components/form/Select";
 import Badge from "../../components/ui/badge/Badge";
 import { PencilIcon, TrashBinIcon } from "../../icons/admin-icons";
-import { useMemo, useState } from "react";
 import { Modal } from "../../components/ui/modal";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import Checkbox from "../../components/form/input/Checkbox";
 
-const allItems = [
-  { name: "Margherita Pizza", price: 18.99, category: "meals", img: "/images/grid-image/image-02.png", desc: "Fresh tomatoes, mozzarella, and basil" },
-  { name: "Caesar Salad", price: 12.99, category: "meals", img: "/images/grid-image/image-03.png", desc: "Crisp romaine with caesar dressing" },
-  { name: "Tiramisu", price: 8.99, category: "desserts", img: "/images/grid-image/image-04.png", desc: "Classic Italian coffee dessert" },
-  { name: "Cappuccino", price: 4.99, category: "drinks", img: "/images/grid-image/image-05.png", desc: "Rich espresso with steamed milk" },
-  { name: "Pasta Carbonara", price: 16.99, category: "meals", img: "/images/grid-image/image-06.png", desc: "Creamy pasta with pancetta and egg" },
-  { name: "Gelato", price: 6.99, category: "desserts", img: "/images/grid-image/image-01.png", desc: "Artisanal Italian ice cream" },
-];
+import {
+  fetchProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../../redux/slices/ProductSlice";
+import { getAllCategories } from "../../redux/slices/CategorySlice";
+import { unwrapResult } from "@reduxjs/toolkit";
 
-export default function Menu() {
-  const [category, setCategory] = useState("all");
-  const [items, setItems] = useState(allItems);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const filtered = useMemo(() => {
-    if (category === "all") return items;
-    return items.filter((i) => i.category === category);
-  }, [category, items]);
+/**
+ * MenuWithAPI.jsx
+ * - Fixes: empty categories dropdown + edit description not visible
+ * - Uses productImage as file field (matches your product router)
+ */
 
+export default function MenuWithAPI() {
+  const dispatch = useDispatch();
+
+  // Redux state
+  // Selectors: return the slice reference directly (do not create new objects inside selector)
+  const productState = useSelector((s) => s.product);
+  const { list: products = [], loading: productsLoading, error: productsError } = productState || {};
+
+  // Store registers category reducer under `category` (singular) in `store.js`.
+  const categoryState = useSelector((s) => s.category);
+  const { list: categories = [], loading: categoriesLoading } = categoryState || {};
+
+  // UI state
+  const [categoryFilter, setCategoryFilter] = useState("all"); // 'all' or categoryId
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Form initial
+  const emptyForm = {
     name: "",
     desc: "",
     basePrice: "",
     imgURL: "",
-    category: "meals",
+    imageFile: null, // local File object -> appended as 'productImage'
+    categoryId: "", // will be set when categories load
     stock: 0,
     isnew: false,
     productPoints: 0,
     pointsToPay: 0,
     tags: "",
     options: [],
-  });
+  };
+  const [form, setForm] = useState(emptyForm);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  // fetch categories + products on mount
+  useEffect(() => {
+    dispatch(getAllCategories());
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
+  // when categories arrive, ensure form.categoryId has a valid default
+  useEffect(() => {
+    if (categories && categories.length) {
+      setForm((f) => ({ ...f, categoryId: f.categoryId || categories[0]._id }));
+      // if filter currently 'all' keep it; otherwise ensure filter id still exists
+      if (categoryFilter !== "all") {
+        const exists = categories.some((c) => c._id === categoryFilter);
+        if (!exists) setCategoryFilter("all");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
+
+  // filtered products by categoryFilter
+  const filtered = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    if (categoryFilter === "all") return products;
+    return products.filter((p) => String(p.categoryId) === String(categoryFilter));
+  }, [categoryFilter, products]);
+
+  // helper to update form
   const updateField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
-  const addOption = () => setForm((f) => ({ ...f, options: [...f.options, { name: "", required: false, choices: [] }] }));
+  // Options helpers (same as your original behavior)
+  const addOption = () =>
+    setForm((f) => ({ ...f, options: [...(f.options || []), { name: "", required: false, choices: [] }] }));
   const removeOption = (idx) => setForm((f) => ({ ...f, options: f.options.filter((_, i) => i !== idx) }));
   const updateOption = (idx, patch) => setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === idx ? { ...o, ...patch } : o)) }));
-  const addChoice = (optIdx) => setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: [...o.choices, { label: "", priceDelta: 0, stock: null }] } : o)) }));
-  const updateChoice = (optIdx, choiceIdx, patch) => setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: o.choices.map((c, j) => (j === choiceIdx ? { ...c, ...patch } : c)) } : o)) }));
-  const removeChoice = (optIdx, choiceIdx) => setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: o.choices.filter((_, j) => j !== choiceIdx) } : o)) }));
+  const addChoice = (optIdx) =>
+    setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: [...o.choices, { label: "", priceDelta: 0, stock: null }] } : o)) }));
+  const updateChoice = (optIdx, choiceIdx, patch) =>
+    setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: o.choices.map((c, j) => (j === choiceIdx ? { ...c, ...patch } : c)) } : o)) }));
+  const removeChoice = (optIdx, choiceIdx) =>
+    setForm((f) => ({ ...f, options: f.options.map((o, i) => (i === optIdx ? { ...o, choices: o.choices.filter((_, j) => j !== choiceIdx) } : o)) }));
 
-  const handleSave = () => {
-    if (!form.name || !form.desc || !form.basePrice || !form.imgURL) return;
-    const newItem = {
-      name: form.name,
-      price: Number(form.basePrice),
-      category: form.category,
-      img: form.imgURL,
-      desc: form.desc,
-      meta: {
-        stock: Number(form.stock) || 0,
-        isnew: !!form.isnew,
-        productPoints: Number(form.productPoints) || 0,
-        pointsToPay: Number(form.pointsToPay) || 0,
-        tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-        options: form.options,
-      },
-    };
-    if (editingIndex !== null) {
-      setItems((prev) => prev.map((it, i) => (i === editingIndex ? newItem : it)));
-    } else {
-      setItems((prev) => [newItem, ...prev]);
-    }
-    setForm({ name: "", desc: "", basePrice: "", imgURL: "", category: "meals", stock: 0, isnew: false, productPoints: 0, pointsToPay: 0, tags: "", options: [] });
-    setEditingIndex(null);
-    closeModal();
+  // OPEN create modal
+  const openCreateModal = () => {
+    setEditingId(null);
+    setForm((f) => ({ ...emptyForm, categoryId: categories?.[0]?._id || "" }));
+    setIsModalOpen(true);
   };
 
-  const openEdit = (index) => {
-    const it = items[index];
+  // OPEN edit modal (populate controlled form properly)
+  const openEditModal = (product) => {
+    // Map API product fields into our form shape - controlled values
+    setEditingId(product._id);
     setForm({
-      name: it.name || "",
-      desc: it.desc || "",
-      basePrice: String(it.price ?? ""),
-      imgURL: it.img || "",
-      category: it.category || "meals",
-      stock: it.meta?.stock ?? 0,
-      isnew: it.meta?.isnew ?? false,
-      productPoints: it.meta?.productPoints ?? 0,
-      pointsToPay: it.meta?.pointsToPay ?? 0,
-      tags: (it.meta?.tags || []).join(", "),
-      options: it.meta?.options ? JSON.parse(JSON.stringify(it.meta.options)) : [],
+      name: product.name || "",
+      desc: product.desc || "",
+      basePrice: product.basePrice != null ? String(product.basePrice) : "",
+      imgURL: product.imgURL || "",
+      imageFile: null,
+      categoryId: product.categoryId || (categories?.[0]?._id || ""),
+      stock: product.stock ?? 0,
+      isnew: product.isnew ?? false,
+      productPoints: product.productPoints ?? 0,
+      pointsToPay: product.pointsToPay ?? 0,
+      tags: (product.tags || []).join(", "),
+      options: product.options ? JSON.parse(JSON.stringify(product.options)) : [],
     });
-    setEditingIndex(index);
-    openModal();
+    setIsModalOpen(true);
   };
 
-  const deleteItem = (index) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+  // Build FormData for create/update. IMPORTANT: backend expects file field name 'productImage'
+  const buildFormData = (s) => {
+    const fd = new FormData();
+    fd.append("name", s.name || "");
+    fd.append("desc", s.desc || "");
+    fd.append("basePrice", String(s.basePrice || 0));
+    fd.append("categoryId", s.categoryId || "");
+    fd.append("stock", String(s.stock || 0));
+    fd.append("isnew", String(!!s.isnew));
+    fd.append("productPoints", String(s.productPoints || 0));
+    fd.append("pointsToPay", String(s.pointsToPay || 0));
+
+    const tagsArr = s.tags ? s.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
+    fd.append("tags", JSON.stringify(tagsArr));
+    fd.append("options", JSON.stringify(s.options || []));
+
+    // file field name must match your router: uploadCloud.single('productImage')
+    if (s.imageFile) {
+      fd.append("productImage", s.imageFile);
+    } else if (s.imgURL) {
+      fd.append("imgURL", s.imgURL);
+    }
+
+    return fd;
+  };
+
+  // Basic validation
+  const isFormValid = () => {
+    if (!form.name || !form.desc) return false;
+    if (form.basePrice === "" || Number.isNaN(Number(form.basePrice))) return false;
+    if (!form.categoryId) return false;
+    return true;
+  };
+
+  // Save (create or update)
+  const handleSave = async () => {
+    if (!isFormValid()) return;
+    setSaving(true);
+    const fd = buildFormData(form);
+    try {
+      if (editingId) {
+        const action = await dispatch(updateProduct({ id: editingId, productData: fd }));
+        unwrapResult(action);
+      } else {
+        const action = await dispatch(createProduct(fd));
+        unwrapResult(action);
+      }
+      // refresh product list to keep state in sync
+      await dispatch(fetchProducts());
+      setIsModalOpen(false);
+      setEditingId(null);
+    } catch (err) {
+      // slice contains error message; optionally show toast here
+      // console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete with confirmation
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    setDeletingId(id);
+    try {
+      const action = await dispatch(deleteProduct(id));
+      unwrapResult(action);
+      await dispatch(fetchProducts());
+    } catch (err) {
+      // console.error(err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const getCategoryName = (id) => {
+    const c = categories.find((x) => String(x._id) === String(id));
+    return c ? c.name : "Unknown";
   };
 
   return (
@@ -114,94 +218,142 @@ export default function Menu() {
 
       <ComponentCard>
         <div className="flex items-center justify-between">
-          <Select
-            options={[
-              { value: "all", label: "All Categories" },
-              { value: "meals", label: "Meals" },
-              { value: "drinks", label: "Drinks" },
-              { value: "desserts", label: "Desserts" },
-            ]}
-            defaultValue="all"
-            onChange={(val) => setCategory(val || "all")}
-            className="w-44"
-            fullWidth={false}
-          />
-          <Button onClick={openModal}>+ Add Item</Button>
+          {/* Category filter using native select to avoid custom Select mismatch */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium mr-2">Filter</label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="border rounded px-2 py-1"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Button onClick={openCreateModal}>+ Add Item</Button>
         </div>
       </ComponentCard>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((it, idx) => (
-          <div key={it.name + idx} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-            <img src={it.img} alt={it.name} className="w-full h-36 object-cover rounded-xl" />
+      <div className="mt-4">
+        {(productsLoading || categoriesLoading) && <div className="p-3 text-sm text-gray-600">Loading...</div>}
+        {productsError && <div className="p-3 text-sm text-red-600">Error: {productsError}</div>}
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 mt-3">
+        {filtered.map((it) => (
+          <div key={it._id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <img src={it.imgURL} alt={it.name} className="w-full h-36 object-cover rounded-xl" />
             <div className="mt-4 flex items-start justify-between">
               <div>
-                <h4 className="text-gray-800 font-semibold dark:text:white/90">{it.name}</h4>
+                <h4 className="text-gray-800 font-semibold dark:text-white/90">{it.name}</h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{it.desc}</p>
               </div>
-              <span className="text-gray-800 font-semibold dark:text-white/90">${it.price}</span>
+              <span className="text-gray-800 font-semibold dark:text-white/90">${it.basePrice}</span>
             </div>
+
             <div className="mt-4 flex items-center justify-between">
-              <Badge size="sm" variant="light" color={it.category === "meals" ? "light" : it.category === "drinks" ? "info" : "warning"}>{it.category[0].toUpperCase() + it.category.slice(1)}</Badge>
+              <Badge size="sm" variant="light" color="light">{getCategoryName(it.categoryId)}</Badge>
               <div className="flex items-center gap-3">
-                <button className="text-brand-500" title="Edit" onClick={() => openEdit(items.indexOf(it))}><PencilIcon className="size-5" /></button>
-                <button className="text-error-500" title="Delete" onClick={() => deleteItem(items.indexOf(it))}><TrashBinIcon className="size-5" /></button>
+                <button className="text-brand-500" title="Edit" onClick={() => openEditModal(it)}>
+                  <PencilIcon className="size-5" />
+                </button>
+                <button
+                  className="text-error-500"
+                  title="Delete"
+                  onClick={() => handleDelete(it._id)}
+                  disabled={deletingId === it._id}
+                >
+                  <TrashBinIcon className="size-5" />
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} className="max-w-3xl p-6">
+      {/* Modal: controlled form */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="max-w-3xl h-100 p-6">
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Add Item</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{editingId ? "Edit Item" : "Add Item"}</h3>
+
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
               <Label htmlFor="name">Name</Label>
               <Input id="name" value={form.name} onChange={(e) => updateField("name", e.target.value)} placeholder="Product name" />
             </div>
+
             <div>
               <Label htmlFor="price">Base Price</Label>
               <Input id="price" type="number" step="0.01" value={form.basePrice} onChange={(e) => updateField("basePrice", e.target.value)} placeholder="0.00" />
             </div>
+
             <div className="md:col-span-2">
               <Label htmlFor="desc">Description</Label>
-              <TextArea rows={3} value={form.desc} onChange={(v) => updateField("desc", v)} placeholder="Short description" />
+              {/* Controlled TextArea - ensures edit shows desc */}
+              <TextArea rows={3} value={form.desc || ""} onChange={(val) => updateField("desc", val)} placeholder="Short description" />
             </div>
+
             <div>
-              <Label htmlFor="img">Image URL</Label>
-              <Input id="img" value={form.imgURL} onChange={(e) => updateField("imgURL", e.target.value)} placeholder="https://..." />
+              <Label htmlFor="imgurl">Image URL</Label>
+              <Input id="imgurl" value={form.imgURL} onChange={(e) => updateField("imgURL", e.target.value)} placeholder="https://..." />
             </div>
+
+            <div>
+              <Label htmlFor="productImage">Or upload image</Label>
+              <input id="productImage" type="file" accept="image/*" onChange={(e) => updateField("imageFile", e.target.files?.[0] || null)} />
+              <div className="text-xs text-gray-500 mt-1">Uploads sent as <code>productImage</code> (backend expects this).</div>
+            </div>
+
             <div>
               <Label>Category</Label>
-              <Select options={[{ value: "meals", label: "Meals" }, { value: "drinks", label: "Drinks" }, { value: "desserts", label: "Desserts" }]} defaultValue={form.category} onChange={(v) => updateField("category", v)} fullWidth={false} className="w-44" />
+              {/* Native select to ensure value binding correctness */}
+              <select value={form.categoryId || ""} onChange={(e) => updateField("categoryId", e.target.value)} className="border rounded px-2 py-1 w-full">
+                <option value="">Select category</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
               <Label htmlFor="stock">Stock</Label>
-              <Input id="stock" type="number" value={form.stock} onChange={(e) => updateField("stock", e.target.value)} />
+              <Input id="stock" type="number" value={String(form.stock ?? "")} onChange={(e) => updateField("stock", e.target.value === "" ? 0 : Number(e.target.value))} />
             </div>
+
             <div>
               <Label htmlFor="tags">Tags</Label>
               <Input id="tags" value={form.tags} onChange={(e) => updateField("tags", e.target.value)} placeholder="spicy, vegan" />
             </div>
+
             <div>
-              <Checkbox label="New" checked={form.isnew} onChange={(v) => updateField("isnew", v)} />
+              <Checkbox label="New" checked={!!form.isnew} onChange={(v) => updateField("isnew", v)} />
             </div>
+
             <div>
               <Label htmlFor="pp">Product Points</Label>
-              <Input id="pp" type="number" value={form.productPoints} onChange={(e) => updateField("productPoints", e.target.value)} />
+              <Input id="pp" type="number" value={String(form.productPoints ?? "")} onChange={(e) => updateField("productPoints", e.target.value === "" ? 0 : Number(e.target.value))} />
             </div>
+
             <div>
               <Label htmlFor="ptp">Points To Pay</Label>
-              <Input id="ptp" type="number" value={form.pointsToPay} onChange={(e) => updateField("pointsToPay", e.target.value)} />
+              <Input id="ptp" type="number" value={String(form.pointsToPay ?? "")} onChange={(e) => updateField("pointsToPay", e.target.value === "" ? 0 : Number(e.target.value))} />
             </div>
           </div>
 
+          {/* Options editor */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-gray-800 dark:text-white/90">Options</h4>
               <Button variant="outline" onClick={addOption}>+ Add Option</Button>
             </div>
+
             {form.options.map((opt, idx) => (
               <div key={idx} className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
@@ -210,21 +362,23 @@ export default function Menu() {
                     <Input value={opt.name} onChange={(e) => updateOption(idx, { name: e.target.value })} placeholder="Size" />
                   </div>
                   <div>
-                    <Checkbox label="Required" checked={opt.required} onChange={(v) => updateOption(idx, { required: v })} />
+                    <Checkbox label="Required" checked={!!opt.required} onChange={(v) => updateOption(idx, { required: v })} />
                   </div>
                   <div className="md:text-right">
                     <Button variant="outline" onClick={() => removeOption(idx)}>Remove</Button>
                   </div>
                 </div>
+
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Choices</span>
                     <Button variant="outline" onClick={() => addChoice(idx)}>+ Add Choice</Button>
                   </div>
+
                   {opt.choices.map((ch, j) => (
                     <div key={j} className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       <Input placeholder="Label" value={ch.label} onChange={(e) => updateChoice(idx, j, { label: e.target.value })} />
-                      <Input type="number" step="0.01" placeholder="Price Delta" value={ch.priceDelta} onChange={(e) => updateChoice(idx, j, { priceDelta: Number(e.target.value) })} />
+                      <Input type="number" step="0.01" placeholder="Price Delta" value={String(ch.priceDelta ?? 0)} onChange={(e) => updateChoice(idx, j, { priceDelta: Number(e.target.value) })} />
                       <div className="flex items-center gap-3">
                         <Input type="number" placeholder="Stock (optional)" value={ch.stock ?? ""} onChange={(e) => updateChoice(idx, j, { stock: e.target.value === "" ? null : Number(e.target.value) })} />
                         <Button variant="outline" onClick={() => removeChoice(idx, j)}>Delete</Button>
@@ -237,8 +391,10 @@ export default function Menu() {
           </div>
 
           <div className="flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={closeModal}>Cancel</Button>
-            <Button onClick={handleSave}>Save Item</Button>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={!isFormValid() || saving}>
+              {saving ? "Saving..." : "Save Item"}
+            </Button>
           </div>
         </div>
       </Modal>
