@@ -1,15 +1,14 @@
 // src/pages/CheckoutPage.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
-import { ArrowLeft, Plus, Minus, Trash2, MapPin, Tag, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 
 // Leaflet imports (same as before)
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // Fix default icon paths
 L.Icon.Default.mergeOptions({
@@ -21,7 +20,6 @@ L.Icon.Default.mergeOptions({
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { products, totalPrice, loading, _id: cartId } = useSelector(
     (state) => state.cart
   );
@@ -35,12 +33,12 @@ export default function CheckoutPage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [mapSelectedPos, setMapSelectedPos] = useState(null);
+  const mapRef = useRef(null);
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactAddress, setContactAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
-  const [showRewardModal, setShowRewardModal] = useState(false);
   const [orderError, setOrderError] = useState("");
 
   // Load cart on mount
@@ -56,13 +54,85 @@ export default function CheckoutPage() {
     }
   }, [authUser]);
 
+   useEffect(() => {
+    if (!showMapPicker || mapRef.current) return;
+
+    const map = L.map("map", {
+      center: [30.0444, 31.2357], // default coordinates
+      zoom: 13,
+    });
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    let marker;
+
+    map.on("click", function (e) {
+      const { lat, lng } = e.latlng;
+      setMapSelectedPos({ lat, lng });
+
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [showMapPicker]);
+
+  // Share user location
+  const shareMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setDeliveryLocation({
+          lat: latitude,
+          lng: longitude,
+          address: "Current Location",
+        });
+        setLocationError(null);
+        setLocationLoading(false);
+      },
+      (error) => {
+        setLocationError("Unable to retrieve your location.");
+        setLocationLoading(false);
+      }
+    );
+  };
+
+  // Save map-picked location
+  const saveMapLocation = () => {
+    if (mapSelectedPos) {
+      setDeliveryLocation({
+        ...mapSelectedPos,
+        address: "Picked on map",
+      });
+      setShowMapPicker(false);
+    } else {
+      setLocationError("Please select a location on the map first.");
+    }
+  };
+
+
   const handleQuantityChange = (productId, quantity) => {
     if (quantity < 1) return;
     console.log("Updating quantity for productId:", productId);
-    
-    dispatch(updateCartQuantity({ 
+
+    dispatch(updateCartQuantity({
       cartItemId: productId,
-      newQuantity: quantity 
+      newQuantity: quantity
     }));
   };
 
@@ -73,19 +143,19 @@ export default function CheckoutPage() {
 
   const handleOptionChange = async (item, optionName, choiceLabel) => {
     try {
-      const newSelectedOptions = { 
-        ...item.selectedOptions, 
-        [optionName]: choiceLabel 
+      const newSelectedOptions = {
+        ...item.selectedOptions,
+        [optionName]: choiceLabel
       };
-      
+
       await dispatch(deleteProductFromCart(item.productId._id));
-      
+
       await dispatch(addToCart({
         productId: item.productId._id,
         quantity: item.quantity,
         selectedOptions: newSelectedOptions
       }));
-      
+
     } catch (err) {
       console.error("Options didn't update:", err);
     }
@@ -102,7 +172,7 @@ export default function CheckoutPage() {
       setOrderError("No cart found. Please add items to cart first.");
       return;
     }
-    
+
     if (products.length === 0) {
       setOrderError("Your cart is empty. Please add items before checking out.");
       return;
@@ -176,11 +246,11 @@ export default function CheckoutPage() {
         }
 
         // Navigate to payment page with order data
-        navigate("/payment", { 
-          state: { 
+        navigate("/payment", {
+          state: {
             orderId: result.data._id,
             order: result.data
-          } 
+          }
         });
       } else {
         // Handle error response
@@ -189,7 +259,7 @@ export default function CheckoutPage() {
 
     } catch (err) {
       console.error("Order creation failed:", err);
-      
+
       // Handle different error formats
       if (err.message) {
         setOrderError(err.message);
@@ -198,98 +268,15 @@ export default function CheckoutPage() {
       } else {
         setOrderError("Failed to create order. Please try again.");
       }
-      
+
     } finally {
       setSubmitting(false);
     }
   };
 
-  const shareMyLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser");
-      return;
-    }
-    
-    setLocationLoading(true);
-    setLocationError(null);
-    
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        let address = "";
-        
-        try {
-          const resp = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-            { headers: { "User-Agent": "RestaurantApp" } }
-          );
-          const data = await resp.json();
-          address = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        } catch (e) {
-          console.warn("Reverse geocoding failed:", e);
-          address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        }
-        
-        setDeliveryLocation({ lat, lng, address });
-        setContactAddress(address || "");
-        if (authUser) {
-          setContactName(authUser.name || "");
-          setContactPhone(authUser.phoneNumber || "");
-        }
-        setLocationLoading(false);
-      },
-      (err) => {
-        console.error("Geolocation error:", err);
-        if (err.code === 1) {
-          setLocationError("Location access denied. Please enable location permissions.");
-        } else if (err.code === 2) {
-          setLocationError("Position unavailable. Please check your location settings.");
-        } else {
-          setLocationError("Failed to get location: " + err.message);
-        }
-        setLocationLoading(false);
-      },
-      { timeout: 10000, enableHighAccuracy: false }
-    );
-  };
 
-  // Simple component to capture map clicks
-  function MapClick({ onClick }) {
-    useMapEvents({
-      click(e) {
-        onClick(e.latlng);
-      },
-    });
-    return null;
-  }
+  // (react-leaflet removed) map clicks handled by Leaflet instance in effect
 
-  const reverseGeocode = async (lat, lng) => {
-    try {
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-        { headers: { "User-Agent": "RestaurantApp" } }
-      );
-      const data = await resp.json();
-      return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    } catch (e) {
-      console.warn("Reverse geocode failed:", e);
-      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    }
-  };
-
-  const confirmMapSelection = async () => {
-    if (!mapSelectedPos) return;
-    const { lat, lng } = mapSelectedPos;
-    const address = await reverseGeocode(lat, lng);
-    setDeliveryLocation({ lat, lng, address });
-    setContactAddress(address || "");
-    if (authUser) {
-      setContactName(authUser.name || "");
-      setContactPhone(authUser.phoneNumber || "");
-    }
-    setShowMapPicker(false);
-  };
 
   if (loading) {
     return (
@@ -307,7 +294,7 @@ export default function CheckoutPage() {
       {/* Header with Back Button */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors group"
           >
@@ -338,14 +325,14 @@ export default function CheckoutPage() {
 
             {/* Cart Items */}
             {products.length ? products.map((item) => (
-              <div 
-                key={item.productId._id} 
+              <div
+                key={item.productId._id}
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4">
-                  <img 
-                    src={item.productId.imgURL} 
-                    alt={item.productId.name} 
+                  <img
+                    src={item.productId.imgURL}
+                    alt={item.productId.name}
                     className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-xl flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
@@ -360,7 +347,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-orange-100 dark:bg-orange-900/20 rounded-full px-1">
-                          <button 
+                          <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
@@ -369,7 +356,7 @@ export default function CheckoutPage() {
                           <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
-                          <button 
+                          <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
@@ -391,8 +378,8 @@ export default function CheckoutPage() {
                           >
                             <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
                             {opt.choices.map((choice) => (
-                              <option 
-                                key={choice._id} 
+                              <option
+                                key={choice._id}
                                 value={choice.label}
                                 className="bg-white dark:bg-gray-700"
                               >
@@ -406,7 +393,7 @@ export default function CheckoutPage() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-4 mt-4 text-sm">
-                      <button 
+                      <button
                         onClick={() => handleDeleteItem(item.productId._id)}
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
                       >
@@ -423,7 +410,7 @@ export default function CheckoutPage() {
                   <Gift className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">Your cart is empty</p>
-                <button 
+                <button
                   onClick={() => navigate('/')}
                   className="mt-4 text-orange-500 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 font-medium"
                 >
@@ -433,7 +420,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Add Other Items Button */}
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-orange-300 dark:border-orange-600 text-orange-500 dark:text-orange-400 rounded-2xl py-4 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all duration-300"
             >
@@ -468,20 +455,22 @@ export default function CheckoutPage() {
                     <MapPin className="w-4 h-4 mr-2" />
                     Delivery Location
                   </h4>
-                  
+
                   {locationError && (
                     <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                       <p className="text-sm text-red-700 dark:text-red-300">{locationError}</p>
                     </div>
                   )}
-                  
+
                   <div className="space-y-3">
                     {deliveryLocation ? (
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
                         <div className="flex items-start gap-3">
                           <MapPin className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Location Saved</p>
+                            <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
+                              Location Saved
+                            </p>
                             <p className="text-sm text-green-700 dark:text-green-400 break-words">
                               {deliveryLocation.address}
                             </p>
@@ -492,23 +481,23 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="mt-3 space-y-2">
-                          <input 
-                            value={contactName} 
-                            onChange={(e)=>setContactName(e.target.value)} 
-                            placeholder="Full name" 
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          <input
+                            value={contactName}
+                            onChange={(e) => setContactName(e.target.value)}
+                            placeholder="Full name"
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
-                          <input 
-                            value={contactPhone} 
-                            onChange={(e)=>setContactPhone(e.target.value)} 
-                            placeholder="Phone number" 
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          <input
+                            value={contactPhone}
+                            onChange={(e) => setContactPhone(e.target.value)}
+                            placeholder="Phone number"
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
-                          <textarea 
-                            value={contactAddress} 
-                            onChange={(e)=>setContactAddress(e.target.value)} 
-                            placeholder="Address details" 
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
+                          <textarea
+                            value={contactAddress}
+                            onChange={(e) => setContactAddress(e.target.value)}
+                            placeholder="Address details"
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                         </div>
 
@@ -559,6 +548,8 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Map picker handled in modal below */}
                   </div>
                 </div>
               )}
@@ -664,19 +655,11 @@ export default function CheckoutPage() {
               </div>
             </div>
             <div style={{ height: 400 }}>
-              <MapContainer center={deliveryLocation ? [deliveryLocation.lat, deliveryLocation.lng] : [30.0444, 31.2357]} zoom={13} style={{ height: "100%", width: "100%" }}>
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <MapClick onClick={(latlng) => setMapSelectedPos(latlng)} />
-                {mapSelectedPos && (
-                  <Marker position={[mapSelectedPos.lat, mapSelectedPos.lng]}>
-                    <Popup>Selected location</Popup>
-                  </Marker>
-                )}
-              </MapContainer>
+              <div id="map" style={{ height: "100%", width: "100%" }} />
             </div>
             <div className="p-4 flex gap-3 justify-end border-t dark:border-gray-700">
               <button onClick={() => setShowMapPicker(false)} className="px-4 py-2 rounded-lg border">Close</button>
-              <button onClick={confirmMapSelection} className="px-4 py-2 rounded-lg bg-orange-500 text-white">Confirm location</button>
+              <button onClick={saveMapLocation} className="px-4 py-2 rounded-lg bg-orange-500 text-white">Confirm location</button>
             </div>
           </div>
         </div>
