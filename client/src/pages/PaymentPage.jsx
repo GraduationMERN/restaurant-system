@@ -1,17 +1,25 @@
 // src/pages/PaymentPage.jsx
 import React, { useState, useEffect } from "react";
+import socketClient from "../utils/socketRedux";
+import { useToast } from "../hooks/useToast";
 import { useSelector, useDispatch } from "react-redux";
-import { createStripeSession, payInStore } from "../redux/slices/paymentSlice";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, CreditCard, Store, CheckCircle } from "lucide-react";
+import { createStripeSession, verifyPaymentStatus, clearPaymentState } from "../redux/slices/paymentSlice";
+import { fetchOrderById } from "../redux/slices/orderSlice";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, CreditCard, Store, CheckCircle, AlertCircle } from "lucide-react";
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const toast = useToast();
+  
+  // Get URL params for session ID (from payment-success page redirect)
+  const { sessionId } = useParams();
   
   // Debug: Log the full location state to see what's being passed
   console.log("PaymentPage - location.state:", location.state);
+  console.log("PaymentPage - sessionId from URL:", sessionId);
   
   // Get order from navigation state - handle both response structures
   const orderResponse = location.state?.order;
@@ -22,26 +30,71 @@ const PaymentPage = () => {
   console.log("PaymentPage - orderData:", orderData);
   console.log("PaymentPage - orderId:", orderId);
   
+  // Get payment state
+  const paymentState = useSelector((state) => state.payment || {});
+  const { 
+    loading = false, 
+    error = null, 
+    stripeSession = null,
+    paymentStatus = null,
+    verifiedOrder = null
+  } = paymentState;
+  
   // Get cart data as fallback
   const { products = [], totalPrice = 0 } = useSelector((state) => state.cart || {});
-  const paymentState = useSelector((state) => state.payment || {});
-  const { loading = false, error = null, stripeSession = null } = paymentState;
   
   // State
   const [paymentMethod, setPaymentMethod] = useState("online");
   const [branchName, setBranchName] = useState("El Shatby Outlet");
   const [localError, setLocalError] = useState("");
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+
+  // If sessionId exists in URL, we're coming from payment-success page
+  useEffect(() => {
+    if (sessionId && !orderId) {
+      verifyPaymentBySession(sessionId);
+    }
+  }, [sessionId]);
+
+  // Listen for payment updates specific to this user/order
+  useEffect(() => {
+    const s = socketClient.getSocket() || socketClient.initSocket();
+    if (!s) return;
+
+    const handleYourPayment = (order) => {
+      const id = order?._id || order?.orderId;
+      if (!id) return;
+      if (id === orderId) {
+        // If payment was marked paid, navigate to tracking or show toast
+        if (order.paymentStatus === 'paid') {
+          toast.showToast({ message: 'Payment received. Tracking your order.', type: 'success' });
+          navigate(`/orders/${id}`, { state: { order } });
+        } else {
+          toast.showToast({ message: `Payment updated: ${order.paymentStatus}`, type: 'success' });
+        }
+      }
+    };
+
+    s.on('order:your-payment-updated', handleYourPayment);
+    s.on('order:payment-updated', handleYourPayment);
+
+    return () => {
+      s.off('order:your-payment-updated', handleYourPayment);
+      s.off('order:payment-updated', handleYourPayment);
+    };
+  }, [orderId, navigate, toast]);
 
   // Handle stripe redirect
   useEffect(() => {
     if (stripeSession?.url) {
+      console.log("Redirecting to Stripe:", stripeSession.url);
       window.location.href = stripeSession.url;
     }
   }, [stripeSession]);
 
   // Check for orderId on component mount
   useEffect(() => {
-    if (!orderId) {
+    if (!orderId && !sessionId) {
       console.error("No orderId found. Location state:", location.state);
       setLocalError("Order not found. Please complete checkout first.");
       
@@ -52,7 +105,32 @@ const PaymentPage = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [orderId, navigate, location.state]);
+  }, [orderId, navigate, location.state, sessionId]);
+
+  // Verify payment by session ID
+  const verifyPaymentBySession = async (sessionId) => {
+    try {
+      setIsVerifyingPayment(true);
+      const result = await dispatch(verifyPaymentStatus(sessionId)).unwrap();
+      
+      if (result.success && result.data) {
+        // If payment is already paid, redirect to tracking
+        if (result.data.paymentStatus === 'paid') {
+          navigate(`/orders/${result.data._id}`, {
+            state: { order: result.data }
+          });
+        } else {
+          // Payment not completed yet, show payment options
+          setLocalError("Payment not completed. Please complete payment below.");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to verify payment:", err);
+      setLocalError("Unable to verify payment status. Please try again.");
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
 
   // Handle payment
   const handlePayment = async () => {
@@ -61,12 +139,27 @@ const PaymentPage = () => {
       return;
     }
 
+    // Clear any previous errors
+    dispatch(clearPaymentState());
+    setLocalError("");
+
     try {
       if (paymentMethod === "online") {
-        await dispatch(createStripeSession({ orderId })).unwrap();
+        const result = await dispatch(createStripeSession({ 
+          orderId, 
+          paymentMethod: "card" 
+        })).unwrap();
+        
+        if (result.success) {
+          console.log("Stripe session created:", result);
+          // Redirection happens automatically via useEffect
+        } else {
+          setLocalError(result.message || "Failed to create payment session");
+        }
       } else {
-        await dispatch(payInStore({ orderId })).unwrap();
-        // After marking as pay-in-store, go to the order tracking page with orderId in URL
+        // For in-store payments we should NOT mark the order as paid from the customer's client.
+        // The cashier should confirm / mark payment at the POS. Simply navigate to tracking
+        // so the customer can wait for the cashier confirmation.
         navigate(`/orders/${orderId}`, {
           state: {
             orderId,
@@ -76,17 +169,25 @@ const PaymentPage = () => {
       }
     } catch (err) {
       console.error("Payment failed:", err);
-      setLocalError(err.message || "Payment failed. Please try again.");
+      
+      // Check for 403 authorization errors
+      if (err.message && err.message.includes("403")) {
+        setLocalError("Oops! We encountered an authorization issue. This might be a temporary issue. Please try again or contact support.");
+      } else if (err.message && err.message.includes("Not authorized")) {
+        setLocalError("You are not authorized to pay for this order. Please check your order and try again.");
+      } else {
+        setLocalError(err.message || "Payment failed. Please try again.");
+      }
     }
   };
 
   // If there's an error with orderId, show error message
-  if (localError && !orderId) {
+  if (localError && !orderId && !sessionId) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
           <div className="h-16 w-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-red-500 dark:text-red-400 text-2xl font-bold">!</span>
+            <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Order Error</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{localError}</p>
@@ -104,11 +205,27 @@ const PaymentPage = () => {
     );
   }
 
+  // Use verified order data if available, otherwise use location state
+  const displayOrder = verifiedOrder || orderData;
+  const displayOrderId = verifiedOrder?._id || orderId;
+
   // Calculate totals - use order data if available, otherwise use cart
-  const orderItems = orderData?.items || products;
-  const subtotal = orderData?.subtotal || orderData?.totalAmount || totalPrice;
-  const vat = orderData?.vat || 0;
+  const orderItems = displayOrder?.items || products;
+  const subtotal = displayOrder?.subtotal || displayOrder?.totalAmount || totalPrice;
+  const vat = displayOrder?.vat || 0;
   const total = subtotal + vat;
+
+  // If verifying payment, show loading
+  if (isVerifyingPayment) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Verifying payment status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -129,10 +246,36 @@ const PaymentPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Order ID Display */}
-        {orderId && (
+        {displayOrderId && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
             <p className="text-blue-800 dark:text-blue-300 text-center font-medium">
-              Order Reference: <span className="font-bold">{orderId}</span>
+              Order Reference: <span className="font-bold">{displayOrderId}</span>
+              {displayOrder?.orderNumber && ` (${displayOrder.orderNumber})`}
+            </p>
+          </div>
+        )}
+
+        {/* Payment Status Display */}
+        {paymentStatus && (
+          <div className={`mb-6 p-4 rounded-xl ${
+            paymentStatus === 'success' || paymentStatus === 'paid' 
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+              : paymentStatus === 'failed' 
+              ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+              : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+          }`}>
+            <p className={`text-center font-medium ${
+              paymentStatus === 'success' || paymentStatus === 'paid'
+                ? 'text-green-800 dark:text-green-300'
+                : paymentStatus === 'failed'
+                ? 'text-red-800 dark:text-red-300'
+                : 'text-blue-800 dark:text-blue-300'
+            }`}>
+              {paymentStatus === 'paid' && '✅ Payment successful! Order confirmed.'}
+              {paymentStatus === 'success' && '✅ Payment processed successfully.'}
+              {paymentStatus === 'failed' && '❌ Payment failed. Please try again.'}
+              {paymentStatus === 'processing' && '⏳ Processing payment...'}
+              {paymentStatus === 'redirecting' && '↗️ Redirecting to payment gateway...'}
             </p>
           </div>
         )}
@@ -167,6 +310,7 @@ const PaymentPage = () => {
                       ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
                       : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
                   }`}
+                  disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
                 >
                   <div className="flex items-center">
                     <div className={`p-3 rounded-lg mr-4 ${
@@ -202,6 +346,7 @@ const PaymentPage = () => {
                       ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
                       : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
                   }`}
+                  disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
                 >
                   <div className="flex items-center">
                     <div className={`p-3 rounded-lg mr-4 ${
@@ -241,9 +386,24 @@ const PaymentPage = () => {
               </div>
 
               {/* Error Display */}
-              {error && (
+              {(error || localError) && (
                 <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+                  <p className="text-red-600 dark:text-red-400 text-sm text-center">{error || localError}</p>
+                </div>
+              )}
+
+              {/* Already Paid Warning */}
+              {(paymentStatus === 'paid' || paymentStatus === 'success') && (
+                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-green-700 dark:text-green-300 text-sm text-center">
+                    ✅ This order has already been paid. You can track your order status.
+                  </p>
+                  <button
+                    onClick={() => navigate(`/orders/${displayOrderId}`)}
+                    className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition-colors"
+                  >
+                    Track My Order
+                  </button>
                 </div>
               )}
             </div>
@@ -275,11 +435,11 @@ const PaymentPage = () => {
               {/* Payment Button */}
               <button
                 onClick={handlePayment}
-                disabled={loading || !orderId}
+                disabled={loading || !displayOrderId || paymentStatus === 'paid' || paymentStatus === 'success'}
                 className={`w-full mt-8 py-4 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
                   paymentMethod === "online"
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                    ? "bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                    : "bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {loading ? (
@@ -291,9 +451,9 @@ const PaymentPage = () => {
                     Processing...
                   </span>
                 ) : paymentMethod === "online" ? (
-                  "Pay Online"
+                  paymentStatus === 'paid' || paymentStatus === 'success' ? "Already Paid" : "Pay Online"
                 ) : (
-                  "Pay at the cashier"
+                  paymentStatus === 'paid' || paymentStatus === 'success' ? "Already Paid" : "Pay at the cashier"
                 )}
               </button>
 
@@ -311,10 +471,12 @@ const PaymentPage = () => {
                       <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <div className="flex items-center">
                           <span className="text-gray-600 dark:text-gray-400">{item.quantity}x</span>
-                          <span className="ml-2 text-gray-800 dark:text-gray-200 truncate max-w-[150px]">{item.name}</span>
+                          <span className="ml-2 text-gray-800 dark:text-gray-200 truncate max-w-[150px]">
+                            {item.name || item.productId?.name || `Item ${index + 1}`}
+                          </span>
                         </div>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          EGP {(item.price * item.quantity).toFixed(2)}
+                          EGP {((item.price || item.totalPrice / item.quantity) * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     ))}

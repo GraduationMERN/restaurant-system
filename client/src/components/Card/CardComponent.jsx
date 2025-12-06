@@ -1,5 +1,4 @@
 import { Gift } from 'lucide-react';
-import React from 'react'
 import { useState } from 'react';
 
 export default function CardComponent({ item, product, isReward, disabled, onClick, canRedeem }) {
