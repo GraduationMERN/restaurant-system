@@ -18,6 +18,7 @@ export default function Admin() {
     "orders",
     "menu",
     "reviews",
+    "categories",
     "rewards",
     "settings",
     "profile",
@@ -47,17 +48,17 @@ export default function Admin() {
         </section>
       )}
 
-            {section === "categories" && (
-                <section id="categories" className="mt-8">
-                    <Categories />
-                </section>
-            )}
+      {section === "categories" && (
+        <section id="categories" className="mt-8">
+          <Categories />
+        </section>
+      )}
 
-            {section === "reviews" && (
-                <section id="reviews" className="mt-8">
-                    <Reviews />
-                </section>
-            )}
+      {section === "reviews" && (
+        <section id="reviews" className="mt-8">
+          <Reviews />
+        </section>
+      )}
 
       {section === "rewards" && (
         <section id="rewards" className="mt-8">

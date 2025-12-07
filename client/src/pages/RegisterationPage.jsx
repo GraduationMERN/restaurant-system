@@ -427,7 +427,7 @@ export default function RegistrationForm() {
         {/* Back Button */}
         <button
           onClick={() => navigate("/")}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors mb-6 group"
+          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary/50 dark:hover:text-primary/40 transition-colors mb-6 group"
         >
           <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
           Back to Home
@@ -436,7 +436,7 @@ export default function RegistrationForm() {
         {/* Registration Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center">
+          <div className="bg-primary from-primary/50 to-primary/60 p-6 text-center">
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <ChefHat className="w-10 h-10 text-white" />
             </div>
@@ -476,7 +476,7 @@ export default function RegistrationForm() {
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${
                       errors.name && touched.name
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-orange-500 focus:ring-orange-500"
+                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                     } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="flap jack"
                   />
@@ -507,7 +507,7 @@ export default function RegistrationForm() {
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${
                       errors.email && touched.email
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-orange-500 focus:ring-orange-500"
+                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                     } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="john@example.com"
                   />
@@ -538,7 +538,7 @@ export default function RegistrationForm() {
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${
                       errors.phoneNumber && touched.phoneNumber
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-orange-500 focus:ring-orange-500"
+                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                     } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="0123 456 789"
                   />
@@ -569,7 +569,7 @@ export default function RegistrationForm() {
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${
                       errors.password && touched.password
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-orange-500 focus:ring-orange-500"
+                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                     } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="••••••••"
                   />
@@ -619,7 +619,7 @@ export default function RegistrationForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full bg-primary from-primary/50 to-primary/60 hover:from-primary/60 hover:to-primary/70 text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -639,7 +639,7 @@ export default function RegistrationForm() {
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-semibold text-orange-500 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 transition-colors"
+                  className="font-semibold text-primary dark:text-primary/40 hover:text-primary/60 dark:hover:text-primary/30 transition-colors"
                 >
                   Sign in here
                 </Link>

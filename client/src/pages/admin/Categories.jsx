@@ -7,7 +7,12 @@ import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
-import { getAllCategories, addCategory, updateCategory, deleteCategory } from "../../redux/slices/CategorySlice";
+import {
+  getAllCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+} from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 
 export default function Categories() {
@@ -48,7 +53,9 @@ export default function Categories() {
     setSaving(true);
     try {
       if (editing) {
-        const action = await dispatch(updateCategory({ id: editing, data: buildFD(form) }));
+        const action = await dispatch(
+          updateCategory({ id: editing, data: buildFD(form) })
+        );
         unwrapResult(action);
       } else {
         const action = await dispatch(addCategory(buildFD(form)));
@@ -78,43 +85,115 @@ export default function Categories() {
       <PageBreadcrumb pageTitle="Categories" />
 
       <ComponentCard>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h3 className="text-lg font-semibold">Categories</h3>
-          <Button onClick={openCreate}>+ Add Category</Button>
+          <Button onClick={openCreate} className="w-full sm:w-auto">
+            + Add Category
+          </Button>
         </div>
       </ComponentCard>
 
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Responsive Grid */}
+      <div className="
+  mt-4 
+  grid 
+  grid-cols-1       /* Mobile: 1 card per row */
+  sm:grid-cols-2     /* Tablet + Desktop: 2 cards per row */
+  gap-4
+">
+
         {loading && <div className="p-3">Loading...</div>}
-        {!loading && categories.map((c) => (
-          <div key={c._id} className="rounded-lg border p-3 flex items-center gap-3">
-            <img src={c.imgURL} alt={c.name} className="w-16 h-16 object-cover rounded-md" />
-            <div className="flex-1">
-              <div className="font-medium">{c.name}</div>
-              <div className="text-sm text-gray-500">{new Date(c.createdAt).toLocaleString()}</div>
+
+        {!loading &&
+          categories.map((c) => (
+            <div
+              key={c._id}
+              className="rounded-xl border p-4 flex flex-col sm:flex-row items-center gap-4
+                       hover:shadow-md transition-all bg-white dark:bg-gray-900"
+            >
+              {/* Image */}
+              <img
+                src={c.imgURL}
+                alt={c.name}
+                className="w-20 h-20 object-cover rounded-md shadow-sm
+                         sm:w-16 sm:h-16"
+              />
+
+              {/* Text Content */}
+              <div className="flex-1 text-center sm:text-left">
+                <div className="font-semibold text-base">{c.name}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(c.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
+                <button
+                  className="text-brand-500 hover:text-brand-600 text-sm font-medium px-2 py-1"
+                  onClick={() => openEdit(c)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-error-500 hover:text-error-600 text-sm font-medium px-2 py-1"
+                  onClick={() => handleDelete(c._id)}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button className="text-brand-500" onClick={() => openEdit(c)}>Edit</button>
-              <button className="text-error-500" onClick={() => handleDelete(c._id)}>Delete</button>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
 
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} className="max-w-md p-6">
+      {/* Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        className="w-[95%] sm:max-w-md p-6 rounded-xl"
+      >
         <div className="space-y-4">
-          <h4 className="font-semibold">{editing ? "Edit Category" : "Add Category"}</h4>
-          <div>
+          <h4 className="font-semibold text-lg">
+            {editing ? "Edit Category" : "Add Category"}
+          </h4>
+
+          {/* Name Field */}
+          <div className="space-y-1">
             <Label>Name</Label>
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            />
           </div>
-          <div>
+
+          {/* Image Field */}
+          <div className="space-y-1">
             <Label>Image</Label>
-            <input type="file" accept="image/*" onChange={(e) => setForm((f) => ({ ...f, imageFile: e.target.files?.[0] || null }))} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  imageFile: e.target.files?.[0] || null,
+                }))
+              }
+              className="w-full border dark:border-gray-700 rounded-md p-2"
+            />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || !form.name}>{saving ? "Saving..." : "Save"}</Button>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving || !form.name}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </div>
         </div>
       </Modal>

@@ -165,6 +165,7 @@ function MenuPage() {
 
       {/* Search + View Switch */}
       <Box
+        margin={2}
         display="flex"
         justifyContent="space-between"
         alignItems="center"
@@ -226,6 +227,7 @@ function MenuPage() {
         textTransform="uppercase"
         mb={2}
         mt={1}
+        ml={1}
       >
         {activeCategory}
       </Typography>
@@ -234,7 +236,7 @@ function MenuPage() {
       {/* <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"> */}
       <div
         className={
-          "grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
+          "m-2 mb-10 grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
         }
       >
         {filtered.map((p) => (

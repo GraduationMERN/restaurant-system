@@ -17,7 +17,7 @@ export default function ReviewsPage() {
   }, [dispatch]);
 
   return (
-    <div className="ms-20 me-10 my-10">
+    <div className="ms-10 me-10 my-10">
       <h2 className="text-2xl font-bold mb-4">{t("reviews")}</h2>
 
       <button
