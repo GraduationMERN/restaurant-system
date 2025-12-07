@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import path from "path";
 import connectDB from "./src/config/db.js";
 import { env } from "./src/config/env.js";
 // Middlewares
@@ -48,7 +49,7 @@ const corsOptions = {
     const allowedOrigins = [
       "http://localhost:5173",
       "https://brandbite-three.vercel.app",
-      env.frontendUrl
+      env.frontendUrl,
     ].filter(Boolean); // Remove empty values
 
     // Allow exact matches
@@ -86,7 +87,7 @@ app.use(cookieParser());
 app.use(requestIdMiddleware);
 // app.use(requestLogger);
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 
@@ -113,6 +114,9 @@ app.use("/api/restaurant", restaurantRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 
+// Serve uploaded files from /uploads
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 // --- Default Route ---
 app.get("/", (req, res) => {
   res.json({ message: "QR Restaurant API is running" });
@@ -120,7 +124,9 @@ app.get("/", (req, res) => {
 
 // --- 404 Handler ---
 app.use((req, res, next) => {
-  res.status(404).json({ message: "Route not found", requestId: req.requestId });
+  res
+    .status(404)
+    .json({ message: "Route not found", requestId: req.requestId });
 });
 
 // --- Global Error Handler ---

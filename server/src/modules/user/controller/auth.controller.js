@@ -12,9 +12,14 @@ import { verifyOtpService } from "../service/verifyOtp.service.js";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
+  // Only mark cookies as Secure in production (requires HTTPS).
+  // Some browsers (and iOS in particular) will refuse to store Secure cookies
+  // when the site is served over plain HTTP (e.g. local/dev testing or LAN).
+  secure: env.nodeEnv === "production",
+  // In production we need SameSite=None for cross-site cookies (and Secure=true).
+  // During development set a safer default to avoid rejection by browsers.
+  sameSite: env.nodeEnv === "production" ? "none" : "lax",
   maxAge: 24 * 60 * 60 * 1000,
-  sameSite: "none",
 };
 
 export const registerUserController = async (req, res) => {
