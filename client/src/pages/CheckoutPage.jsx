@@ -282,7 +282,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading cart...</p>
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function CheckoutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors group"
+            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary/90 transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back
@@ -346,10 +346,10 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3 ml-4">
-                        <div className="flex items-center bg-orange-100 dark:bg-orange-900/20 rounded-full px-1">
+                        <div className="flex items-center bg-orange-100 dark:bg-primary-900/20 rounded-full px-1">
                           <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
+                            className="w-8 h-8 flex items-center justify-center text-primary/110 dark:text-primary/90 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -358,7 +358,7 @@ export default function CheckoutPage() {
                           </span>
                           <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
+                            className="w-8 h-8 flex items-center justify-center text-primary/110 dark:text-primary/90 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -374,7 +374,7 @@ export default function CheckoutPage() {
                             key={opt._id}
                             value={item.selectedOptions[opt.name] || ""}
                             onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
-                            className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                            className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
                             <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
                             {opt.choices.map((choice) => (
@@ -412,7 +412,7 @@ export default function CheckoutPage() {
                 <p className="text-gray-500 dark:text-gray-400">Your cart is empty</p>
                 <button
                   onClick={() => navigate('/')}
-                  className="mt-4 text-orange-500 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 font-medium"
+                  className="mt-4 text-primary dark:text-primary/90 hover:text-primary/110 dark:hover:text-primary/90 font-medium"
                 >
                   Browse our menu
                 </button>
@@ -422,7 +422,7 @@ export default function CheckoutPage() {
             {/* Add Other Items Button */}
             <button
               onClick={() => navigate('/')}
-              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-orange-300 dark:border-orange-600 text-orange-500 dark:text-orange-400 rounded-2xl py-4 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all duration-300"
+              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-primary/90 dark:border-primary/110 text-primary dark:text-primary/90 rounded-2xl py-4 hover:bg-white dark:hover:bg-primary-900/10 transition-all duration-300"
             >
               <Plus className="w-5 h-5" />
               Add other items
@@ -438,7 +438,7 @@ export default function CheckoutPage() {
                   <select
                     value={serviceType}
                     onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
+                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
                   >
                     <option value="pickup" className="bg-white dark:bg-gray-700">Pick up</option>
                     <option value="dine-in" className="bg-white dark:bg-gray-700">Dine-in</option>
@@ -525,7 +525,7 @@ export default function CheckoutPage() {
                           <button
                             onClick={shareMyLocation}
                             disabled={locationLoading}
-                            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/110 hover:to-primary/110 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
                           >
                             {locationLoading ? (
                               <>
@@ -563,7 +563,7 @@ export default function CheckoutPage() {
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     placeholder="Enter table number"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                   />
                 </div>
               )}
@@ -579,7 +579,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any special requests? (e.g., extra sauce, no onions)"
                   rows={3}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none transition-colors"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none transition-colors"
                 />
               </div>
 
@@ -595,12 +595,12 @@ export default function CheckoutPage() {
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Enter promo code"
-                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => { /* UI-only apply: backend will validate on submit */ }}
-                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium"
+                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium"
                   >
                     Apply
                   </button>
@@ -619,7 +619,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-xl font-bold text-orange-500 dark:text-orange-400">EGP {total.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-primary dark:text-primary/90">EGP {total.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -627,7 +627,7 @@ export default function CheckoutPage() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || products.length === 0}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/110 hover:to-primary/110 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {submitting ? (
                   <span className="flex items-center justify-center">
@@ -659,7 +659,7 @@ export default function CheckoutPage() {
             </div>
             <div className="p-4 flex gap-3 justify-end border-t dark:border-gray-700">
               <button onClick={() => setShowMapPicker(false)} className="px-4 py-2 rounded-lg border">Close</button>
-              <button onClick={saveMapLocation} className="px-4 py-2 rounded-lg bg-orange-500 text-white">Confirm location</button>
+              <button onClick={saveMapLocation} className="px-4 py-2 rounded-lg bg-primary text-white">Confirm location</button>
             </div>
           </div>
         </div>

@@ -35,7 +35,7 @@ import CashierDashboard from "./pages/cashier/CashierDashboard";
 import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
-import { requestNotificationPermission } from './utils/notifications';
+import { requestNotificationPermission } from "./utils/notifications";
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
@@ -52,23 +52,16 @@ function App() {
     }
   }, [dispatch, isAuthenticated, checked]);
 
-  if (loadingGetMe) {
-    return <LoadingSpinner />;
-  }
-    // Only try to auto-fetch the current user if we know
-    // there was a previous authenticated session.
-    if (typeof window !== "undefined") {
-      const hasSession = window.localStorage.getItem("hasSession") === "true";
-      if (hasSession) {
-        dispatch(getMe());
-      }
-    }
-  }, [dispatch]);
-
   // Request notification permission on app load (centralized)
   useEffect(() => {
     requestNotificationPermission();
   }, []);
+
+  if (loadingGetMe) {
+    return <LoadingSpinner />;
+  }
+  // Only try to auto-fetch the current user if we know
+  // there was a previous authenticated session.
 
   return (
     <BrowserRouter>
@@ -89,7 +82,10 @@ function App() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/cart" element={<CartPage />} />
-            <Route path="/reward-order/:id" element={<RewardOrderTrackingPage />} />
+            <Route
+              path="/reward-order/:id"
+              element={<RewardOrderTrackingPage />}
+            />
 
             {/* Customer Routes */}
             <Route path="/cart" element={<CartPage />} />
@@ -153,6 +149,6 @@ function App() {
       <Chatbot />
     </BrowserRouter>
   );
-};
+}
 
 export default App;
