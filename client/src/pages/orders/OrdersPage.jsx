@@ -6,12 +6,11 @@ import {
   fetchActiveOrder,
   fetchOrderHistory,
   setGuestActiveOrder,
-  clearActiveOrder,
-  updateActiveOrderFromSocket,
-  handlePaymentUpdate,
-  handleStatusUpdate,
 } from "../../redux/slices/ordersSlice";
-import socketClient, { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
+import socketClient, {
+  setupSocketListeners,
+  joinSocketRooms,
+} from "../../utils/socketRedux";
 import { useToast } from "../../hooks/useToast";
 import ActiveOrderComponent from "./ActiveOrderComponent";
 import OrderHistoryComponent from "./OrderHistoryComponent";
@@ -37,24 +36,20 @@ export default function OrdersPage() {
   const [guestActiveOrder, setGuestActiveOrderLocal] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Determine if user is logged in
   const isLoggedIn = !!user && !user.isGuest;
 
-  // Initialize socket with proper setup
+  /* ------------------------------------------
+     SOCKET INITIALIZATION
+  ------------------------------------------- */
   useEffect(() => {
-    const socket = socketClient.getSocket() || socketClient.initSocket();
+    const socket =
+      socketClient.getSocket() || socketClient.initSocket();
     if (!socket) return;
 
-    // Setup global socket listeners (handles all Redux dispatches)
     setupSocketListeners(socket);
+    if (user) joinSocketRooms(socket, user);
 
-    // Join socket rooms for this user
-    if (user) {
-      joinSocketRooms(socket, user);
-    }
-
-    // Additional listeners for toast notifications
-    const handleStatusNotification = (data) => {
+    const notifyStatus = (data) => {
       const orderId = data.orderId || data._id;
       if (activeOrder && activeOrder._id === orderId) {
         toast.showToast({
@@ -65,57 +60,51 @@ export default function OrdersPage() {
       }
     };
 
-    const handlePaymentNotification = (data) => {
+    const notifyPayment = (data) => {
       const orderId = data.orderId || data._id;
       if (activeOrder && activeOrder._id === orderId) {
-        if (data.paymentStatus === "paid") {
+        const status = data.paymentStatus;
+        const types = {
+          paid: ["Payment confirmed!", "success"],
+          failed: ["Payment failed", "error"],
+          refunded: ["Order refunded", "success"],
+        };
+
+        if (types[status]) {
           toast.showToast({
-            message: "✅ Payment confirmed!",
-            type: "success",
-            duration: 3000,
-          });
-        } else if (data.paymentStatus === "failed") {
-          toast.showToast({
-            message: "❌ Payment failed",
-            type: "error",
-            duration: 3000,
-          });
-        } else if (data.paymentStatus === "refunded") {
-          toast.showToast({
-            message: "💰 Order refunded",
-            type: "success",
+            message: types[status][0],
+            type: types[status][1],
             duration: 3000,
           });
         }
       }
     };
 
-    // Listen for status changes with notifications
-    socket.on("order:your-status-changed", handleStatusNotification);
-    socket.on("order:status-changed", handleStatusNotification);
-    socket.on("order:your-payment-updated", handlePaymentNotification);
+    socket.on("order:your-status-changed", notifyStatus);
+    socket.on("order:status-changed", notifyStatus);
+    socket.on("order:your-payment-updated", notifyPayment);
 
     return () => {
-      socket.off("order:your-status-changed", handleStatusNotification);
-      socket.off("order:status-changed", handleStatusNotification);
-      socket.off("order:your-payment-updated", handlePaymentNotification);
+      socket.off("order:your-status-changed", notifyStatus);
+      socket.off("order:status-changed", notifyStatus);
+      socket.off("order:your-payment-updated", notifyPayment);
     };
   }, [activeOrder, toast, user]);
 
-  // Fetch data on mount
+  /* ------------------------------------------
+     FETCH INITIAL DATA
+  ------------------------------------------- */
   useEffect(() => {
     if (isLoggedIn) {
-      // Fetch for logged-in users
       dispatch(fetchActiveOrder());
       dispatch(fetchOrderHistory());
     } else {
-      // For guests, try to load from local storage
-      const storedActiveOrder = localStorage.getItem("activeOrder");
-      if (storedActiveOrder) {
+      const stored = localStorage.getItem("activeOrder");
+      if (stored) {
         try {
-          const parsedOrder = JSON.parse(storedActiveOrder);
-          setGuestActiveOrderLocal(parsedOrder);
-          dispatch(setGuestActiveOrder(parsedOrder));
+          const parsed = JSON.parse(stored);
+          setGuestActiveOrderLocal(parsed);
+          dispatch(setGuestActiveOrder(parsed));
         } catch (err) {
           console.error("Failed to parse stored order:", err);
         }
@@ -123,7 +112,9 @@ export default function OrdersPage() {
     }
   }, [isLoggedIn, dispatch]);
 
-  // Refresh handler
+  /* ------------------------------------------
+     REFRESH HANDLER
+  ------------------------------------------- */
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -132,10 +123,11 @@ export default function OrdersPage() {
           dispatch(fetchActiveOrder()),
           dispatch(fetchOrderHistory()),
         ]);
+
         toast.showToast({
           message: "Orders refreshed",
           type: "success",
-          duration: 2000,
+          duration: 1500,
         });
       }
     } catch (err) {
@@ -148,22 +140,25 @@ export default function OrdersPage() {
     }
   };
 
-  // Determine which order to display
+  /* ------------------------------------------
+     DISPLAY DATA HANDLING
+  ------------------------------------------- */
   const displayActiveOrder = isLoggedIn ? activeOrder : guestActiveOrder;
-  const displayOrderHistory = isLoggedIn ? orderHistory : [];
-
-  // Loading state
+  const displayHistory = isLoggedIn ? orderHistory : [];
   const isLoading = activeOrderLoading || historyLoading;
+  const noOrders =
+    !displayActiveOrder && displayHistory.length === 0;
 
-  // No orders state
-  const hasNoOrders = !displayActiveOrder && displayOrderHistory.length === 0;
-
+  /* ------------------------------------------
+     UI
+  ------------------------------------------- */
   return (
     <>
       <PageMeta
         title="My Orders"
         description="Track your restaurant orders in real-time"
       />
+
       <PageBreadcrumb
         breadcrumbs={[
           { label: "Home", href: "/" },
@@ -171,32 +166,40 @@ export default function OrdersPage() {
         ]}
       />
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 sm:py-12">
+      <div className="min-h-screen bg-white dark:bg-gray-900 py-6 sm:py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+          {/* HEADER */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
               My Orders
             </h1>
+
             {isLoggedIn && (
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`
+                  flex items-center gap-2 px-4 py-2
+                  bg-primary hover:bg-primary/80 text-white 
+                  font-semibold rounded-lg transition-colors
+                  disabled:opacity-60 disabled:cursor-not-allowed
+                `}
               >
                 <RefreshCw
-                  className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
+                  className={`w-5 h-5 ${
+                    refreshing ? "animate-spin" : ""
+                  }`}
                 />
                 Refresh
               </button>
             )}
           </div>
 
-          {/* Loading State */}
+          {/* LOADING */}
           {isLoading && (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600 dark:text-gray-400">
                   Loading your orders...
                 </p>
@@ -204,31 +207,30 @@ export default function OrdersPage() {
             </div>
           )}
 
-          {/* Content */}
+          {/* CONTENT */}
           {!isLoading && (
             <>
               {/* Active Order */}
               {displayActiveOrder && (
                 <>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Last updated:{" "}
-                      {lastUpdated
-                        ? new Date(lastUpdated).toLocaleTimeString()
-                        : "Just now"}
-                    </p>
-                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Last updated:{" "}
+                    {lastUpdated
+                      ? new Date(lastUpdated).toLocaleTimeString()
+                      : "Just now"}
+                  </p>
+
                   <ActiveOrderComponent order={displayActiveOrder} />
                 </>
               )}
 
-              {/* Order History */}
-              {displayOrderHistory.length > 0 && (
-                <OrderHistoryComponent orders={displayOrderHistory} />
+              {/* History */}
+              {displayHistory.length > 0 && (
+                <OrderHistoryComponent orders={displayHistory} />
               )}
 
-              {/* Empty State */}
-              {hasNoOrders && <EmptyOrdersComponent />}
+              {/* Empty */}
+              {noOrders && <EmptyOrdersComponent />}
             </>
           )}
         </div>
