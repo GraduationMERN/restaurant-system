@@ -1,176 +1,110 @@
 import Order from "./orderModel.js";
-
+import mongoose from "mongoose";
 
 class OrderRepository {
-  // ==============================
-  // CREATE
-  // ==============================
+  // Create order
   async create(orderData) {
-    return Order.create(orderData);
+    const order = new Order(orderData);
+    return await order.save();
   }
 
-  // ==============================
-  // READ
-  // ==============================
-  async findById(orderId, populateProducts = false) {
+  // Find by ID with optional population
+  async findById(orderId, populate = false) {
     let query = Order.findById(orderId);
-    if (populateProducts) {
+    
+    if (populate) {
       query = query
-        .populate("items.productId")
-        .populate("userId", "name email phone")
-        .populate("cartId");
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
     }
-    return query.exec();
+    
+    return await query;
   }
 
-  async findByUserId(userId) {
-    return Order.find({ userId })
-      .populate("items.productId")
-      .populate("cartId")
-      .sort({ createdAt: -1 })
-      .exec();
+  // Find by Stripe session ID
+  async findByStripeSessionId(sessionId, populate = false) {
+    let query = Order.findOne({ stripeSessionId: sessionId });
+    
+    if (populate) {
+      query = query
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
+    }
+    
+    return await query;
   }
 
+  // Find by user ID (works for both guest and registered)
+  async findByUserId(userId, populate = false) {
+    // Build the $or filter conditionally so we don't accidentally
+    // match { user: null } when the provided id is not a valid ObjectId.
+    const orConditions = [ { customerId: userId } ];
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      orConditions.push({ user: new mongoose.Types.ObjectId(userId) });
+    }
+
+    let query = Order.find({ $or: orConditions }).sort({ createdAt: -1 });
+
+    if (populate) {
+      query = query.populate('user', 'name email phone');
+    }
+
+    return await query;
+  }
+
+  // Find order by Stripe payment intent id
+  async findByStripePaymentIntent(paymentIntent, populate = false) {
+    let query = Order.findOne({ stripePaymentIntent: paymentIntent });
+    if (populate) {
+      query = query
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
+    }
+    return await query;
+  }
+
+  // Find by cart ID
   async findByCartId(cartId) {
-    return Order.findOne({ cartId })
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .exec();
+    return await Order.findOne({ cartId });
   }
 
+  // Find active orders
   async findActiveOrders() {
-    return Order.find({ status: { $in: ["pending", "confirmed", "preparing"] } })
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .sort({ createdAt: 1 })
-      .exec();
-  }
-
-  async findByStatus(status) {
-    return Order.find({ status })
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .sort({ createdAt: -1 })
-      .exec();
-  }
-
-  async getAllOrders() {
-    return Order.find()
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .sort({ createdAt: -1 })
-      .exec();
-  }
-
-  // ==============================
-  // UPDATE
-  // ==============================
-  async updateStatus(orderId, newStatus) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { status: newStatus, updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  async updatePayment(orderId, updates) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { ...updates, updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  async updateCustomerInfo(orderId, customerInfo) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { customerInfo, updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  async updateUserId(orderId, newUserId) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { userId: newUserId, updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  async update(orderId, updates) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { ...updates, updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  async cancelOrder(orderId) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { status: "cancelled", updatedAt: new Date() },
-      { new: true }
-    )
-      .populate("items.productId")
-      .populate("userId", "name email phone");
-  }
-
-  // ==============================
-  // DELETE
-  // ==============================
-  async delete(orderId) {
-    return Order.findByIdAndDelete(orderId);
-  }
-
-  // ==============================
-  // SEARCH / FILTER / PAGINATION
-  // ==============================
-  async search(filter = {}, options = {}) {
-    const { limit = 50, skip = 0, sort = { createdAt: -1 } } = options;
-    return Order.find(filter)
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .exec();
-  }
-
-  async findByDateRange(startDate, endDate) {
-    return Order.find({
-      createdAt: { $gte: startDate, $lte: endDate }
+    return await Order.find({
+      status: { $in: ["pending", "confirmed", "preparing", "ready"] }
     })
-      .populate("items.productId")
-      .populate("userId", "name email phone")
-      .sort({ createdAt: -1 })
-      .exec();
+    .sort({ createdAt: 1 })
+    .populate('user', 'name email phone')
+    .populate('createdBy', 'name');
   }
 
-  // ==============================
-  // STATISTICS
-  // ==============================
-  async getOrderStats() {
-    return Order.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          totalRevenue: { $sum: "$totalAmount" }
-        }
-      }
+  // Get all orders with pagination
+  async getAllOrders({ page = 1, limit = 50, status } = {}) {
+    const skip = (page - 1) * limit;
+    const filter = {};
+    if (status) filter.status = status;
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name'),
+      Order.countDocuments(filter)
     ]);
+
+    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
+  // Update order
+  async update(orderId, updates) {
+    return await Order.findByIdAndUpdate(
+        orderId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+  }
   //for charts
   async getOverviewStats(from = null, to = null) {
     const match = {};
@@ -298,11 +232,119 @@ class OrderRepository {
   async updateStripeSessionId(orderId, sessionId, opts = {}) {
     return Order.findByIdAndUpdate(
       orderId,
-      { stripeSessionId: sessionId },
-      { new: true, ...(opts.session && { session: opts.session }) }
+      { $set: updates },
+      { new: true, runValidators: true }
     );
   }
 
+  // Update status
+  async updateStatus(orderId, status) {
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    );
+  }
+
+  // Update payment with user population
+  async updatePaymentWithUser(orderId, updates) {
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { $set: updates },
+      { new: true }
+    ).populate('user', 'name email phone');
+    
+    return order;
+  }
+
+  // Update payment
+  async updatePayment(orderId, updates, session = null) {
+    const options = { new: true };
+    if (session) options.session = session;
+    
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { $set: updates },
+      options
+    );
+  }
+
+  // Cancel order
+  async cancelOrder(orderId) {
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { 
+        $set: { 
+          status: "cancelled",
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    );
+  }
+
+  // Update customer info
+  async updateCustomerInfo(orderId, customerInfo) {
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { 
+        $set: { 
+          "customerInfo": customerInfo,
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    );
+  }
+
+  // Update user ID (link guest to registered user)
+  async updateUserId(orderId, userId) {
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { 
+        $set: { 
+          user: userId,
+          customerId: userId.toString(),
+          customerType: "registered",
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    );
+  }
+
+  // Search orders
+  async search(filter = {}, options = {}) {
+    const { page = 1, limit = 50, sort = { createdAt: -1 } } = options;
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name email phone'),
+      Order.countDocuments(filter)
+    ]);
+
+    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  // Delete order
+  async delete(orderId) {
+    return await Order.findByIdAndDelete(orderId);
+  }
+
+  // Find by order number
+  async findByOrderNumber(orderNumber) {
+    return await Order.findOne({ orderNumber })
+      .populate('user', 'name email phone');
+  }
 }
 
 export default new OrderRepository();

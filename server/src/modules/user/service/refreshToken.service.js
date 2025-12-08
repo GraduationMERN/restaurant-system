@@ -23,8 +23,9 @@ export const refreshTokenService = async (refreshToken) => {
     throw new Error("Refresh token not recognized");
   }
 
-  const newAccessToken = createAccessToken(user._id);
-  const newRefreshToken = createRefreshToken(user._id);
+  // createAccessToken/createRefreshToken expect the full user object
+  const newAccessToken = createAccessToken(user);
+  const newRefreshToken = createRefreshToken(user);
   await saveRefreshToken(user._id, newRefreshToken);
   return { newAccessToken, newRefreshToken };
 };

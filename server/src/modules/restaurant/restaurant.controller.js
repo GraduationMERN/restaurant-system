@@ -31,3 +31,33 @@ export async function updateRestaurant(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+export async function uploadLogo(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // If using Cloudinary via multer-storage-cloudinary, multer exposes
+    // `file.path` which is the public URL and `file.filename` as the public_id.
+    const url =
+      req.file.path ||
+      `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
+    const restaurant = await Restaurant.findOne();
+    if (!restaurant)
+      return res.status(404).json({ message: "Restaurant not found" });
+
+    // Update branding.logoUrl
+    restaurant.branding = restaurant.branding || {};
+    restaurant.branding.logoUrl = url;
+    await restaurant.save();
+
+    res
+      .status(200)
+      .json({ message: "Logo uploaded", logoUrl: url, restaurant });
+  } catch (error) {
+    console.error("Error uploading logo:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}

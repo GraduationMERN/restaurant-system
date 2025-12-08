@@ -143,8 +143,13 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => response || fetch(event.request))
       .catch(() => {
-        // Return nothing - browser will handle it
-        return null;
+        // **FIX:** Return a simple fallback Response instead of null
+        return new Response('Asset unavailable', {
+          status: 404,
+          statusText: 'Not Found'
+        });
+        // OR, to let the request fail completely, you can re-throw the error:
+        // throw new Error('Asset fetch failed');
       })
   );
 });

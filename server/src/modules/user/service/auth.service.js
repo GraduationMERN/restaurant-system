@@ -3,6 +3,7 @@ import {
   addUser,
   deleteRefreshToken,
   findUserByEmail,
+  findUserByGoogleId,
   findUserByResetToken,
   saveRefreshToken,
 } from "../repository/user.repository.js";
@@ -32,18 +33,25 @@ export const registerUserService = async (user) => {
     throw error;
   }
   const hashedPassword = await hashPassword(password);
-  const code = generateOTP();
+  const code = user.role === "customer" ? generateOTP() : null;
   const newUser = await addUser({
     ...user,
     password: hashedPassword,
     otp: code,
+    isVerified: user.role === "customer" ? false : true,
   });
-  await sendEmail(
-    email,
-    "Your OTP Code",
-    `Your verification code is ${code}, Valid for 10 minutes`
-  );
-  return { message: "OTP sent to email. Please verify your account." };
+  if (user.role === "customer") {
+    await sendEmail(
+      email,
+      "Your OTP Code",
+      `Your verification code is ${code}, Valid for 10 minutes`
+    );
+    return {
+      newUser,
+      message: "OTP sent to email. Please verify your account.",
+    };
+  }
+  return { newUser, message: "Registered successfully" };
 };
 
 export const loginUserService = async (email, password) => {

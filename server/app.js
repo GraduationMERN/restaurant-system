@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import path from "path";
 import connectDB from "./src/config/db.js";
 import { env } from "./src/config/env.js";
 // Middlewares
@@ -11,7 +12,6 @@ import requestIdMiddleware from "./src/middlewares/requestId.middleware.js";
 import requestLogger from "./src/middlewares/requestLogger.middleware.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import optionalAuthMiddleware from "./src/middlewares/optionalAuthMiddleware.js";
-import { stripeWebhookMiddleware } from "./src/modules/payment/stripeWebhookMiddleware.js";
 import logger from "./src/utils/logger.js";
 
 // Routes
@@ -49,7 +49,7 @@ const corsOptions = {
     const allowedOrigins = [
       "http://localhost:5173",
       "https://brandbite-three.vercel.app",
-      env.frontendUrl
+      env.frontendUrl,
     ].filter(Boolean); // Remove empty values
 
     // Allow exact matches
@@ -78,8 +78,7 @@ app.use(cors(corsOptions));
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
   "/api/checkout/webhook",
-  express.raw({ type: "application/json" }), // Use raw body for webhook
-  stripeWebhookMiddleware,
+  express.raw({ type: "application/json" }),
   PaymentController.handleWebhook
 );
 
@@ -89,7 +88,7 @@ app.use(cookieParser());
 app.use(requestIdMiddleware);
 // app.use(requestLogger);
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 
@@ -116,6 +115,9 @@ app.use("/api/restaurant", restaurantRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 
+// Serve uploaded files from /uploads
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 // --- Default Route ---
 app.get("/", (req, res) => {
   res.json({ message: "QR Restaurant API is running" });
@@ -123,7 +125,9 @@ app.get("/", (req, res) => {
 
 // --- 404 Handler ---
 app.use((req, res, next) => {
-  res.status(404).json({ message: "Route not found", requestId: req.requestId });
+  res
+    .status(404)
+    .json({ message: "Route not found", requestId: req.requestId });
 });
 
 // --- Global Error Handler ---

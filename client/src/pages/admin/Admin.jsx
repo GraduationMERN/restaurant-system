@@ -12,70 +12,86 @@ import RewardOrders from "./RewardOrders";
 import Users from "./Users";
 
 export default function Admin() {
-    const { section: rawSection } = useParams();
-    const allowed = new Set(["dashboard", "orders", "menu", "reviews", "rewards", "settings", "profile", "users", "reward-orders", "categories"]);
-    const section = rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
+  const { section: rawSection } = useParams();
+  const allowed = new Set([
+    "dashboard",
+    "orders",
+    "menu",
+    "reviews",
+    "categories",
+    "rewards",
+    "settings",
+    "profile",
+    "users",
+    "reward-orders",
+  ]);
+  const section =
+    rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
 
-    return (
-        <>
-            <PageMeta title="Admin" description="All sections in one page" />
-            {section === "dashboard" && (
-                <section id="dashboard" className="mt-0">
-                    <Dashboard />
-                </section>
-            )}
-            {section === "orders" && (
-                <section id="orders" className="mt-8">
-                    <Orders />
-                </section>
-            )}
+  return (
+    <>
+      <PageMeta title="Admin" description="All sections in one page" />
+      {section === "dashboard" && (
+        <section id="dashboard" className="mt-0">
+          <Dashboard />
+        </section>
+      )}
+      {section === "orders" && (
+        <section id="orders" className="mt-8">
+          <Orders />
+        </section>
+      )}
 
-            {section === "menu" && (
-                <section id="menu" className="mt-8">
-                    <Menu />
-                </section>
-            )}
+      {section === "menu" && (
+        <section id="menu" className="mt-8">
+          <Menu />
+        </section>
+      )}
 
-            {section === "categories" && (
-                <section id="categories" className="mt-8">
-                    <Categories />
-                </section>
-            )}
+      {section === "categories" && (
+        <section id="categories" className="mt-8">
+          <Categories />
+        </section>
+      )}
 
-            {section === "reviews" && (
-                <section id="reviews" className="mt-8">
-                    <Reviews />
-                </section>
-            )}
+      {section === "reviews" && (
+        <section id="reviews" className="mt-8">
+          <Reviews />
+        </section>
+      )}
 
-            {section === "rewards" && (
-                <section id="rewards" className="mt-8">
-                    <Rewards />
-                </section>
-            )}
-            {section === "reward-orders" && (
-                <section id="reward-orders" className="mt-8">
-                    <RewardOrders />
-                </section>
-            )}
+      {section === "rewards" && (
+        <section id="rewards" className="mt-8">
+          <Rewards />
+        </section>
+      )}
+      {section === "reward-orders" && (
+        <section id="reward-orders" className="mt-8">
+          <RewardOrders />
+        </section>
+      )}
 
-            {section === "settings" && (
-                <section id="settings" className="mt-8">
-                    <Settings />
-                </section>
-            )}
+      {section === "settings" && (
+        <section id="settings" className="mt-8">
+          <Settings />
+        </section>
+      )}
+      {section === "users" && (
+        <section id="users" className="mt-8">
+          <Users />
+        </section>
+      )}
 
-            {section === "profile" && (
-                <section id="profile" className="mt-8">
-                    <UserProfiles />
-                </section>
-            )}
-            {section === "users" && (
-                <section id="users" className="mt-8">
-                    <Users />
-                </section>
-            )}
-        </>
-    );
+      {section === "profile" && (
+        <section id="profile" className="mt-8">
+          <UserProfiles />
+        </section>
+      )}
+      {section === "users" && (
+        <section id="users" className="mt-8">
+          <Users />
+        </section>
+      )}
+    </>
+  );
 }
-

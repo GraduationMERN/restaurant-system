@@ -1,6 +1,7 @@
 import { env } from "../../../config/env.js";
 import {
   forgetPasswordService,
+  googleAuthService,
   loginUserService,
   logoutUserService,
   registerUserService,
@@ -11,26 +12,21 @@ import { verifyOtpService } from "../service/verifyOtp.service.js";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
+  // Only mark cookies as Secure in production (requires HTTPS).
+  // Some browsers (and iOS in particular) will refuse to store Secure cookies
+  // when the site is served over plain HTTP (e.g. local/dev testing or LAN).
+  secure: env.nodeEnv === "production",
+  // In production we need SameSite=None for cross-site cookies (and Secure=true).
+  // During development set a safer default to avoid rejection by browsers.
+  sameSite: env.nodeEnv === "production" ? "none" : "lax",
   maxAge: 24 * 60 * 60 * 1000,
-  sameSite: "none",
 };
 
 export const registerUserController = async (req, res) => {
   try {
-    // const { newUser, token } = await registerUserService(req.body);
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   maxAge: 24 * 60 * 60 * 1000,
-    //   sameSite: "none",
-    // });
     const { message } = await registerUserService(req.body);
     res.status(201).json({
-      message: "Registered successfully",
-      user: {
-        message,
-      },
+      message,
     });
   } catch (err) {
     console.log(err);
@@ -57,6 +53,8 @@ export const loginUserController = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
       },
     });
   } catch (err) {
@@ -74,7 +72,7 @@ export const getMe = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      points:user.points
+      points: user.points,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -98,6 +96,8 @@ export const verifyOTP = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
       },
     });
   } catch (err) {
@@ -144,26 +144,24 @@ export const googleCallbackController = async (req, res) => {
 
   try {
     const { refreshToken, accessToken, user } = await googleAuthService(code);
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-
-    res.redirect(env.frontendUrl);
+    // Redirect to frontend instead of sending JSON
+    res.redirect(
+      `${env.frontendUrl}?name=${encodeURIComponent(
+        user.name
+      )}&email=${encodeURIComponent(user.email)}`
+    );
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;

@@ -17,6 +17,23 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const googleLogin = createAsyncThunk(
+  "auth/googleLogin",
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      const res = await dispatch(getMe());
+
+      if (res.meta.requestStatus === "rejected") {
+        return rejectWithValue("Failed to login with Google");
+      }
+
+      return res.payload;
+    } catch (err) {
+      return rejectWithValue("Google login failed");
+    }
+  }
+);
+
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async ({ email, otp: code }, { rejectWithValue }) => {
@@ -33,9 +50,9 @@ export const verifyOtp = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
+  async ({ email, password,points }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password,points });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -58,6 +75,36 @@ export const getMe = createAsyncThunk(
   }
 );
 
+// --- FORGOT PASSWORD ---
+export const sendResetEmail = createAsyncThunk(
+  "auth/sendResetEmail",
+  async (email, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/auth/forget", { email });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Error sending email"
+      );
+    }
+  }
+);
+
+// --- RESET PASSWORD ---
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, password }, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/auth/reset", { token, password });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Error resetting password"
+      );
+    }
+  }
+);
+
 export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
@@ -66,7 +113,7 @@ export const refreshToken = createAsyncThunk(
       return res.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Could not refresh token"
+        err.response?.data?.message || "Failed to refresh token"
       );
     }
   }
@@ -90,12 +137,18 @@ const initialState = {
   isAuthenticated: false,
   error: null,
 
+  // Loading states for existing auth logic
   loadingRegister: false,
   loadingVerifyOtp: false,
   loadingLogin: false,
   loadingGetMe: false,
-  loadingRefresh: false,
   loadingLogout: false,
+
+  // Loading + response states for Forget/Reset flow
+  loadingReset: false,
+  loadingSendReset: false,
+
+  message: "",
 };
 
 // --- SLICE ---
@@ -103,8 +156,15 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    clearAuthState: (state) => {
+      state.message = "";
+      state.error = null;
+    },
     clearError(state) {
       state.error = null;
+    },
+    clearMessage(state) {
+      state.message = "";
     },
     setUser(state, action) {
       state.user = action.payload;
@@ -114,8 +174,10 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.message = "";
     },
   },
+
   extraReducers: (builder) => {
     // --- REGISTER ---
     builder
@@ -161,10 +223,6 @@ const authSlice = createSlice({
         state.loadingLogin = false;
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
-        state.error = null;
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
-        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loadingLogin = false;
@@ -191,41 +249,7 @@ const authSlice = createSlice({
         state.loadingGetMe = false;
         state.user = null;
         state.isAuthenticated = false;
-        if (typeof window !== "undefined") {
-          if (action.payload === "Unauthorized") {
-            window.localStorage.removeItem("hasSession");
-          }
-        }
-        if (action.payload && action.payload !== "Unauthorized") {
-          state.error = action.payload;
-        }
-      });
-
-    // --- REFRESH TOKEN ---
-    builder
-      .addCase(refreshToken.pending, (state) => {
-        state.loadingRefresh = true;
-        state.error = null;
-      })
-      .addCase(refreshToken.fulfilled, (state, action) => {
-        state.loadingRefresh = false;
-        if (action.payload?.user) {
-          state.user = action.payload.user;
-          state.isAuthenticated = true;
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem("hasSession", "true");
-          }
-        }
-        state.error = null;
-      })
-      .addCase(refreshToken.rejected, (state, action) => {
-        state.loadingRefresh = false;
-        state.user = null;
-        state.isAuthenticated = false;
-         if (typeof window !== "undefined") {
-          window.localStorage.removeItem("hasSession");
-        }
-        if (action.payload && action.payload !== "Unauthorized") {
+        if (action.payload !== "Unauthorized") {
           state.error = action.payload;
         }
       });
@@ -240,17 +264,61 @@ const authSlice = createSlice({
         state.loadingLogout = false;
         state.user = null;
         state.isAuthenticated = false;
-        state.error = null;
-        if (typeof window !== "undefined") {
-          window.localStorage.removeItem("hasSession");
-        }
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loadingLogout = false;
         state.error = action.payload;
       });
+
+    // --- SEND RESET EMAIL ---
+    builder
+      .addCase(sendResetEmail.pending, (state) => {
+        state.loadingSendReset = true;
+        state.error = null;
+        state.message = "";
+      })
+      .addCase(sendResetEmail.fulfilled, (state) => {
+        state.loadingSendReset = false;
+        state.message = "Reset link sent to your email";
+      })
+      .addCase(sendResetEmail.rejected, (state, action) => {
+        state.loadingSendReset = false;
+        state.error = action.payload;
+      });
+
+    // --- RESET PASSWORD ---
+    builder
+      .addCase(resetPassword.pending, (state) => {
+        state.loadingReset = true;
+        state.error = null;
+        state.message = "";
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loadingReset = false;
+        state.message = "Password reset successful";
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loadingReset = false;
+        state.error = action.payload;
+      })
+      .addCase(refreshToken.pending, (state) => {
+        state.loadingRefresh = true;
+        state.error = null;
+      })
+      .addCase(refreshToken.fulfilled, (state, action) => {
+        state.loadingRefresh = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+      })
+      .addCase(refreshToken.rejected, (state, action) => {
+        state.loadingRefresh = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.error = action.payload;
+      });
   },
 });
 
-export const { clearError, setUser, logout } = authSlice.actions;
+export const { clearError, clearMessage, setUser, logout, clearAuthState } =
+  authSlice.actions;
 export default authSlice.reducer;

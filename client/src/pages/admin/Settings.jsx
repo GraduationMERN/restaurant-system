@@ -10,29 +10,28 @@ import { useSettings } from "../../context/SettingContext";
 import api from "../../api/axios";
 
 export default function Settings() {
-
   const { settings, updateSettings } = useSettings();
   const [restaurantName, setRestaurantName] = useState(settings.restaurantName);
   const [description, setDescription] = useState(
     "Authentic Italian cuisine with a modern twist"
   );
-  const [address, setAddress] = useState(
-    "123 Main Street, City, State 12345"
-  );
+  const [address, setAddress] = useState("123 Main Street, City, State 12345");
   const [phone, setPhone] = useState(settings.phone);
 
   const [primaryColor, setPrimaryColor] = useState(settings.color || "#FF5733");
-  const [secondaryColor, setSecondaryColor] = useState(settings.secondaryColor || "#33C3FF");
-  const [logoPreview, setLogoPreview] = useState(settings.logo || "");
+  const [secondaryColor, setSecondaryColor] = useState(
+    settings.secondaryColor || "#33C3FF"
+  );
+  const [logoPreview, setLogoPreview] = useState(
+    settings.branding?.logoUrl || ""
+  );
   const [logoFile, setLogoFile] = useState(null);
   const fileInputRef = useRef(null);
-
 
   const [notifyNewOrder, setNotifyNewOrder] = useState(true);
   const [notifyReview, setNotifyReview] = useState(true);
   const [notifyDailySales, setNotifyDailySales] = useState(true);
   const [notifyLowStock, setNotifyLowStock] = useState(false);
-
 
   useEffect(() => {
     async function loadSettings() {
@@ -63,16 +62,13 @@ export default function Settings() {
         branding: {
           primaryColor,
           secondaryColor,
-          logoUrl: logoPreview
-        }
+          logoUrl: logoPreview,
+        },
       };
 
       const res = await api.put("/api/restaurant", payload);
 
       updateSettings(res.data);
-
-
-
     } catch (error) {
       console.error("Error saving settings", error);
     }
@@ -92,50 +88,87 @@ export default function Settings() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2 space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Restaurant Information</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+              Restaurant Information
+            </h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2 mt-5">
               <div className="lg:col-span-1">
                 <Label>Restaurant Name</Label>
-                <Input value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} />
+                <Input
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                />
               </div>
               <div className="lg:col-span-1">
                 <Label>Phone</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
               </div>
               <div className="lg:col-span-2">
                 <Label>Description</Label>
-                <TextArea rows={3} value={description} onChange={setDescription} />
+                <TextArea
+                  rows={3}
+                  value={description}
+                  onChange={setDescription}
+                />
               </div>
               <div className="lg:col-span-2">
                 <Label>Address</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+                <Input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
               </div>
             </div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Notifications</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+              Notifications
+            </h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2 mt-5">
               <div className="space-y-3">
-                <Checkbox label="New Order Alerts" checked={notifyNewOrder} onChange={setNotifyNewOrder} />
-                <Checkbox label="Review Notifications" checked={notifyReview} onChange={setNotifyReview} />
+                <Checkbox
+                  label="New Order Alerts"
+                  checked={notifyNewOrder}
+                  onChange={setNotifyNewOrder}
+                />
+                <Checkbox
+                  label="Review Notifications"
+                  checked={notifyReview}
+                  onChange={setNotifyReview}
+                />
               </div>
               <div className="space-y-3">
-                <Checkbox label="Daily Sales Reports" checked={notifyDailySales} onChange={setNotifyDailySales} />
-                <Checkbox label="Low Stock Alerts" checked={notifyLowStock} onChange={setNotifyLowStock} />
+                <Checkbox
+                  label="Daily Sales Reports"
+                  checked={notifyDailySales}
+                  onChange={setNotifyDailySales}
+                />
+                <Checkbox
+                  label="Low Stock Alerts"
+                  checked={notifyLowStock}
+                  onChange={setNotifyLowStock}
+                />
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Button variant="outline">Cancel</Button>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button variant="primary" onClick={handleSave}>
+              Save Changes
+            </Button>
           </div>
         </div>
 
         <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Branding</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+              Branding
+            </h3>
             <div className="mt-5 space-y-5">
               <div>
                 <Label>Primary Color</Label>
@@ -146,22 +179,53 @@ export default function Settings() {
                     onChange={(e) => setPrimaryColor(e.target.value)}
                     className="h-10 w-10 rounded-md border border-gray-200 bg-transparent p-0 dark:border-gray-800"
                   />
-                  <Input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
+                  <Input
+                    type="text"
+                    value={primaryColor}
+                    onChange={(e) => setPrimaryColor(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
                 <Label>Reward Color</Label>
                 <div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="h-10 w-10 rounded-md border border-gray-200 bg-transparent p-0 dark:border-gray-800"
-                  />
-                  <Input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      className="h-10 w-10 rounded-md border border-gray-200 bg-transparent p-0 dark:border-gray-800"
+                    />
+                    <Input
+                      type="text"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                    />
                   </div>
-                  <h2 className="mt-2 text-xs block auto  text-[#888]">Recommended <span className=" text-[#FFA500] select-text"> #FFA500</span></h2>
+                  <div className="mt-2 flex items-center">
+                    <h2 className="text-xs text-[#888]">Recommended</h2>
+                    <button
+                      type="button"
+                      onClick={() => setSecondaryColor("#F56E00")}
+                      className="flex items-center px-1 py-1 text-xs font-medium text-[#FFA500] hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                      title="Copy to Reward Color"
+                    >
+                      <span className="select-text">#F56E00</span>
+                      <svg
+                        className="w-3 h-3 mx-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
               <div>
@@ -169,12 +233,22 @@ export default function Settings() {
                 <div className="flex items-center gap-4">
                   <div className="h-14 w-14 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-cover" />
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <div className="h-full w-full bg-gray-100 dark:bg-gray-800"></div>
                     )}
                   </div>
-                  <Button variant="outline" onClick={triggerLogoUpload}>Upload New Logo</Button>
+                  <input
+                    className="hover:bg-primary transition-all duration-300 px-7 py-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-sm hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-primary"
+                    type="button"
+                    onClick={triggerLogoUpload}
+                    value={logoPreview ? "Change Logo" : "Upload Logo"}
+                  />
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -185,7 +259,8 @@ export default function Settings() {
                       if (file && file.type.startsWith("image/")) {
                         setLogoFile(file);
                         const reader = new FileReader();
-                        reader.onloadend = () => setLogoPreview(String(reader.result || ""));
+                        reader.onloadend = () =>
+                          setLogoPreview(String(reader.result || ""));
                         reader.readAsDataURL(file);
                       }
                     }}
