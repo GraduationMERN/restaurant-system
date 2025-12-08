@@ -16,12 +16,8 @@ const cookieOptions = {
   httpOnly: true,
   secure: isProduction,
   sameSite: isProduction ? "None" : "Lax",
-  domain: isProduction 
-    ? "restaurant-system-1-kuq6.onrender.com"
-    : "localhost",
   maxAge: 24 * 60 * 60 * 1000,
 };
-
 export const registerUserController = async (req, res) => {
   try {
     const { message } = await registerUserService(req.body);
