@@ -43,10 +43,21 @@ function App() {
 
   useEffect(() => {
     if (!isAuthenticated && !checked) {
+      const hasSession = typeof window !== "undefined" && window.localStorage.getItem("hasSession") === "true";
       const verifyUser = async () => {
-        await dispatch(refreshToken()); // refresh token first
-        await dispatch(getMe()); // then fetch user info
-        setChecked(true);
+        if (!hasSession) {
+          // nothing to verify
+          setChecked(true);
+          return;
+        }
+        try {
+          await dispatch(refreshToken()); // refresh token first
+          await dispatch(getMe()); // then fetch user info
+        } catch (err) {
+          // ignore - auth slice handles errors
+        } finally {
+          setChecked(true);
+        }
       };
       verifyUser();
     }

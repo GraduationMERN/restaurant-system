@@ -223,6 +223,9 @@ const authSlice = createSlice({
         state.loadingLogin = false;
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loadingLogin = false;
@@ -264,6 +267,9 @@ const authSlice = createSlice({
         state.loadingLogout = false;
         state.user = null;
         state.isAuthenticated = false;
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("hasSession");
+        }
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loadingLogout = false;
