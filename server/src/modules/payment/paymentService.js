@@ -3,6 +3,7 @@ import stripe from "stripe";
 import mongoose from "mongoose";
 import OrderRepository from "../order.module/order.repository.js";
 import logger from "../../utils/logger.js";
+import { env } from "../../config/env.js";
 
 // Don't import notificationService and io directly - they'll be passed or accessed via server
 // Remove: import { notificationService, io } from "../../../server.js";
@@ -77,8 +78,8 @@ class PaymentService {
       payment_method_types: ["card"],
       line_items,
       mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
-      cancel_url: `${process.env.CLIENT_URL}/payment-cancel?order_id=${order._id}`,
+      success_url: `${env.clientUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
+      cancel_url: `${env.clientUrl}/payment-cancel?order_id=${order._id}`,
       metadata,
       customer_email: customerEmail || undefined,
       shipping_address_collection: order.serviceType === "delivery" ? {
