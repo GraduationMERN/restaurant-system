@@ -67,12 +67,13 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["set-cookie"],
 };
 
+// CORS middleware handles all preflight requests automatically
 app.use(cors(corsOptions));
 
-// CORS middleware handles all preflight requests automatically
 
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
