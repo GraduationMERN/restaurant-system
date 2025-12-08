@@ -16,8 +16,10 @@ const cookieOptions = {
   httpOnly: true,
   sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
   secure: isProduction ? true : false,      // <- false for local
-  ...(isProduction && { domain: ".onrender.com" }),
   maxAge: 24 * 60 * 60 * 1000,
+  path: "/",
+  // Use domain only in production and if needed for subdomains
+  // ...(isProduction && { domain: frontendDomain }),
 };
 export const registerUserController = async (req, res) => {
   try {
@@ -33,11 +35,18 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
+    console.log("=== LOGIN ATTEMPT ===");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("Frontend URL:", env.frontendUrl);
+    console.log("Request origin:", req.headers.origin);
+    console.log("Cookies received:", req.cookies);
+
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await loginUserService(
       email,
       password
     );
+    
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
@@ -55,6 +64,7 @@ export const loginUserController = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Login error in production:", err.message);
     res.status(401).json({ message: err.message });
   }
 };
@@ -163,8 +173,8 @@ export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     await logoutUserService(refreshToken);
-    res.clearCookie("accessToken",cookieOptions);
-    res.clearCookie("refreshToken",cookieOptions);
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
