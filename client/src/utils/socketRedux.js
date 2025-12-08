@@ -288,9 +288,9 @@ export const setupSocketListeners = (socket) => {
 export const joinSocketRooms = (socket, user) => {
   if (!socket || !user) return;
 
-  console.log("Joining socket rooms for user:", user.id, user.role);
+  console.log("Joining socket rooms for user:", user._id, user.role);
 
-  const userId = user.id || user.customerId;
+  const userId = user._id || user.customerId;
 
   if (userId) {
     socket.emit("register", userId);
