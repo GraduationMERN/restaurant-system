@@ -39,40 +39,16 @@ const app = express();
 
 // --- Global Middlewares ---
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests without an origin (like mobile apps, curl, server-side requests)
-    if (!origin) {
-      return callback(null, true);
-    }
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://brandbite-three.vercel.app",
+  env.frontendUrl, // from your config
+].filter(Boolean); // removes undefined/null
 
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://brandbite-three.vercel.app",
-      env.frontendUrl,
-    ].filter(Boolean); // Remove empty values
-
-    // Allow exact matches
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // Allow all Vercel preview deployments (*.vercel.app)
-    if (/\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-
-    // Block other origins
-    callback(new Error("Not allowed by CORS"));
-  },
+app.use(cors({
+  origin: allowedOrigins,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-  exposedHeaders: ["set-cookie"],
-};
-
-// CORS middleware handles all preflight requests automatically
-app.use(cors(corsOptions));
+}));
 
 
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()

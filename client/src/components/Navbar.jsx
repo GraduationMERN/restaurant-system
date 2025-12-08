@@ -18,7 +18,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    navigate("/login");
+    navigate("/");
   };
 
   return (

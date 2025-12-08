@@ -10,15 +10,15 @@ import {
 import { refreshTokenService } from "../service/refreshToken.service.js";
 import { verifyOtpService } from "../service/verifyOtp.service.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const cookieOptions = {
   httpOnly: true,
-  // Only mark cookies as Secure in production (requires HTTPS).
-  // Some browsers (and iOS in particular) will refuse to store Secure cookies
-  // when the site is served over plain HTTP (e.g. local/dev testing or LAN).
-  secure: env.nodeEnv === "production",
-  // In production we need SameSite=None for cross-site cookies (and Secure=true).
-  // During development set a safer default to avoid rejection by browsers.
-  sameSite: env.nodeEnv === "production" ? "none" : "lax",
+  secure: isProduction,
+  sameSite: isProduction ? "None" : "Lax",
+  domain: isProduction 
+    ? "restaurant-system-1-kuq6.onrender.com"
+    : "localhost",
   maxAge: 24 * 60 * 60 * 1000,
 };
 
