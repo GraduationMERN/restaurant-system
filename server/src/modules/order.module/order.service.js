@@ -2,7 +2,8 @@ import orderRepo from "./order.repository.js";
 import Cart from "../cart/Cart.js";
 import mongoose from "mongoose";
 import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
-import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
+import Order from "./orderModel.js";
+import { earningPoints } from "../rewards/reward.service.js";
 const calculateEstimatedReadyTime = (serviceType, itemsCount, baseTime = 15) => {
   const now = new Date();
 
@@ -158,14 +159,30 @@ class OrderService {
   }
 
   // Get order by ID or order number
-  async getOrder(identifier) {
+    async getOrder(identifier) {
     if (!identifier) return null;
-
+    let order;
     // Check if ObjectId
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-      return await orderRepo.findById(identifier, true);
+       order = await Order.findById(identifier)
+        .populate('user', 'name email')
+        .populate({
+          path: 'items.productId',
+          select: 'name productPoints price' // Select the fields you need
+        });
     }
+    else if (typeof identifier === 'string' && identifier.startsWith('ORD-')) {
+      // Handle order number
+      order = await Order.findOne({ orderNumber: identifier })
+        .populate('user', 'name email')
+        .populate({
+          path: 'items.productId',
+          select: 'name productPoints price'
+        });
+    }
+    return order;
   }
+
   // ===== Other service methods =====
   async getOrdersByUser(userId) { return orderRepo.findByUserId(userId); }
   async getOrderByCartId(cartId) { return orderRepo.findByCartId(cartId); }
@@ -180,9 +197,32 @@ class OrderService {
   async orderUpdate(orderId, updates) { return orderRepo.update(orderId, updates); }
   async updateStatus(orderId, newStatus) {
     const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
-    if (!validStatuses.includes(newStatus)) { throw new Error("Invalid order status"); }
-    if (newStatus === "completed") { await earningPoints(orderId); }
-    return orderRepo.updateStatus(orderId, newStatus);
+
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error("Invalid order status");
+    }
+
+    console.log(`Updating order ${orderId} to status: ${newStatus}`);
+
+    // First update the order status
+    const updatedOrder = await orderRepo.updateStatus(orderId, newStatus);
+
+    console.log(`Order updated successfully, new status: ${updatedOrder.status}`);
+
+    // Then award points if status is "completed"
+    if (newStatus === "completed") {
+      console.log(`Attempting to award points for completed order ${orderId}`);
+      console.log(`Earning points function:`, earningPoints);
+
+      try {
+        await earningPoints(orderId);
+        console.log(`Points successfully awarded for order ${orderId}`);
+      } catch (error) {
+        console.error(`Failed to award points for order ${orderId}:`, error);
+      }
+    }
+
+    return updatedOrder;
   }
 
 
@@ -275,16 +315,6 @@ class OrderService {
     });
 
     return await orderRepo.update(orderId, filteredUpdates);
-  }
-
-  // Update status with validation
-  async updateStatus(orderId, newStatus) {
-    const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
-    if (!validStatuses.includes(newStatus)) {
-      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
-    }
-
-    return await orderRepo.updateStatus(orderId, newStatus);
   }
 
   // Update payment

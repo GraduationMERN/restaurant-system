@@ -6,7 +6,6 @@ import roleMiddleware from "../../middlewares/role.middleware.js";
 import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 
 const router = express.Router();
-console.log(orderController);
 // ============= PUBLIC/GUEST ROUTES =============
 
 

@@ -7,6 +7,7 @@ import Order from "../order.module/orderModel.js";
 import { notificationService , io } from "../../../server.js";
 import pushNotificationService from "../notification/pushNotification.service.js";
 import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
+import { earningPoints } from "../rewards/reward.service.js";
 
 // ==============================
 // CREATE ORDER FROM CART (SIMPLIFIED)
@@ -434,6 +435,9 @@ export const updateOrderStatus = async (req, res) => {
 
       if (status === "ready") {
         global.io.to("cashier").emit("order:ready-notification", populatedOrder);
+      }
+      if (status === "completed") {
+        await earningPoints(populatedOrder._id);
       }
 
       // Customer notification (standardize to `user:<id>`)

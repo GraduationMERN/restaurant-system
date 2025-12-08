@@ -20,49 +20,49 @@ const io = new Server(server, {
 
 // Enhanced Socket.io connection handling
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+
 
   socket.on("register", (userId) => {
     socket.join(userId);
     socket.join(`user:${userId}`); // Add prefix for consistency
-    console.log(`User ${userId} joined personal rooms`);
+
   });
 
   // Allow admins to join the admin room
   socket.on("joinAdmin", () => {
     socket.join("admin");
-    console.log(`Socket ${socket.id} joined admin room`);
+
   });
 
   // Allow any role to join a role-specific room
   socket.on("joinRole", (role) => {
     if (!role) return;
     socket.join(role);
-    console.log(`Socket ${socket.id} joined role room ${role}`);
+    // console.log(`Socket ${socket.id} joined role room ${role}`);
   });
 
   // Kitchen-specific room for order updates
   socket.on("joinKitchen", () => {
     socket.join("kitchen");
-    console.log(`Socket ${socket.id} joined kitchen room`);
+    // console.log(`Socket ${socket.id} joined kitchen room`);
   });
 
   // Cashier-specific room for order updates
   socket.on("joinCashier", () => {
     socket.join("cashier");
-    console.log(`Socket ${socket.id} joined cashier room`);
+    // console.log(`Socket ${socket.id} joined cashier room`);
      });
   // Allow users to join reward order specific room for real-time updates
   socket.on("join_reward_order", (data) => {
     const { orderId } = data;
     if (orderId) {
       socket.join(`reward_order_${orderId}`);
-      console.log(`Socket ${socket.id} joined reward order room: reward_order_${orderId}`);
+      // console.log(`Socket ${socket.id} joined reward order room: reward_order_${orderId}`);
     }
  
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    // console.log("User disconnected:", socket.id);
   });
 });
 });

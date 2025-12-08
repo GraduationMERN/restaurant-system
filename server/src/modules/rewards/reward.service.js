@@ -83,33 +83,47 @@ export const redeemRewardService = async (rewardId, userId) => {
 
 // calculate order points
 export async function calculateRewardPoints(items) {
-    let totalPoints = 0;
-    for (const item of items) {
-        if (item.productId && item.productId.productPoints) {
-            totalPoints += item.productId.productPoints * item.quantity;
+  let totalPoints = 0;
+  for (const item of items) {
+    if (item.productId) {
+      let product;
+      if (item.productId._id) {
+        product = item.productId;
+      } else {
+        try {
+          product = await getProductById(item.productId);
+        } catch (error) {
+          continue;
         }
+      }
+      if (product && product.productPoints) {
+        const itemPoints = product.productPoints * (item.quantity || 1);
+        totalPoints += itemPoints;
+      }
     }
-    return totalPoints;
+  }
+  return totalPoints;
 }
 
 // earning points after order completion 
 export async function earningPoints(orderId) {
-    try {
-        const order = await orderService.getOrder(orderId);
-        if (!order.userId) throw new Error("Order has no associated user for earning points");
-        const user = await getUserByIdService(order.userId._id);
-        if (!user) throw new Error("User not found for earning points");
-        const pointsEarned = await calculateRewardPoints(order.items);
-        await User.findByIdAndUpdate(
-            user.id,
-            { $inc: { points: pointsEarned } },
-            { new: true }
-        );
-        return pointsEarned;
-    } catch (error) {
-        throw new Error(`Earning points failed: ${error.message}`);
+  try {
+    const order = await orderService.getOrder(orderId);
+    if (!order.user._id) {
+      throw new Error("Order has no associated user for earning points");
     }
-
+    const user = await getUserByIdService(order.user._id);
+    if (!user) throw new Error("User not found for earning points");
+    const pointsEarned = await calculateRewardPoints(order.items);
+    await User.findByIdAndUpdate(
+      user._id,
+      { $inc: { points: pointsEarned } },
+      { new: true }
+    );
+    return pointsEarned;
+  } catch (error) {
+    throw new Error(`Earning points failed: ${error.message}`);
+  }
 }
 
 // Reward order
