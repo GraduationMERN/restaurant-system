@@ -85,8 +85,8 @@ export default function Settings() {
         description="Manage restaurant branding, language and notifications"
       />
       <PageBreadcrumb pageTitle="Settings" />
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
               Restaurant Information
@@ -156,14 +156,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline">Cancel</Button>
-            <Button variant="primary" onClick={handleSave}>
-              Save Changes
-            </Button>
-          </div>
         </div>
-
         <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -270,6 +263,12 @@ export default function Settings() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-6 flex items-center gap-3">
+        <Button variant="outline">Cancel</Button>
+        <Button variant="primary" onClick={handleSave}>
+          Save Changes
+        </Button>
       </div>
     </>
   );
