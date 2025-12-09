@@ -525,7 +525,10 @@ export default function CheckoutPage() {
                           <button
                             onClick={shareMyLocation}
                             disabled={locationLoading}
-                            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/110 hover:to-primary/110 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all"
+                            className="flex-1 flex items-center justify-center gap-2
+             bg-primary hover:bg-primary/90
+             disabled:opacity-50 disabled:cursor-not-allowed
+             text-white font-semibold py-3 rounded-xl transition-all"
                           >
                             {locationLoading ? (
                               <>
@@ -541,7 +544,11 @@ export default function CheckoutPage() {
                           </button>
                           <button
                             onClick={() => setShowMapPicker(true)}
-                            className="flex-0 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+className="flex-0 px-4 py-3 rounded-xl
+           bg-primary hover:bg-primary/90
+           border border-primary/30
+           text-white
+           transition-all"
                           >
                             Pick on map
                           </button>
@@ -600,7 +607,8 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => { /* UI-only apply: backend will validate on submit */ }}
-                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium"
+                    className="px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              
                   >
                     Apply
                   </button>
@@ -627,7 +635,7 @@ export default function CheckoutPage() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || products.length === 0}
-                className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/110 hover:to-primary/110 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {submitting ? (
                   <span className="flex items-center justify-center">

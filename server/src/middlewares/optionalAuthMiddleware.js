@@ -29,10 +29,10 @@ const optionalAuthMiddleware = async (req, res, next) => {
   try {
     const token = req.cookies.accessToken;
     
-    // Debug logging
-    console.log("=== OPTIONAL AUTH MIDDLEWARE ===");
-    console.log("Has token?", !!token);
-    console.log("Cookies:", req.cookies);
+    // Debug logging - disabled for production
+    // console.log("=== OPTIONAL AUTH MIDDLEWARE ===");
+    // console.log("Has token?", !!token);
+    // console.log("Cookies:", req.cookies);
     
     if (!token) {
       // Guest user - create guest user object
@@ -41,7 +41,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
         isGuest: true,
         role: 'guest'
       };
-      console.log("No token - treating as guest");
+      // console.log("No token - treating as guest");
       return next();
     }
 
