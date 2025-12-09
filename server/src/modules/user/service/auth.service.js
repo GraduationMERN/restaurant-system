@@ -26,6 +26,7 @@ export const registerUserService = async (user) => {
     error.statusCode = 400;
     throw error;
   }
+  const userRole = user.role || "customer";
   const exists = await User.findOne({ email });
   if (exists) {
     const error = new Error("Email already exists");
@@ -33,24 +34,44 @@ export const registerUserService = async (user) => {
     throw error;
   }
   const hashedPassword = await hashPassword(password);
-  const code = user.role === "customer" ? generateOTP() : null;
+  const code = userRole === "customer" ? generateOTP() : null;
+  
+  console.log("Generated OTP:", code);
+  
   const newUser = await addUser({
     ...user,
+    role: userRole, 
     password: hashedPassword,
     otp: code,
-    isVerified: user.role === "customer" ? false : true,
+    isVerified: userRole === "customer" ? false : true,
   });
-  if (user.role === "customer") {
-    await sendEmail(
-      email,
-      "Your OTP Code",
-      `Your verification code is ${code}, Valid for 10 minutes`
-    );
-    return {
-      newUser,
-      message: "OTP sent to email. Please verify your account.",
-    };
+  
+  if (userRole === "customer") {
+    try {
+      console.log("Sending OTP email to:", email);
+      await sendEmail(
+        email,
+        "Your OTP Code",
+        `Your verification code is ${code}, Valid for 10 minutes`
+      );
+      console.log("OTP email sent successfully!");
+      
+      return {
+        newUser,
+        message: "OTP sent to email. Please verify your account.",
+      };
+    } catch (emailError) {
+      console.error("CRITICAL: Failed to send OTP email:", emailError.message);
+      
+      // For now, return OTP in response for debugging
+      return {
+        newUser,
+        message: "Account created but failed to send email.",
+        debugOtp: code, // Remove in production
+      };
+    }
   }
+  
   return { newUser, message: "Registered successfully" };
 };
 
