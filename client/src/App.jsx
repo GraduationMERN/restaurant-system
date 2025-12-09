@@ -35,6 +35,7 @@ import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
+import Support from "./pages/Support";
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
@@ -103,6 +104,7 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />

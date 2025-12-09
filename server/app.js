@@ -29,6 +29,7 @@ import productRoutes from "./src/modules/product/product.routes.js";
 import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
+import supportRoutes from "./src/modules/support/support.routes.js";
 import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
 // Import PaymentController if needed
@@ -96,6 +97,7 @@ app.use("/api/cart", optionalAuthMiddleware, cartRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/restaurant", restaurantRoutes);
+app.use("/api/support", supportRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 

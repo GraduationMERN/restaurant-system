@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router";
 // Assume these icons are imported from an icon library
 import { ChevronDownIcon, GridIcon, HorizontaLDots, UserCircleIcon, BoxIconLine, TaskIcon, ShootingStarIcon, DollarLineIcon, SettingsGearIcon } from "../../icons/admin-icons";
 import { useSidebar } from "../../context/SidebarContext";
+import { useSettings } from "../../context/SettingContext";
 
 const navItems = [
   { icon: <GridIcon />, name: "Dashboard", path: "/admin/dashboard" },
@@ -20,7 +21,8 @@ const navItems = [
 const othersItems = [];
 
 const AppSidebar = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
+  const { settings } = useSettings();
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState(null);
@@ -116,6 +118,7 @@ const AppSidebar = () => {
             nav.path && (
               <Link
                 to={nav.path}
+                onClick={() => { if (isMobileOpen) toggleMobileSidebar(); }}
                 className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                   }`}
               >
@@ -151,6 +154,7 @@ const AppSidebar = () => {
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
+                      onClick={() => { if (isMobileOpen) toggleMobileSidebar(); }}
                       className={`menu-dropdown-item ${isActive(subItem.path)
                         ? "menu-dropdown-item-active"
                         : "menu-dropdown-item-inactive"
@@ -212,26 +216,20 @@ const AppSidebar = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
                 alt="Logo"
                 width={150}
                 height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
+                className="object-contain"
               />
             </>
           ) : (
             <img
-              src="/images/logo/logo-icon.svg"
+              src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
               alt="Logo"
               width={32}
               height={32}
+              className="object-contain"
             />
           )}
         </Link>
