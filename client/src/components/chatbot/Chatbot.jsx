@@ -274,7 +274,7 @@ export default function Chatbot() {
     }, [isWaiting]);
 
     return (
-        <div className={`chatbot-container lg:mx-10 my-15  ${isActive ? "active" : ""}`} id="chatbot">
+        <div className={`chatbot-container lg:mx-10  ${isActive ? "active" : ""}`} id="chatbot">
             <div className="chatbot-window">
                 <div className="chatbot-header">
                     <div className="bot-avatar">
