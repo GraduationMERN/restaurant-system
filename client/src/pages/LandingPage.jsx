@@ -34,6 +34,7 @@ export default function LandingPage() {
               }
               alt={t("welcome")}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
