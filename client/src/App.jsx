@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
@@ -151,7 +151,8 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/admin/:section?" element={<Admin />} />
             </Route>
-            <Route path="*" element={<NotFound />} />
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
             {/* Legacy routes redirects (removed) */}
           </Routes>
         </Layout>

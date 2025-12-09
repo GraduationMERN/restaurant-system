@@ -12,7 +12,8 @@ export default function Layout({ children }) {
     "/cashier",
     "/kitchen",
     "/reset-password",
-    "/forgot-password"
+    "/forgot-password",
+    "/404"
   ];
   const shouldHideUI = hiddenPaths.some(path =>
     location.pathname.startsWith(path)
