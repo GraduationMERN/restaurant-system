@@ -36,7 +36,7 @@ router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopIte
 // ============= CASHIER ROUTES =============
 router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);
 
-router.patch("/:id/cancel", authMiddleware, orderController.cancelOrder);
+router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
 // ---- ADMIN/CASHIER ----

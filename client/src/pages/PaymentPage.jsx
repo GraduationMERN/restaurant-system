@@ -201,7 +201,7 @@ const PaymentPage = () => {
             Go to Checkout Now
           </button>
         </div>
-      </div>
+      </div> 
     );
   }
 
@@ -246,14 +246,14 @@ const PaymentPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Order ID Display */}
-        {displayOrderId && (
+        {/* {displayOrderId && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-            <p className="text-blue-800 dark:text-blue-300 text-center font-medium">
+            <p className="text- dark:text-blue-300 text-center font-medium">
               Order Reference: <span className="font-bold">{displayOrderId}</span>
               {displayOrder?.orderNumber && ` (${displayOrder.orderNumber})`}
             </p>
           </div>
-        )}
+        )} */}
 
         {/* Payment Status Display */}
         {paymentStatus && (
@@ -287,7 +287,7 @@ const PaymentPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Branch</h2>
               <div className="flex items-start">
-                <div className="bg-orange-100 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 rounded-lg p-3 mr-4">
+                <div className="bg-orange-100 dark:bg-orange-900/20 text-primary dark:text-primary-900 rounded-lg p-3 mr-4">
                   <Store className="w-6 h-6" />
                 </div>
                 <div>
@@ -307,15 +307,15 @@ const PaymentPage = () => {
                   onClick={() => setPaymentMethod("online")}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     paymentMethod === "online"
-                      ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
-                      : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
+                      ? "border-primary dark:border-primary-dark bg-orange-50 dark:bg-orange-900/10"
+                      : "border-gray-200 dark:border-gray-700 hover:border-primary/90 dark:hover:border-primary-dark/90"
                   }`}
                   disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
                 >
                   <div className="flex items-center">
                     <div className={`p-3 rounded-lg mr-4 ${
                       paymentMethod === "online"
-                        ? "bg-orange-500 dark:bg-orange-400 text-white"
+                        ? "bg-primary dark:bg-primary-dark text-white"
                         : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}>
                       <CreditCard className="w-6 h-6" />
@@ -323,7 +323,7 @@ const PaymentPage = () => {
                     <div className="text-left">
                       <h3 className={`font-semibold ${
                         paymentMethod === "online"
-                          ? "text-orange-500 dark:text-orange-400"
+                          ? "text-primary dark:text-primary-dark"
                           : "text-gray-900 dark:text-white"
                       }`}>
                         Online
@@ -332,7 +332,7 @@ const PaymentPage = () => {
                     </div>
                     {paymentMethod === "online" && (
                       <div className="ml-auto">
-                        <CheckCircle className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                        <CheckCircle className="w-6 h-6 text-primary dark:text-primary-dark" />
                       </div>
                     )}
                   </div>
@@ -343,15 +343,15 @@ const PaymentPage = () => {
                   onClick={() => setPaymentMethod("instore")}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     paymentMethod === "instore"
-                      ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/10"
-                      : "border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600"
+                      ? "border-primary dark:border-primary-dark bg-orange-50 dark:bg-orange-900/10"
+                      : "border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-dark/90"
                   }`}
                   disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
                 >
                   <div className="flex items-center">
                     <div className={`p-3 rounded-lg mr-4 ${
                       paymentMethod === "instore"
-                        ? "bg-orange-500 dark:bg-orange-400 text-white"
+                        ? "bg-primary dark:bg-primary-dark/90 text-white"
                         : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}>
                       <Store className="w-6 h-6" />
@@ -359,7 +359,7 @@ const PaymentPage = () => {
                     <div className="text-left">
                       <h3 className={`font-semibold ${
                         paymentMethod === "instore"
-                          ? "text-orange-500 dark:text-orange-400"
+                          ? "text-primary dark:text-primary-dark/90"
                           : "text-gray-900 dark:text-white"
                       }`}>
                         In-store
@@ -368,7 +368,7 @@ const PaymentPage = () => {
                     </div>
                     {paymentMethod === "instore" && (
                       <div className="ml-auto">
-                        <CheckCircle className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                        <CheckCircle className="w-6 h-6 text-primary dark:text-primary-dark/90" />
                       </div>
                     )}
                   </div>
@@ -428,7 +428,7 @@ const PaymentPage = () => {
                 
                 <div className="flex justify-between items-center py-3">
                   <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-lg font-bold text-orange-500 dark:text-orange-400">EGP {total.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-primary dark:text-primary-dark-900">EGP {total.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -438,8 +438,8 @@ const PaymentPage = () => {
                 disabled={loading || !displayOrderId || paymentStatus === 'paid' || paymentStatus === 'success'}
                 className={`w-full mt-8 py-4 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
                   paymentMethod === "online"
-                    ? "bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                    : "bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                    ? "bg-primary hover:bg-primary/90"
+                    : "bg-emerald-500 hover:from-emerald-600 hover:to-emerald-700"
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {loading ? (
@@ -460,7 +460,7 @@ const PaymentPage = () => {
               {/* Order Items Summary */}
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <details className="group">
-                  <summary className="flex items-center justify-between cursor-pointer text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400">
+                  <summary className="flex items-center justify-between cursor-pointer text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark transition-colors font-medium">
                     <span className="font-medium">Order Items ({orderItems.length})</span>
                     <svg className="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
