@@ -237,11 +237,11 @@ export default function LoginPage() {
     setErrors(newErrors);
     setTouched({ email: true, password: true });
 
-     if (Object.keys(newErrors).length === 0) {
+    if (Object.keys(newErrors).length === 0) {
       const resultAction = await dispatch(loginUser(formData));
       if (loginUser.fulfilled.match(resultAction)) {
         // Fetch full user profile (includes points)
-        await dispatch(getMe());
+        dispatch(getMe());
         navigate("/");
       }
     }
@@ -306,8 +306,8 @@ export default function LoginPage() {
                     onBlur={handleBlur}
                     onKeyPress={handleKeyPress}
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${errors.email && touched.email
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="john@example.com"
                   />
@@ -344,8 +344,8 @@ export default function LoginPage() {
                     onBlur={handleBlur}
                     onKeyPress={handleKeyPress}
                     className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border ${errors.password && touched.password
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-primary"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all`}
                     placeholder="••••••••"
                   />

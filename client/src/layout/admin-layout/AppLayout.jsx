@@ -15,11 +15,11 @@ const LayoutContent = () => {
         <Backdrop />
       </div>
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+        className={` flex-1 transition-all duration-300 ease-in-out ${isExpanded || isHovered ? "lg:ml-[260px]" : "lg:ml-[60px]"
           } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader />
-        <div className="p-4 w-full md:p-6">
+        <div className="px-0 py-4 w-full md:px-0 md:py-6">
           <Outlet />
         </div>
       </div>

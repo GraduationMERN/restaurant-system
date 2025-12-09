@@ -1,5 +1,6 @@
 import Order from "./orderModel.js";
 import mongoose from "mongoose";
+import Review from "../review/Review.js";
 
 class OrderRepository {
   // Create order
@@ -132,8 +133,8 @@ class OrderRepository {
             }
           ],
           customers: [
-            { $match: { userId: { $exists: true, $ne: null, $ne: "" } } },
-            { $group: { _id: "$userId" } },
+            { $match: { user: { $exists: true, $ne: null } } },
+            { $group: { _id: "$user" } },
             { $count: "customersCount" }
           ]
         }
@@ -143,7 +144,21 @@ class OrderRepository {
     const totals = (res?.totals?.[0]) || { totalRevenue: 0, orderCount: 0 };
     const statusCounts = res?.statusCounts || [];
     const customersCount = res?.customers?.[0]?.customersCount || 0;
-    return { ...totals, statusCounts, customersCount };
+
+    // Average rating from approved reviews within the same date range
+    const reviewMatch = { status: "approved" };
+    if (from || to) {
+      reviewMatch.createdAt = {};
+      if (from) reviewMatch.createdAt.$gte = new Date(from);
+      if (to) reviewMatch.createdAt.$lte = new Date(to);
+    }
+    const ratingAgg = await Review.aggregate([
+      { $match: reviewMatch },
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, reviewsCount: { $sum: 1 } } }
+    ]);
+    const avgRating = Number(ratingAgg?.[0]?.avgRating || 0);
+
+    return { ...totals, statusCounts, customersCount, avgRating };
   }
 
   async getDailyStats(days = 7) {
@@ -292,8 +307,8 @@ class OrderRepository {
   async updateCustomerInfo(orderId, customerInfo) {
     return await Order.findByIdAndUpdate(
       orderId,
-      { 
-        $set: { 
+      {
+        $set: {
           "customerInfo": customerInfo,
           updatedAt: new Date()
         }

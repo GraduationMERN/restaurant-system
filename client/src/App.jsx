@@ -15,7 +15,6 @@ import LoginPage from "./pages/LoginPage";
 import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
-import Chatbot from "./components/chatbot/Chatbot";
 import LoadingSpinner from "./components/LoadingSpinner";
 import GoogleSuccess from "./components/GoogleSuccess";
 import ForgotPassword from "./pages/ForgetPassword";
@@ -157,7 +156,6 @@ function App() {
           </Routes>
         </Layout>
       </SettingsProvider>
-      <Chatbot />
     </BrowserRouter>
   );
 }

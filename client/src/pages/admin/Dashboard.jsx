@@ -45,7 +45,7 @@ export default function Dashboard() {
           sales: { value: t.totalRevenue || 0, changePct: pct(t.totalRevenue, y.totalRevenue) },
           orders: { value: t.orderCount || 0, changePct: pct(t.orderCount, y.orderCount) },
           customers: { value: t.customersCount || 0, changePct: pct(t.customersCount, y.customersCount) },
-          rating: { value: 0, changePct: 0 },
+          rating: { value: Number((t.avgRating || 0).toFixed(1)), changePct: pct(t.avgRating, y.avgRating) },
         });
       } catch (e) {
         console.error("Failed to load overview stats", e);
@@ -111,7 +111,7 @@ export default function Dashboard() {
         description="Restaurant admin dashboard"
       />
       <PageBreadcrumb pageTitle="Dashboard" />
-      <div className="space-y-6">
+      <div className="space-y-6 px-0">
         <EcommerceMetrics metrics={metrics} />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">

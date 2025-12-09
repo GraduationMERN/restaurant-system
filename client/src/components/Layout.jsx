@@ -1,16 +1,27 @@
 import DesktopNav from "./DesktopNav";
 import Navbar from "./Navbar";
+import Chatbot from "./chatbot/Chatbot";
 import { useLocation } from "react-router-dom";
 
 export default function Layout({ children }) {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith("/admin");
-
+  const hiddenPaths = [
+    "/admin",
+    "/login",
+    "/register",
+    "/cashier",
+    "/kitchen",
+    "/reset-password",
+    "/forgot-password"
+  ];
+  const shouldHideUI = hiddenPaths.some(path =>
+    location.pathname.startsWith(path)
+  );
   return (
-   
-       <div className="lg:mx-20 md:ml-20 min-h-screen  pb-10 transition-all dark:bg-gray-900 dark:text-white select-none">
-    
-      {!isAdmin && <DesktopNav />}
+
+    <div className="lg:mx-20 md:ml-20 min-h-screen  pb-10 transition-all dark:bg-gray-900 dark:text-white select-none">
+
+      {!shouldHideUI && <DesktopNav />}
 
       {/* Main content with correct spacing */}
       <div className="w-full flex">
@@ -20,14 +31,16 @@ export default function Layout({ children }) {
       </div>
 
       {/* Mobile bottom navbar */}
-      {!isAdmin && (
+      {!shouldHideUI && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50">
-            <div className="w-full h-16 flex justify-between items-center px-4">
-              <Navbar />
-            </div>
+          <div className="w-full h-16 flex justify-between items-center px-4">
+            <Navbar />
+          </div>
         </div>
       )}
-  </div>
+      {/* Hiding Chatbot */}
+      {!shouldHideUI && <Chatbot />}
+    </div>
 
   );
 }
