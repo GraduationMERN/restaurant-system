@@ -33,16 +33,31 @@ class PaymentController {
       const isRegisteredUser = user?._id && !user?.isGuest;
       const userIdentifier = isRegisteredUser ? user._id.toString() : null;
       
+      // For guests, check if they have the matching guestOrderId cookie
+      let isGuestOwner = false;
+      if (!user?._id && user?.isGuest) {
+        const guestId = req.cookies.guestOrderId;
+        isGuestOwner = guestId && order.customerId?.toString() === guestId;
+      }
+      
       // Allow payment if:
       // 1. Registered user matches order.customerId
-      // 2. OR guest user (always allow - guest orders have guest_* customerId)
+      // 2. OR guest user with matching guestOrderId cookie
       // 3. OR admin/cashier roles
       const isAuthorized = 
         (isRegisteredUser && order.customerId === userIdentifier) ||
-        user?.isGuest ||
+        isGuestOwner ||
         ["admin", "cashier", "kitchen"].includes(user?.role);
       
       if (!isAuthorized) {
+        console.log("[CHECKOUT] Authorization failed", {
+          orderId,
+          orderCustomerId: order.customerId,
+          userIdentifier,
+          guestId: req.cookies.guestOrderId,
+          isGuestOwner,
+          isRegisteredUser
+        });
         return res.status(403).json({
           success: false,
           error: "Not authorized to pay for this order"
@@ -118,13 +133,22 @@ class PaymentController {
         });
       }
 
-      // Check permissions
-      const userIdentifier = user?._id || user?.customerId;
-      const canView = 
-        order.customerId === userIdentifier ||
-        ["admin", "cashier"].includes(user?.role);
+      // Check permissions - allow if:
+      // 1. User is authenticated and matches the order's customerId
+      // 2. OR User is a guest accessing their own order
+      // 3. OR user is admin/cashier
+      const userIdStr = user?._id?.toString();
+      const isOwner = userIdStr && order.customerId?.toString() === userIdStr;
+      const isStaff = ["admin", "cashier"].includes(user?.role);
+      
+      // For guest users, check if they have the matching guestOrderId cookie
+      let isGuestOwner = false;
+      if (!user?._id && user?.isGuest) {
+        const guestId = req.cookies.guestOrderId;
+        isGuestOwner = guestId && order.customerId?.toString() === guestId;
+      }
 
-      if (!canView) {
+      if (!(isOwner || isStaff || isGuestOwner)) {
         return res.status(403).json({
           success: false,
           message: "Not authorized to view this order"
