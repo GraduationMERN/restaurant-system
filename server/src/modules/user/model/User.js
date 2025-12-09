@@ -32,12 +32,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    socialLinks: {
-      facebook: { type: String, default: "" },
-      x: { type: String, default: "" },
-      linkedin: { type: String, default: "" },
-      instagram: { type: String, default: "" },
-    },
     address: {
       country: { type: String, default: "" },
       cityState: { type: String, default: "" },

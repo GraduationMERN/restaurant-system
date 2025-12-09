@@ -68,7 +68,6 @@ export const updateUserProfile = async (userId, updates) => {
     "name",
     "phoneNumber",
     "bio",
-    "socialLinks",
     "address",
   ];
   const payload = {};

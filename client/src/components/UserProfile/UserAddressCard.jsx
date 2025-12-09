@@ -20,8 +20,12 @@ export default function UserAddressCard() {
   const handleSave = async () => {
     try {
       const payload = { address: { country, cityState, postalCode, taxId } };
+      // Optimistic UI update
+      const prev = user;
+      dispatch(setUser({ ...user, address: payload.address }));
       const res = await api.patch("/users/me", payload);
       if (res?.data?.user) dispatch(setUser(res.data.user));
+      else dispatch(setUser(prev));
       closeModal();
     } catch (err) {
       console.error("Failed to update address", err);
@@ -108,27 +112,27 @@ export default function UserAddressCard() {
               Update your details to keep your profile up-to-date.
             </p>
           </div>
-          <form className="flex flex-col">
+          <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
-                  <Input type="text" value={country} onChange={(e)=>setCountry(e.target.value)} />
+                  <Input type="text" value={country} onChange={(e) => setCountry(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" value={cityState} onChange={(e)=>setCityState(e.target.value)} />
+                  <Input type="text" value={cityState} onChange={(e) => setCityState(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>Postal Code</Label>
-                  <Input type="text" value={postalCode} onChange={(e)=>setPostalCode(e.target.value)} />
+                  <Input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>TAX ID</Label>
-                  <Input type="text" value={taxId} onChange={(e)=>setTaxId(e.target.value)} />
+                  <Input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -136,7 +140,7 @@ export default function UserAddressCard() {
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" type="submit">
                 Save Changes
               </Button>
             </div>

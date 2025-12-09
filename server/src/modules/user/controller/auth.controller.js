@@ -57,10 +57,15 @@ export const loginUserController = async (req, res) => {
       message: "Logged in successfully",
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
         points: user.points,
+        avatarUrl: user.avatarUrl,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        address: user.address,
       },
     });
   } catch (err) {
@@ -74,13 +79,8 @@ export const getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      points: user.points,
-    });
+    // Return full user document sans password (already excluded in middleware)
+    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
