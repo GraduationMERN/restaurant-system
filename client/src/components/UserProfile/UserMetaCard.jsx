@@ -1,4 +1,5 @@
 import { useModal } from "../../hooks/useModal";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
@@ -11,6 +12,10 @@ export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const [facebook, setFacebook] = useState(user?.socialLinks?.facebook || "");
+  const [x, setX] = useState(user?.socialLinks?.x || "");
+  const [linkedin, setLinkedin] = useState(user?.socialLinks?.linkedin || "");
+  const [instagram, setInstagram] = useState(user?.socialLinks?.instagram || "");
   const uploadAvatar = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -23,10 +28,17 @@ export default function UserMetaCard() {
       console.error("Avatar upload failed", err);
     }
   };
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const handleSave = async () => {
+    try {
+      const payload = {
+        socialLinks: { facebook, x, linkedin, instagram },
+      };
+      const res = await api.patch("/users/me", payload);
+      if (res?.data?.user) dispatch(setUser(res.data.user));
+      closeModal();
+    } catch (err) {
+      console.error("Failed to update social links", err);
+    }
   };
   return (
     <>
@@ -185,26 +197,28 @@ export default function UserMetaCard() {
                     <Label>Facebook</Label>
                     <Input
                       type="text"
-                      value="https://www.facebook.com/PimjoHQ"
+                      value={facebook}
+                      onChange={(e) => setFacebook(e.target.value)}
                     />
                   </div>
 
                   <div>
                     <Label>X.com</Label>
-                    <Input type="text" value="https://x.com/PimjoHQ" />
+                    <Input type="text" value={x} onChange={(e) => setX(e.target.value)} />
                   </div>
 
                   <div>
                     <Label>Linkedin</Label>
                     <Input
                       type="text"
-                      value="https://www.linkedin.com/company/pimjo"
+                      value={linkedin}
+                      onChange={(e) => setLinkedin(e.target.value)}
                     />
                   </div>
 
                   <div>
                     <Label>Instagram</Label>
-                    <Input type="text" value="https://instagram.com/PimjoHQ" />
+                    <Input type="text" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
                   </div>
                 </div>
               </div>

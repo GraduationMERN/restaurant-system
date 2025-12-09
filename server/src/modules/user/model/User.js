@@ -28,6 +28,22 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "cashier", "kitchen", "admin"],
       default: "customer",
     },
+    bio: {
+      type: String,
+      default: "",
+    },
+    socialLinks: {
+      facebook: { type: String, default: "" },
+      x: { type: String, default: "" },
+      linkedin: { type: String, default: "" },
+      instagram: { type: String, default: "" },
+    },
+    address: {
+      country: { type: String, default: "" },
+      cityState: { type: String, default: "" },
+      postalCode: { type: String, default: "" },
+      taxId: { type: String, default: "" },
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -44,31 +60,31 @@ const userSchema = new mongoose.Schema(
       }
     },
     orderHistory: [{
-      orderId: { 
-        type: mongoose.Schema.Types.ObjectId, 
+      orderId: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
-        required: true 
+        required: true
       },
-      orderNumber: { 
-        type: String, 
-        required: true 
+      orderNumber: {
+        type: String,
+        required: true
       },
-      totalAmount: { 
-        type: Number, 
-        required: true 
+      totalAmount: {
+        type: Number,
+        required: true
       },
-      status: { 
-        type: String, 
+      status: {
+        type: String,
         enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],
         default: "pending"
       },
-      date: { 
-        type: Date, 
-        default: Date.now 
+      date: {
+        type: Date,
+        default: Date.now
       },
-      itemsCount: { 
-        type: Number, 
-        default: 0 
+      itemsCount: {
+        type: Number,
+        default: 0
       },
       serviceType: {
         type: String,

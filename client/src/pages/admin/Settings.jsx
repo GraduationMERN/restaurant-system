@@ -37,6 +37,9 @@ export default function Settings() {
   const [aboutContent, setAboutContent] = useState(settings.about?.content || "");
   const [supportEmail, setSupportEmail] = useState(settings.support?.email || "");
   const [supportPhone, setSupportPhone] = useState(settings.support?.phone || "");
+  const [faqs, setFaqs] = useState(settings.faqs || []);
+  const [terms, setTerms] = useState(settings.policies?.terms || "");
+  const [privacy, setPrivacy] = useState(settings.policies?.privacy || "");
 
   useEffect(() => {
     async function loadSettings() {
@@ -57,6 +60,9 @@ export default function Settings() {
       setAboutContent(data.about?.content || "");
       setSupportEmail(data.support?.email || "");
       setSupportPhone(data.support?.phone || "");
+      setFaqs(Array.isArray(data.faqs) ? data.faqs : []);
+      setTerms(data.policies?.terms || "");
+      setPrivacy(data.policies?.privacy || "");
     }
     loadSettings();
   }, []);
@@ -75,6 +81,8 @@ export default function Settings() {
         },
         about: { title: aboutTitle, content: aboutContent },
         support: { email: supportEmail, phone: supportPhone },
+        faqs,
+        policies: { terms, privacy },
       };
 
       const res = await api.put("/api/restaurant", payload);
@@ -167,6 +175,19 @@ export default function Settings() {
             </div>
           </div>
 
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Policies</h3>
+            <div className="mt-5 space-y-5">
+              <div>
+                <Label>Terms</Label>
+                <TextArea rows={6} value={terms} onChange={setTerms} />
+              </div>
+              <div>
+                <Label>Privacy</Label>
+                <TextArea rows={6} value={privacy} onChange={setPrivacy} />
+              </div>
+            </div>
+          </div>
         </div>
         <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
@@ -295,6 +316,36 @@ export default function Settings() {
                   <Label>Support Phone</Label>
                   <Input value={supportPhone} onChange={(e)=>setSupportPhone(e.target.value)} />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">FAQs</h3>
+            <div className="mt-5 space-y-4">
+              {faqs.map((faq, idx) => (
+                <div key={idx} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Question</Label>
+                    <Input value={faq.question} onChange={(e)=>{
+                      const next=[...faqs]; next[idx]={...next[idx], question:e.target.value}; setFaqs(next);
+                    }} />
+                  </div>
+                  <div>
+                    <Label>Answer</Label>
+                    <Input value={faq.answer} onChange={(e)=>{
+                      const next=[...faqs]; next[idx]={...next[idx], answer:e.target.value}; setFaqs(next);
+                    }} />
+                  </div>
+                  <div className="lg:col-span-2 flex justify-end">
+                    <Button variant="outline" onClick={()=>{
+                      const next=[...faqs]; next.splice(idx,1); setFaqs(next);
+                    }}>Remove</Button>
+                  </div>
+                </div>
+              ))}
+              <div>
+                <Button onClick={()=> setFaqs([...faqs, { question: "", answer: "" }])}>Add FAQ</Button>
               </div>
             </div>
           </div>

@@ -15,11 +15,13 @@ export default function UserInfoCard() {
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [phone, setPhone] = useState(user?.phoneNumber || "");
+  const [bio, setBio] = useState(user?.bio || "");
   const handleSave = async () => {
     try {
       const payload = {
         name: `${firstName} ${lastName}`.trim(),
-        phoneNumber: phone
+        phoneNumber: phone,
+        bio,
       };
       const res = await api.patch('/users/me', payload);
       if (res?.data?.user) dispatch(setUser(res.data.user));
@@ -180,7 +182,7 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2">
                     <Label>Bio</Label>
-                    <Input type="text" value={user?.role || ""} />
+                    <Input type="text" value={bio} onChange={(e)=>setBio(e.target.value)} />
                   </div>
                 </div>
               </div>

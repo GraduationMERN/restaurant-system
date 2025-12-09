@@ -11,6 +11,10 @@ export function SettingsProvider({ children }) {
         phone: "",
         address: "",
         notifications: { newOrder: true, review: true, dailySales: true, lowStock: false },
+        about: { title: "", content: "" },
+        support: { email: "", phone: "" },
+        faqs: [],
+        policies: { terms: "", privacy: "" },
     });
      useEffect(() => {
   // Apply whenever settings.branding changes
