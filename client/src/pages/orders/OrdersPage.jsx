@@ -12,6 +12,7 @@ import socketClient, {
   joinSocketRooms,
 } from "../../utils/socketRedux";
 import { useToast } from "../../hooks/useToast";
+import api from "../../api/axios";
 import ActiveOrderComponent from "./ActiveOrderComponent";
 import OrderHistoryComponent from "./OrderHistoryComponent";
 import EmptyOrdersComponent from "./EmptyOrdersComponent";
@@ -37,6 +38,18 @@ export default function OrdersPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const isLoggedIn = !!user && !user.isGuest;
+
+  /* ------------------------------------------
+     ENSURE GUEST ID IS SET
+  ------------------------------------------- */
+  useEffect(() => {
+    if (!isLoggedIn) {
+      // For guests, ensure guestOrderId is generated early
+      api.get("/api/orders/guest-id").catch(err => {
+        console.error("Failed to get guest ID:", err);
+      });
+    }
+  }, [isLoggedIn]);
 
   /* ------------------------------------------
      SOCKET INITIALIZATION
@@ -95,22 +108,10 @@ export default function OrdersPage() {
      FETCH INITIAL DATA
   ------------------------------------------- */
   useEffect(() => {
-    if (isLoggedIn) {
-      dispatch(fetchActiveOrder());
-      dispatch(fetchOrderHistory());
-    } else {
-      const stored = localStorage.getItem("activeOrder");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setGuestActiveOrderLocal(parsed);
-          dispatch(setGuestActiveOrder(parsed));
-        } catch (err) {
-          console.error("Failed to parse stored order:", err);
-        }
-      }
-    }
-  }, [isLoggedIn, dispatch]);
+    // Both logged in and guest users should fetch from API
+    dispatch(fetchActiveOrder());
+    dispatch(fetchOrderHistory());
+  }, [dispatch]);
 
   /* ------------------------------------------
      REFRESH HANDLER
@@ -143,8 +144,8 @@ export default function OrdersPage() {
   /* ------------------------------------------
      DISPLAY DATA HANDLING
   ------------------------------------------- */
-  const displayActiveOrder = isLoggedIn ? activeOrder : guestActiveOrder;
-  const displayHistory = isLoggedIn ? orderHistory : [];
+  const displayActiveOrder = activeOrder;
+  const displayHistory = orderHistory;
   const isLoading = activeOrderLoading || historyLoading;
   const noOrders =
     !displayActiveOrder && displayHistory.length === 0;

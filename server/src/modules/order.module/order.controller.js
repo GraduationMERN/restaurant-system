@@ -8,6 +8,57 @@ import { notificationService , io } from "../../../server.js";
 import pushNotificationService from "../notification/pushNotification.service.js";
 import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 import { earningPoints } from "../rewards/reward.service.js";
+import { v4 as uuidv4 } from "uuid";
+
+// ==============================
+// GET ORDER USER ID - Handle both authenticated and guest users (same pattern as cart)
+// ==============================
+function getOrderUserId(req, res) {
+  // Authenticated user
+  if (req.user?._id) {
+    return req.user._id.toString();
+  }
+
+  // Guest user - use UUID stored in cookie (like cart does)
+  let guestId = req.cookies.guestOrderId;
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!guestId) {
+    guestId = uuidv4();
+    console.log("[ORDER] No guestOrderId found → Generating:", guestId);
+    console.log("[ORDER] Current cookies:", req.cookies);
+    
+    res.cookie("guestOrderId", guestId, {
+      httpOnly: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      path: "/",
+    });
+  } else {
+    console.log("[ORDER] Existing guestOrderId found:", guestId);
+  }
+
+  return guestId;
+}
+
+// ==============================
+// GET GUEST ID - Ensure guest gets a consistent UUID in cookies
+// ==============================
+export const getGuestId = async (req, res) => {
+  try {
+    const guestId = getOrderUserId(req, res);
+    
+    res.json({
+      success: true,
+      guestId: guestId
+    });
+  } catch (err) {
+    console.error("Get guest ID error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // ==============================
 // CREATE ORDER FROM CART (SIMPLIFIED)
@@ -41,17 +92,8 @@ export const createOrderFromCart = async (req, res) => {
     // Get user info from middleware
     const user = req.user;
     
-    // Generate customerId: use user._id for registered, or generate UUID for guests
-    let customerId;
-    if (user?.isGuest) {
-      // Generate a consistent guest ID from IP + timestamp
-      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
-      customerId = `guest_${clientIp.replace(/[^a-zA-Z0-9]/g, '')}_${Date.now()}`;
-    } else if (user?._id) {
-      customerId = user._id.toString();
-    } else {
-      customerId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
+    // Generate customerId using the same pattern as cart
+    const customerId = getOrderUserId(req, res);
     
     const orderData = {
       cartId,
@@ -616,7 +658,6 @@ export const getAllOrders = async (req, res) => {
 export const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;
 
     const order = await Order.findById(id);
     if (!order) {
@@ -626,14 +667,23 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
+    // Get the user's identifier using the same pattern as cart
+    const userId = getOrderUserId(req, res);
+
+    console.log("[CANCEL] userId:", userId);
+    console.log("[CANCEL] order.customerId:", order.customerId);
+    console.log("[CANCEL] cookies:", req.cookies);
 
     // Verify ownership
-    if (order.customerId !== (user?._id || user?.customerId)) {
+    if (order.customerId !== userId) {
+      console.log("[CANCEL] Ownership check failed!");
       return res.status(403).json({
         success: false,
         message: "You can only cancel your own orders"
       });
     }
+
+    console.log("[CANCEL] Ownership verified, cancelling order");
 
     // Check if cancellable
     if (!["pending", "confirmed"].includes(order.status)) {
@@ -681,6 +731,10 @@ export const getOrder = async (req, res) => {
     const { id } = req.params;
     const user = req.user;
 
+    console.log("[GET ORDER] Request for:", id);
+    console.log("[GET ORDER] User:", { _id: user?._id, isGuest: user?.isGuest });
+    console.log("[GET ORDER] Cookies:", req.cookies);
+
     const order = await Order.findById(id)
       .populate('user', 'name email phone')
       .populate('createdBy', 'name')
@@ -693,16 +747,32 @@ export const getOrder = async (req, res) => {
       });
     }
 
-    // Check permissions
-    const canView = 
-      // User owns the order (compare string ids)
-      order.customerId === (user?._id?.toString() || user?.customerId) ||
-      // User is staff
-      ["admin", "cashier", "kitchen"].includes(user?.role) ||
-      // Guest with matching guest ID
-      (user?.isGuest && order.customerId === user._id?.toString());
+    console.log("[GET ORDER] Found order with customerId:", order.customerId);
+
+    // Check permissions using same logic as getOrderUserId
+    // Allow if:
+    // 1. User is authenticated and owns the order
+    // 2. OR User is a guest accessing their own order (via UUID in cookie)
+    // 3. OR User is staff (admin, cashier, kitchen)
+    const userId = getOrderUserId(req, res);
+    const userIdStr = user?._id?.toString();
+    const isOwner = userIdStr && order.customerId === userIdStr;
+    const isGuestOwner = !user?._id && userId === order.customerId;
+    const isStaff = ["admin", "cashier", "kitchen"].includes(user?.role);
+
+    console.log("[GET ORDER] Permission check:", {
+      userId,
+      userIdStr,
+      orderCustomerId: order.customerId,
+      isOwner,
+      isGuestOwner,
+      isStaff
+    });
+
+    const canView = isOwner || isGuestOwner || isStaff;
 
     if (!canView) {
+      console.log("[GET ORDER] Permission denied for user:", userId);
       return res.status(403).json({
         success: false,
         message: "Not authorized to view this order"
@@ -809,22 +879,16 @@ export const updatePaymentStatus = async (req, res) => {
 // ==============================
 export const getActiveOrder = async (req, res) => {
   try {
-    const user = req.user;
+    // Get the user's identifier using the same pattern as cart
+    const userId = getOrderUserId(req, res);
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required"
-      });
-    }
-
-    // Get the user's identifier
-    const userId = user._id?.toString() || user.customerId;
+    console.log("[GET ACTIVE] userId:", userId);
+    console.log("[GET ACTIVE] cookies:", req.cookies);
 
     if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot determine user identity"
+      return res.json({
+        success: true,
+        data: null
       });
     }
 
@@ -837,13 +901,15 @@ export const getActiveOrder = async (req, res) => {
       .populate('user', 'name email phone')
       .lean();
 
+    console.log("[GET ACTIVE] Found order:", activeOrder?._id);
+
     res.json({
       success: true,
       data: activeOrder || null
     });
   } catch (err) {
     console.error("Get active order error:", err);
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -852,22 +918,13 @@ export const getActiveOrder = async (req, res) => {
 // ==============================
 export const getOrderHistoryForUser = async (req, res) => {
   try {
-    const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required"
-      });
-    }
-
-    // Get the user's identifier
-    const userId = user._id?.toString() || user.customerId;
+    // Get the user's identifier using the same pattern as cart
+    const userId = getOrderUserId(req, res);
 
     if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot determine user identity"
+      return res.json({
+        success: true,
+        data: []
       });
     }
 
@@ -886,6 +943,6 @@ export const getOrderHistoryForUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Get order history error:", err);
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -131,7 +131,8 @@ self.addEventListener('fetch', event => {
         .catch(() => {
           // API calls fail when offline - don't cache them
           return new Response('Network request failed', {
-            status: 0
+            status: 503,
+            statusText: 'Service Unavailable'
           });
         })
     );
