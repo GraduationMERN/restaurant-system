@@ -46,34 +46,44 @@ export const registerUserService = async (user) => {
     isVerified: userRole === "customer" ? false : true,
   });
   
-  if (userRole === "customer") {
-    try {
-      console.log("Sending OTP email to:", email);
-      await sendEmail(
-        email,
-        "Your OTP Code",
-        `Your verification code is ${code}, Valid for 10 minutes`
-      );
-      console.log("OTP email sent successfully!");
-      
-      return {
-        newUser,
-        message: "OTP sent to email. Please verify your account.",
-      };
-    } catch (emailError) {
-      console.error("CRITICAL: Failed to send OTP email:", emailError.message);
-      
-      // For now, return OTP in response for debugging
-      return {
-        newUser,
-        message: "Account created but failed to send email.",
-        debugOtp: code, // Remove in production
-      };
-    }
+   if (userRole === "customer") {
+    // Send email in background WITHOUT waiting
+    sendOTPEmailInBackground(email, code, newUser.name);
+    
+    return {
+      newUser,
+      message: "Account created! Please check your email for OTP.",
+      // Return OTP for development/testing (remove in production)
+      otp: process.env.NODE_ENV === "development" ? code : undefined
+    };
   }
   
   return { newUser, message: "Registered successfully" };
 };
+
+async function sendOTPEmailInBackground(email, code, name) {
+  setTimeout(async () => {
+    try {
+      console.log("Background: Sending OTP email to", email);
+      
+      const html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Welcome to Bella Vista, ${name}!</h2>
+          <p>Your verification code is:</p>
+          <h1 style="color: #FF6B35; font-size: 32px;">${code}</h1>
+          <p>Valid for 10 minutes.</p>
+        </div>
+      `;
+      
+      await sendEmail(email, "Your Verification Code", `Code: ${code}`, html);
+      console.log("Background: Email sent successfully to", email);
+      
+    } catch (error) {
+      console.error("Background: Failed to send email:", error.message);
+      // Log to error tracking service
+    }
+  }, 100); // Small delay to not block response
+}
 
 export const loginUserService = async (email, password) => {
   const user = await findUserByEmail(email);
