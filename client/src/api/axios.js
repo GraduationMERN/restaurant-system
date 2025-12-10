@@ -11,6 +11,9 @@ const api = axios.create({
 });
 
 // Optional: keep the interceptor
-api.interceptors.response.use((response) => response);
-
+api.interceptors.request.use((config) => {
+  // Ensure cookies are sent with every request
+  config.withCredentials = true;
+  return config;
+});
 export default api;
