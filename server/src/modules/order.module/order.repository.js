@@ -1,172 +1,364 @@
 import Order from "./orderModel.js";
+import mongoose from "mongoose";
+import Review from "../review/Review.js";
 
 class OrderRepository {
-  // ==============================
-  // 1) Create Order
-  // ==============================
-  async create(orderData, session = null) {
-    if (session) {
-      const order = await Order.create([orderData], { session });
-      return order[0];
-    }
-    return Order.create(orderData);
+  // Create order
+  async create(orderData) {
+    const order = new Order(orderData);
+    return await order.save();
   }
 
-  // ==============================
-  // 2) Find Order by ID
-  // ==============================
-  async findById(orderId, { populate = [], lean = true } = {}) {
+  // Find by ID with optional population
+  async findById(orderId, populate = false) {
     let query = Order.findById(orderId);
-    populate.forEach((p) => (query = query.populate(p)));
-    if (lean) query = query.lean();
-    return query.exec();
+    
+    if (populate) {
+      query = query
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
+    }
+    
+    return await query;
   }
 
-  // ==============================
-  // 3) List Orders by Restaurant
-  // ==============================
-  async listByRestaurant(restaurantId, { status, limit = 50, skip = 0 } = {}) {
-    const filter = { restaurantId };
-    if (status) filter.orderStatus = status;
-    return Order.find(filter)
+  // Find by Stripe session ID
+  async findByStripeSessionId(sessionId, populate = false) {
+    let query = Order.findOne({ stripeSessionId: sessionId });
+    
+    if (populate) {
+      query = query
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
+    }
+    
+    return await query;
+  }
+
+  // Find by user ID (works for both guest and registered)
+  async findByUserId(userId, populate = false) {
+    // Build the $or filter conditionally so we don't accidentally
+    // match { user: null } when the provided id is not a valid ObjectId.
+    const orConditions = [ { customerId: userId } ];
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      orConditions.push({ user: new mongoose.Types.ObjectId(userId) });
+    }
+
+    let query = Order.find({ $or: orConditions }).sort({ createdAt: -1 });
+
+    if (populate) {
+      query = query.populate('user', 'name email phone');
+    }
+
+    return await query;
+  }
+
+  // Find order by Stripe payment intent id
+  async findByStripePaymentIntent(paymentIntent, populate = false) {
+    let query = Order.findOne({ stripePaymentIntent: paymentIntent });
+    if (populate) {
+      query = query
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name');
+    }
+    return await query;
+  }
+
+  // Find by cart ID
+  async findByCartId(cartId) {
+    return await Order.findOne({ cartId });
+  }
+
+  // Find active orders
+  async findActiveOrders() {
+    return await Order.find({
+      status: { $in: ["pending", "confirmed", "preparing", "ready"] }
+    })
+    .sort({ createdAt: 1 })
+    .populate('user', 'name email phone')
+    .populate('createdBy', 'name');
+  }
+
+  // Get all orders with pagination
+  async getAllOrders({ page = 1, limit = 50, status } = {}) {
+    const skip = (page - 1) * limit;
+    const filter = {};
+    if (status) filter.status = status;
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name email phone')
+        .populate('createdBy', 'name'),
+      Order.countDocuments(filter)
+    ]);
+
+    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
+  }
+
+  // Update order
+  async update(orderId, updates) {
+    return await Order.findByIdAndUpdate(
+        orderId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+  }
+  //for charts
+  async getOverviewStats(from = null, to = null) {
+    const match = {};
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(from);
+      if (to) match.createdAt.$lte = new Date(to);
+    }
+    const pipeline = [
+      { $match: match },
+      {
+        $facet: {
+          totals: [
+            {
+              $group: {
+                _id: null,
+                totalRevenue: { $sum: "$totalAmount" },
+                orderCount: { $sum: 1 },
+              }
+            }
+          ],
+          statusCounts: [
+            {
+              $group: { _id: "$status", count: { $sum: 1 } }
+            }
+          ],
+          customers: [
+            { $match: { user: { $exists: true, $ne: null } } },
+            { $group: { _id: "$user" } },
+            { $count: "customersCount" }
+          ]
+        }
+      }
+    ];
+    const [res] = await Order.aggregate(pipeline);
+    const totals = (res?.totals?.[0]) || { totalRevenue: 0, orderCount: 0 };
+    const statusCounts = res?.statusCounts || [];
+    const customersCount = res?.customers?.[0]?.customersCount || 0;
+
+    // Average rating from approved reviews within the same date range
+    const reviewMatch = { status: "approved" };
+    if (from || to) {
+      reviewMatch.createdAt = {};
+      if (from) reviewMatch.createdAt.$gte = new Date(from);
+      if (to) reviewMatch.createdAt.$lte = new Date(to);
+    }
+    const ratingAgg = await Review.aggregate([
+      { $match: reviewMatch },
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, reviewsCount: { $sum: 1 } } }
+    ]);
+    const avgRating = Number(ratingAgg?.[0]?.avgRating || 0);
+
+    return { ...totals, statusCounts, customersCount, avgRating };
+  }
+
+  async getDailyStats(days = 7) {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (Number(days) - 1));
+    return Order.aggregate([
+      { $match: { createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+  }
+
+  async getTopItems(from = null, to = null, by = "product") {
+    const match = {};
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(from);
+      if (to) match.createdAt.$lte = new Date(to);
+    }
+    const pipeline = [
+      { $match: match },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: by === "category" ? "$items.productId" : "$items.productId",
+          name: { $first: "$items.name" },
+          quantity: { $sum: "$items.quantity" },
+          revenue: { $sum: "$items.totalPrice" }
+        }
+      },
+      { $sort: { quantity: -1 } },
+      { $limit: 10 },
+      // optional lookup to product for category
+      ...(by === "category"
+        ? [
+          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+          { $group: { _id: "$product.categoryId", quantity: { $sum: "$quantity" }, revenue: { $sum: "$revenue" } } },
+          { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "category" } },
+          { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+          { $project: { label: "$category.name", quantity: 1, revenue: 1 } },
+          { $sort: { quantity: -1 } },
+        ]
+        : [
+          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
+          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+          { $project: { label: { $ifNull: ["$product.name", "$name"] }, quantity: 1, revenue: 1 } },
+        ]
+      )
+    ];
+    return Order.aggregate(pipeline);
+  }
+
+  async getRecentOrders(limit = 5) {
+    const parsed = parseInt(limit, 10);
+    const l = Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
+    return Order.find({}, {
+      orderNumber: 1,
+      customerInfo: 1,
+      items: 1,
+      totalAmount: 1,
+      status: 1,
+      createdAt: 1,
+    })
+      .populate("items.productId", "name")
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      .limit(l)
       .lean()
       .exec();
   }
 
   // ==============================
-  // 4) List Orders by Customer
+  // NEW FUNCTIONS FOR PAYMENT SERVICE
   // ==============================
-  async listByCustomer(customerId, { limit = 50, skip = 0 } = {}) {
-    return Order.find({ customerId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec();
-  }
 
-  // ==============================
-  // 5) Update Order Status
-  // ==============================
-  async updateStatus(orderId, newStatus) {
+  /**
+   * Update Stripe Session ID (supports optional transaction)
+   */
+  async updateStripeSessionId(orderId, sessionId, opts = {}) {
     return Order.findByIdAndUpdate(
       orderId,
-      { $set: { orderStatus: newStatus } },
-      { new: true }
-    ).exec();
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
   }
 
-  // ==============================
-  // 6) Update Payment (status + method + stripeSessionId)
-  // ==============================
-  async updatePayment(orderId, paymentStatus, paymentMethod = null, stripeSessionId = null) {
-    const update = { paymentStatus };
-    if (paymentMethod) update.paymentMethod = paymentMethod;
-    if (stripeSessionId) update.stripeSessionId = stripeSessionId;
-    return Order.findByIdAndUpdate(
+  // Update status
+  async updateStatus(orderId, status) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: update },
+      { 
+        $set: { 
+          status,
+          updatedAt: new Date()
+        }
+      },
       { new: true }
-    ).exec();
+    );
   }
 
-  // ==============================
-  // 7) Update Reward Points
-  // ==============================
-  async updateRewardPoints(orderId, rewardPoints) {
-    return Order.findByIdAndUpdate(
+  // Update payment with user population
+  async updatePaymentWithUser(orderId, updates) {
+    const order = await Order.findByIdAndUpdate(
       orderId,
-      { $set: { rewardPointsEarned: rewardPoints } },
+      { $set: updates },
       { new: true }
-    ).exec();
+    ).populate('user', 'name email phone');
+    
+    return order;
   }
 
-  // ==============================
-  // 8) Add Item to Existing Order
-  // ==============================
-  async addItem(orderId, item) {
-    return Order.findByIdAndUpdate(
+  // Update payment
+  async updatePayment(orderId, updates, session = null) {
+    const options = { new: true };
+    if (session) options.session = session;
+    
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $push: { items: item } },
-      { new: true }
-    ).exec();
+      { $set: updates },
+      options
+    );
   }
 
-  // ==============================
-  // 9) Replace All Items
-  // ==============================
-  async updateItems(orderId, items) {
-    return Order.findByIdAndUpdate(
+  // Cancel order
+  async cancelOrder(orderId) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: { items } },
+      { 
+        $set: { 
+          status: "cancelled",
+          updatedAt: new Date()
+        }
+      },
       { new: true }
-    ).exec();
+    );
   }
 
-  // ==============================
-  // 10) Update Total Amount
-  // ==============================
-  async updateTotal(orderId, totalAmount) {
-    return Order.findByIdAndUpdate(
+  // Update customer info
+  async updateCustomerInfo(orderId, customerInfo) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: { totalAmount } },
+      {
+        $set: {
+          "customerInfo": customerInfo,
+          updatedAt: new Date()
+        }
+      },
       { new: true }
-    ).exec();
+    );
   }
 
-  // ==============================
-  // 11) Update Table Number
-  // ==============================
-  async updateTable(orderId, tableNumber) {
-    return Order.findByIdAndUpdate(
+  // Update user ID (link guest to registered user)
+  async updateUserId(orderId, userId) {
+    return await Order.findByIdAndUpdate(
       orderId,
-      { $set: { tableNumber } },
+      { 
+        $set: { 
+          user: userId,
+          customerId: userId.toString(),
+          customerType: "registered",
+          updatedAt: new Date()
+        }
+      },
       { new: true }
-    ).exec();
+    );
   }
 
-  // ==============================
-  // 12) Update Service Type
-  // ==============================
-  async updateServiceType(orderId, serviceType) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { serviceType } },
-      { new: true }
-    ).exec();
+  // Search orders
+  async search(filter = {}, options = {}) {
+    const { page = 1, limit = 50, sort = { createdAt: -1 } } = options;
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate('user', 'name email phone'),
+      Order.countDocuments(filter)
+    ]);
+
+    return { orders, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  // ==============================
-  // 13) Mark Order as Reward Order
-  // ==============================
-  async markAsRewardOrder(orderId, isReward = true) {
-    return Order.findByIdAndUpdate(
-      orderId,
-      { $set: { isRewardOrder: isReward } },
-      { new: true }
-    ).exec();
-  }
-
-  // ==============================
-  // 14) Search Orders (filter + pagination)
-  // ==============================
-  async search(filter = {}, { skip = 0, limit = 50 } = {}) {
-    return Order.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec();
-  }
-
-  // ==============================
-  // 15) Delete Order
-  // ==============================
+  // Delete order
   async delete(orderId) {
-    return Order.findByIdAndDelete(orderId).exec();
+    return await Order.findByIdAndDelete(orderId);
+  }
+
+  // Find by order number
+  async findByOrderNumber(orderNumber) {
+    return await Order.findOne({ orderNumber })
+      .populate('user', 'name email phone');
   }
 }
 

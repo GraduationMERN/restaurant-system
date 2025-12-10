@@ -1,1 +1,107 @@
 @import "tailwindcss";
+@import "./admin.css";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Minimal color tokens and helpers only (per request) */
+
+@theme {
+  --color-primary: #fff;
+  --color-secondary: #fff;
+  --color-accent: #7c3aed;
+  /* … other tokens … */
+}
+
+:root {
+  --color-secondary: #33c3ff;
+  --color-accent: #7c3aed; /* purple 600 */
+  --color-success: #10b981; /* green 500 */
+  --color-muted: #6b7280; /* gray 500 */
+  --color-on-surface: #111827; /* gray 900 */
+  --bg-default: #f9fafb; /* gray-50 */
+  --surface: #ffffff; /* white surface */
+  --warning: #f59e0b; /* amber 500 */
+  --danger: #ef4444; /* red 500 */
+}
+/* Dark mode overrides */
+.dark {
+  --color-primary: #ff8a65; /* فاتح شويه على Dark Mode */
+  --color-secondary: #66d9ff;
+  --color-on-surface: #f9fafb;
+  --bg-default: #1f2937; /* dark gray-800 */
+  --surface: #374151; /* gray-700 */
+  --color-muted: #9ca3af; /* gray-400 */
+  --danger: #f87171; /* red-400 */
+}
+
+/* Text colors */
+.text-muted {
+  color: var(--color-muted) !important;
+}
+.text-on-surface {
+  color: var(--color-on-surface) !important;
+}
+.text-white {
+  color: #fff !important;
+}
+.text-accent {
+  color: var(--color-accent) !important;
+}
+.text-success {
+  color: var(--color-success) !important;
+}
+.text-warning {
+  color: var(--warning) !important;
+}
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* Background colors */
+.bg-default {
+  background-color: var(--bg-default) !important;
+}
+.bg-surface {
+  background-color: var(--surface) !important;
+}
+.bg-primary-gradient {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-500),
+    var(--color-primary)
+  ) !important;
+  color: #fff !important;
+}
+.bg-accent {
+  background-color: var(--color-accent) !important;
+}
+.bg-success {
+  background-color: var(--color-success) !important;
+}
+.bg-danger {
+  background-color: var(--danger) !important;
+}
+
+/* Checkbox and icon fills */
+.fill-warning {
+  fill: var(--warning) !important;
+}
+
+/* Semantic helpers */
+.border-muted {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Button variants (colors only) */
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-on-surface);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* hover helpers (limited) */
+.hover\:bg-surface:hover {
+  background-color: var(--surface) !important;
+}
+
+/* Removed duplicate legacy Tailwind at-rules to avoid lint errors */

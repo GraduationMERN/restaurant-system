@@ -18,7 +18,8 @@ export class ApiFeatures {
   //2-filter
   filter() {
     let filterObj = { ...this.queryString };
-    let exclude = ["page", "sort", "fields", "keyword"];
+    // parameters used for pagination/sorting/selection should NOT be treated as filters
+    let exclude = ["page", "sort", "fields", "keyword", "limit"];
     exclude.forEach((e) => {
       delete filterObj[e];
     });

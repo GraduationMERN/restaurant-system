@@ -18,10 +18,10 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
     },
     googleId: String,
+    avatarUrl: { type: String, default: "" },
     phoneNumber: {
-      type: Number,
-      required: [true, "Phone number is required"],
-      minlength: [11, "Phone number must be 11 number long"],
+      type: String,
+      minlength: [11, "Phone number must be 11 characters long"],
     },
     role: {
       type: String,
@@ -35,15 +35,54 @@ const userSchema = new mongoose.Schema(
     points: {
       type: Number,
       default: 0,
-      valide: {
+      validate: {
         validator: function (val) {
-          if (this.role === "customer" && val && val >= 0) {
-            return true;
-          }
-          return false;
+          // value must be non-negative; allow 0 for customers; admins, etc. can have points but business logic will restrict them as needed
+          return typeof val === "number" && val >= 0;
         },
-        message: "Only customers can have points",
+        message: "Points must be a non-negative number",
+      }
+    },
+    orderHistory: [{
+      orderId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Order',
+        required: true 
       },
+      orderNumber: { 
+        type: String, 
+        required: true 
+      },
+      totalAmount: { 
+        type: Number, 
+        required: true 
+      },
+      status: { 
+        type: String, 
+        enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],
+        default: "pending"
+      },
+      date: { 
+        type: Date, 
+        default: Date.now 
+      },
+      itemsCount: { 
+        type: Number, 
+        default: 0 
+      },
+      serviceType: {
+        type: String,
+        enum: ["dine-in", "pickup", "delivery"]
+      }
+    }],
+    coupon: {
+      usedCoupons: [
+        {
+          couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+          code: String,
+          usedAt: { type: Date, default: Date.now }
+        }
+      ]
     },
     otp: String,
     otpExpires: Date,

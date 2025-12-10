@@ -1,6 +1,7 @@
 import { env } from "../../../config/env.js";
 import {
   forgetPasswordService,
+  googleAuthService,
   loginUserService,
   logoutUserService,
   registerUserService,
@@ -9,28 +10,22 @@ import {
 import { refreshTokenService } from "../service/refreshToken.service.js";
 import { verifyOtpService } from "../service/verifyOtp.service.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
+  sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
+  secure: isProduction ? true : false,      // <- false for local
   maxAge: 24 * 60 * 60 * 1000,
-  sameSite: "none",
+  path: "/",
+  // Use domain only in production and if needed for subdomains
+  // ...(isProduction && { domain: frontendDomain }),
 };
-
 export const registerUserController = async (req, res) => {
   try {
-    // const { newUser, token } = await registerUserService(req.body);
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   maxAge: 24 * 60 * 60 * 1000,
-    //   sameSite: "none",
-    // });
     const { message } = await registerUserService(req.body);
     res.status(201).json({
-      message: "Registered successfully",
-      user: {
-        message,
-      },
+      message,
     });
   } catch (err) {
     console.log(err);
@@ -40,11 +35,18 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
+    console.log("=== LOGIN ATTEMPT ===");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("Frontend URL:", env.frontendUrl);
+    console.log("Request origin:", req.headers.origin);
+    console.log("Cookies received:", req.cookies);
+
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await loginUserService(
       email,
       password
     );
+    
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
@@ -57,9 +59,12 @@ export const loginUserController = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
       },
     });
   } catch (err) {
+    console.error("Login error in production:", err.message);
     res.status(401).json({ message: err.message });
   }
 };
@@ -74,6 +79,7 @@ export const getMe = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      points: user.points,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -97,6 +103,8 @@ export const verifyOTP = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
       },
     });
   } catch (err) {
@@ -143,32 +151,30 @@ export const googleCallbackController = async (req, res) => {
 
   try {
     const { refreshToken, accessToken, user } = await googleAuthService(code);
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-
-    res.redirect(env.frontendUrl);
+    // Redirect to frontend instead of sending JSON
+    res.redirect(
+      `${env.frontendUrl}?name=${encodeURIComponent(
+        user.name
+      )}&email=${encodeURIComponent(user.email)}`
+    );
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     await logoutUserService(refreshToken);
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
