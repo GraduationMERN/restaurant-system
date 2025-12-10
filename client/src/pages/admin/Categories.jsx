@@ -14,9 +14,11 @@ import {
   deleteCategory,
 } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { useToast } from "../../hooks/useToast";
 
 export default function Categories() {
   const dispatch = useDispatch();
+  const toast = useToast();
   const categoryState = useSelector((s) => s.category) || {};
   const { list: categories = [], loading } = categoryState;
 
@@ -63,8 +65,10 @@ export default function Categories() {
       }
       await dispatch(getAllCategories());
       setIsOpen(false);
+      toast.showToast({ message: editing ? "Category updated" : "Category created", type: "success" });
     } catch (err) {
       // handle error (toast)
+      toast.showToast({ message: "Failed to save category", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -191,9 +195,7 @@ export default function Categories() {
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !form.name}>
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            <Button onClick={handleSave} disabled={!form.name} loading={saving}>Save</Button>
           </div>
         </div>
       </Modal>

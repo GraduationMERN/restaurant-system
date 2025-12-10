@@ -20,6 +20,7 @@ import {
 } from "../../redux/slices/ProductSlice";
 import { getAllCategories } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { useToast } from "../../hooks/useToast";
 
 /**
  * MenuWithAPI.jsx
@@ -29,6 +30,7 @@ import { unwrapResult } from "@reduxjs/toolkit";
 
 export default function MenuWithAPI() {
   const dispatch = useDispatch();
+  const toast = useToast();
 
   // Redux state
   // Selectors: return the slice reference directly (do not create new objects inside selector)
@@ -183,9 +185,11 @@ export default function MenuWithAPI() {
       await dispatch(fetchProducts());
       setIsModalOpen(false);
       setEditingId(null);
+      toast.showToast({ message: editingId ? "Item updated" : "Item created", type: "success" });
     } catch (err) {
       // slice contains error message; optionally show toast here
       // console.error(err);
+      toast.showToast({ message: "Failed to save item", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -392,9 +396,7 @@ export default function MenuWithAPI() {
 
           <div className="flex items-center justify-end gap-3">
             <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!isFormValid() || saving}>
-              {saving ? "Saving..." : "Save Item"}
-            </Button>
+            <Button onClick={handleSave} disabled={!isFormValid()} loading={saving}>Save Item</Button>
           </div>
         </div>
       </Modal>

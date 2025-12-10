@@ -7,16 +7,20 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import api from "../../api/axios";
 import { setUser } from "../../redux/slices/authSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const toast = useToast();
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [phone, setPhone] = useState(user?.phoneNumber || "");
   const [bio, setBio] = useState(user?.bio || "");
+  const [saving, setSaving] = useState(false);
   const handleSave = async () => {
+    setSaving(true);
     try {
       const payload = {
         name: `${firstName} ${lastName}`.trim(),
@@ -30,8 +34,12 @@ export default function UserInfoCard() {
       if (res?.data?.user) dispatch(setUser(res.data.user));
       else dispatch(setUser(prev));
       closeModal();
+      toast.showToast({ message: "Changes saved", type: "success" });
     } catch (err) {
       console.error('Failed to update profile', err);
+      toast.showToast({ message: 'Failed to save changes', type: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
   return (
@@ -160,10 +168,10 @@ export default function UserInfoCard() {
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
                 Close
               </Button>
-              <Button size="sm" type="submit">
+              <Button size="sm" type="submit" loading={saving}>
                 Save Changes
               </Button>
             </div>

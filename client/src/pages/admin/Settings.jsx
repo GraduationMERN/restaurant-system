@@ -6,11 +6,13 @@ import TextArea from "../../components/form/input/TextArea";
 import Checkbox from "../../components/form/input/Checkbox";
 import Button from "../../components/ui/button/Button";
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "../../hooks/useToast";
 import { useSettings } from "../../context/SettingContext";
 import api from "../../api/axios";
 
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
+  const toast = useToast();
   const [restaurantName, setRestaurantName] = useState(settings.restaurantName);
   const [description, setDescription] = useState(
     "Authentic Italian cuisine with a modern twist"
@@ -40,6 +42,7 @@ export default function Settings() {
   const [faqs, setFaqs] = useState(settings.faqs || []);
   const [terms, setTerms] = useState(settings.policies?.terms || "");
   const [privacy, setPrivacy] = useState(settings.policies?.privacy || "");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -68,6 +71,7 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       const payload = {
         restaurantName,
@@ -88,8 +92,12 @@ export default function Settings() {
       const res = await api.put("/api/restaurant", payload);
 
       updateSettings(res.data);
+      toast.showToast({ message: "Settings saved", type: "success" });
     } catch (error) {
       console.error("Error saving settings", error);
+      toast.showToast({ message: "Failed to save settings", type: "error" });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -352,8 +360,8 @@ export default function Settings() {
         </div>
       </div>
       <div className="mt-6 flex items-center gap-3">
-        <Button variant="outline">Cancel</Button>
-        <Button variant="primary" onClick={handleSave}>
+        <Button variant="outline" disabled={saving}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave} loading={saving}>
           Save Changes
         </Button>
       </div>
