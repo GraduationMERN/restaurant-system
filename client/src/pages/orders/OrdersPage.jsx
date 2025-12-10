@@ -102,7 +102,7 @@ export default function OrdersPage() {
       socket.off("order:status-changed", notifyStatus);
       socket.off("order:your-payment-updated", notifyPayment);
     };
-  }, [activeOrder, toast, user]);
+  }, [activeOrder, user]);
 
   /* ------------------------------------------
      FETCH INITIAL DATA
