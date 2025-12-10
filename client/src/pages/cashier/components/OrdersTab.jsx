@@ -130,7 +130,7 @@ export default function OrdersTab() {
       socket.off("order:your-payment-updated", handlePaymentChange);
       socket.off("order:new", handleNewOrder);
     };
-  }, [statusUpdateOrder, paymentUpdateOrder, toast, user]);
+  }, [statusUpdateOrder, paymentUpdateOrder, user]);
 
   const fetchOrders = async () => {
     try {
