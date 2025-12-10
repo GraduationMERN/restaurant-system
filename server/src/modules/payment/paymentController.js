@@ -12,6 +12,8 @@ class PaymentController {
       console.log("Order ID:", orderId);
       console.log("User:", user?._id || "guest");
       console.log("Is guest:", user?.isGuest || false);
+      console.log("STRIPE_SECRET_KEY configured:", !!process.env.STRIPE_SECRET_KEY);
+      console.log("CLIENT_URL:", process.env.CLIENT_URL);
 
       if (!orderId) {
         return res.status(400).json({ 
@@ -23,11 +25,20 @@ class PaymentController {
       // Verify order exists
       const order = await Order.findById(orderId);
       if (!order) {
+        console.error("Order not found:", orderId);
         return res.status(404).json({
           success: false,
           error: "Order not found"
         });
       }
+
+      console.log("Order found:", { 
+        _id: order._id, 
+        orderNumber: order.orderNumber, 
+        items: order.items?.length || 0,
+        totalAmount: order.totalAmount,
+        paymentStatus: order.paymentStatus
+      });
 
       // Verify ownership - handle both registered users and guests
       const isRegisteredUser = user?._id && !user?.isGuest;
@@ -84,10 +95,15 @@ class PaymentController {
       });
 
     } catch (error) {
-      console.error("Checkout session error:", error);
+      console.error("Checkout session error:", {
+        message: error.message,
+        stack: error.stack,
+        orderId: req.body?.orderId
+      });
       res.status(500).json({ 
         success: false,
-        error: error.message || "Failed to create checkout session" 
+        error: error.message || "Failed to create checkout session",
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

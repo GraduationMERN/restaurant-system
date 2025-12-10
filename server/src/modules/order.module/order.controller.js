@@ -102,7 +102,6 @@ export const createOrderFromCart = async (req, res) => {
       notes,
       paymentMethod,
       customerInfo,
-      deliveryLocation,
       // Pass user info based on authentication
       customerId: customerId,
       isGuest: user?.isGuest || false,
@@ -833,16 +832,14 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
-    // Validation: Only allow manual updates for non-online payment methods
-    const onlinePaymentMethods = ["online", "stripe", "card"];
-    const isOnlinePayment = onlinePaymentMethods.includes(order.paymentMethod?.toLowerCase());
-    
-    if (isOnlinePayment && paymentStatus === "paid") {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot manually update payment status for ${order.paymentMethod} payments. Status updates automatically via payment gateway.`
-      });
-    }
+    // Log for debugging
+    console.log("[UPDATE PAYMENT]", {
+      orderId: id,
+      paymentMethod: order.paymentMethod,
+      requestedStatus: paymentStatus,
+      userRole: user?.role,
+      isCashierOrAdmin
+    });
 
     order.paymentStatus = paymentStatus;
     order.paidAt = paymentStatus === "paid" ? new Date() : null;

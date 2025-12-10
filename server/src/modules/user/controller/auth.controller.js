@@ -14,13 +14,11 @@ import orderModel from "../../order.module/orderModel.js";
 const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
-  httpOnly: true,
-  sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
-  secure: isProduction ? true : false,      // <- false for local
+  httpOnly: false,
+  sameSite: "None",  // <- Lax for local
+  secure: true,      // <- false for local
   maxAge: 24 * 60 * 60 * 1000,
   path: "/",
-  // Use domain only in production and if needed for subdomains
-  // ...(isProduction && { domain: frontendDomain }),
 };
 export const registerUserController = async (req, res) => {
   try {
@@ -36,10 +34,11 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
-    console.log("=== LOGIN ATTEMPT ===");
+     console.log("=== LOGIN ATTEMPT ===");
     console.log("NODE_ENV:", process.env.NODE_ENV);
     console.log("Frontend URL:", env.frontendUrl);
     console.log("Request origin:", req.headers.origin);
+    console.log("Request headers:", req.headers);
     console.log("Cookies received:", req.cookies);
 
     const { email, password } = req.body;

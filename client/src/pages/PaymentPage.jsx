@@ -48,6 +48,7 @@ const PaymentPage = () => {
   const [branchName, setBranchName] = useState("El Shatby Outlet");
   const [localError, setLocalError] = useState("");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [showInstoreModal, setShowInstoreModal] = useState(false);
 
   // If sessionId exists in URL, we're coming from payment-success page
   useEffect(() => {
@@ -82,7 +83,7 @@ const PaymentPage = () => {
       s.off('order:your-payment-updated', handleYourPayment);
       s.off('order:payment-updated', handleYourPayment);
     };
-  }, [orderId, navigate, toast]);
+  }, [orderId, navigate]);
 
   // Handle stripe redirect
   useEffect(() => {
@@ -105,7 +106,7 @@ const PaymentPage = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [orderId, navigate, location.state, sessionId]);
+  }, [orderId, sessionId, navigate]);
 
   // Verify payment by session ID
   const verifyPaymentBySession = async (sessionId) => {
@@ -196,7 +197,7 @@ const PaymentPage = () => {
           </p>
           <button
             onClick={() => navigate("/checkout")}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition-colors"
           >
             Go to Checkout Now
           </button>
@@ -220,7 +221,7 @@ const PaymentPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Verifying payment status...</p>
         </div>
       </div>
@@ -235,7 +236,7 @@ const PaymentPage = () => {
           <div className="flex items-center">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary/90 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back
@@ -287,7 +288,7 @@ const PaymentPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Branch</h2>
               <div className="flex items-start">
-                <div className="bg-orange-100 dark:bg-orange-900/20 text-primary dark:text-primary-900 rounded-lg p-3 mr-4">
+                <div className="bg-primary/10 dark:bg-primary/10 text-primary dark:text-primary-900 rounded-lg p-3 mr-4">
                   <Store className="w-6 h-6" />
                 </div>
                 <div>
@@ -307,7 +308,7 @@ const PaymentPage = () => {
                   onClick={() => setPaymentMethod("online")}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     paymentMethod === "online"
-                      ? "border-primary dark:border-primary-dark bg-orange-50 dark:bg-orange-900/10"
+                      ? "border-primary dark:border-primary-dark bg-primary/10 dark:bg-primary/10"
                       : "border-gray-200 dark:border-gray-700 hover:border-primary/90 dark:hover:border-primary-dark/90"
                   }`}
                   disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
@@ -340,11 +341,11 @@ const PaymentPage = () => {
 
                 {/* In-store Payment Option */}
                 <button
-                  onClick={() => setPaymentMethod("instore")}
+                  onClick={() => setShowInstoreModal(true)}
                   className={`p-6 rounded-xl border-2 transition-all ${
                     paymentMethod === "instore"
-                      ? "border-primary dark:border-primary-dark bg-orange-50 dark:bg-orange-900/10"
-                      : "border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-dark/90"
+                      ? "border-primary dark:border-primary-dark bg-primary/10 dark:bg-primary/10"
+                      : "border-gray-200 dark:border-gray-700 hover:border-primary/300 dark:hover:border-primary-dark/90"
                   }`}
                   disabled={paymentStatus === 'paid' || paymentStatus === 'success'}
                 >
@@ -486,6 +487,57 @@ const PaymentPage = () => {
             </div>
           </div>
         </div>
+
+        {/* In-Store Payment Confirmation Modal */}
+        {showInstoreModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+              {/* Icon */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-primary dark:bg-primary-dark text-white rounded-full p-4">
+                  <Store className="w-8 h-8" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                Pay at the Cashier
+              </h3>
+
+              {/* Message */}
+              <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                Please proceed to the cashier to confirm your order and complete the payment. Your order will be prepared once payment is confirmed.
+              </p>
+
+              {/* Amount Display */}
+              {/* <div className="bg-primary dark:bg-primary-dark bg-opacity-10 rounded-lg p-4 mb-6">
+                <p className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white font-bold py-3 px-6 rounded-xl transition-colors">Total Amount</p>
+                <p className="text-3xl font-bold text-primary dark:text-primary-dark">
+                  EGP {total.toFixed(2)}
+                </p>
+              </div> */}
+
+              {/* Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setPaymentMethod("instore");
+                    setShowInstoreModal(false);
+                  }}
+                  className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                >
+                  I'll Pay at the Cashier
+                </button>
+                <button
+                  onClick={() => setShowInstoreModal(false)}
+                  className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

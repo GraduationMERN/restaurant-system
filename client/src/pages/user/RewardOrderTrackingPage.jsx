@@ -129,8 +129,8 @@ export default function RewardOrderTrackingPage() {
             {/* Order Confirmation Card */}
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm mb-6 overflow-x-hidden">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
-                  <FaCheckCircle className="w-8 h-8 text-orange-500" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                  <FaCheckCircle className="w-8 h-8 text-primary" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
                 <p className="text-gray-600">Order confirmed! Kindly pick up your reward.</p>
@@ -149,17 +149,17 @@ export default function RewardOrderTrackingPage() {
                     <React.Fragment key={idx}>
                       <div className="flex flex-col items-center flex-1">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${
-                          step.completed ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600'
+                          step.completed ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'
                         }`}>
                           <FaCheckCircle className="w-5 h-5" />
                         </div>
-                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-orange-500' : 'text-gray-600'}`}>
+                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-primary' : 'text-gray-600'}`}>
                           {step.label}
                         </p>
                       </div>
                       {idx < statusSteps.length - 1 && (
                         <div className={`flex-1 h-1 transition-colors mb-6 ${
-                          step.completed ? 'bg-orange-500' : 'bg-gray-300'
+                          step.completed ? 'bg-primary' : 'bg-gray-300'
                         }`} />
                       )}
                     </React.Fragment>
@@ -171,7 +171,7 @@ export default function RewardOrderTrackingPage() {
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-2 text-gray-700 mb-2">
                   <FaClock className="w-5 h-5" />
-                  <span className="font-semibold text-2xl text-orange-500">{formatTime(timeRemaining)}</span>
+                  <span className="font-semibold text-2xl text-primary">{formatTime(timeRemaining)}</span>
                   <span className="text-gray-600">Estimated ready time</span>
                 </div>
                 <p className="text-sm text-gray-600">We will let you know when your reward is ready.</p>
@@ -179,11 +179,11 @@ export default function RewardOrderTrackingPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 flex-col md:flex-row">
-                <button className="flex-1 px-4 py-3 border-2 border-orange-500 text-orange-500 rounded-xl font-semibold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
+                <button className="flex-1 px-4 py-3 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
                   <span>📞</span>
                   Call the restaurant
                 </button>
-                <button className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2">
+                <button className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
                   <span>⭐</span>
                   Rate your experience
                 </button>
@@ -245,7 +245,7 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-900">Total Points</span>
-                  <span className="text-2xl font-bold text-orange-500">{order.pointsUsed}</span>
+                  <span className="text-2xl font-bold text-primary">{order.pointsUsed}</span>
                 </div>
               </div>
 

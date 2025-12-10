@@ -294,7 +294,7 @@ function MenuPage() {
                   <Typography color="text.secondary" mb={1}>
                     {selectedProduct.desc}
                   </Typography>
-                  <Typography fontWeight={700} sx={{ color: "#e27e36" }}>
+                  <Typography fontWeight={700} sx={{ color: "var(--color-primary)" }}>
                     EGP {selectedProduct.basePrice}
                   </Typography>
                 </Box>
@@ -309,9 +309,9 @@ function MenuPage() {
                     variant="contained"
                     sx={{
                       minWidth: 40,
-                      bgcolor: "#e27e36",
+                      bgcolor: "var(--color-primary)",
                       borderRadius: 3,
-                      "&:hover": { bgcolor: "#d26c2c" },
+                      "&:hover": { opacity: 0.9 },
                     }}
                     onClick={() => setQuantity(quantity + 1)}
                   >
@@ -324,9 +324,9 @@ function MenuPage() {
                     variant="contained"
                     sx={{
                       minWidth: 40,
-                      bgcolor: "#e27e36",
+                      bgcolor: "var(--color-primary)",
                       borderRadius: 3,
-                      "&:hover": { bgcolor: "#d26c2c" },
+                      "&:hover": { opacity: 0.9 },
                     }}
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   >
@@ -359,17 +359,17 @@ function MenuPage() {
                           mb: 1,
                           "& .MuiToggleButton-root": {
                             borderRadius: "20px",
-                            border: `1px solid #e27e36`,
+                            border: `1px solid var(--color-primary)`,
                             textTransform: "none",
                             fontWeight: 600,
-                            color: "#e27e36",
+                            color: "var(--color-primary)",
                             px: 3,
                             py: 0.5,
                             mx: 0.3,
                             minWidth: 40,
                           },
                           "& .Mui-selected": {
-                            bgcolor: "#e27e36 !important",
+                            bgcolor: "var(--color-primary) !important",
                             color: "#fff !important",
                           },
                         }}
@@ -404,11 +404,9 @@ function MenuPage() {
                 sx={{
                   bgcolor: isProductOutOfStock(selectedProduct)
                     ? "grey.400"
-                    : "#e27e36",
+                    : "var(--color-primary)",
                   "&:hover": {
-                    bgcolor: isProductOutOfStock(selectedProduct)
-                      ? "grey.400"
-                      : "#d26c2c",
+                    opacity: isProductOutOfStock(selectedProduct) ? 1 : 0.9,
                   },
                 }}
                 onClick={() => {
