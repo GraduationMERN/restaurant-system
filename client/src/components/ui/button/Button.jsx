@@ -1,3 +1,5 @@
+import LoadingSpinner from "../../LoadingSpinner";
+
 const Button = ({
   children,
   size = "md",
@@ -8,6 +10,7 @@ const Button = ({
   className = "",
   disabled = false,
   type = "button",
+  loading = false,
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -24,16 +27,19 @@ const Button = ({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
-        sizeClasses[size]
-      } ${variantClasses[variant]} ${
-        disabled ? "cursor-not-allowed opacity-50" : ""
-      }`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${sizeClasses[size]
+        } ${variantClasses[variant]} ${disabled || loading ? "cursor-not-allowed opacity-50" : ""
+        }`}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
+      aria-busy={loading}
     >
-      {startIcon && <span className="flex items-center">{startIcon}</span>}
-      {children}
+      {loading ? (
+        <span className="flex items-center"><LoadingSpinner size="18px" /></span>
+      ) : (
+        startIcon && <span className="flex items-center">{startIcon}</span>
+      )}
+      <span>{children}</span>
       {endIcon && <span className="flex items-center">{endIcon}</span>}
     </button>
   );
