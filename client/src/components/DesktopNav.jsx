@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   User,
   LifeBuoy,
+  HelpCircle,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
@@ -147,7 +148,7 @@ export default function CombinedNavbar() {
           />
           <DesktopNavItem
             to="/support"
-            icon={<LifeBuoy size={20} />}
+            icon={<HelpCircle size={20} />}
             label={"Support"}
             active={isActive("/support")}
             isOpen={isOpen}
