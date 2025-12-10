@@ -1,4 +1,4 @@
-import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut } from "lucide-react";
+import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut, HelpCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
@@ -26,14 +26,14 @@ export default function Navbar() {
 
       {/* Language Switch */}
       {i18n.language === "en" ? (
-        <button 
+        <button
           onClick={() => i18n.changeLanguage("ar")}
           className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
         >
           <span className="text-xs font-medium">AR</span>
         </button>
       ) : (
-        <button 
+        <button
           onClick={() => i18n.changeLanguage("en")}
           className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
         >
@@ -43,8 +43,8 @@ export default function Navbar() {
 
       {/* Normal Navbar Buttons */}
       {/* Home */}
-      <Link 
-        to="/" 
+      <Link
+        to="/"
         className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Home size={20} />
@@ -52,8 +52,8 @@ export default function Navbar() {
       </Link>
 
       {/* Menu */}
-      <Link 
-        to="/menu" 
+      <Link
+        to="/menu"
         className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Utensils size={20} />
@@ -63,9 +63,8 @@ export default function Navbar() {
       {/* Cart */}
       <Link
         to="/cart"
-        className={`relative flex flex-col items-center transition-colors ${
-          isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
-        }`}
+        className={`relative flex flex-col items-center transition-colors ${isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+          }`}
       >
         <ShoppingCart size={20} />
 
@@ -75,7 +74,7 @@ export default function Navbar() {
               position: "absolute",
               top: "-6px",
               right: "-6px",
-              backgroundColor: "var(--color-primary)", 
+              backgroundColor: "var(--color-primary)",
               color: "#fff",
               fontSize: "10px",
               fontWeight: "bold",
@@ -98,8 +97,8 @@ export default function Navbar() {
 
 
       {/* Orders */}
-      <Link 
-        to="/orders/:id" 
+      <Link
+        to="/orders/:id"
         className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Clock4 size={20} />
@@ -107,8 +106,8 @@ export default function Navbar() {
       </Link>
 
       {/* Reviews */}
-      <Link 
-        to="/reviews" 
+      <Link
+        to="/reviews"
         className={`flex flex-col items-center transition-colors ${isActive("/reviews") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Star size={20} />
@@ -116,21 +115,29 @@ export default function Navbar() {
       </Link>
 
       {/* Rewards */}
-      <Link 
-        to="/rewards" 
-        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-secondary" : "text-gray-600 hover:text-secondary/70"}`}
+      <Link
+        to="/rewards"
+        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Gift size={20} />
         <span className="text-xs">{t("rewards")}</span>
+      </Link>
+
+      {/* Support */}
+      <Link
+        to="/support"
+        className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <HelpCircle size={20} />
+        <span className="text-xs">Support</span>
       </Link>
 
       {/* LOGIN / LOGOUT */}
       {!isAuthenticated ? (
         <Link
           to="/login"
-          className={`flex flex-col items-center transition-colors ${
-            isActive("/login") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
-          }`}
+          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+            }`}
         >
           <User size={20} />
           <span className="text-xs">{t("login")}</span>

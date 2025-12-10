@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
@@ -35,6 +35,7 @@ import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
+import Support from "./pages/Support";
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
@@ -97,6 +98,7 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
@@ -145,7 +147,8 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/admin/:section?" element={<Admin />} />
             </Route>
-            <Route path="*" element={<NotFound />} />
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
             {/* Legacy routes redirects (removed) */}
           </Routes>
         </Layout>

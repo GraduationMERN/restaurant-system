@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSettings } from "../../context/SettingContext";
 
 import { Link } from "react-router";
 import { useSidebar } from "../../context/SidebarContext";
@@ -8,6 +9,7 @@ import UserDropdown from "../../components/header/UserDropdown";
 
 const AppHeader = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const { settings } = useSettings();
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -71,14 +73,9 @@ const AppHeader = () => {
 
           <Link to="/" className="lg:hidden">
             <img
-              className="dark:hidden"
-              src="./images/logo/logo.svg"
+              src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
               alt="Logo"
-            />
-            <img
-              className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
-              alt="Logo"
+              className="h-8 w-auto object-contain"
             />
           </Link>
 

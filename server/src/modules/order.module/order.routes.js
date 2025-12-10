@@ -8,6 +8,8 @@ import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 const router = express.Router();
 // ============= PUBLIC/GUEST ROUTES =============
 
+// Ensure guest ID is generated and cookie is set
+router.get("/guest-id", optionalAuthMiddleware, orderController.getGuestId);
 
 router.post("/from-cart", optionalAuthMiddleware, orderController.createOrderFromCart);
 router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder);
@@ -36,7 +38,7 @@ router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopIte
 // ============= CASHIER ROUTES =============
 router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);
 
-router.patch("/:id/cancel", authMiddleware, orderController.cancelOrder);
+router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
 // ---- ADMIN/CASHIER ----
