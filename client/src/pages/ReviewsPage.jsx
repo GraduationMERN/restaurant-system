@@ -6,35 +6,38 @@ import { useTranslation } from "react-i18next";
 import ReviewModal from "../components/reviews/ReviewModal";
 import ReviewsGrid from "../components/reviews/ReviewsGrid";
 import api from "../api/axios";
+import { useToast } from "../hooks/useToast";
 
 export default function ReviewsPage() {
   const dispatch = useDispatch();
   const { list: reviews, loading } = useSelector((state) => state.reviews);
   const { isOpen, openModal, closeModal } = useModal();
   const { t } = useTranslation();
+  const { user } = useSelector((state) => state.auth);
 
+  const { error, warning, success } = useToast();
 
   useEffect(() => {
     dispatch(fetchReviews());
   }, [dispatch]);
-  const { user } = useSelector((state) => state.auth);
 
   const handleOpenReviewModal = async () => {
-    console.log(user)
     if (!user?.id) {
-      return alert("You must be logged in to write a review");
+      return warning("You must be logged in to write a review.");
     }
 
     try {
-      const res =await api.get("/auth/me");
+      const res = await api.get("/auth/me");
+
       if (res.data.orderCount < 1) {
-        return alert("You must complete at least one order before reviewing.");
+        return warning("You must complete at least one order before reviewing.");
       }
-     
+
+      success("Great! You can now leave a review.");
       openModal();
     } catch (err) {
       console.error(err);
-      alert("Unable to verify review permissions.");
+      error("Unable to verify review permissions.");
     }
   };
 
@@ -44,7 +47,7 @@ export default function ReviewsPage() {
 
       <button
         onClick={handleOpenReviewModal}
-        className="bg-primary text-white px-5 py-2 rounded-xl shadow mb-8"
+        className="bg-primary text-white px-5 py-2 rounded-xl shadow mb-8 hover:opacity-90 transition-all"
       >
         + {t("write_review")}
       </button>
