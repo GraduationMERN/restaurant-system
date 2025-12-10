@@ -1,47 +1,79 @@
 
 import { ReviewService } from "./review.service.js";
 import { io, notificationService } from "../../../server.js";
+import Order  from "../order.module/orderModel.js";
 
 // CREATE REVIEW
 export const createReview = async (req, res, next) => {
   try {
-    const { rating, comment, order } = req.body;
+    const userId = req.user?._id;
 
-    // Cloudinary URLs from multer-storage-cloudinary
+    // 1. Must be logged in
+    if (!userId) {
+      return res.status(401).json({ message: "You must be logged in to leave a review." });
+    }
+
+    // 2. Must have completed order
+    const completedOrders = await Order.find({
+      user: userId,
+      status: "completed",
+    });
+
+    if (completedOrders.length === 0) {
+      return res.status(403).json({
+        message: "You need at least one completed order to leave a review.",
+      });
+    }
+
+    // Extract form data (IMPORTANT FIX)
+    const { rating, comment, order, anonymous } = req.body;
+
+    // 3. Uploaded photos
     const photos = req.files?.map((file) => ({
       url: file.path,
       public_id: file.filename,
     }));
 
+    // 4. Create review
     const review = await ReviewService.createReview({
-      user: req.user?._id || null,
+      user: anonymous === "true" || anonymous === true ? null : userId,
       order,
       rating,
       comment,
       photos,
+      anonymous,
     });
 
-    // Populate user data for socket emission
+    // 5. Populate review
     const populatedReview = await ReviewService.getReviewById(review._id);
 
-    // Emit new review event to admin room
+    // Enforce anonymity (remove user from populated)
+    if (populatedReview.anonymous) {
+      populatedReview.user = null;
+    }
+
+    // 6. Emit to admin
     if (io) {
       io.to("admin").emit("new_review", populatedReview);
-      
-      // Also send notification to admin
+
       await notificationService?.sendToAdmin({
         title: "New Review Submitted",
-        message: `A new review with ${rating} stars was submitted by ${populatedReview.user?.name || "Anonymous"}`,
+        message: `A new review with ${rating} stars was submitted by ${
+          populatedReview.user?.name || "Anonymous"
+        }`,
         type: "review",
-        createdAt: new Date()
+        createdAt: new Date(),
       });
     }
 
-    res.status(201).json({ success: true, data: review });
+    // 7. Response with populated review
+    res.status(201).json({ success: true, data: populatedReview });
+
   } catch (error) {
     next(error);
   }
 };
+
 
 // GET ALL REVIEWS
 export const getAllReviews = async (req, res, next) => {

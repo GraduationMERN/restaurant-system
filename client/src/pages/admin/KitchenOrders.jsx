@@ -110,7 +110,7 @@ export default function KitchenOrders() {
       toast.showToast({ message: error, type: "error" });
       dispatch(clearKitchenMessages());
     }
-  }, [successMessage, error, dispatch, toast]);
+  }, [successMessage, error, dispatch]);
 
   // Auto-clear new order alert
   useEffect(() => {
