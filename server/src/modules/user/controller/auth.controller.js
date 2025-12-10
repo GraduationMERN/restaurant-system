@@ -14,7 +14,7 @@ import orderModel from "../../order.module/orderModel.js";
 const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
-  httpOnly: true,
+  httpOnly: false,
   sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
   secure: isProduction ? true : false,      // <- false for local
   maxAge: 24 * 60 * 60 * 1000,
