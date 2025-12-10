@@ -7,169 +7,110 @@ import logger from "../../utils/logger.js";
 // Don't import notificationService and io directly - they'll be passed or accessed via server
 // Remove: import { notificationService, io } from "../../../server.js";
 
-// Initialize stripeClient lazily to ensure env vars are loaded
-let stripeClient;
-
-const getStripeClient = () => {
-  if (!stripeClient) {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("STRIPE_SECRET_KEY environment variable not configured");
-    }
-    stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
-  }
-  return stripeClient;
-};
+const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 
 class PaymentService {
   // Create Stripe Checkout Session (UPDATED)
   async createCheckoutSession(orderId, meta = {}) {
-    try {
-      console.log("[PAYMENT-SERVICE] Starting createCheckoutSession for orderId:", orderId);
-      
-      if (!process.env.STRIPE_SECRET_KEY) {
-        throw new Error("Stripe secret key not configured");
-      }
-
-      console.log("[PAYMENT-SERVICE] Initializing Stripe client...");
-      const stripeClient = getStripeClient();
-      console.log("[PAYMENT-SERVICE] Stripe client ready");
-
-      // Fetch order with user population
-      console.log("[PAYMENT-SERVICE] Fetching order from repository...");
-      const order = await OrderRepository.findById(orderId, true); // true for populate
-      if (!order) {
-        throw new Error("Order not found");
-      }
-
-      console.log("[PAYMENT-SERVICE] Order loaded:", {
-        _id: order._id,
-        itemCount: order.items?.length,
-        totalAmount: order.totalAmount,
-        paymentStatus: order.paymentStatus
-      });
-
-      if (order.paymentStatus === "paid") {
-        throw new Error("Order already paid");
-      }
-
-      // Validate order has items
-      if (!order.items || order.items.length === 0) {
-        throw new Error("Order has no items");
-      }
-
-      console.log("[PAYMENT-SERVICE] Building line items for Stripe...");
-      // Prepare line items - FIXED: Use proper price calculation
-      const line_items = order.items.map((item, idx) => {
-        try {
-          const description = this._formatItemOptions(item.selectedOptions);
-          const unitPrice = item.price || (item.totalPrice / item.quantity);
-          const unitAmountCents = Math.round(unitPrice * 100);
-          
-          const priceData = {
-            currency: process.env.STRIPE_CURRENCY || "usd",
-            product_data: { 
-              name: item.name
-            },
-            unit_amount: unitAmountCents
-          };
-          
-          // Only add description if it's not empty
-          if (description) {
-            priceData.product_data.description = description;
-          }
-          
-          return {
-            price_data: priceData,
-            quantity: item.quantity || 1
-          };
-        } catch (itemErr) {
-          console.error("[PAYMENT-SERVICE] Error building line item", idx, itemErr.message);
-          throw itemErr;
-        }
-      });
-
-      console.log("[PAYMENT-SERVICE] Line items built:", line_items.length);
-
-      // Add delivery fee as line item if applicable
-      if (order.deliveryFee > 0) {
-        line_items.push({
-          price_data: {
-            currency: process.env.STRIPE_CURRENCY || "usd",
-            product_data: { name: "Delivery Fee" },
-            unit_amount: Math.round(order.deliveryFee * 100)
-          },
-          quantity: 1
-        });
-      }
-
-      // Customer metadata for Stripe
-      const customerEmail = order.customerInfo?.email || 
-                           (order.user?.email) || 
-                           meta.user?.email;
-
-      // Session metadata
-      const metadata = {
-        orderId: order._id.toString(),
-        orderNumber: order.orderNumber,
-        customerId: order.customerId || "guest",
-        customerType: order.customerType || "guest",
-        source: "restaurant-saas"
-      };
-
-      if (meta.traceId) metadata.traceId = meta.traceId;
-
-      // Validate CLIENT_URL is set
-      if (!process.env.CLIENT_URL) {
-        throw new Error("CLIENT_URL environment variable not configured");
-      }
-
-      console.log("[PAYMENT-SERVICE] Creating Stripe session...");
-      // Create Stripe session
-      const session = await getStripeClient().checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items,
-        mode: "payment",
-        success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
-        cancel_url: `${process.env.CLIENT_URL}/payment-cancel?order_id=${order._id}`,
-        metadata,
-        customer_email: customerEmail || undefined,
-        shipping_address_collection: order.serviceType === "delivery" ? {
-          allowed_countries: ["US", "GB", "CA", "AU", "EG"] // Adjust as needed
-        } : undefined,
-        expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
-      });
-
-      console.log("[PAYMENT-SERVICE] Stripe session created:", session.id);
-
-      // Update order with Stripe session ID
-      console.log("[PAYMENT-SERVICE] Updating order with session ID...");
-      await OrderRepository.updatePayment(orderId, {
-        stripeSessionId: session.id,
-        paymentStatus: "pending",
-        paymentMethod: "card"
-      });
-
-      console.log("[PAYMENT-SERVICE] Order updated successfully");
-      logger.info("Created Stripe session", {
-        orderId,
-        sessionId: session.id,
-        orderNumber: order.orderNumber,
-        amount: order.totalAmount
-      });
-
-      return session;
-    } catch (error) {
-      console.error("[PAYMENT-SERVICE] Exception caught:", {
-        message: error.message,
-        stack: error.stack
-      });
-      logger.error("Failed to create checkout session", {
-        orderId,
-        error: error.message,
-        stack: error.stack
-      });
-      throw error; // Re-throw so controller can handle it
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("Stripe secret key not configured");
     }
+
+    // Fetch order with user population
+    const order = await OrderRepository.findById(orderId, true); // true for populate
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    if (order.paymentStatus === "paid") {
+      throw new Error("Order already paid");
+    }
+
+    // Validate order has items
+    if (!order.items || order.items.length === 0) {
+      throw new Error("Order has no items");
+    }
+
+    // Prepare line items - FIXED: Use proper price calculation
+    const line_items = order.items.map(item => {
+      const description = this._formatItemOptions(item.selectedOptions);
+      const priceData = {
+        currency: process.env.STRIPE_CURRENCY || "usd",
+        product_data: { 
+          name: item.name
+        },
+        unit_amount: Math.round((item.price || item.totalPrice / item.quantity) * 100)
+      };
+      
+      // Only add description if it's not empty
+      if (description) {
+        priceData.product_data.description = description;
+      }
+      
+      return {
+        price_data: priceData,
+        quantity: item.quantity || 1
+      };
+    });
+
+    // Add delivery fee as line item if applicable
+    if (order.deliveryFee > 0) {
+      line_items.push({
+        price_data: {
+          currency: process.env.STRIPE_CURRENCY || "usd",
+          product_data: { name: "Delivery Fee" },
+          unit_amount: Math.round(order.deliveryFee * 100)
+        },
+        quantity: 1
+      });
+    }
+
+    // Customer metadata for Stripe
+    const customerEmail = order.customerInfo?.email || 
+                         (order.user?.email) || 
+                         meta.user?.email;
+
+    // Session metadata
+    const metadata = {
+      orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
+      customerId: order.customerId || "guest",
+      customerType: order.customerType || "guest",
+      source: "restaurant-saas"
+    };
+
+    if (meta.traceId) metadata.traceId = meta.traceId;
+
+    // Create Stripe session
+    const session = await stripeClient.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items,
+      mode: "payment",
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
+      cancel_url: `${process.env.CLIENT_URL}/payment-cancel?order_id=${order._id}`,
+      metadata,
+      customer_email: customerEmail || undefined,
+      shipping_address_collection: order.serviceType === "delivery" ? {
+        allowed_countries: ["US", "GB", "CA", "AU", "EG"] // Adjust as needed
+      } : undefined,
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
+    });
+
+    // Update order with Stripe session ID
+    await OrderRepository.updatePayment(orderId, {
+      stripeSessionId: session.id,
+      paymentStatus: "pending",
+      paymentMethod: "card"
+    });
+
+    logger.info("Created Stripe session", {
+      orderId,
+      sessionId: session.id,
+      orderNumber: order.orderNumber,
+      amount: order.totalAmount
+    });
+
+    return session;
   }
 
   // Handle Stripe Webhook (COMPLETE FIX)
@@ -185,7 +126,7 @@ class PaymentService {
 
     let event;
     try {
-      event = getStripeClient().webhooks.constructEvent(
+      event = stripeClient.webhooks.constructEvent(
         req.body,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET
@@ -556,7 +497,7 @@ class PaymentService {
       : Math.round(order.totalAmount * 100);
 
     try {
-      const refund = await getStripeClient().refunds.create({
+      const refund = await stripeClient.refunds.create({
         payment_intent: order.stripePaymentIntent,
         amount: amount,
         reason: "requested_by_customer"
@@ -669,7 +610,7 @@ class PaymentService {
     }
 
     try {
-      const session = await getStripeClient().checkout.sessions.retrieve(order.stripeSessionId);
+      const session = await stripeClient.checkout.sessions.retrieve(order.stripeSessionId);
       return {
         status: session.payment_status,
         stripeStatus: session.payment_status,
