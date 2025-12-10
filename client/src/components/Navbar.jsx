@@ -1,44 +1,157 @@
-import { Home, Utensils, Clock4 , Star, Gift } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut, HelpCircle } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from "../redux/slices/authSlice"; // adjust path
 
 export default function Navbar() {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const isActive = (path) =>
-    location.pathname === path
-      ? "text-blue-600"
-      : "text-gray-500 hover:text-blue-600";
+  const { isAuthenticated, user } = useSelector(state => state.auth);
+  const cartItem = useSelector(state => state.cart.products);
+  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
+
+  const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    navigate("/");
+  };
 
   return (
-    <div className="w-full bg-white  shadow-sm fixed bottom-0 left-0 ">
-      <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
+    <div className="w-full flex justify-between items-center">
 
-        <Link to="/" className={`flex flex-col items-center ${isActive("/")}`}>
-          <Home size={20} />
-          <span className="text-xs">Home</span>
+      {/* Language Switch */}
+      {i18n.language === "en" ? (
+        <button
+          onClick={() => i18n.changeLanguage("ar")}
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          <span className="text-xs font-medium">AR</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => i18n.changeLanguage("en")}
+          className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          <span className="text-xs font-medium">EN</span>
+        </button>
+      )}
+
+      {/* Normal Navbar Buttons */}
+      {/* Home */}
+      <Link
+        to="/"
+        className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <Home size={20} />
+        <span className="text-xs">{t("home")}</span>
+      </Link>
+
+      {/* Menu */}
+      <Link
+        to="/menu"
+        className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <Utensils size={20} />
+        <span className="text-xs">{t("menu")}</span>
+      </Link>
+
+      {/* Cart */}
+      <Link
+        to="/cart"
+        className={`relative flex flex-col items-center transition-colors ${isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+          }`}
+      >
+        <ShoppingCart size={20} />
+
+        {totalItems > 0 && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "-6px",
+              backgroundColor: "var(--color-primary)",
+              color: "#fff",
+              fontSize: "10px",
+              fontWeight: "bold",
+              borderRadius: "50%",
+              height: "18px",
+              minWidth: "18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 4px",
+              lineHeight: 1,
+            }}
+          >
+            {totalItems}
+          </span>
+        )}
+
+        <span className="text-xs">{t("cart")}</span>
+      </Link>
+
+
+      {/* Orders */}
+      <Link
+        to="/orders/:id"
+        className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <Clock4 size={20} />
+        <span className="text-xs">{t("orders")}</span>
+      </Link>
+
+      {/* Reviews */}
+      <Link
+        to="/reviews"
+        className={`flex flex-col items-center transition-colors ${isActive("/reviews") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <Star size={20} />
+        <span className="text-xs">{t("reviews")}</span>
+      </Link>
+
+      {/* Rewards */}
+      <Link
+        to="/rewards"
+        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <Gift size={20} />
+        <span className="text-xs">{t("rewards")}</span>
+      </Link>
+
+      {/* Support */}
+      <Link
+        to="/support"
+        className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+      >
+        <HelpCircle size={20} />
+        <span className="text-xs">Support</span>
+      </Link>
+
+      {/* LOGIN / LOGOUT */}
+      {!isAuthenticated ? (
+        <Link
+          to="/login"
+          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+            }`}
+        >
+          <User size={20} />
+          <span className="text-xs">{t("login")}</span>
         </Link>
+      ) : (
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center text-gray-600 hover:text-red-600 transition-colors"
+        >
+          <LogOut size={20} />
+          <span className="text-xs">{t("logout")}</span>
+        </button>
+      )}
 
-        <Link to="/menu" className={`flex flex-col items-center ${isActive("/menu")}`}>
-          <Utensils size={20} />
-          <span className="text-xs">Menu</span>
-        </Link>
-
-        <Link to="/orders" className={`flex flex-col items-center ${isActive("/orders")}`}>
-          <Clock4  size={20} />
-          <span className="text-xs">Orders</span>
-        </Link>
-
-        <Link to="/reviews" className={`flex flex-col items-center ${isActive("/reviews")}`}>
-          <Star size={20} />
-          <span className="text-xs">Reviews</span>
-        </Link>
-
-        <Link to="/rewards" className={`flex flex-col items-center ${isActive("/rewards")}`}>
-          <Gift size={20} />
-          <span className="text-xs">Rewards</span>
-        </Link>
-
-      </div>
     </div>
   );
 }
