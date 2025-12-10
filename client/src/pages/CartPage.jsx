@@ -217,10 +217,10 @@ export default function CartPage() {
                       minWidth: 32,
                       height: 32,
                       padding: 0,
-                      bgcolor: "#FFD8B1", // لون برتقالي فاتح زي الصورة
-                      color: "#FF6B35", // لون الرمز
+                      bgcolor: "var(--color-primary)",
+                      color: "#fff",
                       fontWeight: 700,
-                      "&:hover": { bgcolor: "#FFCBA1" },
+                      "&:hover": { opacity: 0.9 },
                       borderRadius: "50%",
                     }}
                   >
@@ -254,10 +254,10 @@ export default function CartPage() {
                       minWidth: 32,
                       height: 32,
                       padding: 0,
-                      bgcolor: "#FFD8B1",
-                      color: "#FF6B35",
+                      bgcolor: "var(--color-primary)",
+                      color: "#fff",
                       fontWeight: 700,
-                      "&:hover": { bgcolor: "#FFCBA1" },
+                      "&:hover": { opacity: 0.9 },
                       borderRadius: "50%",
                     }}
                   >

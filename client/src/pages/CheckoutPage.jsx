@@ -346,10 +346,10 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-3 ml-4">
-                        <div className="flex items-center bg-orange-100 dark:bg-primary-900/20 rounded-full px-1">
+                        <div className="flex items-center bg-primary/10 dark:bg-primary/10 rounded-full px-1">
                           <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primary/110 dark:text-primary/90 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
+                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -358,7 +358,7 @@ export default function CheckoutPage() {
                           </span>
                           <button
                             onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primary/110 dark:text-primary/90 hover:bg-orange-200 dark:hover:bg-orange-800 rounded-full transition-colors"
+                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                           </button>

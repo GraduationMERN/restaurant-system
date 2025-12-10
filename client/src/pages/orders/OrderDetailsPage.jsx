@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { fetchOrderById } from "../../redux/slices/ordersSlice";
 import ActiveOrderComponent from "./ActiveOrderComponent";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
@@ -219,9 +219,6 @@ export default function OrderDetailsPage() {
   const dispatch = useDispatch();
   const toast = useToast();
 
-  const { user } = useSelector((state) => state.auth);
-  const isGuest = !user || user.isGuest;
-
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -233,21 +230,16 @@ export default function OrderDetailsPage() {
         setLoading(true);
         const result = await dispatch(fetchOrderById(id)).unwrap();
         setOrder(result);
-        
-        // Store in localStorage for guests so they can see it on /orders page
-        if (isGuest && result) {
-          localStorage.setItem("activeOrder", JSON.stringify(result));
-        }
       } catch (err) {
         setError("Failed to load the order");
-        toast?.error("Failed to load order");
+        toast.error("Failed to load order");
       } finally {
         setLoading(false);
       }
     };
 
     if (id) loadOrder();
-  }, [id, dispatch, isGuest]);
+  }, [id, dispatch, toast]);
 
   if (loading) return <PageLoader />;
   if (error || !order)
