@@ -56,7 +56,7 @@ export default function SocketProvider() {
       s.off("order:your-status-changed", onYourStatusChanged);
       s.off("order:your-payment-updated", onYourPaymentUpdated);
     };
-  }, [authUser, dispatch, toast]);
+  }, [authUser, dispatch]);
 
   return null;
 }

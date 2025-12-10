@@ -72,7 +72,7 @@ export default function SocketInitializer() {
       socket.off("order:estimatedTime");
       // Do not disconnect singleton here to keep connection for other parts
     };
-  }, [user, dispatch, toast]);
+  }, [user, dispatch]);
 
   return null;
 }

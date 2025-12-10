@@ -65,13 +65,25 @@ const OrderSchema = new mongoose.Schema(
     },
 
     // ============= DELIVERY (Only for delivery type) =============
-    deliveryAddress: {
-      type: String,
-      default: "",
-      required: function () {
-        return this.serviceType === "delivery";
-      },
+    // deliveryAddress: {
+    //   type: String,
+    //   default: "",
+    //   required: function () {
+    //     return this.serviceType === "delivery";
+    //   },
+    // },
+    deliveryAddress: { 
+  address: {
+    type: String,
+    required: function () {
+      return this.serviceType === "delivery";
     },
+  },
+  lat: Number,
+  lng: Number,
+  notes: String,
+},
+
 
     // ============= ORDER ITEMS =============
     items: [OrderItemSchema],
