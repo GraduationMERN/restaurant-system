@@ -49,16 +49,25 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like curl, server-to-server)
+    // Allow requests with no origin (like mobile apps, curl)
     if (!origin) return callback(null, true);
+    
+    // Check if the origin is in allowedOrigins
     if (allowedOrigins.includes(origin)) {
       return callback(null, origin);
     }
+    
+    // Check for vercel.app subdomains
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, origin);
+    }
+    
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
+  exposedHeaders: ['Set-Cookie'], // Important for cookies
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
-
 
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
