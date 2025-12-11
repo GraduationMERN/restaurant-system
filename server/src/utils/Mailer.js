@@ -1,46 +1,44 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import { env } from "../config/env.js";
 
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: env.emailUser,
-    pass: env.emailPass,
-  },
-});
+// Initialize SendGrid with API key
+if (env.sendgridApiKey) {
+  sgMail.setApiKey(env.sendgridApiKey);
+  console.log("SendGrid initialized successfully");
+} else {
+  console.warn("WARNING: SENDGRID_API_KEY not configured. Email sending will fail.");
+}
 
-console.log("Email config check:");
-console.log("Email User:", env.emailUser);
-console.log("Email Pass exists:", !!env.emailPass); // Check if password exists
+const FROM_EMAIL = "abdalkareemnegm@gmail.com"; // Change to your verified SendGrid sender email
 
 export async function sendEmail(to, subject, text, html = null) {
   try {
     console.log(`Attempting to send email to: ${to}`);
     console.log(`Subject: ${subject}`);
     
-    if (!env.emailUser || !env.emailPass) {
-      throw new Error("Email credentials not configured (EMAIL_USER or EMAIL_PASS missing)");
+    if (!env.sendgridApiKey) {
+      throw new Error("SendGrid API key not configured (SENDGRID_API_KEY missing)");
     }
     
-    const mailOptions = {
-      from: env.emailUser,
+    const msg = {
       to,
+      from: FROM_EMAIL,
       subject,
       text,
     };
     
     // Add HTML if provided
     if (html) {
-      mailOptions.html = html;
+      msg.html = html;
     }
     
-    const info = await transporter.sendMail(mailOptions);
+    const [response] = await sgMail.send(msg);
     
-    console.log("Email sent successfully! Message ID:", info.messageId);
-    return info;
+    console.log("Email sent successfully! Status:", response.statusCode);
+    return response;
   } catch (error) {
     console.error("FAILED TO SEND EMAIL:", error.message);
-    console.error("Full error:", error);
+    console.error("Full error:", error.response?.body || error);
     throw error; // Re-throw so caller knows it failed
   }
 }
