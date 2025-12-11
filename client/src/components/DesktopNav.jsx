@@ -25,9 +25,8 @@ export default function CombinedNavbar() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const cartItem = useSelector(state => state.cart.products);
+  const cartItem = useSelector((state) => state.cart.products);
   const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
-
 
   const isActive = (path) => location.pathname === path;
 
@@ -202,7 +201,6 @@ export default function CombinedNavbar() {
             badge={totalItems}
           />
 
-
           <MobileNavItem
             to="/orders"
             icon={<Clock4 size={20} />}
@@ -269,7 +267,13 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick, badge }) {
           </span>
         )}
       </div>
-      {isOpen && <span className={`text-sm ${label === "Rewards" ? "text-secondary" : ""}`}>{label}</span>}
+      {isOpen && (
+        <span
+          className={`text-sm ${label === "Rewards" ? "text-secondary" : ""}`}
+        >
+          {label}
+        </span>
+      )}
     </Link>
   );
 }
@@ -280,8 +284,9 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
     <Link
       to={to}
       onClick={() => onClick && onClick()}
-      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"
-        }`}
+      className={`flex flex-col items-center ${
+        active ? "text-primary" : "text-muted"
+      }`}
     >
       <div className="relative">
         {icon}

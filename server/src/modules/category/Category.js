@@ -7,6 +7,11 @@ const categorySchema =new mongoose.Schema({
         unique: true,
         trim: true,
         },
+    name_ar: {
+        type: String,
+        required: true,
+        trim: true,
+        },
     imgURL:{
         type:String,
         required:true,
