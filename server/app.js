@@ -30,7 +30,7 @@ import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
-import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
+// import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -90,7 +90,7 @@ if (process.env.NODE_ENV !== "production") {
 await connectDB();
 
 // --- Initialize AI chatbot ---
-initializeEmbeddingModel();
+// initializeEmbeddingModel();
 
 // --- API Routes ---
 app.use("/api", couponRoutes);
