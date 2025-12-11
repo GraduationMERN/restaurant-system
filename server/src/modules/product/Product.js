@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const optionSchema = new mongoose.Schema({
   name: { type: String, required: true }, // e.g. "Size"
-  name_ar: { type: String, required: true },
+  name_ar: { type: String},
   required: { type: Boolean, default: false },
   choices: [
     {
       label: { type: String, required: true }, // e.g. "Small"
-      label_ar: { type: String, required: true }, // e.g. "Small"
+      label_ar: { type: String}, // e.g. "Small"
       priceDelta: { type: Number, default: 0 }, // +price بالنسبة للأساس
       stock: { type: Number, default: null }, // اختياري - لو لكل اختيار ستوك
     },
@@ -22,7 +22,6 @@ const productSchema = new mongoose.Schema(
     },
     name_ar: {
       type: String,
-      required: true,
     },
     desc: {
       type: String,
@@ -30,7 +29,6 @@ const productSchema = new mongoose.Schema(
     },
     desc_ar: {
       type: String,
-      required: true,
     },
     basePrice: {
       type: Number,
