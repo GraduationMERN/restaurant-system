@@ -13,12 +13,21 @@ import orderModel from "../../order.module/orderModel.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const cookieOptions = {
-  httpOnly: false,
-  sameSite: "None",  // <- Lax for local
-  secure: true,      // <- false for local
+// Base cookie options. Use more restrictive SameSite in development for testing
+// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+const cookieOptionsBase = {
+  httpOnly: true,
+  sameSite: isProduction ? "None" : "Lax",
+  secure: !!isProduction,
   maxAge: 24 * 60 * 60 * 1000,
   path: "/",
+};
+
+// Allow an explicit cookie domain to be set via env (e.g. ".example.com").
+// This helps when frontend and backend are on subdomains of the same eTLD+1.
+const cookieOptions = {
+  ...cookieOptionsBase,
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const registerUserController = async (req, res) => {
   try {
@@ -85,16 +94,14 @@ export const getMe = async (req, res) => {
       user: user._id,
       status: "completed",
     });
-    res.status(200).json({
+    return res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       points: user.points,
-      orderCount: completedOrders, 
+      orderCount: completedOrders,
     });
-    // Return full user document sans password (already excluded in middleware)
-    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
