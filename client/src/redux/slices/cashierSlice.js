@@ -175,7 +175,8 @@ const cashierSlice = createSlice({
         orderId: newOrder._id,
         orderNumber: newOrder.orderNumber,
         customerName: newOrder.customerInfo?.name || "Guest",
-        timestamp: new Date()
+        // store serializable timestamp
+        timestamp: Date.now()
       };
     },
     
