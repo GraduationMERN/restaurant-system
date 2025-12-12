@@ -9,6 +9,7 @@ import {
 } from "../service/auth.service.js";
 import { refreshTokenService } from "../service/refreshToken.service.js";
 import { verifyOtpService } from "../service/verifyOtp.service.js";
+import orderModel from "../../order.module/orderModel.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -52,15 +53,21 @@ export const loginUserController = async (req, res) => {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
+    
 
     res.status(200).json({
       message: "Logged in successfully",
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
         points: user.points,
+        avatarUrl: user.avatarUrl,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        address: user.address,
       },
     });
   } catch (err) {
@@ -74,13 +81,21 @@ export const getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    // Count completed orders for this user
+    const completedOrders = await orderModel.countDocuments({
+      user: user._id,
+      status: "completed",
+    });
     res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       points: user.points,
+      orderCount: completedOrders, 
     });
+    // Return full user document sans password (already excluded in middleware)
+    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

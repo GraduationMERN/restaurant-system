@@ -83,7 +83,7 @@ const PaymentPage = () => {
       s.off('order:your-payment-updated', handleYourPayment);
       s.off('order:payment-updated', handleYourPayment);
     };
-  }, [orderId, navigate, toast]);
+  }, [orderId, navigate]);
 
   // Handle stripe redirect
   useEffect(() => {
@@ -106,7 +106,7 @@ const PaymentPage = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [orderId, navigate, location.state, sessionId]);
+  }, [orderId, sessionId, navigate]);
 
   // Verify payment by session ID
   const verifyPaymentBySession = async (sessionId) => {
