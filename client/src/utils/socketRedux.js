@@ -270,15 +270,14 @@ export const setupSocketListeners = (socket) => {
   ---------------------------------------- */
 
   socket.on("connect", () => {
-    console.log("Socket connected");
+
   });
 
   socket.on("disconnect", () => {
-    console.log("Socket disconnected");
+  
   });
 
   socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error);
   });
 };
 
@@ -288,33 +287,27 @@ export const setupSocketListeners = (socket) => {
 export const joinSocketRooms = (socket, user) => {
   if (!socket || !user) return;
 
-  console.log("Joining socket rooms for user:", user._id, user.role);
 
   const userId = user._id || user.customerId;
 
   if (userId) {
     socket.emit("register", userId);
     // server joins both `userId` and `user:<id>` on register; we explicitly join role rooms
-    console.log(`Registered socket for user: ${userId}`);
   }
 
   if (user.role) {
     socket.emit("joinRole", user.role);
-    console.log(`Requested role join for: ${user.role}`);
 
     if (user.role === "kitchen") {
       socket.emit("joinKitchen");
-      console.log("Requested kitchen room join");
     }
 
     if (user.role === "cashier") {
       socket.emit("joinCashier");
-      console.log("Requested cashier room join");
     }
 
     if (user.role === "admin") {
       socket.emit("joinAdmin");
-      console.log("Requested admin room join");
     }
   }
 };

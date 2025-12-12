@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import LogoutButton from "./ui/button/LogoutButton";
 import LoginButton from "./ui/button/LoginButton";
+import { useRole } from "../hooks/useRole";
 
 export default function CombinedNavbar() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -29,6 +30,8 @@ export default function CombinedNavbar() {
   const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
 
   const isActive = (path) => location.pathname === path;
+
+  const { isAdmin } = useRole();
 
   // Close sidebar when clicking a nav item (useful on mobile)
   const handleNavClick = () => setIsOpen(false);
@@ -60,7 +63,17 @@ export default function CombinedNavbar() {
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-
+          {/* Admin view toggle */}
+            {isOpen && isAdmin && (
+              <div className="px-2">
+                <button
+                onClick={() => {window.location.replace("/admin")}}
+                  className="px-3 py-2 bg-primary text-white rounded-md hover:opacity-90"
+                >
+                Switch to Admin
+                </button>
+              </div>
+            )}
           {/* Language + Dark Mode */}
           <div className="flex justify-between items-center px-2">
             {isOpen && (
@@ -88,6 +101,7 @@ export default function CombinedNavbar() {
             <div className="">
               <ThemeToggleButton />
             </div>
+            
           </div>
 
           {/* Navigation Items */}
@@ -231,6 +245,14 @@ export default function CombinedNavbar() {
             active={isActive("/support")}
             onClick={handleNavClick}
           />
+          {isAdmin && (
+            <button
+              onClick={() => {window.location.replace("/admin")}}
+              className="px-3 py-2 rounded-md bg-primary text-white"
+            >
+               Admin
+            </button>
+          )}
         </div>
       </div>
     </>
