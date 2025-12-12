@@ -191,10 +191,12 @@
   "goToOrder": "متابعة الطلب",
   "outOfStock": "غير متوفر",
   "cart_close": "إغلاق",
-
+  "Register_rewards": "سجل واطلب مكافآتك!",
+  "explore_reviews": "اكتشف ما يقوله عملاؤنا",
   "menu.title": "المنيو",
   "search.placeholder": "بحث",
-  
+  "Support": "الدعم",
+  "FAQ_and_help": "ابحث عن إجابات للأسئلة الشائعة واحصل على المساعدة",
   "tabs.category": "الفئات",
 
   "popup.description": "الوصف",

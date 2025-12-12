@@ -12,7 +12,6 @@
 }
 
 :root {
-  --color-secondary: #33c3ff;
   --color-accent: #7c3aed; /* purple 600 */
   --color-success: #10b981; /* green 500 */
   --color-muted: #6b7280; /* gray 500 */
@@ -24,8 +23,6 @@
 }
 /* Dark mode overrides */
 .dark {
-  --color-primary: #ff8a65; /* فاتح شويه على Dark Mode */
-  --color-secondary: #66d9ff;
   --color-on-surface: #f9fafb;
   --bg-default: #1f2937; /* dark gray-800 */
   --surface: #374151; /* gray-700 */
@@ -62,14 +59,6 @@
 }
 .bg-surface {
   background-color: var(--surface) !important;
-}
-.bg-primary-gradient {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-500),
-    var(--color-primary)
-  ) !important;
-  color: #fff !important;
 }
 .bg-accent {
   background-color: var(--color-accent) !important;

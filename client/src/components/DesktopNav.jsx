@@ -26,8 +26,7 @@ export default function CombinedNavbar() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const cartItem = useSelector((state) => state.cart.products);
-  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
+
 
   const isActive = (path) => location.pathname === path;
 
@@ -124,16 +123,6 @@ export default function CombinedNavbar() {
           />
 
           <DesktopNavItem
-            to="/cart"
-            icon={<ShoppingCart size={20} />}
-            label={t("cart")}
-            active={isActive("/cart")}
-            isOpen={isOpen}
-            onClick={handleNavClick}
-            badge={totalItems}
-          />
-
-          <DesktopNavItem
             to="/orders"
             icon={<Clock4 size={20} />}
             label={t("orders")}
@@ -205,14 +194,6 @@ export default function CombinedNavbar() {
             label={t("menu")}
             active={isActive("/menu")}
             onClick={handleNavClick}
-          />
-          <MobileNavItem
-            to="/cart"
-            icon={<ShoppingCart size={20} />}
-            label={t("cart")}
-            active={isActive("/cart")}
-            onClick={handleNavClick}
-            badge={totalItems}
           />
 
           <MobileNavItem
