@@ -18,7 +18,7 @@ import OrderHistoryComponent from "./OrderHistoryComponent";
 import EmptyOrdersComponent from "./EmptyOrdersComponent";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Phone, Star } from "lucide-react";
 
 export default function OrdersPage() {
   const dispatch = useDispatch();
@@ -36,6 +36,9 @@ export default function OrdersPage() {
   const { user } = useSelector((state) => state.auth);
   const [guestActiveOrder, setGuestActiveOrderLocal] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
 
   const isLoggedIn = !!user && !user.isGuest;
 
@@ -142,6 +145,45 @@ export default function OrdersPage() {
   };
 
   /* ------------------------------------------
+     CALL RESTAURANT HANDLER
+  ------------------------------------------- */
+  const handleCallRestaurant = () => {
+    // Replace with actual restaurant phone number
+    const restaurantPhone = "+201234567890";
+    window.location.href = `tel:${restaurantPhone}`;
+  };
+
+  /* ------------------------------------------
+     SUBMIT REVIEW HANDLER
+  ------------------------------------------- */
+  const handleSubmitReview = async () => {
+    if (!displayActiveOrder?._id) return;
+
+    try {
+      // TODO: Implement review submission to API
+      // await api.post(`/api/reviews`, {
+      //   orderId: displayActiveOrder._id,
+      //   rating: reviewRating,
+      //   comment: reviewText
+      // });
+
+      toast.showToast({
+        message: "Thank you for your review!",
+        type: "success",
+      });
+
+      setShowReviewModal(false);
+      setReviewRating(5);
+      setReviewText("");
+    } catch (err) {
+      toast.showToast({
+        message: "Failed to submit review",
+        type: "error",
+      });
+    }
+  };
+
+  /* ------------------------------------------
      DISPLAY DATA HANDLING
   ------------------------------------------- */
   const displayActiveOrder = activeOrder;
@@ -167,8 +209,8 @@ export default function OrdersPage() {
         ]}
       />
 
-      <div className="min-h-screen bg-white dark:bg-gray-900 py-6 sm:py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 sm:py-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
@@ -181,7 +223,7 @@ export default function OrdersPage() {
                 disabled={refreshing}
                 className={`
                   flex items-center gap-2 px-4 py-2
-                  bg-primary hover:bg-primary/80 text-white 
+                  bg-primary hover:bg-primary/80 dark:bg-primary dark:hover:bg-primary/90 text-white 
                   font-semibold rounded-lg transition-colors
                   disabled:opacity-60 disabled:cursor-not-allowed
                 `}
@@ -214,20 +256,65 @@ export default function OrdersPage() {
               {/* Active Order */}
               {displayActiveOrder && (
                 <>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Last updated:{" "}
-                    {lastUpdated
-                      ? new Date(lastUpdated).toLocaleTimeString()
-                      : "Just now"}
-                  </p>
+                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm mb-6">
+                    <div className="text-center mb-8">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 dark:bg-primary/20 rounded-full mb-4">
+                        <RefreshCw className="w-8 h-8 text-primary" />
+                      </div>
+                      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        Order in Progress
+                      </h2>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Track your order status below
+                      </p>
+                    </div>
 
-                  <ActiveOrderComponent order={displayActiveOrder} />
+                    {/* Last Updated */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 text-center">
+                      <p className="text-blue-700 dark:text-blue-300 font-semibold">
+                        Last updated
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+                        {lastUpdated
+                          ? new Date(lastUpdated).toLocaleTimeString()
+                          : "Just now"}
+                      </p>
+                    </div>
+
+                    {/* Active Order Component */}
+                    <div className="mb-6">
+                      <ActiveOrderComponent order={displayActiveOrder} />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 flex-col md:flex-row">
+                      <button 
+                        onClick={handleCallRestaurant}
+                        className="flex-1 px-4 py-3 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Phone className="w-5 h-5" />
+                        Call the restaurant
+                      </button>
+                      <button 
+                        onClick={() => setShowReviewModal(true)}
+                        className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Star className="w-5 h-5" />
+                        Rate your experience
+                      </button>
+                    </div>
+                  </div>
                 </>
               )}
 
-              {/* History */}
+              {/* Order History Card */}
               {displayHistory.length > 0 && (
-                <OrderHistoryComponent orders={displayHistory} />
+                <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                    Order History
+                  </h2>
+                  <OrderHistoryComponent orders={displayHistory} />
+                </div>
               )}
 
               {/* Empty */}
@@ -236,6 +323,65 @@ export default function OrdersPage() {
           )}
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Rate Your Experience
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              How was your order?
+            </p>
+
+            {/* Star Rating */}
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setReviewRating(star)}
+                  className={`text-3xl transition-transform hover:scale-110 ${
+                    star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            {/* Review Text */}
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Share your feedback (optional)..."
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mb-6 focus:outline-none focus:ring-2 focus:ring-primary"
+              rows="4"
+            />
+
+            {/* Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={handleSubmitReview}
+                className="w-full bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+              >
+                Submit Review
+              </button>
+              <button
+                onClick={() => {
+                  setShowReviewModal(false);
+                  setReviewRating(5);
+                  setReviewText("");
+                }}
+                className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
