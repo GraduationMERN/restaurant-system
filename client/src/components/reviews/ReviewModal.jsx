@@ -37,7 +37,6 @@ export default function ReviewModal({ isOpen, close }) {
       await dispatch(fetchReviews());
       close();
     } catch (err) {
-      console.error("Failed to create review:", err);
       showToast("Failed to submit review.", "error");
     }
   };

@@ -145,7 +145,14 @@ function App() {
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             {/* Single Admin Page with section sub-route */}
             <Route element={<AppLayout />}>
-              <Route path="/admin/:section?" element={<Admin />} />
+              <Route
+                path="/admin/:section?"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Admin />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
