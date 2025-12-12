@@ -270,14 +270,15 @@ export const setupSocketListeners = (socket) => {
   ---------------------------------------- */
 
   socket.on("connect", () => {
-
+    console.log("Socket connected:", socket.id);
   });
 
   socket.on("disconnect", () => {
-  
+    console.log("Socket disconnected");
   });
 
   socket.on("connect_error", (error) => {
+    console.error("Socket connect_error:", error);
   });
 };
 
@@ -287,8 +288,8 @@ export const setupSocketListeners = (socket) => {
 export const joinSocketRooms = (socket, user) => {
   if (!socket || !user) return;
 
-
-  const userId = user._id || user.customerId;
+  const userId = user._id || user.id || user.customerId;
+  console.log("Joining socket rooms for user:", userId, "role:", user.role);
 
   if (userId) {
     socket.emit("register", userId);
@@ -324,6 +325,7 @@ export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
   const BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
   try {
+    console.log("Initializing socket with base:", BASE, "withCredentials:", options.withCredentials || true);
     socketInstance = ioClient(BASE, {
       transports: ["websocket"],
       withCredentials: true,
