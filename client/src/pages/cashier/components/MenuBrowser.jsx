@@ -27,14 +27,17 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching products:", error);
-        toast.showToast({ message: "Failed to load menu items", type: "error" });
+        toast?.showToast?.({ message: "Failed to load menu items", type: "error" });
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [toast]);
+    // `toast` from useToast may be unstable (new reference each render).
+    // We intentionally omit it from deps to avoid refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filter products
   useEffect(() => {
@@ -45,10 +48,11 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
     }
 
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          p.name.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term)
       );
     }
 

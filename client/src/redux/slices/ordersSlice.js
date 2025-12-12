@@ -52,6 +52,15 @@ export const cancelOrder = createAsyncThunk(
     try {
       const res = await api.patch(`/api/orders/${orderId}/cancel`);
       return res.data.data || res.data;
+      if (!order) {
+        return rejectWithValue("Order not found");
+      }
+
+      if (order.status !== "pending") {
+        return rejectWithValue(
+          "You can only cancel orders that are pending."
+        );
+      }
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }

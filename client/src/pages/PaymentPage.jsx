@@ -44,7 +44,7 @@ const PaymentPage = () => {
   const { products = [], totalPrice = 0 } = useSelector((state) => state.cart || {});
   
   // State
-  const [paymentMethod, setPaymentMethod] = useState("online");
+  const [paymentMethod, setPaymentMethod] = useState("instore");
   const [branchName, setBranchName] = useState("El Shatby Outlet");
   const [localError, setLocalError] = useState("");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
@@ -377,8 +377,8 @@ const PaymentPage = () => {
               </div>
 
               {/* Notification Message */}
-              <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <p className="text-blue-800 dark:text-blue-300 text-center">
+              <div className="mt-8 p-4 bg-primary/10 dark:bg-blue-900/20 border border-primary dark:border-blue-800 rounded-xl">
+                <p className="text-black dark:text-blue-300 text-center">
                   We will notify you once your order is ready.{" "}
                   {paymentMethod === "instore" && (
                     <span className="font-semibold">Kindly pay at the cashier.</span>
@@ -438,9 +438,9 @@ const PaymentPage = () => {
                 onClick={handlePayment}
                 disabled={loading || !displayOrderId || paymentStatus === 'paid' || paymentStatus === 'success'}
                 className={`w-full mt-8 py-4 rounded-xl font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                  paymentMethod === "online"
-                    ? "bg-primary hover:bg-primary/90"
-                    : "bg-emerald-500 hover:from-emerald-600 hover:to-emerald-700"
+                  paymentMethod === "instore"
+                    ? "bg-emerald-500 hover:from-emerald-600 hover:to-emerald-700"
+                    :  "bg-primary hover:bg-primary/90"
                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
                 {loading ? (
@@ -490,7 +490,7 @@ const PaymentPage = () => {
 
         {/* In-Store Payment Confirmation Modal */}
         {showInstoreModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
               {/* Icon */}
               <div className="flex justify-center mb-6">

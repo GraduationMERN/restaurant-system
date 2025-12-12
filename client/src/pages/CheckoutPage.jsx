@@ -25,7 +25,7 @@ export default function CheckoutPage() {
   );
   const authUser = useSelector((state) => state.auth?.user || null);
 
-  const [serviceType, setServiceType] = useState("dine-in");
+  const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState(null);
@@ -421,7 +421,7 @@ export default function CheckoutPage() {
 
             {/* Add Other Items Button */}
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/menu')}
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-primary/90 dark:border-primary/110 text-primary dark:text-primary/90 rounded-2xl py-4 hover:bg-white dark:hover:bg-primary-900/10 transition-all duration-300"
             >
               <Plus className="w-5 h-5" />
