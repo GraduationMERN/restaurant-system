@@ -30,7 +30,6 @@ import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
-import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -49,16 +48,25 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like curl, server-to-server)
+    // Allow requests with no origin (like mobile apps, curl)
     if (!origin) return callback(null, true);
+
+    // Check if the origin is in allowedOrigins
     if (allowedOrigins.includes(origin)) {
       return callback(null, origin);
     }
+
+    // Check for vercel.app subdomains
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, origin);
+    }
+
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
+  exposedHeaders: ['Set-Cookie'], // Important for cookies
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', "x-guest-id"]
 }));
-
 
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
@@ -79,9 +87,6 @@ if (process.env.NODE_ENV !== "production") {
 
 // --- Connect to Database ---
 await connectDB();
-
-// --- Initialize AI chatbot ---
-initializeEmbeddingModel();
 
 // --- API Routes ---
 app.use("/api", couponRoutes);

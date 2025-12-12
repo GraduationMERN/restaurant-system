@@ -7,17 +7,21 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import api from "../../api/axios";
 import { setUser } from "../../redux/slices/authSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const toast = useToast();
   const [country, setCountry] = useState(user?.address?.country || "");
   const [cityState, setCityState] = useState(user?.address?.cityState || "");
   const [postalCode, setPostalCode] = useState(user?.address?.postalCode || "");
   const [taxId, setTaxId] = useState(user?.address?.taxId || "");
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       const payload = { address: { country, cityState, postalCode, taxId } };
       // Optimistic UI update
@@ -27,8 +31,12 @@ export default function UserAddressCard() {
       if (res?.data?.user) dispatch(setUser(res.data.user));
       else dispatch(setUser(prev));
       closeModal();
+      toast.showToast({ message: "Changes saved", type: "success" });
     } catch (err) {
       console.error("Failed to update address", err);
+      toast.showToast({ message: "Failed to save changes", type: "error" });
+    } finally {
+      setSaving(false);
     }
   };
   return (
@@ -137,10 +145,10 @@ export default function UserAddressCard() {
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
                 Close
               </Button>
-              <Button size="sm" type="submit">
+              <Button size="sm" type="submit" loading={saving}>
                 Save Changes
               </Button>
             </div>

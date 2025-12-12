@@ -177,6 +177,42 @@
   "Yes":"Yes",
   "No":"No",
   "points":"points",
-  "for":"for"
+  "for":"for",
   
+  
+  "cart_title": "My Cart",
+  "empty": "Your cart is empty 🛒",
+  "cart_delete": "Delete",
+  "noOptions": "No options selected",
+  "summary": "Cart Totals",
+  "totalItems": "Total Items",
+  "totalPrice": "Total Price",
+  "currency": "EGP",
+  "goToOrder": "Go to Order",
+  "outOfStock": "Out of Stock",
+  "cart_close": "Close",
+
+
+  
+  "menu.title": "Menu",
+  "search.placeholder": "Search",
+  
+  "tabs.category": "Category",
+
+  "popup.description": "Description",
+  "popup.price": "Price",
+  "popup.total": "Total",
+  "popup.addToCart": "Add to Cart",
+  "popup.quantity.increase": "Increase Quantity",
+  "popup.quantity.decrease": "Decrease Quantity",
+
+  "product.outOfStock": "Out of Stock",
+  "product.options": "Options",
+  "product.size": "Size",
+  
+  "cart.added": "Added to cart",
+  "cart.failed": "Failed to add to cart"
+
+
+
 }

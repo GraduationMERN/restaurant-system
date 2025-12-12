@@ -1,6 +1,6 @@
 import { getAllProductsWithLean, getProductById } from "../product/product.repository.js";
 import OrderService from "../order.module/order.service.js";
-import { cosineSimilarity } from "../chat/chat.service.js";
+// import { cosineSimilarity } from "../chat/chat.service.js";
 import { env } from "../../config/env.js";
 
 function jaccard(a = [], b = []) {

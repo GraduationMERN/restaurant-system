@@ -7,7 +7,7 @@ import {
   getNewProductsService,
   getProductForListService,
 } from "./product.service.js";
-import { getEmbedding } from "../chat/chat.service.js"; // for AI
+// import { getEmbedding } from "../chat/chat.service.js"; // for AI
 
 //getAllProducts
 export const getAllProducts = async (req, res) => {
