@@ -102,7 +102,7 @@ export const createOrderFromCart = async (req, res) => {
       notes,
       paymentMethod,
       customerInfo,
-      deliveryAddress,
+      // deliveryAddress,
       // Pass user info based on authentication
       customerId: customerId,
       isGuest: user?.isGuest || false,

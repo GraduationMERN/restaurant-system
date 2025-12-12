@@ -239,7 +239,7 @@ export default function OrderDetailsPage() {
     };
 
     if (id) loadOrder();
-  }, [id, dispatch, toast]);
+  }, [id]);
 
   if (loading) return <PageLoader />;
   if (error || !order)
