@@ -6,6 +6,8 @@ import {
   ChefHat,
   MapPin,
   Phone,
+  LifeBuoy,
+  Star,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -41,7 +43,7 @@ export default function LandingPage() {
             {settings.restaurantName || t("welcome")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
-            {settings.description || t("welcome_message")}
+            {settings.description}
           </p>
         </div>
 
@@ -72,8 +74,7 @@ export default function LandingPage() {
               {t("explore_dishes")}
             </p>
           </button>
-
-          <button
+           <button
             onClick={() => navigate("/orders")}
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
@@ -97,6 +98,57 @@ export default function LandingPage() {
             <p className="text-gray-600 dark:text-gray-400">
               {t("check_status")}
             </p>
+          </button>     
+          <button
+            onClick={() => navigate("/reviews")}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
+          >
+            <div
+              className={`flex items-start justify-between mb-6 ${
+                isRTL ? "flex-row-reverse" : ""
+              }`}
+            >
+              <div className="w-16 h-16 bg-primary/10 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Star className="w-8 h-8 text-primary dark:text-orange-400" />
+              </div>
+              <ArrowRight
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${
+                  isRTL ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {t("reviews")}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t("explore_reviews")}
+            </p>
+          </button>
+
+            <button
+            onClick={() => navigate("/support")}
+            className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
+          >
+            <div
+              className={`flex items-start justify-between mb-6 ${
+                isRTL ? "flex-row-reverse" : ""
+              }`}
+            >
+              <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <LifeBuoy className="w-8 h-8 text-secondary dark:text-orange-400" />
+              </div>
+              <ArrowRight
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${
+                  isRTL ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {t("Support")}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t("FAQ_and_help")}
+            </p>
           </button>
         </div>
 
@@ -116,14 +168,14 @@ export default function LandingPage() {
             </div>
           </div>
           <h3 className="text-2xl font-bold mb-3">{t("special_offer")}</h3>
-          <p className="text-orange-500 mb-6 opacity-90">
-            {t("first_order_discount")}
+          <p className="text-secondary mb-6 opacity-90">
+            {t("Special Rewards for Customers")}
           </p>
           <button
             onClick={() => navigate("/register")}
             className="w-full bg-white text-secondary font-semibold py-4 px-6 rounded-xl hover:bg-gray-100 active:scale-[0.98] transition-all duration-300 transform hover:scale-[1.02]"
           >
-            {t("claim_now")}
+            {t("Register_rewards")}
           </button>
         </div>
 

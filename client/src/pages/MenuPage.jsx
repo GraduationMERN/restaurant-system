@@ -28,6 +28,8 @@ import { fetchProductList } from "../redux/slices/ProductSlice";
 import CardComponent from "../components/Card/CardComponent";
 import { addToCart } from "../redux/slices/cartSlice";
 import { useTranslation } from "react-i18next";
+import {  ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router";
 
 function MenuPage() {
   const { t, i18n } = useTranslation();
@@ -51,8 +53,9 @@ function MenuPage() {
   const products = useSelector((state) => state.product.filtered);
   const [selectedSizes, setSelectedSizes] = useState({});
 
-
-
+  const navigate = useNavigate();
+  const cartItem = useSelector((state) => state.cart.products);
+  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
   const isProductOutOfStock = (product) => {
     if (!product.options || product.options.length === 0) return false;
 
@@ -179,6 +182,21 @@ function MenuPage() {
         {t("menu.title")}
       </Typography>
 
+      {/* Top-right cart button */}
+      <div className="fixed right-6 top-5 z-50">
+        <button
+          onClick={() => navigate('/cart')}
+          className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
+        >
+          <ShoppingCart size={20} />
+          {totalItems > 0 && (
+            <span className="absolute -top-2 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Search + View Switch */}
       <Box
         margin={2}
@@ -227,7 +245,6 @@ function MenuPage() {
             ),
           }}
         /> */}
-
         <div className="w-full flex justify-center mb-4 px-2">
           <div
             className="
