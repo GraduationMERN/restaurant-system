@@ -222,32 +222,13 @@ export default function OrderDetailsPage() {
   const { user } = useSelector((state) => state.auth);
   const isGuest = !user || user.isGuest;
 
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { selectedOrder: order, selectedOrderLoading: loading, selectedOrderError: error } = useSelector((state) => state.orders);
 
   // Fetch Single Order
   useEffect(() => {
-    const loadOrder = async () => {
-      try {
-        setLoading(true);
-        const result = await dispatch(fetchOrderById(id)).unwrap();
-        setOrder(result);
-        
-        // Store in localStorage for guests so they can see it on /orders page
-        if (isGuest && result) {
-          localStorage.setItem("activeOrder", JSON.stringify(result));
-        }
-      } catch (err) {
-        setError("Failed to load the order");
-        toast?.error("Failed to load order");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) loadOrder();
-  }, [id, dispatch, isGuest]);
+    if (!id) return;
+    dispatch(fetchOrderById(id));
+  }, [id, dispatch]);
 
   if (loading) return <PageLoader />;
   if (error || !order)

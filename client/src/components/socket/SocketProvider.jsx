@@ -13,10 +13,12 @@ export default function SocketProvider() {
 
   useEffect(() => {
     const s = socketClient.initSocket();
+    console.log('SocketProvider: socket instance', s?.id, s?.connected);
     if (!s) return;
 
     // When authUser changes, request server to join rooms for this user/role
     if (authUser) {
+      console.log('SocketProvider: joining rooms for user', authUser?.id || authUser?._id);
       socketClient.joinSocketRooms(s, authUser);
     }
 
