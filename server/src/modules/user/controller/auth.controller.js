@@ -17,8 +17,8 @@ const isProduction = process.env.NODE_ENV === "production";
 // and enable `SameSite=None; Secure` in production for cross-site cookie usage.
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: "None", // Required for cross-site requests
-  secure: true, // Required for SameSite=None
+  sameSite: "Lax", // Changed from None to Lax for better compatibility
+  secure: true, // Keep secure for HTTPS
   maxAge: 24 * 60 * 60 * 1000,
   path: "/", // Reverted back to "/"
 };
