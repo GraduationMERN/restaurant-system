@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
-import { ChevronDownIcon, GridIcon, HorizontaLDots, UserCircleIcon, BoxIconLine, TaskIcon, ShootingStarIcon, DollarLineIcon, SettingsGearIcon } from "../../icons/admin-icons";
+import { ChevronDownIcon, GridIcon, HorizontaLDots, UserCircleIcon, BoxIconLine, TaskIcon, ShootingStarIcon, DollarLineIcon, SettingsGearIcon, GroupIcon } from "../../icons/admin-icons";
 import { useSidebar } from "../../context/SidebarContext";
 import { useSettings } from "../../context/SettingContext";
 
@@ -15,6 +15,8 @@ const navItems = [
   { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
   { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },
   { icon: <UserCircleIcon />, name: "users", path: "/admin/users" },
+  { icon: <BoxIconLine />, name: "Kitchen", path: "/kitchen" },
+  { icon: <GroupIcon />, name: "Cashier", path: "/cashier" },
   { icon: <SettingsGearIcon />, name: "Settings", path: "/admin/settings" },
 ];
 

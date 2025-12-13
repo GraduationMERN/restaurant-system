@@ -18,7 +18,7 @@ export default function UserMetaCard() {
       const localUrl = URL.createObjectURL(file);
       setAvatarPreview(localUrl);
       setUploading(true);
-      const res = await api.post("/users/me/avatar", fd);
+      const res = await api.post("api/users/me/avatar", fd);
       if (res?.data?.user) {
         dispatch(setUser(res.data.user));
         setAvatarPreview(res.data.avatarUrl || res.data.user.avatarUrl || localUrl);
