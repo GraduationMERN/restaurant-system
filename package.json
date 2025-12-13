@@ -1,5 +1,28 @@
-{
+﻿{
+  "version": "1.0.0",
   "dependencies": {
     "@tailwindcss/line-clamp": "^0.4.4"
-  }
+  },
+  "name": "brand-bite",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npm run start:client",
+    "lint": "cd client ; npm run lint",
+    "deploy": "vercel --prod",
+    "build:client": "cd client ; npm run build",
+    "install:all": "npm install ; cd client ; npm install ; cd ../server ; npm install ; cd ..",
+    "preview": "cd client ; npm run preview",
+    "build": "npm run build:client",
+    "start:client": "cd client ; npm run preview",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "deploy:link": "vercel link",
+    "dev:server": "cd server ; npm run dev",
+    "dev:client": "cd client ; npm run dev",
+    "start:server": "cd server ; npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "description": "Restaurant ordering system with admin dashboard"
 }
