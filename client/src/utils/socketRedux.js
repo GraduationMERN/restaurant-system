@@ -323,7 +323,7 @@ let socketInstance = null;
 
 export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
-  const BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  const BASE = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
   try {
     console.log("Initializing socket with base:", BASE, "withCredentials:", options.withCredentials || true);
     socketInstance = ioClient(BASE, {

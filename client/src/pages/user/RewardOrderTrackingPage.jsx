@@ -17,7 +17,7 @@ export default function RewardOrderTrackingPage() {
   useEffect(() => {
     if (!orderId) return; // Don't connect if we don't have an order ID
 
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const apiUrl = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
 
     const newSocket = io(apiUrl, {
       reconnection: true,

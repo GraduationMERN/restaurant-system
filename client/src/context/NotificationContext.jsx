@@ -20,6 +20,7 @@ export const NotificationProvider = ({ children }) => {
   const isOnReviewsPage = location.pathname === "/admin/reviews";
   const envBase = import.meta.env.VITE_API_BASE_URL;
   const BASE_URL = envBase || `${window.location.protocol}//${window.location.hostname}:5000`;
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
   useEffect(() => {
     // Only initialize socket for admin pages
     if (!location.pathname.startsWith("/admin")) {
@@ -46,7 +47,7 @@ export const NotificationProvider = ({ children }) => {
 
     // Initialize socket connection (only once)
     if (!socketRef.current || !socketRef.current.connected) {
-      socketRef.current = io(BASE_URL);
+      socketRef.current = io(SOCKET_URL);
       const socket = socketRef.current;
 
       // Register with admin room when connected
