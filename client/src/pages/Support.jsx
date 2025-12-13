@@ -17,7 +17,7 @@ export default function Support() {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post("/support", { name, email, subject, type, message });
+      const res = await api.post("api/support", { name, email, subject, type, message });
       if (res?.data?.success) {
         setStatus({ ok: true, msg: "Submitted successfully" });
         setName(""); setEmail(""); setSubject(""); setType("feedback"); setMessage("");

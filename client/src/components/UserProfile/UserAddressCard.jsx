@@ -27,7 +27,7 @@ export default function UserAddressCard() {
       // Optimistic UI update
       const prev = user;
       dispatch(setUser({ ...user, address: payload.address }));
-      const res = await api.patch("/users/me", payload);
+      const res = await api.patch("/api/users/me", payload);
       if (res?.data?.user) dispatch(setUser(res.data.user));
       else dispatch(setUser(prev));
       closeModal();

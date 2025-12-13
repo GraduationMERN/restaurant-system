@@ -27,7 +27,7 @@ export default function ReviewsPage() {
     }
 
     try {
-      const res = await api.get("/auth/me");
+      const res = await api.get("api/auth/me");
 
       if (res.data.orderCount < 1) {
         return warning("You must complete at least one order before reviewing.");

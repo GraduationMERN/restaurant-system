@@ -46,7 +46,7 @@ export default function Settings() {
 
   useEffect(() => {
     async function loadSettings() {
-      const res = await api.get("/restaurant");
+      const res = await api.get("/api/restaurant");
       const data = res.data;
 
       updateSettings(data); // context update
@@ -89,7 +89,7 @@ export default function Settings() {
         policies: { terms, privacy },
       };
 
-      const res = await api.put("/restaurant", payload);
+      const res = await api.put("/api/restaurant", payload);
 
       updateSettings(res.data);
       toast.showToast({ message: "Settings saved", type: "success" });

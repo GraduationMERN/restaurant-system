@@ -51,7 +51,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!isLoggedIn) {
       // For guests, ensure guestOrderId is generated early
-      api.get("/orders/guest-id").catch(err => {
+      api.get("api/orders/guest-id").catch(err => {
         console.error("Failed to get guest ID:", err);
       });
     }

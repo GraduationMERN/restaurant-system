@@ -20,12 +20,12 @@ export default function RewardOrders() {
    const socketRef = useRef(null);
   const { items = [], loading } = useSelector((state) => state.rewardOrders);
   const [rewards, setRewards] = useState([]);
-  const BASE_URL = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
+  const BASE_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL;
   const [viewOrder, setViewOrder] = useState(null);
   
     async function loadRewards() {
       try {
-        const {items} = await api.get("/reward/reward-order");
+        const {items} = await api.get("api/reward/reward-order");
         setRewards(items || []);
       } catch (error) {
         console.error("Failed to load reviews:", error);
