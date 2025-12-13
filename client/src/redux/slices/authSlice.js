@@ -7,7 +7,7 @@ export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (payload, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/register", payload);
+      const res = await api.post("api/auth/register", payload);
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -38,7 +38,7 @@ export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async ({ email, otp: code }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/verifyOtp", { email, code });
+      const res = await api.post("api/auth/verifyOtp", { email, code });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -52,7 +52,7 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ email, password,points }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/login", { email, password,points });
+      const res = await api.post("api/auth/login", { email, password,points });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -66,7 +66,7 @@ export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/auth/me");
+      const res = await api.get("api/auth/me");
       return res.data;
     } catch (err) {
       if (err.response?.status === 401) return rejectWithValue("Unauthorized");
@@ -80,7 +80,7 @@ export const sendResetEmail = createAsyncThunk(
   "auth/sendResetEmail",
   async (email, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/forget", { email });
+      const res = await api.post("api/auth/forget", { email });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -95,7 +95,7 @@ export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async ({ token, password }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/reset", { token, password });
+      const res = await api.post("api/auth/reset", { token, password });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -109,7 +109,7 @@ export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.post("/auth/refresh");
+      const res = await api.post("api/auth/refresh");
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -123,7 +123,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      await api.post("/auth/logout");
+      await api.post("api/auth/logout");
       return true;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);

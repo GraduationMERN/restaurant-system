@@ -27,7 +27,7 @@ export function SettingsProvider({ children }) {
     useEffect(() => {
         async function fetchSettings() {
             try {
-                const res = await api.get("/restaurant");
+                const res = await api.get("/api/restaurant");
                 setSettings(res.data);
             } catch (err) {
                 console.error("Failed to load restaurant settings", err);
