@@ -30,7 +30,7 @@ export default function CashierDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/api/orders");
+      const response = await api.get("/orders");
       const orders = response.data.data || response.data || [];
 
       const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || o.total || 0), 0);

@@ -18,7 +18,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/api/products");
+        const response = await api.get("/products");
         const data = response.data.data || response.data;
         setProducts(Array.isArray(data) ? data : []);
 

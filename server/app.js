@@ -41,8 +41,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://brandbite-three.vercel.app",
-  "https://brandbite-lz5uftny1-negms-projects.vercel.app",
+  "https://brandbite-nng5vjxbr-negms-projects.vercel.app",
   "https://restaurant-system-zcar.vercel.app",
   env.frontendUrl,
 ].filter(Boolean);
@@ -96,8 +95,8 @@ app.use("/api/recommendations", recommendationRoutes); // for AI
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/reward", rewardRouter);
-app.use("/auth", authRoutes);
-app.use("/users", usersRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", optionalAuthMiddleware, cartRoutes);
 app.use("/api/notifications", notificationRoutes);

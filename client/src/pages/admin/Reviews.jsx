@@ -27,7 +27,7 @@ export default function Reviews() {
   async function loadReviews() {
     try {
       setLoading(true);
-      const { data } = await api.get("/api/reviews", {
+      const { data } = await api.get("/reviews", {
         params: {
           // ask backend for a large batch so admin can paginate client-side
           limit: 1000,
