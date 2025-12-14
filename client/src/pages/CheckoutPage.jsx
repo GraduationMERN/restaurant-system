@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
+import api from "../api/axios";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
