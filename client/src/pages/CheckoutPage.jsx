@@ -5,6 +5,7 @@ import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
+import PointsModal from "../components/PointsModal";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
@@ -40,6 +41,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [orderError, setOrderError] = useState("");
+  const [showPointsModal, setShowPointsModal] = useState(false);
 
   // Load cart on mount
   useEffect(() => {
@@ -165,6 +167,12 @@ export default function CheckoutPage() {
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   const total = +(subtotal + vat).toFixed(2);
+
+  // Calculate total points from cart items
+  const totalPoints = products.reduce((acc, item) => {
+    const productPoints = item.productId?.productPoints || 0;
+    return acc + (productPoints * item.quantity);
+  }, 0);
 
   // Handle order submission
   const handleSubmit = async () => {
@@ -631,6 +639,27 @@ className="flex-0 px-4 py-3 rounded-xl
                 </div>
               </div>
 
+              {/* Points Earned Section */}
+              {totalPoints > 0 && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-700 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Gift className="w-5 h-5 text-amber-500" />
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Reward Points Earned</p>
+                        <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalPoints}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowPointsModal(true)}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 text-white rounded-lg font-medium text-sm transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Confirm Order Button */}
               <button
                 onClick={handleSubmit}
@@ -672,6 +701,12 @@ className="flex-0 px-4 py-3 rounded-xl
           </div>
         </div>
       )}
+
+      {/* Points Modal */}
+      <PointsModal 
+        isOpen={showPointsModal} 
+        totalPoints={totalPoints}
+      />
     </div>
   );
 }
