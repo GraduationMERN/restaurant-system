@@ -28,7 +28,7 @@ export default function Coupons() {
   const loadCoupons = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/coupons");
+      const res = await api.get("/api/admin/coupons");
       setCoupons(res.data.coupons || []);
     } catch (error) {
       console.error("Error loading coupons:", error);
