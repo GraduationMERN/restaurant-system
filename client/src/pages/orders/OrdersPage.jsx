@@ -19,7 +19,7 @@ import OrderHistoryComponent from "./OrderHistoryComponent";
 import EmptyOrdersComponent from "./EmptyOrdersComponent";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import { RefreshCw, Phone, Star } from "lucide-react";
+import { RefreshCw, Phone, Star, ShoppingBag } from "lucide-react";
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
 
 export default function OrdersPage() {
@@ -39,6 +39,7 @@ export default function OrdersPage() {
   const [guestActiveOrder, setGuestActiveOrderLocal] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(329); // default countdown
@@ -248,23 +249,38 @@ export default function OrdersPage() {
             </h1>
 
             {isLoggedIn && (
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className={`
-                  flex items-center gap-2 px-4 py-2
-                  bg-primary hover:bg-primary/80 dark:bg-primary dark:hover:bg-primary/90 text-white 
-                  font-semibold rounded-lg transition-colors
-                  disabled:opacity-60 disabled:cursor-not-allowed
-                `}
-              >
-                <RefreshCw
-                  className={`w-5 h-5 ${
-                    refreshing ? "animate-spin" : ""
-                  }`}
-                />
-                Refresh
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowHistoryModal(true)}
+                  disabled={refreshing}
+                  className={`
+                    flex items-center gap-2 px-4 py-2
+                    bg-secondary hover:bg-secondary/80 dark:bg-secondary dark:hover:bg-secondary/90 text-white 
+                    font-semibold rounded-lg transition-colors
+                    disabled:opacity-60 disabled:cursor-not-allowed
+                  `}
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  View History
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className={`
+                    flex items-center gap-2 px-4 py-2
+                    bg-primary hover:bg-primary/80 dark:bg-primary dark:hover:bg-primary/90 text-white 
+                    font-semibold rounded-lg transition-colors
+                    disabled:opacity-60 disabled:cursor-not-allowed
+                  `}
+                >
+                  <RefreshCw
+                    className={`w-5 h-5 ${
+                      refreshing ? "animate-spin" : ""
+                    }`}
+                  />
+                  Refresh
+                </button>
+              </div>
             )}
           </div>
 
@@ -372,16 +388,6 @@ export default function OrdersPage() {
                 </>
               )}
 
-              {/* Order History Card */}
-              {displayHistory.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                    Order History
-                  </h2>
-                  <OrderHistoryComponent orders={displayHistory} />
-                </div>
-              )}
-
               {/* Empty */}
               {noOrders && <EmptyOrdersComponent />}
             </>
@@ -446,6 +452,50 @@ export default function OrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Order History Modal */}
+      {showHistoryModal && (
+        <>
+          {/* Overlay with blur */}
+          <div 
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+            onClick={() => setShowHistoryModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="fixed inset-4 md:inset-8 lg:inset-16 z-50 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              {/* Header with Close Button */}
+              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between rounded-t-3xl">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Order History
+                </h2>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  aria-label="Close modal"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {displayHistory.length > 0 ? (
+                  <OrderHistoryComponent orders={displayHistory} />
+                ) : (
+                  <div className="text-center py-12">
+                    <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No order history yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );
