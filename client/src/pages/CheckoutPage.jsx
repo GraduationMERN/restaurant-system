@@ -41,7 +41,6 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [orderError, setOrderError] = useState("");
-  const [showPointsModal, setShowPointsModal] = useState(false);
 
   // Load cart on mount
   useEffect(() => {
@@ -435,6 +434,11 @@ export default function CheckoutPage() {
               <Plus className="w-5 h-5" />
               Add other items
             </button>
+
+            {/* Points Modal - Always Visible */}
+            {totalPoints > 0 && (
+              <PointsModal totalPoints={totalPoints} />
+            )}
           </div>
 
           {/* Right Column - Order Summary */}
@@ -639,27 +643,6 @@ className="flex-0 px-4 py-3 rounded-xl
                 </div>
               </div>
 
-              {/* Points Earned Section */}
-              {totalPoints > 0 && (
-                <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-700 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Gift className="w-5 h-5 text-amber-500" />
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Reward Points Earned</p>
-                        <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{totalPoints}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowPointsModal(true)}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 text-white rounded-lg font-medium text-sm transition-colors"
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Confirm Order Button */}
               <button
                 onClick={handleSubmit}
@@ -701,12 +684,6 @@ className="flex-0 px-4 py-3 rounded-xl
           </div>
         </div>
       )}
-
-      {/* Points Modal */}
-      <PointsModal 
-        isOpen={showPointsModal} 
-        totalPoints={totalPoints}
-      />
     </div>
   );
 }
