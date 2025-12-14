@@ -29,7 +29,6 @@ import MenuPage from "./pages/MenuPage";
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
-import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierDashboard from "./pages/cashier/CashierDashboard";
 import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
@@ -107,17 +106,13 @@ function App() {
             <Route
               path="/cashier"
               element={
-                <ProtectedRoute roles={["cashier", "admin"]}>
                   <CashierDashboard />
-                </ProtectedRoute>
               }
             />
             <Route
               path="/kitchen"
               element={
-                <ProtectedRoute roles={["kitchen", "admin"]}>
                   <KitchenOrders />
-                </ProtectedRoute>
               }
             />
 
@@ -126,17 +121,13 @@ function App() {
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
                     <AdminDashboard />
-                  </ProtectedRoute>
                 }
               />
               <Route
                 path="/admin/kitchen"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
                     <KitchenOrders />
-                  </ProtectedRoute>
                 }
               />
             </Route>
@@ -148,9 +139,7 @@ function App() {
               <Route
                 path="/admin/:section?"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
                     <Admin />
-                  </ProtectedRoute>
                 }
               />
             </Route>
