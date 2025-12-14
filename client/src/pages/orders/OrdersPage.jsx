@@ -255,7 +255,7 @@ export default function OrdersPage() {
                   disabled={refreshing}
                   className={`
                     flex items-center gap-2 px-4 py-2
-                    bg-secondary hover:bg-secondary/80 dark:bg-secondary dark:hover:bg-secondary/90 text-white 
+                    bg-primary hover:bg-primary/80 dark:bg-secondary dark:hover:bg-secondary/90 text-white 
                     font-semibold rounded-lg transition-colors
                     disabled:opacity-60 disabled:cursor-not-allowed
                   `}
