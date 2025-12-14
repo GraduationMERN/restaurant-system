@@ -86,11 +86,35 @@ export const setupSocketListeners = (socket) => {
     const id = data._id || data.orderId || data.id;
     const payload = { _id: id, ...data };
     handleUpdated(payload);
+
+    // Send notification for order status change
+    sendNotificationToSW({
+      title: 'Order Status Updated',
+      body: `Order #${id} status changed to ${data.status}`,
+      tag: `order-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
   socket.on("order:your-status-changed", (data) => {
     const id = data._id || data.orderId || data.id;
     const payload = { _id: id, ...data };
     handleUpdated(payload);
+
+    // Send notification for user's order status change
+    sendNotificationToSW({
+      title: 'Your Order Status Updated',
+      body: `Your order #${id} is now ${data.status}`,
+      tag: `order-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
 
   /* ---- ORDER DELETED ---- */
@@ -116,6 +140,14 @@ export const setupSocketListeners = (socket) => {
     store.dispatch(socketPaymentSuccess(payload));
     store.dispatch(cashierSocketOrderUpdated(payload));
     store.dispatch(cashierSocketPaymentUpdated(payload));
+
+    // Send notification for payment success
+    sendNotificationToSW({
+      title: 'Payment Successful',
+      body: `Payment for order #${id} was successful`,
+      tag: `payment-${id}`,
+      data: { orderId: id, url: '/orders' }
+    });
   });
 
   socket.on("order:payment:confirmed", (order) => {
@@ -123,6 +155,14 @@ export const setupSocketListeners = (socket) => {
     console.log("Socket: order:payment:confirmed", id);
     const payload = { _id: id, ...order };
     store.dispatch(socketPaymentSuccess(payload));
+
+    // Send notification for payment confirmation
+    sendNotificationToSW({
+      title: 'Payment Confirmed',
+      body: `Payment for order #${id} has been confirmed`,
+      tag: `payment-${id}`,
+      data: { orderId: id, url: '/orders' }
+    });
   });
 
   // Generic payment update emitted by order controller
@@ -227,6 +267,18 @@ export const setupSocketListeners = (socket) => {
     const payload = { _id: id, ...order };
     store.dispatch(socketOrderUpdated(payload));
     store.dispatch(cashierSocketOrderUpdated(payload));
+
+    // Send notification for order ready
+    sendNotificationToSW({
+      title: 'Order Ready!',
+      body: `Your order #${id} is ready for pickup`,
+      tag: `ready-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
 
   /* ----------------------------------------
@@ -320,6 +372,16 @@ export const joinSocketRooms = (socket, user) => {
 import { io as ioClient } from "socket.io-client";
 
 let socketInstance = null;
+
+// Utility function to send notifications to service worker
+const sendNotificationToSW = (notificationData) => {
+  if ('serviceWorker' in navigator && 'controller' in navigator.serviceWorker) {
+    navigator.serviceWorker.controller?.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      data: notificationData
+    });
+  }
+};
 
 export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;

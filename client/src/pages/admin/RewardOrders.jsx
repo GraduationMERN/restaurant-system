@@ -66,6 +66,19 @@ export default function RewardOrders() {
         if (exists) return prev;
         return [newReview, ...prev];
       });
+
+      // Send notification for new reward redemption
+      if ('serviceWorker' in navigator && 'controller' in navigator.serviceWorker) {
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          data: {
+            title: '🎉 New Reward Redeemed!',
+            body: `${newReview.title || 'A reward'} has been redeemed`,
+            tag: `reward-${newReview._id}`,
+            data: { rewardId: newReview._id, url: '/admin/reward-orders' }
+          }
+        });
+      }
     });
 
     // Cleanup on unmount
