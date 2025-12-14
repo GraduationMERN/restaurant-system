@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
+import api from "../api/axios";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
@@ -41,6 +42,9 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [orderError, setOrderError] = useState("");
+  const [coupon, setCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
 
   // Load cart on mount
   useEffect(() => {
@@ -162,10 +166,44 @@ export default function CheckoutPage() {
     }
   };
 
-  // Compute totals
+  // Compute totals with coupon discount
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
-  const total = +(subtotal + vat).toFixed(2);
+  let discountAmount = 0;
+  
+  if (coupon) {
+    discountAmount = +(subtotal * (coupon.discountPercentage / 100)).toFixed(2);
+  }
+  
+  const total = +(subtotal + vat - discountAmount).toFixed(2);
+
+  // Apply coupon function
+  const applyCoupon = async () => {
+    if (!promoCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const res = await api.get(`/api/coupons/validate/${promoCode.trim()}`);
+      setCoupon(res.data.coupon);
+      setCouponError("");
+    } catch (error) {
+      setCoupon(null);
+      setCouponError(error.response?.data?.message || "Invalid coupon code");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Remove coupon function
+  const removeCoupon = () => {
+    setCoupon(null);
+    setPromoCode("");
+    setCouponError("");
+  };
 
   // Calculate total points from cart items
   const totalPoints = products.reduce((acc, item) => {
@@ -608,23 +646,49 @@ className="flex-0 px-4 py-3 rounded-xl
                   <Gift className="w-4 h-4 mr-2" />
                   Coupon / Promo Code
                 </h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter promo code"
-                    className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { /* UI-only apply: backend will validate on submit */ }}
-                    className="px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              
-                  >
-                    Apply
-                  </button>
-                </div>
+                
+                {coupon ? (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-xl p-4 mb-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-green-900 dark:text-green-200">{coupon.code}</p>
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          {coupon.discountPercentage}% discount applied
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
+                      placeholder="Enter coupon code"
+                      className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading}
+                      className="px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {couponLoading ? "Checking..." : "Apply"}
+                    </button>
+                  </div>
+                )}
+                
+                {couponError && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-2">{couponError}</p>
+                )}
               </div>
 
               {/* Price Breakdown */}
@@ -637,6 +701,12 @@ className="flex-0 px-4 py-3 rounded-xl
                   <span className="text-gray-600 dark:text-gray-400">VAT</span>
                   <span className="font-medium text-gray-900 dark:text-white">EGP {vat.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-green-600 dark:text-green-400">Discount ({coupon?.discountPercentage}%)</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">-EGP {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
                   <span className="text-xl font-bold text-primary dark:text-primary/90">EGP {total.toFixed(2)}</span>

@@ -4,6 +4,7 @@ import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
 import Admin from "./pages/admin/Admin";
+import Coupons from "./pages/admin/Coupons";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import RegistrationPage from "./pages/RegisterationPage";
@@ -136,6 +137,14 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin"]}>
                     <KitchenOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/coupons"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Coupons />
                   </ProtectedRoute>
                 }
               />

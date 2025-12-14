@@ -5,14 +5,25 @@ import * as couponService from './coupon.service.js';
 // Create new coupon
 export const createCoupon = async (req, res) => {
   try {
+    // Transform client format to server format
+    const { code, discountPercentage, maxUses, expiryDate } = req.body;
+    
+    // Convert client format to model format
+    const couponData = {
+      code: code.toUpperCase(),
+      discountType: 'percentage',
+      discountValue: discountPercentage,
+      maxTotalUses: maxUses || null,
+      expiresAt: expiryDate ? new Date(expiryDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+      isActive: true,
+    };
 
-    const {couponData} = {...req.body};
     const coupon = await couponService.createCouponService(couponData);
     
     res.status(201).json({
       success: true,
       message: 'Coupon created successfully',
-      data: coupon,
+      coupon,
     });
   } catch (error) {
     res.status(400).json({
@@ -25,11 +36,21 @@ export const createCoupon = async (req, res) => {
 // Get all coupons
 export const getAllCoupons = async (req, res) => {
   try {
-    const coupons = await couponService.getAllCouponsService(req.user.restaurantId);
+    const coupons = await couponService.getAllCouponsService();
+    
+    // Transform to client format
+    const formattedCoupons = coupons.map(c => ({
+      _id: c._id,
+      code: c.code,
+      discountPercentage: c.discountValue,
+      maxUses: c.maxTotalUses,
+      usedCount: c.currentUses,
+      expiryDate: c.expiresAt,
+    }));
     
     res.status(200).json({
       success: true,
-      data: coupons,
+      coupons: formattedCoupons,
     });
   } catch (error) {
     res.status(400).json({
@@ -43,7 +64,20 @@ export const getAllCoupons = async (req, res) => {
 export const updateCoupon = async (req, res) => {
   try {
     const { couponId } = req.params;
-    const coupon = await couponService.updateCouponService(couponId, req.body);
+    const { code, discountPercentage, maxUses, expiryDate } = req.body;
+    
+    // Transform client format to server format
+    const updateData = {
+      code: code?.toUpperCase(),
+      discountValue: discountPercentage,
+      maxTotalUses: maxUses,
+      expiresAt: expiryDate ? new Date(expiryDate) : undefined,
+    };
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+    const coupon = await couponService.updateCouponService(couponId, updateData);
     
     if (!coupon) {
       return res.status(404).json({
@@ -55,7 +89,7 @@ export const updateCoupon = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Coupon updated successfully',
-      data: coupon,
+      coupon,
     });
   } catch (error) {
     res.status(400).json({
@@ -91,6 +125,47 @@ export const deleteCoupon = async (req, res) => {
 };
 
 // ========== CUSTOMER ENDPOINTS ==========
+
+// Validate coupon by code (simple GET validation for checkout)
+export const validateCouponByCode = async (req, res) => {
+  try {
+    const { code } = req.params;
+    
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coupon code is required',
+      });
+    }
+
+    const result = await couponService.validateCouponCodeService(code);
+    
+    if (!result.valid) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+    
+    // Transform to client format
+    const coupon = {
+      _id: result.coupon._id,
+      code: result.coupon.code,
+      discountPercentage: result.coupon.discountValue,
+    };
+    
+    res.status(200).json({
+      success: true,
+      message: 'Coupon is valid',
+      coupon,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // Validate coupon (called when user enters code)
 export const validateCoupon = async (req, res) => {
