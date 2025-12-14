@@ -18,11 +18,13 @@ const STATUS_OPTIONS = [
 export default function RewardOrders() {
   const dispatch = useDispatch();
    const socketRef = useRef(null);
-  const { items = [], loading } = useSelector((state) => state.rewardOrders);
+  const { items = [], loading ,pagination } = useSelector((state) => state.rewardOrders);
   const [rewards, setRewards] = useState([]);
   const BASE_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL;
   const [viewOrder, setViewOrder] = useState(null);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
     async function loadRewards() {
       try {
         const {items} = await api.get("api/reward/reward-order");
@@ -91,9 +93,13 @@ export default function RewardOrders() {
     };
   }, []);
 
-  useEffect(() => {
-    dispatch(getAllRewardOrders());
-  }, [dispatch]);
+    useEffect(() => {
+    dispatch(getAllRewardOrders({ page: currentPage, limit: itemsPerPage }));
+  }, [dispatch, currentPage]);
+
+    const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const updateOrderStatus = (id, newStatus) => {
     dispatch(updateRewardOrder({ id, data: { status: newStatus } }));
@@ -230,7 +236,47 @@ export default function RewardOrders() {
         </div>
       )}
 
-
+        {/* Pagination Controls */}
+      <div className="flex items-center justify-between mt-6 px-4">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} orders
+        </div>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            Previous
+          </button>
+          
+          {/* Page Numbers */}
+          <div className="flex gap-1">
+            {[...Array(pagination.totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                className={`px-3 py-2 rounded-lg ${
+                  currentPage === i + 1
+                    ? 'bg-brand-500 text-white'
+                    : 'border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === pagination.totalPages}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
