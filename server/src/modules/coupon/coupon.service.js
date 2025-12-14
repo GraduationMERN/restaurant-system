@@ -27,6 +27,37 @@ export const deleteCouponService = async (couponId) => {
 
 // ========== COUPON VALIDATION ==========
 
+// Simple validation - just check if coupon exists and is valid
+export const validateCouponCodeService = async (code) => {
+  try {
+    // Find coupon by code
+    const coupon = await couponRepo.findCouponByCode(code);
+
+    if (!coupon) {
+      return { valid: false, message: 'Coupon not found' };
+    }
+
+    // Check if active
+    if (!coupon.isActive) {
+      return { valid: false, message: 'Coupon is not active' };
+    }
+
+    // Check expiration
+    if (coupon.expiryDate && new Date() > new Date(coupon.expiryDate)) {
+      return { valid: false, message: 'Coupon has expired' };
+    }
+
+    // Check if max uses reached
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+      return { valid: false, message: 'Coupon has reached maximum uses' };
+    }
+
+    return { valid: true, coupon };
+  } catch (error) {
+    return { valid: false, message: error.message };
+  }
+};
+
 export const validateCouponService = async (code, userId, orderId) => {
   // 1. Find coupon by code
   const coupon = await couponRepo.findCouponByCode(code);
