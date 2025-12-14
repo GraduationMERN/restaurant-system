@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   User,
   LifeBuoy,
+  HelpCircle,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
@@ -18,17 +19,18 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import LogoutButton from "./ui/button/LogoutButton";
 import LoginButton from "./ui/button/LoginButton";
+import { useRole } from "../hooks/useRole";
 
 export default function CombinedNavbar() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const cartItem = useSelector(state => state.cart.products);
-  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
 
 
   const isActive = (path) => location.pathname === path;
+
+  const { isAdmin } = useRole();
 
   // Close sidebar when clicking a nav item (useful on mobile)
   const handleNavClick = () => setIsOpen(false);
@@ -60,7 +62,17 @@ export default function CombinedNavbar() {
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-
+          {/* Admin view toggle */}
+            {isOpen && isAdmin && (
+              <div className="px-2">
+                <button
+                onClick={() => {window.location.replace("/admin")}}
+                  className="px-3 py-2 bg-primary text-white rounded-md hover:opacity-90"
+                >
+                Switch to Admin
+                </button>
+              </div>
+            )}
           {/* Language + Dark Mode */}
           <div className="flex justify-between items-center px-2">
             {isOpen && (
@@ -88,6 +100,7 @@ export default function CombinedNavbar() {
             <div className="">
               <ThemeToggleButton />
             </div>
+            
           </div>
 
           {/* Navigation Items */}
@@ -107,16 +120,6 @@ export default function CombinedNavbar() {
             active={isActive("/menu")}
             isOpen={isOpen}
             onClick={handleNavClick}
-          />
-
-          <DesktopNavItem
-            to="/cart"
-            icon={<ShoppingCart size={20} />}
-            label={t("cart")}
-            active={isActive("/cart")}
-            isOpen={isOpen}
-            onClick={handleNavClick}
-            badge={totalItems}
           />
 
           <DesktopNavItem
@@ -147,7 +150,7 @@ export default function CombinedNavbar() {
           />
           <DesktopNavItem
             to="/support"
-            icon={<LifeBuoy size={20} />}
+            icon={<HelpCircle size={20} />}
             label={"Support"}
             active={isActive("/support")}
             isOpen={isOpen}
@@ -192,15 +195,6 @@ export default function CombinedNavbar() {
             active={isActive("/menu")}
             onClick={handleNavClick}
           />
-          <MobileNavItem
-            to="/cart"
-            icon={<ShoppingCart size={20} />}
-            label={t("cart")}
-            active={isActive("/cart")}
-            onClick={handleNavClick}
-            badge={totalItems}
-          />
-
 
           <MobileNavItem
             to="/orders"
@@ -232,6 +226,14 @@ export default function CombinedNavbar() {
             active={isActive("/support")}
             onClick={handleNavClick}
           />
+          {isAdmin && (
+            <button
+              onClick={() => {window.location.replace("/admin")}}
+              className="px-3 py-2 rounded-md bg-primary text-white"
+            >
+               Admin
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -268,7 +270,13 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick, badge }) {
           </span>
         )}
       </div>
-      {isOpen && <span className={`text-sm ${label === "Rewards" ? "text-secondary" : ""}`}>{label}</span>}
+      {isOpen && (
+        <span
+          className={`text-sm ${label === "Rewards" ? "text-secondary" : ""}`}
+        >
+          {label}
+        </span>
+      )}
     </Link>
   );
 }
@@ -279,8 +287,9 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
     <Link
       to={to}
       onClick={() => onClick && onClick()}
-      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"
-        }`}
+      className={`flex flex-col items-center ${
+        active ? "text-primary" : "text-muted"
+      }`}
     >
       <div className="relative">
         {icon}

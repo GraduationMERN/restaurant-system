@@ -3,6 +3,7 @@ import { Star, X } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { createReview, fetchReviews } from "../../redux/slices/reviewSlice";
 import { useTranslation } from "react-i18next";
+import { useToast } from "../../hooks/useToast";
 
 export default function ReviewModal({ isOpen, close }) {
   const dispatch = useDispatch();
@@ -10,17 +11,25 @@ export default function ReviewModal({ isOpen, close }) {
   const [comment, setComment] = useState("");
   const [images, setImages] = useState([]);
   const { t } = useTranslation();
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const { showToast } = useToast();
 
   if (!isOpen) return null;
 
   const handleImageChange = (e) => setImages([...e.target.files]);
 
   const handleSubmit = async () => {
-    if (rating === 0) return alert("Please provide a rating");
+    if (rating === 0) {
+      showToast("Please provide a rating", "error");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("rating", rating);
     formData.append("comment", comment || "");
+    // server expects `anonymous` field name
+    formData.append("anonymous", isAnonymous ? "true" : "false");
+
     images.forEach((img) => formData.append("photos", img));
 
     try {
@@ -28,7 +37,7 @@ export default function ReviewModal({ isOpen, close }) {
       await dispatch(fetchReviews());
       close();
     } catch (err) {
-      console.error("Failed to create review:", err);
+      showToast("Failed to submit review.", "error");
     }
   };
 
@@ -66,7 +75,7 @@ export default function ReviewModal({ isOpen, close }) {
 
         <p className=" text-sm mb-2 mt-2 font-medium">{t("upload_photos")}</p>
         <label className="cursor-pointer bg-white border border-gray-300 px-4 py-2 rounded-xl inline-flex items-center gap-2">
-        {t("choose_your_photos")}
+          {t("choose_your_photos")}
           <input
             type="file"
             multiple
@@ -85,6 +94,17 @@ export default function ReviewModal({ isOpen, close }) {
               className="h-20 w-20 object-cover rounded-lg"
             />
           ))}
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="checkbox"
+            id="anon"
+            checked={isAnonymous}
+            onChange={(e) => setIsAnonymous(e.target.checked)}
+          />
+          <label htmlFor="anon" className="text-sm">
+            {t("post_anonymously")}
+          </label>
         </div>
 
         <button

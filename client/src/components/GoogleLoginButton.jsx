@@ -2,7 +2,7 @@ import React from "react";
 
 export default function GoogleLoginButton() {
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/auth/google";
+    window.location.href = `https://brand-bite.onrender.com/api/auth/google`;
   };
 
   return (

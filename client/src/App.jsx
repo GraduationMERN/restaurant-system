@@ -42,26 +42,20 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!isAuthenticated && !checked) {
-      const hasSession = typeof window !== "undefined" && window.localStorage.getItem("hasSession") === "true";
-      const verifyUser = async () => {
-        if (!hasSession) {
-          // nothing to verify
-          setChecked(true);
-          return;
-        }
-        try {
-          await dispatch(refreshToken()); // refresh token first
-          await dispatch(getMe()); // then fetch user info
-        } catch (err) {
-          // ignore - auth slice handles errors
-        } finally {
-          setChecked(true);
-        }
-      };
-      verifyUser();
-    }
-  }, [dispatch, isAuthenticated, checked]);
+    const init = async () => {
+      try {
+        await dispatch(refreshToken());
+        await dispatch(getMe());
+      } catch (e) {
+        // ignore errors
+      } finally {
+        setChecked(true);
+      }
+    };
+  
+    if (!checked) init();
+  }, [dispatch, checked]);
+  
 
   // Request notification permission on app load (centralized)
   useEffect(() => {
@@ -151,7 +145,14 @@ function App() {
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             {/* Single Admin Page with section sub-route */}
             <Route element={<AppLayout />}>
-              <Route path="/admin/:section?" element={<Admin />} />
+              <Route
+                path="/admin/:section?"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Admin />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />

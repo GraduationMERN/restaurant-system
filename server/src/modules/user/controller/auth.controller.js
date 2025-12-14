@@ -9,17 +9,25 @@ import {
 } from "../service/auth.service.js";
 import { refreshTokenService } from "../service/refreshToken.service.js";
 import { verifyOtpService } from "../service/verifyOtp.service.js";
+import orderModel from "../../order.module/orderModel.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const cookieOptions = {
+// Base cookie options. Use more restrictive SameSite in development for testing
+// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
-  secure: isProduction ? true : false,      // <- false for local
+  sameSite: "Lax", // Changed from None to Lax for better compatibility
+  secure: true, // Keep secure for HTTPS
   maxAge: 24 * 60 * 60 * 1000,
-  path: "/",
-  // Use domain only in production and if needed for subdomains
-  // ...(isProduction && { domain: frontendDomain }),
+  path: "/", // Reverted back to "/"
+};
+
+// Allow an explicit cookie domain to be set via env (e.g. ".example.com").
+// This helps when frontend and backend are on subdomains of the same eTLD+1.
+const cookieOptions = {
+  ...cookieOptionsBase,
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const registerUserController = async (req, res) => {
   try {
@@ -35,10 +43,11 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
-    console.log("=== LOGIN ATTEMPT ===");
+     console.log("=== LOGIN ATTEMPT ===");
     console.log("NODE_ENV:", process.env.NODE_ENV);
     console.log("Frontend URL:", env.frontendUrl);
     console.log("Request origin:", req.headers.origin);
+    console.log("Request headers:", req.headers);
     console.log("Cookies received:", req.cookies);
 
     const { email, password } = req.body;
@@ -52,15 +61,21 @@ export const loginUserController = async (req, res) => {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
+    
 
     res.status(200).json({
       message: "Logged in successfully",
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
         points: user.points,
+        avatarUrl: user.avatarUrl,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        address: user.address,
       },
     });
   } catch (err) {
@@ -74,12 +89,18 @@ export const getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({
+    // Count completed orders for this user
+    const completedOrders = await orderModel.countDocuments({
+      user: user._id,
+      status: "completed",
+    });
+    return res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       points: user.points,
+      orderCount: completedOrders,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });

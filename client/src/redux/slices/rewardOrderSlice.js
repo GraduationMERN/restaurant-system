@@ -3,9 +3,9 @@ import api from "../../api/axios";
 
 export const getAllRewardOrders = createAsyncThunk(
     "rewardOrders/getAll",
-    async (_, { rejectWithValue }) => {
+    async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
         try {
-            const res = await api.get('/api/reward/reward-order');
+            const res = await api.get(`/api/reward/reward-order?page=${page}&limit=${limit}`);
             return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data.error);
@@ -41,6 +41,12 @@ const slice = createSlice({
     name: 'rewardOrders',
     initialState: {
         items: [],
+         pagination: {
+            page: 1,
+            limit: 10,
+            total: 0,
+            totalPages: 0
+        },
         loading: false,
         error: null,
     },
@@ -61,7 +67,7 @@ const slice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(getAllRewardOrders.pending, (state) => { state.loading = true; state.error = null; })
-            .addCase(getAllRewardOrders.fulfilled, (state, action) => { state.loading = false; state.items = action.payload; })
+            .addCase(getAllRewardOrders.fulfilled, (state, action) => { state.loading = false;state.items = action.payload.items;state.pagination = action.payload.pagination; })
             .addCase(getAllRewardOrders.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(updateRewardOrder.fulfilled, (state, action) => {
                 const updated = action.payload;

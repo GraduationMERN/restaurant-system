@@ -30,8 +30,11 @@ export const ReviewRepository = {
     // Retrieve a single review by its ID
 async getReviewById(id) {
     return await Review.findById(id)
-      .populate("user", "name")
-      .populate("order", "_id");
+    .populate({
+      path: "user",
+      select: "name email",
+    })
+    .lean();
   },
 
   // Update a review  by its ID

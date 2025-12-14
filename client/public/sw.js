@@ -60,6 +60,38 @@ self.addEventListener('push', event => {
   );
 });
 
+// Message event - handle messages from main thread for local notifications
+self.addEventListener('message', event => {
+  console.log('Service Worker received message:', event.data);
+
+  const { type, data } = event.data;
+
+  if (type === 'SHOW_NOTIFICATION') {
+    const { title, body, icon = '/images/logo/logo-icon.svg', badge = '/images/logo/logo-icon.svg', tag, data: notificationData, actions } = data;
+
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon,
+        badge,
+        tag: tag || 'app-notification',
+        requireInteraction: true,
+        data: notificationData || {},
+        actions: actions || [
+          {
+            action: 'open',
+            title: 'View'
+          },
+          {
+            action: 'close',
+            title: 'Close'
+          }
+        ]
+      })
+    );
+  }
+});
+
 // Notification click event
 self.addEventListener('notificationclick', event => {
   console.log('Notification clicked:', event);

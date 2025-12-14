@@ -59,60 +59,16 @@ export default function Navbar() {
         <Utensils size={20} />
         <span className="text-xs">{t("menu")}</span>
       </Link>
-
-      {/* Cart */}
-      <Link
-        to="/cart"
-        className={`relative flex flex-col items-center transition-colors ${isActive("/cart") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
-          }`}
-      >
-        <ShoppingCart size={20} />
-
-        {totalItems > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-6px",
-              right: "-6px",
-              backgroundColor: "var(--color-primary)",
-              color: "#fff",
-              fontSize: "10px",
-              fontWeight: "bold",
-              borderRadius: "50%",
-              height: "18px",
-              minWidth: "18px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 4px",
-              lineHeight: 1,
-            }}
-          >
-            {totalItems}
-          </span>
-        )}
-
-        <span className="text-xs">{t("cart")}</span>
-      </Link>
-
-
+   
       {/* Orders */}
       <Link
-        to="/orders/:id"
+        to="/orders"
         className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
         <Clock4 size={20} />
         <span className="text-xs">{t("orders")}</span>
       </Link>
 
-      {/* Reviews */}
-      <Link
-        to="/reviews"
-        className={`flex flex-col items-center transition-colors ${isActive("/reviews") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
-      >
-        <Star size={20} />
-        <span className="text-xs">{t("reviews")}</span>
-      </Link>
 
       {/* Rewards */}
       <Link
@@ -121,15 +77,6 @@ export default function Navbar() {
       >
         <Gift size={20} />
         <span className="text-xs">{t("rewards")}</span>
-      </Link>
-
-      {/* Support */}
-      <Link
-        to="/support"
-        className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
-      >
-        <HelpCircle size={20} />
-        <span className="text-xs">Support</span>
       </Link>
 
       {/* LOGIN / LOGOUT */}

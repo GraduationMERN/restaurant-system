@@ -1,5 +1,6 @@
 import { Gift } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function CardComponent({
   item,
@@ -10,6 +11,8 @@ export default function CardComponent({
   canRedeem,
 }) {
   const [hovered, setHovered] = useState(false);
+  const {t,i18n }=useTranslation();
+  const lang = i18n.language;
   return (
     <div
       onClick={onClick}
@@ -22,9 +25,10 @@ export default function CardComponent({
           ? "opacity-100"
           : "opacity-70"
       }
-             group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2
-                    h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col lg:justify-between
-                    hover:shadow-lg transition duration-200 overflow-hidden`}
+             group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2 lg:relative
+         h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col
+         ${isReward ? "lg:justify-between" : ""} 
+         hover:shadow-lg transition duration-200 overflow-hidden`}
     >
       {isReward ? (
         <div className="w-1/2  lg:w-full lg:h-1/2 flex items-center gap-4">
@@ -41,7 +45,7 @@ export default function CardComponent({
           )}
         </div>
       ) : (
-        <div className="w-1/2 lg:w-full  lg:h-1/2 flex items-center gap-4">
+        <div className="w-1/2 lg:w-full  lg:h-3/5 flex items-center gap-4">
           <img
             src={product.imgURL}
             alt={product.name}
@@ -80,24 +84,19 @@ export default function CardComponent({
           </button>
         </div>
       ) : (
-        <div className="flex lg:flex-col  justify-between w-1/2 lg:w-full lg:relative">
+        <div className="flex lg:flex-col  justify-between w-1/2 lg:w-full ">
           <h3 className="flex flex-col mx-2 justify-center text-md font-semibold text-primary">
-            <div className={`text-sm font-semibold flex-1 `}>
-              {product?.name || "Product"}
-            </div>
-            <span
-              className="
-    text-xs 
-    text-[#888] 
-    leading-snug 
-    break-words 
-    line-clamp-2
-    sm:line-clamp-3
-  "
+            <div
+              className={`text-sm font-semibold lg:font-bold flex-1 lg:line-clamp-1 mt-1`}
             >
-              {product.desc}
+              {/* {product?.name || "Product"} */}
+              {lang==='ar'?(product.name_ar||product.name):product.name}
+            </div>
+            <span className="text-xs text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
+              {/* {product.desc} */}
+              {lang==='ar'?(product.desc_ar||product.desc):product.desc}
             </span>
-            {product.basePrice} EGP
+            <div className="mt-5">{product.basePrice} {t('currency')}</div>
           </h3>
           <button
             disabled={disabled}

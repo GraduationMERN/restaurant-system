@@ -14,16 +14,13 @@ export default function RewardPage() {
   const { reward } = useSelector((state) => state.reward || {});
   const { user} = useSelector((state) => state.auth);
   const userRedemptions = useSelector((state) => state.reward?.userRedemptions || []);
-
   const toast = useToast();
   const navigate = useNavigate();
-
   const points = user?.points || 0;
   const [userPoints, setUserPoints] = useState(points);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
   const [showRedemptions, setShowRedemptions] = useState(false);
-
   const userName = user?.name || "Guest";
   useEffect(() => {
     dispatch(getAllRewards());
@@ -36,7 +33,6 @@ export default function RewardPage() {
 
   // ---- MILESTONE LOGIC ----
   const milestones = [...new Set(rewards.map(r => r.pointsRequired))].sort((a, b) => a - b);
-
   const maxMilestone = milestones[milestones.length - 1] || 1;
   const progress = Math.min((points / maxMilestone) * 100, 100);
   const sortedRewards = [...rewards].sort((a, b) => a.pointsRequired - b.pointsRequired);

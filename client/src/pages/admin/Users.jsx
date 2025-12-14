@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../redux/slices/usersSlice";
 import { registerUser } from "../../redux/slices/authSlice";
+import Button from "../../components/ui/button/Button";
+import { useToast } from "../../hooks/useToast";
 
 const validateField = (name, value) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,6 +43,7 @@ const validateField = (name, value) => {
 export default function Users() {
   const dispatch = useDispatch();
   const { users, loading } = useSelector((state) => state.users);
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -51,6 +54,7 @@ export default function Users() {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUsers());
@@ -83,7 +87,15 @@ export default function Users() {
     // If any errors exist, stop submission
     if (Object.keys(newErrors).length > 0) return;
 
-    await dispatch(registerUser(formData));
+    setSubmitting(true);
+    try {
+      await dispatch(registerUser(formData));
+      toast.showToast({ message: "User created", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: "Failed to create user", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
 
     setFormData({
       name: "",
@@ -198,12 +210,7 @@ export default function Users() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="bg-primary w-full py-2 rounded-xl text-lg hover:opacity-90 transition"
-          >
-            Submit
-          </button>
+          <Button type="submit" loading={submitting} className="w-full">Submit</Button>
         </form>
       )}
 

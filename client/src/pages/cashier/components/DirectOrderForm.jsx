@@ -86,7 +86,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
         notes: `Payment Method: ${paymentMethod}`
       };
 
-      const response = await api.post("/api/orders/direct", orderData);
+      const response = await api.post("api/orders/direct", orderData);
       
       if (response.data) {
         toast.showToast({ message: `✅ Order created successfully!`, type: "success" });

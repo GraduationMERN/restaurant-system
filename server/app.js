@@ -30,7 +30,6 @@ import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
-import { initializeEmbeddingModel } from "./src/modules/chat/chat.service.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -42,23 +41,32 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://brandbite-three.vercel.app",
+  "https://brandbite-nng5vjxbr-negms-projects.vercel.app",
   "https://restaurant-system-zcar.vercel.app",
   env.frontendUrl,
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like curl, server-to-server)
+    // Allow requests with no origin (like mobile apps, curl)
     if (!origin) return callback(null, true);
+
+    // Check if the origin is in allowedOrigins
     if (allowedOrigins.includes(origin)) {
       return callback(null, origin);
     }
+
+    // Check for vercel.app subdomains
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, origin);
+    }
+
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
+  exposedHeaders: ['Set-Cookie'], // Important for cookies
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', "x-guest-id"]
 }));
-
 
 // IMPORTANT: Webhook needs raw body, so handle it BEFORE express.json()
 app.post(
@@ -68,7 +76,8 @@ app.post(
 );
 
 // Now apply regular JSON parsing for other routes
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 app.use(requestIdMiddleware);
 // app.use(requestLogger);
@@ -80,9 +89,6 @@ if (process.env.NODE_ENV !== "production") {
 // --- Connect to Database ---
 await connectDB();
 
-// --- Initialize AI chatbot ---
-initializeEmbeddingModel();
-
 // --- API Routes ---
 app.use("/api", couponRoutes);
 app.use("/api/chatBot", chatRoutes); // for AI
@@ -90,8 +96,8 @@ app.use("/api/recommendations", recommendationRoutes); // for AI
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/reward", rewardRouter);
-app.use("/auth", authRoutes);
-app.use("/users", usersRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", optionalAuthMiddleware, cartRoutes);
 app.use("/api/notifications", notificationRoutes);

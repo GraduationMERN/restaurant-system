@@ -439,7 +439,7 @@ const PaymentSuccess = () => {
     // Fetch order by session ID
     const fetchOrder = async () => {
       try {
-        const res = await api.get(`/api/checkout/session/${sessionId}/order`);
+        const res = await api.get(`api/checkout/session/${sessionId}/order`);
         const order = res.data.data || res.data;
         
         if (order?._id) {
