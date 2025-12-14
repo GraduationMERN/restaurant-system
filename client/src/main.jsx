@@ -1,7 +1,5 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import "swiper/swiper-bundle.css";
 import "flatpickr/dist/flatpickr.css";
 import './index.css';
 
@@ -14,7 +12,6 @@ import { ToastProvider } from './components/ui/toast/ToastProvider';
 
 import { Provider } from 'react-redux';
 import { store } from "./redux/store";
-import SocketInitializer from './components/socket/SocketInitializer';
 import { registerServiceWorker, requestNotificationPermission } from './utils/notificationUtils.js';
 // SocketProvider is mounted inside `App.jsx`; avoid double-mounting here.
 import { setStore } from './utils/socketRedux.js';

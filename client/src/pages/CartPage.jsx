@@ -16,6 +16,8 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
+
 import {
   getCartForUser,
   updateCartQuantity,
@@ -27,6 +29,8 @@ export default function CartPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [darkMode, setDarkMode] = useState(false);
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
   const {
     products: cartItems,
@@ -99,7 +103,7 @@ export default function CartPage() {
         mb={4}
         sx={{ color: "var(--color-on-surface)" }}
       >
-        My Cart
+        {t("cart_title")}
       </Typography>
 
       {/* Main layout: products + summary */}
@@ -115,7 +119,7 @@ export default function CartPage() {
           {cartItems.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 12 }}>
               <Typography variant="h6" fontWeight={600}>
-                Your cart is empty 🛒
+                {t("empty")}
               </Typography>
               {/* <Button
                     variant="contained"
@@ -158,18 +162,37 @@ export default function CartPage() {
                       fontWeight={600}
                       sx={{ color: "var(--color-on-surface)" }}
                     >
-                      {item.productId?.name}
+                      {/* {item.productId?.name} */}
+                      {lang === "ar"
+                        ? item.productId?.name_ar || item.productId?.name
+                        : item.productId?.name}
                     </Typography>
                     <Typography color="text.secondary">
-                      EGP {item.price}
+                      {t("currency")} {item.price}
                     </Typography>
+
                     <Typography color="text.secondary" fontSize={15}>
                       {item.selectedOptions &&
                       Object.keys(item.selectedOptions).length > 0
                         ? Object.entries(item.selectedOptions)
-                            .map(([key, value]) => `${key}: ${value}`)
+                            .map(([optionKey, selectedLabel]) => {
+                              // جيب الـ option من المنتج
+                              const option = item?.productId?.options?.find(
+                                (o) => o.name === optionKey
+                              );
+                              const choice = option?.choices?.find(
+                                (c) => c.label === selectedLabel
+                              );
+                              return lang === "ar"
+                                ? `${option?.name_ar || optionKey}: ${
+                                    choice?.label_ar || selectedLabel
+                                  }`
+                                : `${option?.name || optionKey}: ${
+                                    choice?.label || selectedLabel
+                                  }`;
+                            })
                             .join(", ")
-                        : "No options selected"}
+                        : t("noOptions")}
                     </Typography>
 
                     <Stack
@@ -188,7 +211,7 @@ export default function CartPage() {
                           dispatch(deleteProductFromCart(item.productId._id));
                         }}
                       >
-                        Delete
+                        {t("cart_delete")}
                       </Typography>
                     </Stack>
                   </Box>
@@ -288,7 +311,7 @@ export default function CartPage() {
             mb={2}
             // color="var(--color-secondary)"
           >
-            Cart Totals
+            {t("summary")}
           </Typography>
           <Divider sx={{ mb: 2 }} />
 
@@ -299,7 +322,7 @@ export default function CartPage() {
             mb={1}
           >
             <Typography sx={{ color: "var(--color-on-surface)" }}>
-              Total Items
+              {t("totalItems")}
             </Typography>
             <Typography sx={{ color: "var(--color-primary)" }}>
               {totalItems}
@@ -313,10 +336,10 @@ export default function CartPage() {
             mb={3}
           >
             <Typography sx={{ color: "var(--color-on-surface)" }}>
-              Total Price
+              {t("totalPrice")}
             </Typography>
             <Typography fontWeight={700} sx={{ color: "var(--color-primary)" }}>
-              EGP {subtotal}
+              {t("currency")} {subtotal}
             </Typography>
           </Stack>
 
@@ -333,7 +356,7 @@ export default function CartPage() {
             }}
             onClick={() => navigate("/checkout")}
           >
-            Go to Order
+            {t("goToOrder")}
           </Button>
         </Box>
       </Stack>
@@ -354,7 +377,7 @@ export default function CartPage() {
         {message && (
           <>
             <DialogTitle sx={{ fontWeight: 700 }}>
-              Out of Stock
+              {t("outOfStock")}
             </DialogTitle>
             <DialogContent>
               <Typography color="error" sx={{ mb: 2 }}>
@@ -377,7 +400,7 @@ export default function CartPage() {
                     width: "100%",
                   }}
                 >
-                  Close
+                  {t("cart_close")}
                 </Button>
               </Box>
             </DialogContent>

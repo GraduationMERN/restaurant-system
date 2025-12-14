@@ -28,7 +28,7 @@ router.get("/google", (req, res) => {
     "https://accounts.google.com/o/oauth2/v2/auth?" +
     new URLSearchParams({
       client_id: env.googleId,
-      redirect_uri: `${env.serverURI}/auth/google/callback`,
+      redirect_uri: env.serverURI,
       response_type: "code",
       scope: "openid email profile",
       prompt: "consent",

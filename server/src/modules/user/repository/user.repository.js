@@ -64,7 +64,12 @@ export const decrementUserPoints = async (userId, points, session = null) => {
 };
 
 export const updateUserProfile = async (userId, updates) => {
-  const allowed = ["name", "phoneNumber"]; // keep it safe
+  const allowed = [
+    "name",
+    "phoneNumber",
+    "bio",
+    "address",
+  ];
   const payload = {};
   for (const key of allowed) {
     if (updates[key] !== undefined) payload[key] = updates[key];

@@ -14,15 +14,23 @@ import {
   deleteCategory,
 } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { useToast } from "../../hooks/useToast";
+import { useTranslation } from "react-i18next";
 
 export default function Categories() {
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
+  const toast = useToast();
   const categoryState = useSelector((s) => s.category) || {};
   const { list: categories = [], loading } = categoryState;
 
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", imageFile: null });
+  const [form, setForm] = useState({
+    name: "",
+    name_ar: "",
+    imageFile: null,
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -31,25 +39,34 @@ export default function Categories() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", imageFile: null });
+    setForm({
+      name: "",
+      name_ar: "",
+      imageFile: null,
+    });
     setIsOpen(true);
   };
 
   const openEdit = (cat) => {
     setEditing(cat._id);
-    setForm({ name: cat.name || "", imageFile: null });
+    setForm({
+      name: cat.name || "",
+      name_ar: cat.name_ar || "",
+      imageFile: null,
+    });
     setIsOpen(true);
   };
 
   const buildFD = (s) => {
     const fd = new FormData();
     fd.append("name", s.name || "");
+    fd.append("name_ar", s.name_ar || "");
     if (s.imageFile) fd.append("categoryImage", s.imageFile);
     return fd;
   };
 
   const handleSave = async () => {
-    if (!form.name) return;
+    if (!form.name || !form.name_ar) return;
     setSaving(true);
     try {
       if (editing) {
@@ -63,8 +80,13 @@ export default function Categories() {
       }
       await dispatch(getAllCategories());
       setIsOpen(false);
+      toast.showToast({
+        message: editing ? "Category updated" : "Category created",
+        type: "success",
+      });
     } catch (err) {
       // handle error (toast)
+      toast.showToast({ message: "Failed to save category", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -94,14 +116,15 @@ export default function Categories() {
       </ComponentCard>
 
       {/* Responsive Grid */}
-      <div className="
+      <div
+        className="
   mt-4 
   grid 
   grid-cols-1       /* Mobile: 1 card per row */
   sm:grid-cols-2     /* Tablet + Desktop: 2 cards per row */
   gap-4
-">
-
+"
+      >
         {loading && <div className="p-3">Loading...</div>}
 
         {!loading &&
@@ -121,7 +144,10 @@ export default function Categories() {
 
               {/* Text Content */}
               <div className="flex-1 text-center sm:text-left">
-                <div className="font-semibold text-base">{c.name}</div>
+                <div className="font-semibold text-base">
+                  {/* {c.name} */}
+                  {i18n.language === "ar" ? c.name_ar || c.name : c.name}
+                </div>
                 <div className="text-xs text-gray-500 mt-1">
                   {new Date(c.createdAt).toLocaleDateString()}
                 </div>
@@ -159,10 +185,21 @@ export default function Categories() {
 
           {/* Name Field */}
           <div className="space-y-1">
-            <Label>Name</Label>
+            <Label>Name (EN)</Label>
             <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label>Name (AR)</Label>
+            <Input
+              className="text-right"
+              value={form.name_ar}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, name_ar: e.target.value }))
+              }
             />
           </div>
 
@@ -191,8 +228,8 @@ export default function Categories() {
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !form.name}>
-              {saving ? "Saving..." : "Save"}
+            <Button onClick={handleSave} disabled={!form.name || !form.name_ar} loading={saving}>
+              Save
             </Button>
           </div>
         </div>

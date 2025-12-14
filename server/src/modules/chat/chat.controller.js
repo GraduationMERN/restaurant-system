@@ -1,38 +1,33 @@
-import * as ragEngine from './chat.service.js';
+import * as chatService from './chat.service.js';
 
 export const checkHealth = (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString()
-    });
+    res.json({ status: 'ok', time: new Date() });
 }
 
 export const answerQuestion = async (req, res) => {
     try {
         const { message } = req.body;
+        
+        // Retrieve Guest ID from headers
+        const guestId = req.headers['x-guest-id'] || "anonymous_guest";
 
-        // Validation
-        if (!message || typeof message !== 'string' || message.trim().length === 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Message is required and must be a non-empty string'
-            });
+        if (!message || typeof message !== 'string') {
+            return res.status(400).json({ success: false, error: 'Invalid message' });
         }
 
-        // Process the question
-        console.log(`📝 User question: "${message}"`);
-        const result = await ragEngine.answerQuestion(message);
+        console.log(`📝 Request from ${guestId}: "${message}"`);
 
-        console.log(`✅ Response generated`);
+        // Call Service
+        const result = await chatService.processUserMessage(message, guestId);
 
-        res.json(result);
+        res.json({
+            success: true,
+            answer: result.answer,
+            action: result.action
+        });
 
     } catch (error) {
-        console.error('❌ Error processing chat:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Internal server error',
-            answer: "I'm having trouble right now. Please try again in a moment."
-        });
+        console.error('❌ Controller Error:', error);
+        res.status(500).json({ success: false, error: 'Server Error' });
     }
 }

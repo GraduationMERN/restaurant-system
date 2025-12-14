@@ -22,15 +22,18 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, addReward, deleteReward, updateReward } from "../../redux/slices/rewardSlice";
 import { fetchProducts } from "../../redux/slices/ProductSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [form, setForm] = useState({ productId: "", points: "", type: "discount", desc: "" });
+  const [saving, setSaving] = useState(false);
   const totalPointsIssued = useMemo(() => 45230, []);
   const activeMembers = useMemo(() => 1247, []);
   const rewardsRedeemed = useMemo(() => 892, []);
   const dispatch = useDispatch()
+  const toast = useToast();
   const { reward, loading, error } = useSelector((state) => state.reward);
   const { list } = useSelector((state) => state.product);
   
@@ -68,21 +71,28 @@ export default function Rewards() {
   };
 
   const closeModal = () => setIsOpen(false);
-  const handleSave = () => {
+  const handleSave = async () => {
     const points = Number(form.points);
     if (!form.productId || Number.isNaN(points) || points <= 0) return;
     const payload = {
       productId: form.productId,
       pointsRequired: points,
     };
-
-    if (editingIndex !== null) {
-      const id = rewards[editingIndex]._id;
-      dispatch(updateReward({ id, data: payload }));
-    } else {
-      dispatch(addReward(payload));
+    setSaving(true);
+    try {
+      if (editingIndex !== null) {
+        const id = rewards[editingIndex]._id;
+        await dispatch(updateReward({ id, data: payload }));
+      } else {
+        await dispatch(addReward(payload));
+      }
+      setIsOpen(false);
+      toast.showToast({ message: editingIndex !== null ? "Reward updated" : "Reward created", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: "Failed to save reward", type: "error" });
+    } finally {
+      setSaving(false);
     }
-    setIsOpen(false);
   };
   const deleteProgram = (idx) => {
     const id = rewards[idx]._id;
@@ -200,8 +210,8 @@ export default function Rewards() {
             </div>
           </div>
           <div className="mt-6 flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={closeModal}>Cancel</Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button variant="outline" onClick={closeModal} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} loading={saving}>Save</Button>
           </div>
         </div>
       </Modal>

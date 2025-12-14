@@ -19,14 +19,28 @@ export function showNotification(title, options = {}) {
   }
 }
 
+// Send notification to service worker for PWA notifications
+export function sendNotificationToSW(notificationData) {
+  if ('serviceWorker' in navigator && 'controller' in navigator.serviceWorker) {
+    navigator.serviceWorker.controller?.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      data: notificationData
+    });
+  }
+}
+
 export function notifyRedeemed(item) {
   if (!item) return;
-  showNotification('🎉 Reward Redeemed!', {
+  const notificationData = {
+    title: '🎉 Reward Redeemed!',
     body: `${item.title} has been redeemed. You'll be redirected to track your order.`,
     icon: '/icon.png',
     tag: `reward-${item._id}`,
     requireInteraction: false
-  });
+  };
+
+  showNotification(notificationData.title, notificationData);
+  sendNotificationToSW(notificationData);
 }
 
 export function showStatusNotification(status, { tag = '', keepInteractiveForReady = true } = {}) {
@@ -56,17 +70,26 @@ export function showStatusNotification(status, { tag = '', keepInteractiveForRea
       message = `Your order status has been updated to: ${status}`;
   }
 
-  showNotification(title, {
+  const notificationData = {
     body: message,
     icon: '/icon.png',
     tag: tag || `order-status-${Date.now()}`,
     requireInteraction: keepInteractiveForReady && status === 'Ready'
+  };
+
+  showNotification(title, notificationData);
+
+  // Also send to service worker for PWA notifications
+  sendNotificationToSW({
+    title,
+    ...notificationData
   });
 }
 
 export default {
   requestNotificationPermission,
   showNotification,
+  sendNotificationToSW,
   notifyRedeemed,
   showStatusNotification
 };

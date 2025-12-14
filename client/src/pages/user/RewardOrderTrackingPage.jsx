@@ -17,7 +17,7 @@ export default function RewardOrderTrackingPage() {
   useEffect(() => {
     if (!orderId) return; // Don't connect if we don't have an order ID
 
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const apiUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
     const newSocket = io(apiUrl, {
       reconnection: true,
@@ -94,10 +94,10 @@ export default function RewardOrderTrackingPage() {
     { label: 'Ready', completed: order?.status === 'Ready' }
   ];
 
-  return (
+ return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 overflow-x-hidden">
-      <div className="max-w-2xl mx-auto">
-        {!order ? (
+      <div className="max-w-6xl mx-auto">
+        {! order ? (
           // No order state - show basic info
           <div className="bg-white rounded-2xl p-8 shadow-sm text-center ">
             <FaCheckCircle className="w-16 h-16 text-secondary mx-auto mb-4" />

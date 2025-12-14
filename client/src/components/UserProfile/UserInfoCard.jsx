@@ -7,25 +7,39 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import api from "../../api/axios";
 import { setUser } from "../../redux/slices/authSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const toast = useToast();
   const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
   const [phone, setPhone] = useState(user?.phoneNumber || "");
+  const [bio, setBio] = useState(user?.bio || "");
+  const [saving, setSaving] = useState(false);
   const handleSave = async () => {
+    setSaving(true);
     try {
       const payload = {
         name: `${firstName} ${lastName}`.trim(),
-        phoneNumber: phone
+        phoneNumber: phone,
+        bio,
       };
-      const res = await api.patch('/users/me', payload);
+      // Optimistic UI update
+      const prev = user;
+      dispatch(setUser({ ...user, ...payload }));
+      const res = await api.patch('/api/users/me', payload);
       if (res?.data?.user) dispatch(setUser(res.data.user));
+      else dispatch(setUser(prev));
       closeModal();
+      toast.showToast({ message: "Changes saved", type: "success" });
     } catch (err) {
       console.error('Failed to update profile', err);
+      toast.showToast({ message: 'Failed to save changes', type: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
   return (
@@ -117,41 +131,9 @@ export default function UserInfoCard() {
               Update your details to keep your profile up-to-date.
             </p>
           </div>
-          <form className="flex flex-col">
+          <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
-              <div>
-                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Social Links
-                </h5>
 
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                  <div>
-                    <Label>Facebook</Label>
-                    <Input
-                      type="text"
-                      value="https://www.facebook.com/PimjoHQ"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>X.com</Label>
-                    <Input type="text" value="https://x.com/PimjoHQ" />
-                  </div>
-
-                  <div>
-                    <Label>Linkedin</Label>
-                    <Input
-                      type="text"
-                      value="https://www.linkedin.com/company/pimjo"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Instagram</Label>
-                    <Input type="text" value="https://instagram.com/PimjoHQ" />
-                  </div>
-                </div>
-              </div>
               <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   Personal Information
@@ -160,12 +142,12 @@ export default function UserInfoCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input type="text" value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
-                  </div>
+                    <Input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value.trim())} />
+                  </div>520
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input type="text" value={lastName} onChange={(e)=>setLastName(e.target.value)} />
+                    <Input type="text" value={lastName} onChange={(e) => setLastName(e.target.value.trim())} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
@@ -175,21 +157,21 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
-                    <Input type="text" value={phone} onChange={(e)=>setPhone(e.target.value)} />
+                    <Input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
 
                   <div className="col-span-2">
                     <Label>Bio</Label>
-                    <Input type="text" value={user?.role || ""} />
+                    <Input type="text" value={bio} onChange={(e) => setBio(e.target.value)} />
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" type="submit" loading={saving}>
                 Save Changes
               </Button>
             </div>

@@ -135,7 +135,7 @@ export default function OrdersTab() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/api/orders");
+      const response = await api.get("api/orders");
       setOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -177,7 +177,7 @@ export default function OrdersTab() {
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       setUpdatingStatus(true);
-      const response = await api.patch(`/api/orders/${orderId}/status`, {
+      const response = await api.patch(`api/orders/${orderId}/status`, {
         status: newStatus,
       });
 
@@ -196,7 +196,7 @@ export default function OrdersTab() {
   const handleUpdatePayment = async (orderId, newPaymentStatus) => {
     try {
       setUpdatingPayment(true);
-      const response = await api.patch(`/api/orders/${orderId}/payment`, {
+      const response = await api.patch(`api/orders/${orderId}/payment`, {
         paymentStatus: newPaymentStatus,
       });
 
@@ -219,7 +219,7 @@ export default function OrdersTab() {
 
     try {
       setDeletingId(orderId);
-      await api.delete(`/api/orders/${orderId}`);
+      await api.delete(`api/orders/${orderId}`);
       setOrders(orders.filter((o) => o._id !== orderId));
       toast.showToast({message:"Order deleted"});
     } catch (error) {

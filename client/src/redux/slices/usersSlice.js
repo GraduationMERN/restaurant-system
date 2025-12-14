@@ -3,7 +3,7 @@ import api from "../../api/axios";
 
 // Fetch all users
 export const fetchUsers = createAsyncThunk("users/fetchUsers", async () => {
-  const res = await api.get("users/");
+  const res = await api.get("api/users/");
   return res.data.users;
 });
 

@@ -5,10 +5,15 @@ const reviewSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
     },
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
+    },
+    anonymous: {
+      type: Boolean,
+      default: false,
     },
     rating: {
       type: Number,

@@ -62,7 +62,8 @@ export const registerUserService = async (user) => {
 };
 
 async function sendOTPEmailInBackground(email, code, name) {
-  setTimeout(async () => {
+  // Use Promise to not block response but still attempt to send
+  Promise.resolve().then(async () => {
     try {
       console.log("Background: Sending OTP email to", email);
       
@@ -80,9 +81,10 @@ async function sendOTPEmailInBackground(email, code, name) {
       
     } catch (error) {
       console.error("Background: Failed to send email:", error.message);
+      console.error("Background: Full error:", error);
       // Log to error tracking service
     }
-  }, 100); // Small delay to not block response
+  }).catch(err => console.error("Background promise error:", err));
 }
 
 export const loginUserService = async (email, password) => {

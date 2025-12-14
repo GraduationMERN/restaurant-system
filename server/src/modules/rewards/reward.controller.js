@@ -76,13 +76,37 @@ export async function redeemReward(req, res) {
     }   
 }
 
-export const getAllRewardOrder = async(req,res)=>{
-       try {
-        const rewards = await getAllRewardOrdersServices();
-        res.status(200).json(rewards);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }  
+export const getAllRewardOrder = async(req, res)=>{
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    const [rewards, total] = await Promise.all([
+      RewardOrder.find()
+        .populate({
+          path: "rewardId",
+          populate: { path: "productId" }
+        })
+        .populate("userId")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      RewardOrder.countDocuments()
+    ]);
+    
+    res.status(200).json({
+      items: rewards,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }  
 }
 
 export const getRewardOrderById = async(req,res)=>{

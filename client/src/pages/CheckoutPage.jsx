@@ -5,6 +5,7 @@ import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
+import PointsModal from "../components/PointsModal";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
@@ -25,7 +26,7 @@ export default function CheckoutPage() {
   );
   const authUser = useSelector((state) => state.auth?.user || null);
 
-  const [serviceType, setServiceType] = useState("dine-in");
+  const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState(null);
@@ -165,6 +166,12 @@ export default function CheckoutPage() {
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   const total = +(subtotal + vat).toFixed(2);
+
+  // Calculate total points from cart items
+  const totalPoints = products.reduce((acc, item) => {
+    const productPoints = item.productId?.productPoints || 0;
+    return acc + (productPoints * item.quantity);
+  }, 0);
 
   // Handle order submission
   const handleSubmit = async () => {
@@ -421,12 +428,17 @@ export default function CheckoutPage() {
 
             {/* Add Other Items Button */}
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/menu')}
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-primary/90 dark:border-primary/110 text-primary dark:text-primary/90 rounded-2xl py-4 hover:bg-white dark:hover:bg-primary-900/10 transition-all duration-300"
             >
               <Plus className="w-5 h-5" />
               Add other items
             </button>
+
+            {/* Points Modal - Always Visible */}
+            {totalPoints > 0 && (
+              <PointsModal totalPoints={totalPoints} />
+            )}
           </div>
 
           {/* Right Column - Order Summary */}

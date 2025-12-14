@@ -119,7 +119,8 @@ const kitchenSlice = createSlice({
           orderNumber: newOrder.orderNumber,
           itemsCount: newOrder.items?.length || 0,
           serviceType: newOrder.serviceType,
-          timestamp: new Date()
+          // use epoch time for serializability
+          timestamp: Date.now()
         };
       }
       

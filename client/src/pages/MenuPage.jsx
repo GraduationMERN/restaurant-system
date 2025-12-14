@@ -27,8 +27,13 @@ import { getAllCategories } from "../redux/slices/CategorySlice";
 import { fetchProductList } from "../redux/slices/ProductSlice";
 import CardComponent from "../components/Card/CardComponent";
 import { addToCart } from "../redux/slices/cartSlice";
+import { useTranslation } from "react-i18next";
+import {  ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router";
 
 function MenuPage() {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const [activeCategory, setActiveCategory] = useState("");
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -39,12 +44,18 @@ function MenuPage() {
   const [quantity, setQuantity] = useState(1);
 
   const categories = useSelector((state) => state.category.list);
-  const categoriesTabs = categories.map((cat) => cat.name.toUpperCase());
+  // const categoriesTabs = categories.map((cat) => cat.name.toUpperCase());
+  const categoriesTabs = categories.map((cat) =>
+    lang === "ar" ? cat?.name_ar: cat?.name.toUpperCase()
+  );
 
   //   const products = useSelector((state) => state.product.list)
   const products = useSelector((state) => state.product.filtered);
   const [selectedSizes, setSelectedSizes] = useState({});
 
+  const navigate = useNavigate();
+  const cartItem = useSelector((state) => state.cart.products);
+  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
   const isProductOutOfStock = (product) => {
     if (!product.options || product.options.length === 0) return false;
 
@@ -71,7 +82,10 @@ function MenuPage() {
   useEffect(() => {
     if (categories.length > 0) {
       const category = categories.find(
-        (c) => c.name.toUpperCase() === activeCategory
+        (c) =>
+          lang === "ar"
+        ? c.name_ar === activeCategory
+        :c.name.toUpperCase() === activeCategory
       );
       if (category) {
         console.log("Category ID:", category._id);
@@ -87,7 +101,7 @@ function MenuPage() {
         console.log("Category not found for:", activeCategory);
       }
     }
-  }, [activeCategory, search, categories]);
+  }, [activeCategory, search, categories,lang]);
 
   useEffect(() => {
     filterProducts();
@@ -98,9 +112,14 @@ function MenuPage() {
       // console.log("p",p)
       // console.log("categ",categories.find(c => c._id === p.categoryId)?.name.toUpperCase());
 
+      const category = categories.find((c) => c._id === p.categoryId);
+      if (!category) return false;
+
+      const categoryName = lang === "ar" ? category.name_ar : category.name;
+      const productName = lang === "ar" ? p.name_ar || p.name : p.name;
       return (
-        categories.find((c) => c._id === p.categoryId)?.name.toUpperCase() ===
-          activeCategory && p.name.toLowerCase().includes(search.toLowerCase())
+        categoryName.toUpperCase() === activeCategory.toUpperCase() &&
+        productName.toLowerCase().includes(search.toLowerCase())
       );
     });
     setFiltered(f);
@@ -160,8 +179,23 @@ function MenuPage() {
   return (
     <>
       <Typography variant="h4" fontWeight={700} ml={4} mt={2} mb={3}>
-        Menu
+        {t("menu.title")}
       </Typography>
+
+      {/* Top-right cart button */}
+      <div className="fixed right-6 top-5 z-50">
+        <button
+          onClick={() => navigate('/cart')}
+          className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
+        >
+          <ShoppingCart size={20} />
+          {totalItems > 0 && (
+            <span className="absolute -top-2 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Search + View Switch */}
       <Box
@@ -172,11 +206,37 @@ function MenuPage() {
         mb={3}
         flexWrap="wrap"
       >
-        <TextField
-          placeholder="Search"
+        {/* <TextField
+          placeholder= {t("search.placeholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: { xs: "100%", md: "60%" }, mb: { xs: 2, md: 0 } }}
+          sx={{
+    width: { xs: "100%", md: "50%" },
+    mb: { xs: 2, md: 0 },
+    "& .MuiInputBase-root": {
+      backgroundColor: "var(--surface)",
+      color: "var(--color-on-surface)",
+      borderRadius: "12px",
+      paddingRight: "8px",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--color-secondary)",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--color-primary)",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--color-primary)",
+      borderWidth: "2px",
+    },
+    "& .MuiInputBase-input::placeholder": {
+      color: "var(--color-muted)",
+      opacity: 1,
+    },
+    "& .MuiSvgIcon-root": {
+      color: "var(--color-muted)",
+    },
+  }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -184,7 +244,42 @@ function MenuPage() {
               </InputAdornment>
             ),
           }}
-        />
+        /> */}
+        <div className="w-full flex justify-center mb-4 px-2">
+          <div
+            className="
+              flex items-center 
+              w-full md:w-1/2 
+              bg-[var(--surface)] 
+              border border-[var(--color-secondary)] 
+              rounded-2xl 
+              shadow-sm
+              px-4 py-2 
+              focus-within:border-[var(--color-primary)]
+              transition-all duration-200
+            "
+          >
+            <SearchIcon
+              className="text-[var(--color-muted)] mr-2"
+              sx={{ fontSize: 22 }}
+            />
+
+            <input
+              type="text"
+              placeholder={t("search.placeholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="
+                w-full 
+                bg-transparent 
+                outline-none 
+                text-[var(--color-on-surface)] 
+                placeholder:text-[var(--color-muted)]
+                text-sm
+              "
+            />
+          </div>
+        </div>
       </Box>
 
       {/* Tabs */}
@@ -208,6 +303,7 @@ function MenuPage() {
             mr: 1,
             minHeight: "40px",
             fontWeight: 600,
+            background: "var(--surface)",
           },
           "& .Mui-selected": {
             background: "#333",
@@ -268,7 +364,10 @@ function MenuPage() {
         {selectedProduct && (
           <>
             <DialogTitle sx={{ fontWeight: 700 }}>
-              {selectedProduct.name}
+              {/* {selectedProduct.name} */}
+              {lang === "ar"
+                ? selectedProduct.name_ar || selectedProduct.name
+                : selectedProduct.name}
             </DialogTitle>
             <DialogContent>
               <Box
@@ -292,10 +391,16 @@ function MenuPage() {
                 {/* الوصف والسعر */}
                 <Box flex={1}>
                   <Typography color="text.secondary" mb={1}>
-                    {selectedProduct.desc}
+                    {/* {selectedProduct.desc} */}
+                    {lang === "ar"
+                      ? selectedProduct.desc_ar || selectedProduct.desc
+                      : selectedProduct.desc}
                   </Typography>
-                  <Typography fontWeight={700} sx={{ color: "var(--color-primary)" }}>
-                    EGP {selectedProduct.basePrice}
+                  <Typography
+                    fontWeight={700}
+                    sx={{ color: "var(--color-primary)" }}
+                  >
+                    {t("currency")} {selectedProduct.basePrice}
                   </Typography>
                 </Box>
 
@@ -346,7 +451,10 @@ function MenuPage() {
                   return (
                     <Box key={option.name} sx={{ mb: 2 }}>
                       <Typography sx={{ mb: 1, fontWeight: 600 }}>
-                        {option.name}
+                        {/* {option.name} */}
+                        {lang === "ar"
+                          ? option.name_ar || option.name
+                          : option.name}
                       </Typography>
 
                       <ToggleButtonGroup
@@ -385,7 +493,10 @@ function MenuPage() {
                                 choice.stock === 0 ? "line-through" : "none",
                             }}
                           >
-                            {choice.label}
+                            {/* {choice.label} */}
+                            {lang === "ar"
+                              ? choice.label_ar || choice.label
+                              : choice.label}
                           </ToggleButton>
                         ))}
                       </ToggleButtonGroup>
@@ -394,7 +505,8 @@ function MenuPage() {
                 })}
               {/* Total Price */}
               <Typography fontWeight={700} mb={2}>
-                Total: EGP {selectedProduct.basePrice * quantity}
+                {t("popup.total")}: {t("currency")}{" "}
+                {selectedProduct.basePrice * quantity}
               </Typography>
               {/* Add to Cart */}
               <Button
@@ -414,7 +526,7 @@ function MenuPage() {
                   handleClosePopup();
                 }}
               >
-                Add to Cart
+                {t("popup.addToCart")}
               </Button>
             </DialogContent>
           </>

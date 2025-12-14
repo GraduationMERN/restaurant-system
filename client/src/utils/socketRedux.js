@@ -86,11 +86,35 @@ export const setupSocketListeners = (socket) => {
     const id = data._id || data.orderId || data.id;
     const payload = { _id: id, ...data };
     handleUpdated(payload);
+
+    // Send notification for order status change
+    sendNotificationToSW({
+      title: 'Order Status Updated',
+      body: `Order #${id} status changed to ${data.status}`,
+      tag: `order-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
   socket.on("order:your-status-changed", (data) => {
     const id = data._id || data.orderId || data.id;
     const payload = { _id: id, ...data };
     handleUpdated(payload);
+
+    // Send notification for user's order status change
+    sendNotificationToSW({
+      title: 'Your Order Status Updated',
+      body: `Your order #${id} is now ${data.status}`,
+      tag: `order-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
 
   /* ---- ORDER DELETED ---- */
@@ -116,6 +140,14 @@ export const setupSocketListeners = (socket) => {
     store.dispatch(socketPaymentSuccess(payload));
     store.dispatch(cashierSocketOrderUpdated(payload));
     store.dispatch(cashierSocketPaymentUpdated(payload));
+
+    // Send notification for payment success
+    sendNotificationToSW({
+      title: 'Payment Successful',
+      body: `Payment for order #${id} was successful`,
+      tag: `payment-${id}`,
+      data: { orderId: id, url: '/orders' }
+    });
   });
 
   socket.on("order:payment:confirmed", (order) => {
@@ -123,6 +155,14 @@ export const setupSocketListeners = (socket) => {
     console.log("Socket: order:payment:confirmed", id);
     const payload = { _id: id, ...order };
     store.dispatch(socketPaymentSuccess(payload));
+
+    // Send notification for payment confirmation
+    sendNotificationToSW({
+      title: 'Payment Confirmed',
+      body: `Payment for order #${id} has been confirmed`,
+      tag: `payment-${id}`,
+      data: { orderId: id, url: '/orders' }
+    });
   });
 
   // Generic payment update emitted by order controller
@@ -227,6 +267,18 @@ export const setupSocketListeners = (socket) => {
     const payload = { _id: id, ...order };
     store.dispatch(socketOrderUpdated(payload));
     store.dispatch(cashierSocketOrderUpdated(payload));
+
+    // Send notification for order ready
+    sendNotificationToSW({
+      title: 'Order Ready!',
+      body: `Your order #${id} is ready for pickup`,
+      tag: `ready-${id}`,
+      data: { orderId: id, url: '/orders' },
+      actions: [
+        { action: 'open', title: 'View Order' },
+        { action: 'close', title: 'Close' }
+      ]
+    });
   });
 
   /* ----------------------------------------
@@ -270,7 +322,7 @@ export const setupSocketListeners = (socket) => {
   ---------------------------------------- */
 
   socket.on("connect", () => {
-    console.log("Socket connected");
+    console.log("Socket connected:", socket.id);
   });
 
   socket.on("disconnect", () => {
@@ -278,7 +330,7 @@ export const setupSocketListeners = (socket) => {
   });
 
   socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error);
+    console.error("Socket connect_error:", error);
   });
 };
 
@@ -288,33 +340,27 @@ export const setupSocketListeners = (socket) => {
 export const joinSocketRooms = (socket, user) => {
   if (!socket || !user) return;
 
-  console.log("Joining socket rooms for user:", user._id, user.role);
-
-  const userId = user._id || user.customerId;
+  const userId = user._id || user.id || user.customerId;
+  console.log("Joining socket rooms for user:", userId, "role:", user.role);
 
   if (userId) {
     socket.emit("register", userId);
     // server joins both `userId` and `user:<id>` on register; we explicitly join role rooms
-    console.log(`Registered socket for user: ${userId}`);
   }
 
   if (user.role) {
     socket.emit("joinRole", user.role);
-    console.log(`Requested role join for: ${user.role}`);
 
     if (user.role === "kitchen") {
       socket.emit("joinKitchen");
-      console.log("Requested kitchen room join");
     }
 
     if (user.role === "cashier") {
       socket.emit("joinCashier");
-      console.log("Requested cashier room join");
     }
 
     if (user.role === "admin") {
       socket.emit("joinAdmin");
-      console.log("Requested admin room join");
     }
   }
 };
@@ -327,10 +373,21 @@ import { io as ioClient } from "socket.io-client";
 
 let socketInstance = null;
 
+// Utility function to send notifications to service worker
+const sendNotificationToSW = (notificationData) => {
+  if ('serviceWorker' in navigator && 'controller' in navigator.serviceWorker) {
+    navigator.serviceWorker.controller?.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      data: notificationData
+    });
+  }
+};
+
 export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
-  const BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  const BASE = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
   try {
+    console.log("Initializing socket with base:", BASE, "withCredentials:", options.withCredentials || true);
     socketInstance = ioClient(BASE, {
       transports: ["websocket"],
       withCredentials: true,
