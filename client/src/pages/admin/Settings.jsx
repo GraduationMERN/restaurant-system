@@ -73,6 +73,20 @@ export default function Settings() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // First upload logo if there's a new file
+      let logoUrl = logoPreview;
+      if (logoFile) {
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+        
+        const uploadRes = await api.post('/api/restaurant/upload-logo', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        logoUrl = uploadRes.data.logoUrl;
+      }
+
       const payload = {
         restaurantName,
         description,
@@ -81,7 +95,7 @@ export default function Settings() {
         branding: {
           primaryColor,
           secondaryColor,
-          logoUrl: logoPreview,
+          logoUrl,
         },
         about: { title: aboutTitle, content: aboutContent },
         support: { email: supportEmail, phone: supportPhone },
@@ -93,6 +107,9 @@ export default function Settings() {
 
       updateSettings(res.data);
       toast.showToast({ message: "Settings saved", type: "success" });
+      
+      // Clear the file state after successful save
+      setLogoFile(null);
     } catch (error) {
       console.error("Error saving settings", error);
       toast.showToast({ message: "Failed to save settings", type: "error" });
