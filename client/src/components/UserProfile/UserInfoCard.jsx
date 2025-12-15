@@ -36,7 +36,6 @@ export default function UserInfoCard() {
       closeModal();
       toast.showToast({ message: "Changes saved", type: "success" });
     } catch (err) {
-      console.error('Failed to update profile', err);
       toast.showToast({ message: 'Failed to save changes', type: 'error' });
     } finally {
       setSaving(false);

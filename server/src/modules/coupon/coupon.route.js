@@ -31,6 +31,12 @@ router.delete('/admin/coupons/:couponId',
 );
 
 // ========== CUSTOMER ROUTES ==========
+// Validate coupon by code (GET endpoint for checkout)
+router.get('/coupons/validate/:code', 
+  couponController.validateCouponByCode
+);
+
+// Validate coupon (POST endpoint with full validation)
 router.post('/coupons/validate', 
   authMiddleware, 
   couponController.validateCoupon

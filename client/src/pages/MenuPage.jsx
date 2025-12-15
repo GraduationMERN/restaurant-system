@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -19,43 +19,79 @@ import {
   DialogTitle,
   Button,
   Stack,
+  useMediaQuery,
 } from "@mui/material";
-
 import SearchIcon from "@mui/icons-material/Search";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllCategories } from "../redux/slices/CategorySlice";
-import { fetchProductList } from "../redux/slices/ProductSlice";
+import { fetchProducts } from "../redux/slices/ProductSlice";
 import CardComponent from "../components/Card/CardComponent";
 import { addToCart } from "../redux/slices/cartSlice";
 import { useTranslation } from "react-i18next";
-import {  ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router";
+import api from "../api/axios";
+import RecommendedForProduct from "../components/recommendations/RecommendedForProduct";
 
 function MenuPage() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-  const [activeCategory, setActiveCategory] = useState("");
-  const [filtered, setFiltered] = useState([]);
-  const [search, setSearch] = useState("");
-  // const [view, setView] = useState("list"); // list | grid
 
+  const isMobile = useMediaQuery("(max-width:768px)");
+
+  const categories = useSelector((state) => state.category.list);
+  const products = useSelector((state) => state.product.list);
+  const cartItem = useSelector((state) => state.cart.products);
+
+  const totalItems = cartItem.reduce((a, b) => a + b.quantity, 0);
+
+  const [activeCategory, setActiveCategory] = useState("");
+  const [search, setSearch] = useState("");
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const categories = useSelector((state) => state.category.list);
+  const categoryRefs = useRef({});
+  const tabRefs = useRef({});
+
+  const tabsWrapperRef = useRef(null);
+  const [pillStyle, setPillStyle] = useState({});
+
   // const categoriesTabs = categories.map((cat) => cat.name.toUpperCase());
   const categoriesTabs = categories.map((cat) =>
-    lang === "ar" ? cat?.name_ar: cat?.name.toUpperCase()
+    lang === "ar" ? cat?.name_ar : cat?.name.toUpperCase()
   );
 
   //   const products = useSelector((state) => state.product.list)
-  const products = useSelector((state) => state.product.filtered);
-  const [selectedSizes, setSelectedSizes] = useState({});
 
-  const navigate = useNavigate();
-  const cartItem = useSelector((state) => state.cart.products);
-  const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
+  const [selectedSizes, setSelectedSizes] = useState({});
+  const handelClick = (product, qty) => {
+    let optionsPayload = {};
+  
+    if (product.options && product.options.length > 0) {
+      product.options.forEach((option) => {
+        const key = `${product._id}_${option.name}`;
+        const selectedValue =
+          selectedSizes[key] || option.choices[0]?.label;
+  
+        if (selectedValue) {
+          optionsPayload[option.name] = selectedValue;
+        }
+      });
+    }
+  
+    dispatch(
+      addToCart({
+        productId: product._id,
+        quantity: qty,
+        selectedOptions: optionsPayload,
+      })
+    );
+  };
+  
+
   const isProductOutOfStock = (product) => {
     if (!product.options || product.options.length === 0) return false;
 
@@ -64,96 +100,77 @@ function MenuPage() {
     );
   };
 
-  console.log("Products from Redux:", products);
-  console.log(products[0]);
 
-  const dispatch = useDispatch();
-
+  /* ---------------- FETCH ONCE ---------------- */
   useEffect(() => {
     dispatch(getAllCategories());
+    dispatch(fetchProducts());
   }, [dispatch]);
 
   useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].name.toUpperCase());
+    if (categories.length && !activeCategory) {
+      setActiveCategory(categories[0]._id);
     }
   }, [categories]);
 
-  useEffect(() => {
-    if (categories.length > 0) {
-      const category = categories.find(
-        (c) =>
-          lang === "ar"
-        ? c.name_ar === activeCategory
-        :c.name.toUpperCase() === activeCategory
-      );
-      if (category) {
-        console.log("Category ID:", category._id);
-        dispatch(
-          fetchProductList({
-            categoryId: category._id,
-            searchTerm: search,
-            page: 1,
-            pageSize: 1000,
-          })
-        );
-      } else {
-        console.log("Category not found for:", activeCategory);
-      }
-    }
-  }, [activeCategory, search, categories,lang]);
+  /* ---------------- GROUP PRODUCTS ---------------- */
+  const groupedProducts = useMemo(() => {
+    const map = {};
+    categories.forEach((c) => (map[c._id] = []));
 
-  useEffect(() => {
-    filterProducts();
-  }, [products, activeCategory, search]);
-
-  const filterProducts = () => {
-    const f = products.filter((p) => {
-      // console.log("p",p)
-      // console.log("categ",categories.find(c => c._id === p.categoryId)?.name.toUpperCase());
-
-      const category = categories.find((c) => c._id === p.categoryId);
-      if (!category) return false;
-
-      const categoryName = lang === "ar" ? category.name_ar : category.name;
-      const productName = lang === "ar" ? p.name_ar || p.name : p.name;
-      return (
-        categoryName.toUpperCase() === activeCategory.toUpperCase() &&
-        productName.toLowerCase().includes(search.toLowerCase())
-      );
+    products.forEach((p) => {
+      if (map[p.categoryId]) map[p.categoryId].push(p);
     });
-    setFiltered(f);
-  };
 
-  const handelClick = (product, qty) => {
-    let optionsPayload = {};
-
-    // لو في خيارات موجودة للمنتج
-    if (product.options && product.options.length > 0) {
-      product.options.forEach((option) => {
-        const key = `${product._id}_${option.name}`;
-        const selectedValue =
-          selectedSizes[key] || // إذا المستخدم اختار
-          option.choices[0]?.label; // default choice
-
-        if (selectedValue) {
-          optionsPayload[option.name] = selectedValue;
-        }
+    Object.keys(map).forEach((catId) => {
+      map[catId] = map[catId].filter((p) => {
+        const name = lang === "ar" ? p.name_ar || p.name : p.name;
+        return name.toLowerCase().includes(search.toLowerCase());
       });
-    }
+    });
 
-    dispatch(
-      addToCart({
-        productId: product._id,
-        quantity: qty,
-        selectedOptions: optionsPayload,
-      })
+    return map;
+  }, [products, categories, search, lang]);
+
+  /* ---------------- SCROLL → TAB SYNC ---------------- */
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveCategory(entry.target.dataset.id);
+          }
+        });
+      },
+      {
+        rootMargin: isMobile ? "-100px 0px -60% 0px" : "-140px 0px -65% 0px",
+      }
     );
 
-    console.log("SENT TO CART:", {
-      productId: product._id,
-      quantity: qty,
-      selectedOptions: optionsPayload,
+    Object.values(categoryRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [categories, isMobile]);
+
+  /* ---------------- AUTO-SCROLL ACTIVE TAB ---------------- */
+  useEffect(() => {
+    const tabEl = tabRefs.current[activeCategory];
+    if (tabEl) {
+      tabEl.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [activeCategory]);
+
+  /* ---------------- HELPERS ---------------- */
+  const handleTabClick = (catId) => {
+    categoryRefs.current[catId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
   };
 
@@ -176,16 +193,21 @@ function MenuPage() {
     }));
   };
 
+  const isOutOfStock = (product) =>
+    product.options?.length &&
+    product.options.every((o) => o.choices.every((c) => c.stock === 0));
+
+  /* ---------------- RENDER ---------------- */
   return (
     <>
-      <Typography variant="h4" fontWeight={700} ml={4} mt={2} mb={3}>
+      <Typography variant="h4" fontWeight={700} ml={2} mt={2}>
         {t("menu.title")}
       </Typography>
 
-      {/* Top-right cart button */}
+      {/* CART */}
       <div className="fixed right-6 top-5 z-50">
         <button
-          onClick={() => navigate('/cart')}
+          onClick={() => navigate("/checkout")}
           className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
         >
           <ShoppingCart size={20} />
@@ -197,6 +219,7 @@ function MenuPage() {
         </button>
       </div>
 
+      {/* SEARCH */}
       {/* Search + View Switch */}
       <Box
         margin={2}
@@ -282,71 +305,133 @@ function MenuPage() {
         </div>
       </Box>
 
-      {/* Tabs */}
-      <Tabs
-        value={
-          categoriesTabs.indexOf(activeCategory) === -1
-            ? 0
-            : categoriesTabs.indexOf(activeCategory)
-        }
-        onChange={(e, idx) => setActiveCategory(categoriesTabs[idx])}
-        variant="scrollable"
-        scrollButtons
-        allowScrollButtonsMobile
+      {/* TABS */}
+      <Box
         sx={{
-          borderBottom: "1px solid #ddd",
-          mb: 3,
-          "& .MuiTab-root": {
-            textTransform: "none",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            mr: 1,
-            minHeight: "40px",
-            fontWeight: 600,
-            background: "var(--surface)",
-          },
-          "& .Mui-selected": {
-            background: "#333",
-            color: "#fff !important",
-          },
+          position: "sticky",
+          top: 0,
+          zIndex: 20,
+          // bgcolor: "var(--surface)",
+          // borderBottom: "1px solid var(--border-color)",
+          backdropFilter: "blur(6px)",
+          height: 55,
         }}
       >
-        {categoriesTabs.map((cat) => (
-          <Tab key={cat} label={cat} />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeCategory || false}
+          variant="scrollable"
+          allowScrollButtonsMobile={false}
+          TabIndicatorProps={{ style: { display: "none" } }}
+          sx={{
+            px: 1,
+            py: 1,
+            minHeight: 70,
 
-      {/* Category Title */}
-      <Typography
-        variant="h6"
-        fontWeight={700}
-        textTransform="uppercase"
-        mb={2}
-        mt={1}
-        ml={1}
-      >
-        {activeCategory}
-      </Typography>
+            "& .MuiTabs-flexContainer": {
+              gap: "10px",
+              alignItems: "center",
+            },
 
-      {/* Products in Grid */}
-      {/* <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"> */}
-      <div
-        className={
-          "m-2 mb-10 grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
-        }
-      >
-        {filtered.map((p) => (
-          <CardComponent
-            onClick={() => {
-              handleOpenPopup(p);
-            }}
-            product={p}
-            key={p._id}
-            disabled={false}
-            isReward={false}
-          />
-        ))}
-      </div>
+            // kill default MUI color behavior
+            "& .MuiTab-root": {
+              color: "var(--color-on-surface)",
+            },
+          }}
+        >
+          {categories.map((cat) => {
+            const isActive = activeCategory === cat._id;
+
+            return (
+              <Tab
+                key={cat._id}
+                value={cat._id}
+                ref={(el) => (tabRefs.current[cat._id] = el)}
+                onClick={() => handleTabClick(cat._id)}
+                label={lang === "ar" ? cat.name_ar : cat.name}
+                sx={{
+                  position: "relative",
+                  minHeight: 40,
+                  px: 3,
+                  borderRadius: "999px",
+                  fontSize: "0.85rem",
+                  fontWeight: isActive ? 700 : 600,
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+
+                  // COLORS
+                  bgcolor: isActive ? "var(--color-primary)" : "var(--surface)",
+
+                  color: isActive
+                    ? "var(--color-on-primary-strong)"
+                    : "var(--color-on-surface)",
+
+                  // DEPTH
+                  boxShadow: isActive
+                    ? "0 6px 18px , transparent)"
+                    : "0 1px 3px rgba(0,0,0,0.06)",
+
+                  // MICRO-INTERACTION
+                  transform: isActive ? "scale(1.05)" : "scale(1)",
+
+                  // ACTIVE STATE OVERRIDE
+                  "&.Mui-selected": {
+                    color: "var(--color-on-primary-strong)",
+                  },
+
+                  "&:hover": {
+                    transform: "scale(1.04)",
+                    bgcolor: isActive
+                      ? "var(--color-primary)"
+                      : "var(--surface)",
+                  },
+
+                  // MOBILE FEEL
+                  "@media (max-width: 768px)": {
+                    minHeight: 44,
+                    px: 2.5,
+                    fontSize: "0.8rem",
+                  },
+                }}
+              />
+            );
+          })}
+        </Tabs>
+      </Box>
+
+      {/* CATEGORY SECTIONS */}
+      {categories.map((cat) => {
+        const list = groupedProducts[cat._id] || [];
+        if (!list.length) return null;
+
+        return (
+          <Box
+            key={cat._id}
+            ref={(el) => (categoryRefs.current[cat._id] = el)}
+            data-id={cat._id}
+            px={2}
+            mt={4}
+          >
+            <Typography variant="h6" fontWeight={700} mb={2}>
+              {lang === "ar" ? cat.name_ar : cat.name}
+            </Typography>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {list.map((p) => (
+                <CardComponent
+                  key={p._id}
+                  product={p}
+                  onClick={() => {
+                    setSelectedProduct(p);
+                    setQuantity(1);
+                    setOpenPopup(true);
+                  }}
+                />
+              ))}
+            </div>
+          </Box>
+        );
+      })}
 
       {/* Popup Dialog */}
       <Dialog
@@ -528,6 +613,7 @@ function MenuPage() {
               >
                 {t("popup.addToCart")}
               </Button>
+              <RecommendedForProduct productId={selectedProduct._id} />
             </DialogContent>
           </>
         )}

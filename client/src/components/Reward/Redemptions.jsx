@@ -4,9 +4,9 @@ import { FaStarOfLife } from 'react-icons/fa'
 export default function Redemptions({userRedemptions, onClick, viewDetails}) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto animate-fadeIn">
+          <div className="redemptions-modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto animate-fadeIn">
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-6 flex justify-between items-center">
               <h2 className="text-2xl font-semibold">My Redemptions</h2>
               <button
                 // onClick={() => setShowRedemptions(false)}
@@ -25,7 +25,7 @@ export default function Redemptions({userRedemptions, onClick, viewDetails}) {
               {userRedemptions?.length > 0 ? (
                 <div className="space-y-4">
                   {userRedemptions.map((redemption) => (
-                    <div key={redemption._id} className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors">
+                    <div key={redemption._id} className=" border dark:border-gray-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h3 className="font-semibold text-gray-900">

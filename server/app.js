@@ -28,6 +28,7 @@ import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
 import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
+import aiProductRoutes from "./src/modules/ai_product/aiProduct.routes.js"; // AI Vision
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
 
@@ -42,6 +43,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://brandbite-nng5vjxbr-negms-projects.vercel.app",
+  "https://brandbite-three.vercel.app",
   "https://restaurant-system-zcar.vercel.app",
   env.frontendUrl,
 ].filter(Boolean);
@@ -93,6 +95,7 @@ await connectDB();
 app.use("/api", couponRoutes);
 app.use("/api/chatBot", chatRoutes); // for AI
 app.use("/api/recommendations", recommendationRoutes); // for AI
+app.use("/api/ai-product", aiProductRoutes); // for AI product analysis
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/reward", rewardRouter);

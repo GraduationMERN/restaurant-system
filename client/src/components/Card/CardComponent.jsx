@@ -26,7 +26,7 @@ export default function CardComponent({
           : "opacity-70"
       }
              group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2 lg:relative
-         h-32 lg:h-80 bg-white dark:bg-gray-200 flex lg:flex lg:flex-col
+         h-32 lg:h-80 bg-white dark:bg-gray-800 flex lg:flex lg:flex-col
          ${isReward ? "lg:justify-between" : ""} 
          hover:shadow-lg transition duration-200 overflow-hidden`}
     >
@@ -39,7 +39,7 @@ export default function CardComponent({
               className="rounded-xl object-cover  shadow-sm"
             />
           ) : (
-            <div className="object-cover bg-gray-100 rounded-xl flex items-center justify-center shadow-inner">
+            <div className="object-cover bg-gray-100  rounded-xl flex items-center justify-center shadow-inner">
               <Gift className="text-gray-400" />
             </div>
           )}
