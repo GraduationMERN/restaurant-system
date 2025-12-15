@@ -21,6 +21,7 @@ import {
 import { getAllCategories } from "../../redux/slices/CategorySlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useToast } from "../../hooks/useToast";
+import AIProductAutoFill from "../../components/admin/AIProductAutoFill";
 
 /**
  * MenuWithAPI.jsx
@@ -384,6 +385,14 @@ export default function MenuWithAPI() {
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             {editingId ? "Edit Item" : "Add Item"}
           </h3>
+
+          <AIProductAutoFill
+            categories={categories}
+            sourceFile={form.imageFile}
+            onApply={(patch) => {
+              setForm((f) => ({ ...f, ...patch }));
+            }}
+          />
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
