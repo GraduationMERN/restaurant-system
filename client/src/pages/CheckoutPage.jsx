@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
+import OrderRecommendations from "../components/recommendations/OrderRecommendations";
 import api from "../api/axios";
 
 // Leaflet imports (same as before)
@@ -149,7 +150,7 @@ export default function CheckoutPage() {
   const handleOptionChange = async (item, optionName, choiceLabel) => {
     try {
       const newSelectedOptions = {
-        ...item.selectedOptions,
+        ...(item.selectedOptions || {}),
         [optionName]: choiceLabel
       };
 
@@ -371,7 +372,7 @@ export default function CheckoutPage() {
             {/* Cart Items */}
             {products.length ? products.map((item) => (
               <div
-                key={item.productId._id}
+                key={item._id}
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4">
@@ -417,7 +418,7 @@ export default function CheckoutPage() {
                         {item.productId.options.map((opt) => (
                           <select
                             key={opt._id}
-                            value={item.selectedOptions[opt.name] || ""}
+                            value={(item.selectedOptions || {})[opt.name] || ""}
                             onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
@@ -461,6 +462,13 @@ export default function CheckoutPage() {
                 >
                   Browse our menu
                 </button>
+              </div>
+            )}
+
+            {/* Order-based Recommendations */}
+            {products.length > 0 && (
+              <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                <OrderRecommendations />
               </div>
             )}
 

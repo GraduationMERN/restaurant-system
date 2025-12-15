@@ -26,7 +26,6 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
         const uniqueCategories = ["all", ...new Set(Array.isArray(data) ? data.map((p) => p.category).filter(Boolean) : [])];
         setCategories(uniqueCategories);
       } catch (error) {
-        console.error("Error fetching products:", error);
         toast?.showToast?.({ message: "Failed to load menu items", type: "error" });
       } finally {
         setLoading(false);

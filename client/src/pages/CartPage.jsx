@@ -40,14 +40,12 @@ export default function CartPage() {
   } = useSelector((state) => state.cart);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  console.log(" Cart Items:", cartItems);
 
   useEffect(() => {
     dispatch(getCartForUser());
   }, [dispatch]);
 
   useEffect(() => {
-    console.log("Cart Items changed:", cartItems);
   }, [cartItems]);
 
   //for Popup dialog

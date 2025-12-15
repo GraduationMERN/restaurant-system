@@ -73,7 +73,10 @@ export const getCartForUser = async (req, res) => {
     
     // Populate with product details to include productPoints
     cart = await populateCartWithProductPoints(cart);
-    
+        cart.products = cart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -242,6 +245,10 @@ export const addToCart = async (req, res) => {
     
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     
     res.status(201).json(populatedCart);
   } catch (err) {
@@ -328,7 +335,10 @@ export const deleteProductFromCart = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-
+  populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -451,7 +461,10 @@ export const updateCartQuantity = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -526,7 +539,10 @@ export const clearCart = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json({
       message: "Cart cleared successfully",
       cart: populatedCart,
