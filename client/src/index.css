@@ -21,6 +21,13 @@
   --warning: #f59e0b; /* amber 500 */
   --danger: #ef4444; /* red 500 */
 }
+
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 /* Dark mode overrides */
 .dark {
   --color-on-surface: #f9fafb;

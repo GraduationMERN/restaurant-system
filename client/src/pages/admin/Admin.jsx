@@ -28,70 +28,75 @@ export default function Admin() {
   const section =
     rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
 
+  // Responsive padding/margin classes
+  const contentClasses = "mt-0 lg:mt-4";
+
   return (
     <>
       <PageMeta title="Admin" description="All sections in one page" />
-      {section === "dashboard" && (
-        <section id="dashboard" className="mt-0">
-          <Dashboard />
-        </section>
-      )}
-      {section === "orders" && (
-        <section id="orders" className="mt-8">
-          <Orders />
-        </section>
-      )}
+      <div className="max-w-screen-2xl mx-auto">
+        {section === "dashboard" && (
+          <section id="dashboard" className={contentClasses}>
+            <Dashboard />
+          </section>
+        )}
+        {section === "orders" && (
+          <section id="orders" className={contentClasses}>
+            <Orders />
+          </section>
+        )}
 
-      {section === "menu" && (
-        <section id="menu" className="mt-8">
-          <Menu />
-        </section>
-      )}
+        {section === "menu" && (
+          <section id="menu" className={contentClasses}>
+            <Menu />
+          </section>
+        )}
 
-      {section === "categories" && (
-        <section id="categories" className="mt-8">
-          <Categories />
-        </section>
-      )}
+        {section === "categories" && (
+          <section id="categories" className={contentClasses}>
+            <Categories />
+          </section>
+        )}
 
-      {section === "reviews" && (
-        <section id="reviews" className="mt-8">
-          <Reviews />
-        </section>
-      )}
+        {section === "reviews" && (
+          <section id="reviews" className={contentClasses}>
+            <Reviews />
+          </section>
+        )}
 
-      {section === "rewards" && (
-        <section id="rewards" className="mt-8">
-          <Rewards />
-        </section>
-      )}
-      {section === "reward-orders" && (
-        <section id="reward-orders" className="mt-8">
-          <RewardOrders />
-        </section>
-      )}
+        {section === "rewards" && (
+          <section id="rewards" className={contentClasses}>
+            <Rewards />
+          </section>
+        )}
+        {section === "reward-orders" && (
+          <section id="reward-orders" className={contentClasses}>
+            <RewardOrders />
+          </section>
+        )}
 
-      {section === "settings" && (
-        <section id="settings" className="mt-8">
-          <Settings />
-        </section>
-      )}
-      {section === "users" && (
-        <section id="users" className="mt-8">
-          <Users />
-        </section>
-      )}
+        {section === "settings" && (
+          <section id="settings" className={contentClasses}>
+            <Settings />
+          </section>
+        )}
+        {section === "users" && (
+          <section id="users" className={contentClasses}>
+            <Users />
+          </section>
+        )}
 
-      {section === "profile" && (
-        <section id="profile" className="mt-8">
-          <UserProfiles />
-        </section>
-      )}
-      {section === "users" && (
-        <section id="users" className="mt-8">
-          <Users />
-        </section>
-      )}
+        {section === "profile" && (
+          <section id="profile" className={contentClasses}>
+            <UserProfiles />
+          </section>
+        )}
+        {section === "users" && (
+          <section id="users" className={contentClasses}>
+            <Users />
+          </section>
+        )}
+      </div>
     </>
   );
 }
