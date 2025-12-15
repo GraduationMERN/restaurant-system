@@ -47,7 +47,7 @@ function MenuPage() {
 
   const totalItems = cartItem.reduce((a, b) => a + b.quantity, 0);
 
-  const [activeCategory, setActiveCategory] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("");
   const [search, setSearch] = useState("");
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
