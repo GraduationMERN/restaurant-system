@@ -15,6 +15,12 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    hasMore: true,
+    loading: false,
+  });
   const socketRef = useRef(null);
   const location = useLocation();
   const isOnReviewsPage = location.pathname === "/admin/reviews";
@@ -28,22 +34,33 @@ export const NotificationProvider = ({ children }) => {
     }
 
     // Fetch persisted notifications for admin area
-    const fetchNotifications = async () => {
+    const fetchNotifications = async (page = 1, append = false) => {
       try {
-        const url = BASE_URL.replace(/\/$/, "") + "/api/notifications";
+        setPagination(prev => ({ ...prev, loading: true }));
+        const url = `${BASE_URL.replace(/\/$/, "")}/api/notifications?page=${page}&limit=20`;
         const res = await fetch(url, { credentials: "include" });
         const json = await res.json();
         if (json && json.notifications) {
           // Normalize ids and set as current notifications
           const normalized = json.notifications.map((n) => ({ ...n, id: n._id || n.id }));
-          setNotifications(normalized);
-          setUnreadCount(normalized.filter((n) => !n.isRead).length);
+          
+          if (append) {
+            setNotifications(prev => {
+              const newNotifications = [...prev, ...normalized];
+              setUnreadCount(newNotifications.filter((n) => !n.isRead).length);
+              return newNotifications;
+            });
+          } else {
+            setNotifications(normalized);
+            setUnreadCount(normalized.filter((n) => !n.isRead).length);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch admin notifications", err);
+        setPagination(prev => ({ ...prev, loading: false }));
       }
     };
-    fetchNotifications();
+    fetchNotifications(1, false);
 
     // Initialize socket connection (only once)
     if (!socketRef.current || !socketRef.current.connected) {
@@ -185,6 +202,13 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(0);
   };
 
+  // Load more notifications
+  const loadMoreNotifications = () => {
+    if (!pagination.loading && pagination.hasMore) {
+      fetchNotifications(pagination.page + 1, true);
+    }
+  };
+
   // Get unread notifications count
   const hasUnread = unreadCount > 0;
 
@@ -194,9 +218,11 @@ export const NotificationProvider = ({ children }) => {
         notifications,
         unreadCount,
         hasUnread,
+        pagination,
         markAsRead,
         markAllAsRead,
         clearNotifications,
+        loadMoreNotifications,
       }}
     >
       {children}

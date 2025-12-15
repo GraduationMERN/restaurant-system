@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Link } from "react-router-dom";
@@ -7,7 +7,8 @@ import { format } from "timeago.js";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, hasUnread, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, hasUnread, unreadCount, markAsRead, markAllAsRead, pagination, loadMoreNotifications } = useNotifications();
+  const dropdownRef = useRef(null);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -27,6 +28,14 @@ export default function NotificationDropdown() {
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id || notification._id);
     closeDropdown();
+  };
+
+  // Handle scroll for infinite loading
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollTop + clientHeight >= scrollHeight - 50 && !pagination.loading && pagination.hasMore) {
+      loadMoreNotifications();
+    }
   };
   return (
     <div className="relative">
@@ -88,7 +97,11 @@ export default function NotificationDropdown() {
             </svg>
           </button>
         </div>
-        <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
+        <ul 
+          ref={dropdownRef}
+          className="flex flex-col h-auto overflow-y-auto custom-scrollbar"
+          onScroll={handleScroll}
+        >
           {notifications.length === 0 ? (
             <li className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
               <span>No notifications</span>
@@ -138,6 +151,11 @@ export default function NotificationDropdown() {
                 </li>
               );
             })
+          )}
+          {pagination.loading && (
+            <li className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </li>
           )}
         </ul>
         {notifications.length > 0 && (
