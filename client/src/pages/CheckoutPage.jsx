@@ -169,7 +169,41 @@ export default function CheckoutPage() {
   // Compute totals with coupon discount
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
-  const total = +(subtotal + vat).toFixed(2);
+  let discountAmount = 0;
+  
+  if (coupon) {
+    discountAmount = +(subtotal * (coupon.discountPercentage / 100)).toFixed(2);
+  }
+  
+  const total = +(subtotal + vat - discountAmount).toFixed(2);
+
+  // Apply coupon function
+  const applyCoupon = async () => {
+    if (!promoCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const res = await api.get(`/api/coupons/validate/${promoCode.trim()}`);
+      setCoupon(res.data.coupon);
+      setCouponError("");
+    } catch (error) {
+      setCoupon(null);
+      setCouponError(error.response?.data?.message || "Invalid coupon code");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Remove coupon function
+  const removeCoupon = () => {
+    setCoupon(null);
+    setPromoCode("");
+    setCouponError("");
+  };
 
   // Calculate total points from cart items
   const totalPoints = products.reduce((acc, item) => {
