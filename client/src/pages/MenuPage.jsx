@@ -185,7 +185,7 @@ function MenuPage() {
       {/* Top-right cart button */}
       <div className="fixed right-6 top-5 z-50">
         <button
-          onClick={() => navigate('/chekout')}
+          onClick={() => navigate('/checkout')}
           className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
         >
           <ShoppingCart size={20} />
