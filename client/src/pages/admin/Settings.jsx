@@ -111,7 +111,6 @@ export default function Settings() {
       // Clear the file state after successful save
       setLogoFile(null);
     } catch (error) {
-      console.error("Error saving settings", error);
       toast.showToast({ message: "Failed to save settings", type: "error" });
     } finally {
       setSaving(false);
