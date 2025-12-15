@@ -150,7 +150,7 @@ export default function CheckoutPage() {
   const handleOptionChange = async (item, optionName, choiceLabel) => {
     try {
       const newSelectedOptions = {
-        ...item.selectedOptions,
+        ...(item.selectedOptions || {}),
         [optionName]: choiceLabel
       };
 
@@ -418,7 +418,7 @@ export default function CheckoutPage() {
                         {item.productId.options.map((opt) => (
                           <select
                             key={opt._id}
-                            value={item.selectedOptions[opt.name] || ""}
+                            value={(item.selectedOptions || {})[opt.name] || ""}
                             onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
