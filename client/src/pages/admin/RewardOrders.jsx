@@ -30,7 +30,6 @@ export default function RewardOrders() {
         const {items} = await api.get("api/reward/reward-order");
         setRewards(items || []);
       } catch (error) {
-        console.error("Failed to load reviews:", error);
         alert("Failed to load reviews. Please try again.");
       } 
     }

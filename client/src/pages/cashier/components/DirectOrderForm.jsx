@@ -103,7 +103,6 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
         setStep(1);
       }
     } catch (error) {
-      console.error("Error creating order:", error);
       const errorMsg = error?.response?.data?.message || error?.message || "Failed to create order";
       toast.showToast({ message: errorMsg, type: "error" });
     } finally {
