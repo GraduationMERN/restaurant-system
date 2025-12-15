@@ -30,6 +30,8 @@ import { addToCart } from "../redux/slices/cartSlice";
 import { useTranslation } from "react-i18next";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router";
+import api from "../api/axios";
+import RecommendedForProduct from "../components/recommendations/RecommendedForProduct";
 
 function MenuPage() {
   const dispatch = useDispatch();
@@ -613,6 +615,7 @@ function MenuPage() {
               >
                 {t("popup.addToCart")}
               </Button>
+              <RecommendedForProduct productId={selectedProduct._id} />
             </DialogContent>
           </>
         )}

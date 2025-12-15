@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
+import OrderRecommendations from "../components/recommendations/OrderRecommendations";
 import api from "../api/axios";
 
 // Leaflet imports (same as before)
@@ -461,6 +462,13 @@ export default function CheckoutPage() {
                 >
                   Browse our menu
                 </button>
+              </div>
+            )}
+
+            {/* Order-based Recommendations */}
+            {products.length > 0 && (
+              <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+                <OrderRecommendations />
               </div>
             )}
 
