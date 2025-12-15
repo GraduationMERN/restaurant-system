@@ -37,7 +37,6 @@ export default function Reviews() {
       setReviews(data.reviews || []);
       setPage(1); // reset to first page
     } catch (error) {
-      console.error("Failed to load reviews:", error);
       alert("Failed to load reviews. Please try again.");
     } finally {
       setLoading(false);
@@ -156,7 +155,6 @@ export default function Reviews() {
         )
       );
     } catch (error) {
-      console.error("Failed to approve review:", error);
       alert("Failed to approve review. Please try again.");
     }
   }
@@ -178,7 +176,6 @@ export default function Reviews() {
         )
       );
     } catch (error) {
-      console.error("Failed to reject review:", error);
       alert("Failed to reject review. Please try again.");
     }
   }
@@ -195,7 +192,6 @@ export default function Reviews() {
       await api.delete(`/api/reviews/${id}`);
       setReviews((prev) => prev.filter((r) => r._id !== id));
     } catch (error) {
-      console.error("Failed to delete review:", error);
       alert("Failed to delete review. Please try again.");
     }
   }

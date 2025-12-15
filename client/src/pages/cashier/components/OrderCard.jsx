@@ -45,13 +45,13 @@ export default function OrderCard({
 
  return (
   <div
-    className={`bg-white border-2 ${colors.border} rounded-2xl p-5 mb-5 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}
+    className={`bg-white dark:bg-gray-800 border-2 ${colors.border} dark:border-gray-700 rounded-2xl p-5 mb-5 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}
   >
     {/* Header Row */}
     <div className="flex items-start justify-between mb-4">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h3 className="font-extrabold text-lg text-slate-900">
+          <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
             Order #{order._id?.slice(-6).toUpperCase() || order._id?.toUpperCase()}
           </h3>
           <span

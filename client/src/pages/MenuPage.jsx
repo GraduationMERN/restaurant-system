@@ -100,8 +100,6 @@ function MenuPage() {
     );
   };
 
-  console.log("Products from Redux:", products);
-  console.log(products[0]);
 
   /* ---------------- FETCH ONCE ---------------- */
   useEffect(() => {
