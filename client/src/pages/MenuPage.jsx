@@ -164,8 +164,10 @@ function MenuPage() {
           position: "sticky",
           top: 0,
           zIndex: 20,
-          bgcolor: "var(--surface)",
-          borderBottom: "1px solid var(--border-color)",
+          // bgcolor: "var(--surface)",
+          // borderBottom: "1px solid var(--border-color)",
+          backdropFilter: "blur(6px)",
+          height: 55,
         }}
       >
         <Tabs
@@ -175,9 +177,17 @@ function MenuPage() {
           TabIndicatorProps={{ style: { display: "none" } }}
           sx={{
             px: 1,
-            minHeight: 48,
+            py: 1,
+            minHeight: 70,
+
             "& .MuiTabs-flexContainer": {
-              gap: "8px",
+              gap: "10px",
+              alignItems: "center",
+            },
+
+            // kill default MUI color behavior
+            "& .MuiTab-root": {
+              color: "var(--color-on-surface)",
             },
           }}
         >
@@ -192,39 +202,52 @@ function MenuPage() {
                 onClick={() => handleTabClick(cat._id)}
                 label={lang === "ar" ? cat.name_ar : cat.name}
                 sx={{
-                  minHeight: 36,
-                  px: 2.5,
+                  position: "relative",
+                  minHeight: 40,
+                  px: 3,
                   borderRadius: "999px",
                   fontSize: "0.85rem",
-                  fontWeight: 600,
+                  fontWeight: isActive ? 700 : 600,
                   textTransform: "none",
                   whiteSpace: "nowrap",
-                
-                  // FULL CONTROL
+                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+
+                  // COLORS
+                  bgcolor: isActive
+                    ? "var(--color-primary)"
+                    : "var(--surface)",
+
                   color: isActive
                     ? "var(--color-on-primary-strong)"
                     : "var(--color-on-surface)",
-                
-                  bgcolor: isActive
-                    ? "var(--color-primary)"
-                    : "var(--surface-elevated)",
-                
+
+                  // DEPTH
                   boxShadow: isActive
-                    ? "var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.15))"
-                    : "none",
-                
-                  // override ALL MUI states
+                    ? "0 6px 18px , transparent)"
+                    : "0 1px 3px rgba(0,0,0,0.06)",
+
+                  // MICRO-INTERACTION
+                  transform: isActive ? "scale(1.05)" : "scale(1)",
+
+                  // ACTIVE STATE OVERRIDE
                   "&.Mui-selected": {
                     color: "var(--color-on-primary-strong)",
                   },
-                
+
                   "&:hover": {
+                    transform: "scale(1.04)",
                     bgcolor: isActive
                       ? "var(--color-primary)"
                       : "var(--surface)",
                   },
+
+                  // MOBILE FEEL
+                  "@media (max-width: 768px)": {
+                    minHeight: 44,
+                    px: 2.5,
+                    fontSize: "0.8rem",
+                  },
                 }}
-                
               />
             );
           })}
