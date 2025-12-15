@@ -27,13 +27,12 @@ export default function ReviewsGrid({ reviews }) {
 
         return (
           <div
-            style={{ backgroundColor: "var(--surface)" }}
             key={review._id}
-            className="border p-4 rounded-lg shadow-sm"
+            className="border  dark:bg-gray-800 dark:border-gray-700 p-4 rounded-lg shadow-sm shadow-primary/50 dark:shadow-none"
           >
             {/* User info */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
+              <div className="h-10 w-10 rounded-full bg-gray-800 dark:bg-gray-300 flex items-center justify-center text-white font-bold">
                 {initials}
               </div>
               <span className="font-medium">{userName}</span>
