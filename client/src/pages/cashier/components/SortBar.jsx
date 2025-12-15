@@ -13,10 +13,10 @@ const SORT_OPTIONS = [
 
 export default function SortBar({ activeSort, onSortChange }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 mb-6">
       <div className="flex items-center gap-3 mb-4">
-        <ArrowUpDown className="w-5 h-5 text-slate-600" />
-        <h3 className="font-bold text-slate-900">Sort Orders</h3>
+        <ArrowUpDown className="w-5 h-5 text-slate-600 dark:text-white" />
+        <h3 className="font-bold text-slate-900 dark:text-white">Sort Orders</h3>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -27,7 +27,7 @@ export default function SortBar({ activeSort, onSortChange }) {
             className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
               activeSort === sort.value
                 ? "bg-blue-600 text-white shadow-lg"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-slate-100 dark:bg-gray-700 dark:text-white text-slate-700  hover:bg-slate-200 border dark:hover:bg-gray-900 dark:border-gray-700"
             }`}
           >
             {sort.label}
