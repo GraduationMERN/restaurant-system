@@ -29,6 +29,14 @@ export default function RewardPage() {
   useEffect(() => {
     setUserPoints(points);
   }, [points]);
+
+   useEffect(() => {
+    document.body.classList.add('custom-scrollbar-page');
+    return () => {
+      document.body.classList.remove('custom-scrollbar-page');
+    };
+  }, []);
+
   const rewards = reward || [];
 
   // ---- MILESTONE LOGIC ----
