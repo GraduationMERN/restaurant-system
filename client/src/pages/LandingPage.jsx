@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingContext";
+import LocationMap from "../components/home/LocationMap";
 
 export default function LandingPage() {
   const { settings } = useSettings();
@@ -21,9 +22,8 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex items-center justify-center px-4 py-8 ${
-        isRTL ? "rtl" : "ltr"
-      }`}
+      className={`min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex items-center justify-center px-4 py-8 ${isRTL ? "rtl" : "ltr"
+        }`}
     >
       <div className="max-w-7xl w-full">
         {/* Logo and Header */}
@@ -54,17 +54,15 @@ export default function LandingPage() {
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
             <div
-              className={`flex items-start justify-between mb-6 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-start justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Utensils className="w-8 h-8 text-secondary dark:text-orange-400" />
               </div>
               <ArrowRight
-                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${
-                  isRTL ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${isRTL ? "rotate-180" : ""
+                  }`}
               />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -74,22 +72,20 @@ export default function LandingPage() {
               {t("explore_dishes")}
             </p>
           </button>
-           <button
+          <button
             onClick={() => navigate("/orders")}
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
             <div
-              className={`flex items-start justify-between mb-6 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-start justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Clock className="w-8 h-8 text-blue-500 dark:text-blue-400" />
               </div>
               <ArrowRight
-                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors ${
-                  isRTL ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors ${isRTL ? "rotate-180" : ""
+                  }`}
               />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -98,23 +94,21 @@ export default function LandingPage() {
             <p className="text-gray-600 dark:text-gray-400">
               {t("check_status")}
             </p>
-          </button>     
+          </button>
           <button
             onClick={() => navigate("/reviews")}
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
             <div
-              className={`flex items-start justify-between mb-6 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-start justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-16 h-16 bg-primary/10 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Star className="w-8 h-8 text-primary dark:text-orange-400" />
               </div>
               <ArrowRight
-                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${
-                  isRTL ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${isRTL ? "rotate-180" : ""
+                  }`}
               />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -125,22 +119,20 @@ export default function LandingPage() {
             </p>
           </button>
 
-            <button
+          <button
             onClick={() => navigate("/support")}
             className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 group text-left"
           >
             <div
-              className={`flex items-start justify-between mb-6 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-start justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <LifeBuoy className="w-8 h-8 text-secondary dark:text-orange-400" />
               </div>
               <ArrowRight
-                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${
-                  isRTL ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-secondary dark:group-hover:text-orange-400 transition-colors ${isRTL ? "rotate-180" : ""
+                  }`}
               />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -155,9 +147,8 @@ export default function LandingPage() {
         {/* Special Offer Card */}
         <div className="bg-primary to-primary rounded-2xl p-8 shadow-xl text-white mb-8">
           <div
-            className={`flex items-center justify-between mb-6 ${
-              isRTL ? "flex-row-reverse" : ""
-            }`}
+            className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""
+              }`}
           >
             <ChefHat className="w-12 h-12" />
             <div className={`text-right ${isRTL ? "text-left" : ""}`}>
@@ -183,9 +174,8 @@ export default function LandingPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div
-              className={`flex items-center gap-4 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-center gap-4 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
                 <MapPin className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -200,9 +190,8 @@ export default function LandingPage() {
               </div>
             </div>
             <div
-              className={`flex items-center gap-4 ${
-                isRTL ? "flex-row-reverse" : ""
-              }`}
+              className={`flex items-center gap-4 ${isRTL ? "flex-row-reverse" : ""
+                }`}
             >
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
                 <Phone className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -217,6 +206,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+          <LocationMap />
         </div>
       </div>
     </div>
