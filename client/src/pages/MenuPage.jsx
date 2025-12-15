@@ -7,8 +7,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-   ToggleButton,
-  ToggleButtonGroup,
   Button,
   useMediaQuery,
 } from "@mui/material";
@@ -41,7 +39,7 @@ function MenuPage() {
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSizes, setSelectedSizes] = useState({});
+
   const categoryRefs = useRef({});
   const tabRefs = useRef({});
 
@@ -113,66 +111,17 @@ function MenuPage() {
     }
   }, [activeCategory]);
 
-    const isProductOutOfStock = (product) => {
-    if (!product.options || product.options.length === 0) return false;
-
-    return product.options.every((option) =>
-      option.choices.every((choice) => choice.stock === 0)
-    );
-  };
-
   /* ---------------- HELPERS ---------------- */
-  const handelClick = (product, qty) => {
-    let optionsPayload = {};
-
-    // لو في خيارات موجودة للمنتج
-    if (product.options && product.options.length > 0) {
-      product.options.forEach((option) => {
-        const key = `${product._id}_${option.name}`;
-        const selectedValue =
-          selectedSizes[key] || // إذا المستخدم اختار
-          option.choices[0]?.label; // default choice
-
-        if (selectedValue) {
-          optionsPayload[option.name] = selectedValue;
-        }
-      });
-    }
-
-    dispatch(
-      addToCart({
-        productId: product._id,
-        quantity: qty,
-        selectedOptions: optionsPayload,
-      })
-    );
-
-    console.log("SENT TO CART:", {
-      productId: product._id,
-      quantity: qty,
-      selectedOptions: optionsPayload,
+  const handleTabClick = (catId) => {
+    categoryRefs.current[catId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
   };
 
   const isOutOfStock = (product) =>
     product.options?.length &&
     product.options.every((o) => o.choices.every((c) => c.stock === 0));
-    const handleClosePopup = () => {
-    setOpenPopup(false);
-    setSelectedProduct(null);
-  };
-
-  const handleSizeChange = (key, size) => {
-    setSelectedSizes((prev) => ({
-      ...prev,
-      [key]: size,
-    }));
-  };
-    const handleOpenPopup = (product) => {
-    setSelectedProduct(product);
-    setQuantity(1);
-    setOpenPopup(true);
-  };
 
   /* ---------------- RENDER ---------------- */
   return (
@@ -340,181 +289,27 @@ function MenuPage() {
       })}
 
       {/* POPUP */}
-      <Dialog
-        open={openPopup}
-        onClose={handleClosePopup}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            p: 2,
-          },
-        }}
-      >
+      <Dialog open={openPopup} onClose={() => setOpenPopup(false)} fullWidth>
         {selectedProduct && (
           <>
-            <DialogTitle sx={{ fontWeight: 700 }}>
-              {/* {selectedProduct.name} */}
+            <DialogTitle>
               {lang === "ar"
                 ? selectedProduct.name_ar || selectedProduct.name
                 : selectedProduct.name}
             </DialogTitle>
             <DialogContent>
-              <Box
-                component="img"
-                src={selectedProduct.imgURL}
-                alt={selectedProduct.name}
-                sx={{
-                  width: "100%",
-                  maxHeight: 300,
-                  objectFit: "cover",
-                  borderRadius: 2,
-                  mb: 2,
-                }}
-              />
-              <Box
-                display="flex"
-                alignItems="flex-start"
-                justifyContent="space-between"
-                mb={2}
-              >
-                {/* الوصف والسعر */}
-                <Box flex={1}>
-                  <Typography color="text.secondary" mb={1}>
-                    {/* {selectedProduct.desc} */}
-                    {lang === "ar"
-                      ? selectedProduct.desc_ar || selectedProduct.desc
-                      : selectedProduct.desc}
-                  </Typography>
-                  <Typography
-                    fontWeight={700}
-                    sx={{ color: "var(--color-primary)" }}
-                  >
-                    {t("currency")} {selectedProduct.basePrice}
-                  </Typography>
-                </Box>
-
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  ml={2}
-                >
-                  <Button
-                    variant="contained"
-                    sx={{
-                      minWidth: 40,
-                      bgcolor: "var(--color-primary)",
-                      borderRadius: 3,
-                      "&:hover": { opacity: 0.9 },
-                    }}
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    +
-                  </Button>
-                  <Typography fontWeight={700} my={1}>
-                    {quantity}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      minWidth: 40,
-                      bgcolor: "var(--color-primary)",
-                      borderRadius: 3,
-                      "&:hover": { opacity: 0.9 },
-                    }}
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  >
-                    -
-                  </Button>
-                </Box>
-              </Box>
-              {/* Size options */}
-
-              {selectedProduct.options &&
-                selectedProduct.options.length > 0 &&
-                selectedProduct.options.map((option) => {
-                  const allChoicesOutOfStock = option.choices.every(
-                    (c) => c.stock === 0
-                  );
-                  const key = `${selectedProduct._id}_${option.name}`;
-                  return (
-                    <Box key={option.name} sx={{ mb: 2 }}>
-                      <Typography sx={{ mb: 1, fontWeight: 600 }}>
-                        {/* {option.name} */}
-                        {lang === "ar"
-                          ? option.name_ar || option.name
-                          : option.name}
-                      </Typography>
-
-                      <ToggleButtonGroup
-                        disabled={allChoicesOutOfStock}
-                        value={selectedSizes[key] || option.choices[0]?.label}
-                        exclusive
-                        onChange={(e, val) => val && handleSizeChange(key, val)}
-                        size="small"
-                        sx={{
-                          mb: 1,
-                          "& .MuiToggleButton-root": {
-                            borderRadius: "20px",
-                            border: `1px solid var(--color-primary)`,
-                            textTransform: "none",
-                            fontWeight: 600,
-                            color: "var(--color-primary)",
-                            px: 3,
-                            py: 0.5,
-                            mx: 0.3,
-                            minWidth: 40,
-                          },
-                          "& .Mui-selected": {
-                            bgcolor: "var(--color-primary) !important",
-                            color: "#fff !important",
-                          },
-                        }}
-                      >
-                        {option.choices.map((choice) => (
-                          <ToggleButton
-                            key={choice._id}
-                            value={choice.label}
-                            disabled={choice.stock === 0}
-                            sx={{
-                              opacity: choice.stock === 0 ? 0.4 : 1, // يفتح شوية لو خلصان
-                              textDecoration:
-                                choice.stock === 0 ? "line-through" : "none",
-                            }}
-                          >
-                            {/* {choice.label} */}
-                            {lang === "ar"
-                              ? choice.label_ar || choice.label
-                              : choice.label}
-                          </ToggleButton>
-                        ))}
-                      </ToggleButtonGroup>
-                    </Box>
-                  );
-                })}
-              {/* Total Price */}
-              <Typography fontWeight={700} mb={2}>
-                {t("popup.total")}: {t("currency")}{" "}
-                {selectedProduct.basePrice * quantity}
-              </Typography>
-              {/* Add to Cart */}
               <Button
                 fullWidth
                 variant="contained"
-                disabled={isProductOutOfStock(selectedProduct)}
-                sx={{
-                  bgcolor: isProductOutOfStock(selectedProduct)
-                    ? "grey.400"
-                    : "var(--color-primary)",
-                  "&:hover": {
-                    opacity: isProductOutOfStock(selectedProduct) ? 1 : 0.9,
-                  },
-                }}
+                disabled={isOutOfStock(selectedProduct)}
                 onClick={() => {
-                  handelClick(selectedProduct, quantity);
-                  handleClosePopup();
+                  dispatch(
+                    addToCart({
+                      productId: selectedProduct._id,
+                      quantity,
+                    })
+                  );
+                  setOpenPopup(false);
                 }}
               >
                 {t("popup.addToCart")}
