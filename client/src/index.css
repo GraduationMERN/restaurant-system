@@ -7,7 +7,6 @@
 @theme {
   --color-primary: #fff;
   --color-secondary: #fff;
-  --color-accent: #7c3aed;
   /* … other tokens … */
 }
 
@@ -22,12 +21,56 @@
   --danger: #ef4444; /* red 500 */
 }
 
-html,
-body {
-  width: 100%;
-  overflow-x: hidden;
+::-webkit-scrollbar {
+  width: 10px; /* width for vertical scrollbar */
+  height: 10px; /* height for horizontal scrollbar */
 }
 
+/* The draggable part of the scrollbar */
+::-webkit-scrollbar-thumb {
+   background: var(--color-primary);/* your custom color */
+  border-radius: 8px;
+  border: 3px solid var(--color-primary); /* optional: adds space around thumb */
+}
+
+/* The scrollbar track */
+::-webkit-scrollbar-track {
+  background: #ecf5ff; /* background color of scrollbar track */
+}
+
+/* Optional: scrollbar corner */
+::-webkit-scrollbar-corner {
+  background: #1e1e1e;
+}
+
+body.custom-scrollbar-page::-webkit-scrollbar-thumb {
+  background: var(--color-secondary); /* or any color you want */
+  border-radius: 8px;
+  border: 3px solid var(--color-secondary);
+}
+
+body.custom-scrollbar-page::-webkit-scrollbar-track {
+  background: #fef3c7; /* different track color */
+}
+
+.redemptions-modal::-webkit-scrollbar {
+  width: 10px;
+}
+
+.redemptions-modal::-webkit-scrollbar-thumb {
+  background-color: var(--color-secondary);
+  border-radius: 6px;
+  border: 2px solid transparent;
+}
+
+.redemptions-modal::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+.dark .redemptions-modal::-webkit-scrollbar-track {
+  background: #374151;
+}
 /* Dark mode overrides */
 .dark {
   --color-on-surface: #f9fafb;

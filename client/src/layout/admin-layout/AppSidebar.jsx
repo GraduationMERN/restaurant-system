@@ -222,23 +222,23 @@ const AppSidebar = () => {
         ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }
-        lg:translate-x-0 lg:top-0 lg:mt-0`}
+        lg:translate-x-0 lg:top-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Logo */}
-      <div className={`flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-800 ${
+      {/* Logo - Hidden on small and medium screens (below lg) */}
+      <div className={`hidden lg:flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-800 ${
         !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
       }`}>
         <Link to="/" className="flex items-center gap-3">
-          {isExpanded || isHovered || isMobileOpen ? (
+          {isExpanded || isHovered ? (
             <>
               <img
                 src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
                 alt="Logo"
                 width={120}
                 height={40}
-                className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
+                className="object-contain "
               />
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
                 Admin
@@ -256,8 +256,21 @@ const AppSidebar = () => {
         </Link>
       </div>
 
+      {/* Alternative: Show minimal logo on mobile when sidebar is open */}
+      {isMobileOpen && (
+        <div className="lg:hidden flex items-center justify-center px-4 py-6 border-b border-gray-200 dark:border-gray-800">
+          <img
+            src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
+            alt="Logo"
+            width={32}
+            height={32}
+            className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
+          />
+        </div>
+      )}
+
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 lg:py-6">
         <nav className="space-y-6">
           <div>
             <h2

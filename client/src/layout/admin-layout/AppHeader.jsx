@@ -7,7 +7,6 @@ import NotificationDropdown from "../../components/header/NotificationDropdown";
 import UserDropdown from "../../components/header/UserDropdown";
 
 const AppHeader = () => {
-  const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { settings } = useSettings();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
@@ -17,7 +16,7 @@ const AppHeader = () => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-    
+
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -31,29 +30,21 @@ const AppHeader = () => {
     }
   };
 
-  const toggleApplicationMenu = () => {
-    setApplicationMenuOpen(!isApplicationMenuOpen);
-  };
-
   return (
-    <header className="sticky top-0 w-full bg-white border-b border-gray-200 dark:border-gray-800 dark:bg-gray-900 z-99999">
-      <div className="flex flex-col lg:flex-row">
-        {/* Top Bar - Logo and Hamburger Menu */}
-        <div className="flex items-center justify-between w-full px-4 py-3 border-b border-gray-200 dark:border-gray-800 lg:border-b-0 lg:px-6 lg:py-4">
+    <header className="sticky top-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-50">
+      {/* Full width container for mobile/tablet, constrained width for desktop */}
+      <div className="w-full xl:pl-[90px] xl:transition-all xl:duration-300 xl:ease-in-out">
+        <div className="flex items-center justify-between w-full px-4 py-3 xl:px-6 xl:py-4">
+          {/* Left - Hamburger + Logo */}
           <div className="flex items-center gap-3">
+            {/* Hamburger Icon - Visible only on mobile/tablet */}
             <button
-              className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:w-11 lg:h-11 lg:border lg:border-gray-200 lg:dark:border-gray-800"
+              className="flex xl:hidden items-center justify-center w-10 h-10 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={handleToggle}
               aria-label="Toggle Sidebar"
             >
               {isMobileOpen ? (
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -62,13 +53,7 @@ const AppHeader = () => {
                   />
                 </svg>
               ) : (
-                <svg
-                  width="16"
-                  height="12"
-                  viewBox="0 0 16 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
@@ -79,30 +64,26 @@ const AppHeader = () => {
               )}
             </button>
 
+            {/* Logo */}
             <Link to="/" className="flex items-center">
               <img
-                src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
+                src={
+                  settings.branding?.logoDarkModeUrl && document.documentElement.classList.contains("dark")
+                    ? settings.branding.logoDarkModeUrl
+                    : settings.branding?.logoUrl || "/images/logo/logo.svg"
+                }
                 alt="Logo"
-                className="h-8 w-auto object-contain dark:invert dark:brightness-0 dark:contrast-200"
+                className="h-8 w-auto object-contain"
               />
             </Link>
           </div>
 
-          {/* Mobile Controls - Always visible on mobile/tablet */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* Right Controls - Always visible */}
+          <div className="flex items-center gap-2 lg:gap-4">
             <ThemeToggleButton />
             <NotificationDropdown />
             <UserDropdown />
           </div>
-        </div>
-
-        {/* Desktop Controls - Hidden on mobile/tablet */}
-        <div className="hidden lg:flex items-center justify-end flex-1 px-6 py-4 gap-4">
-          <div className="flex items-center gap-3">
-            <ThemeToggleButton />
-            <NotificationDropdown />
-          </div>
-          <UserDropdown />
         </div>
       </div>
     </header>
