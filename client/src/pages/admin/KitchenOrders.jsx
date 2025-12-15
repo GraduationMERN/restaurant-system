@@ -210,13 +210,6 @@ export default function KitchenOrders() {
     return order.items.length > 0 ? Math.round((preparedItems / order.items.length) * 100) : 0;
   };
 
-  if (!isKitchen && !isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-error-500">Access Denied: Kitchen staff only</p>
-      </div>
-    );
-  }
 
   return (
     <>
