@@ -29,6 +29,8 @@ export const env = {
     llmApiUrl: process.env.GROQ_API_URL,
     embeddingModel: process.env.EMBEDDING_MODEL || 'Xenova/all-MiniLM-L6-v2',
     llmModel: process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
+    geminiApiKey: process.env.GEMINI_API_KEY,
+    geminiModel: process.env.GEMINI_MODEL,
     topK: parseInt(process.env.TOP_K || '3'),
 };
 
