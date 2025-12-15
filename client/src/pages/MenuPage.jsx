@@ -65,6 +65,30 @@ function MenuPage() {
   //   const products = useSelector((state) => state.product.list)
 
   const [selectedSizes, setSelectedSizes] = useState({});
+  const handelClick = (product, qty) => {
+    let optionsPayload = {};
+  
+    if (product.options && product.options.length > 0) {
+      product.options.forEach((option) => {
+        const key = `${product._id}_${option.name}`;
+        const selectedValue =
+          selectedSizes[key] || option.choices[0]?.label;
+  
+        if (selectedValue) {
+          optionsPayload[option.name] = selectedValue;
+        }
+      });
+    }
+  
+    dispatch(
+      addToCart({
+        productId: product._id,
+        quantity: qty,
+        selectedOptions: optionsPayload,
+      })
+    );
+  };
+  
 
   const isProductOutOfStock = (product) => {
     if (!product.options || product.options.length === 0) return false;
