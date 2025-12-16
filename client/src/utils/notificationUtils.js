@@ -89,9 +89,7 @@ export async function subscribeToPushNotifications() {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BG5l3K7z8v-x2y9w_q4r5s-t6u7v8w9x0y1z2a3b4c5d6e7f8g9h0i1j2k3l4m5n'
-      )
+      applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY)
     });
 
     // Send subscription to backend

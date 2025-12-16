@@ -32,6 +32,7 @@ import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router";
 import api from "../api/axios";
 import RecommendedForProduct from "../components/recommendations/RecommendedForProduct";
+import ProgressBar from "../components/Reward/ProgressBar";
 
 function MenuPage() {
   const dispatch = useDispatch();
@@ -69,19 +70,19 @@ function MenuPage() {
   const [selectedSizes, setSelectedSizes] = useState({});
   const handelClick = (product, qty) => {
     let optionsPayload = {};
-  
+
     if (product.options && product.options.length > 0) {
       product.options.forEach((option) => {
         const key = `${product._id}_${option.name}`;
         const selectedValue =
           selectedSizes[key] || option.choices[0]?.label;
-  
+
         if (selectedValue) {
           optionsPayload[option.name] = selectedValue;
         }
       });
     }
-  
+
     dispatch(
       addToCart({
         productId: product._id,
@@ -90,7 +91,7 @@ function MenuPage() {
       })
     );
   };
-  
+
 
   const isProductOutOfStock = (product) => {
     if (!product.options || product.options.length === 0) return false;
@@ -200,12 +201,12 @@ function MenuPage() {
   /* ---------------- RENDER ---------------- */
   return (
     <>
-      <Typography variant="h4" fontWeight={700} ml={2} mt={2}>
+      <div className="sticky top-0 z-20 bg-gray-50 rounded-2xl py-3 dark:bg-gray-800">
+            <Typography variant="h4" fontWeight={700} ml={2} mt={2}>
         {t("menu.title")}
       </Typography>
-
-      {/* CART */}
-      <div className="fixed right-6 top-5 z-50">
+            {/* CART */}
+          <div className="absolute right-6 top-3">
         <button
           onClick={() => navigate("/checkout")}
           className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
@@ -218,81 +219,41 @@ function MenuPage() {
           )}
         </button>
       </div>
-
-      {/* SEARCH */}
-      {/* Search + View Switch */}
-      <Box
-        margin={2}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-        flexWrap="wrap"
-      >
-        {/* <TextField
-          placeholder= {t("search.placeholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{
-    width: { xs: "100%", md: "50%" },
-    mb: { xs: 2, md: 0 },
-    "& .MuiInputBase-root": {
-      backgroundColor: "var(--surface)",
-      color: "var(--color-on-surface)",
-      borderRadius: "12px",
-      paddingRight: "8px",
-    },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "var(--color-secondary)",
-    },
-    "&:hover .MuiOutlinedInput-notchedOutline": {
-      borderColor: "var(--color-primary)",
-    },
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "var(--color-primary)",
-      borderWidth: "2px",
-    },
-    "& .MuiInputBase-input::placeholder": {
-      color: "var(--color-muted)",
-      opacity: 1,
-    },
-    "& .MuiSvgIcon-root": {
-      color: "var(--color-muted)",
-    },
-  }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="disabled" />
-              </InputAdornment>
-            ),
-          }}
-        /> */}
-        <div className="w-full flex justify-center mb-4 px-2">
-          <div
-            className="
+        <div className="flex flex-col mb-5 items-center">
+                {/* SEARCH */}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={3}
+            flexWrap="wrap"
+            className="w-full mt-2"
+          >
+            <div className="w-full flex justify-center mb-4 px-2">
+              <div
+                className="
               flex items-center 
               w-full md:w-1/2 
               bg-[var(--surface)] 
-              border border-[var(--color-secondary)] 
+              border border-[var(--color-primary)] 
               rounded-2xl 
               shadow-sm
               px-4 py-2 
               focus-within:border-[var(--color-primary)]
               transition-all duration-200
             "
-          >
-            <SearchIcon
-              className="text-[var(--color-muted)] mr-2"
-              sx={{ fontSize: 22 }}
-            />
+              >
+                <SearchIcon
+                  className="text-[var(--color-muted)] mr-2"
+                  sx={{ fontSize: 22 }}
+                />
 
-            <input
-              type="text"
-              placeholder={t("search.placeholder")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="
+                <input
+                  type="text"
+                  placeholder={t("search.placeholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="
                 w-full 
                 bg-transparent 
                 outline-none 
@@ -300,104 +261,104 @@ function MenuPage() {
                 placeholder:text-[var(--color-muted)]
                 text-sm
               "
-            />
+                />
+              </div>
+            </div>
+          </Box>
+          <div className="w-2/3">
+            <ProgressBar />
           </div>
         </div>
-      </Box>
-
-      {/* TABS */}
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-          // bgcolor: "var(--surface)",
-          // borderBottom: "1px solid var(--border-color)",
-          backdropFilter: "blur(6px)",
-          height: 55,
-        }}
-      >
-        <Tabs
-          value={activeCategory || false}
-          variant="scrollable"
-          allowScrollButtonsMobile={false}
-          TabIndicatorProps={{ style: { display: "none" } }}
+        {/* TABS */}
+        <Box
           sx={{
-            px: 1,
-            py: 1,
-            minHeight: 70,
-
-            "& .MuiTabs-flexContainer": {
-              gap: "10px",
-              alignItems: "center",
-            },
-
-            // kill default MUI color behavior
-            "& .MuiTab-root": {
-              color: "var(--color-on-surface)",
-            },
+            backdropFilter: "blur(6px)",
+            height: 55,
           }}
         >
-          {categories.map((cat) => {
-            const isActive = activeCategory === cat._id;
+          <Tabs
+            value={activeCategory || false}
+            variant="scrollable"
+            allowScrollButtonsMobile={false}
+            TabIndicatorProps={{ style: { display: "none" } }}
+            sx={{
+              px: 1,
+              py: 1,
+              minHeight: 70,
 
-            return (
-              <Tab
-                key={cat._id}
-                value={cat._id}
-                ref={(el) => (tabRefs.current[cat._id] = el)}
-                onClick={() => handleTabClick(cat._id)}
-                label={lang === "ar" ? cat.name_ar : cat.name}
-                sx={{
-                  position: "relative",
-                  minHeight: 40,
-                  px: 3,
-                  borderRadius: "999px",
-                  fontSize: "0.85rem",
-                  fontWeight: isActive ? 700 : 600,
-                  textTransform: "none",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+              "& .MuiTabs-flexContainer": {
+                gap: "10px",
+                alignItems: "center",
+              },
 
-                  // COLORS
-                  bgcolor: isActive ? "var(--color-primary)" : "var(--surface)",
+              // kill default MUI color behavior
+              "& .MuiTab-root": {
+                color: "var(--color-on-surface)",
+              },
+            }}
+          >
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat._id;
 
-                  color: isActive
-                    ? "var(--color-on-primary-strong)"
-                    : "var(--color-on-surface)",
+              return (
+                <Tab
+                  key={cat._id}
+                  value={cat._id}
+                  ref={(el) => (tabRefs.current[cat._id] = el)}
+                  onClick={() => handleTabClick(cat._id)}
+                  label={lang === "ar" ? cat.name_ar : cat.name}
+                  sx={{
+                    position: "relative",
+                    minHeight: 40,
+                    px: 3,
+                    borderRadius: "999px",
+                    fontSize: "0.85rem",
+                    fontWeight: isActive ? 700 : 600,
+                    textTransform: "none",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
 
-                  // DEPTH
-                  boxShadow: isActive
-                    ? "0 6px 18px , transparent)"
-                    : "0 1px 3px rgba(0,0,0,0.06)",
+                    // COLORS
+                    bgcolor: isActive ? "var(--color-primary)" : "var(--surface)",
 
-                  // MICRO-INTERACTION
-                  transform: isActive ? "scale(1.05)" : "scale(1)",
+                    color: isActive
+                      ? "var(--color-on-primary-strong)"
+                      : "var(--color-on-surface)",
 
-                  // ACTIVE STATE OVERRIDE
-                  "&.Mui-selected": {
-                    color: "var(--color-on-primary-strong)",
-                  },
+                    // DEPTH
+                    boxShadow: isActive
+                      ? "0 6px 18px , transparent)"
+                      : "0 1px 3px rgba(0,0,0,0.06)",
 
-                  "&:hover": {
-                    transform: "scale(1.04)",
-                    bgcolor: isActive
-                      ? "var(--color-primary)"
-                      : "var(--surface)",
-                  },
+                    // MICRO-INTERACTION
+                    transform: isActive ? "scale(1.05)" : "scale(1)",
 
-                  // MOBILE FEEL
-                  "@media (max-width: 768px)": {
-                    minHeight: 44,
-                    px: 2.5,
-                    fontSize: "0.8rem",
-                  },
-                }}
-              />
-            );
-          })}
-        </Tabs>
-      </Box>
+                    // ACTIVE STATE OVERRIDE
+                    "&.Mui-selected": {
+                      color: "var(--color-on-primary-strong)",
+                    },
+
+                    "&:hover": {
+                      transform: "scale(1.04)",
+                      bgcolor: isActive
+                        ? "var(--color-primary)"
+                        : "var(--surface)",
+                    },
+
+                    // MOBILE FEEL
+                    "@media (max-width: 768px)": {
+                      minHeight: 44,
+                      px: 2.5,
+                      fontSize: "0.8rem",
+                    },
+                  }}
+                />
+              );
+            })}
+          </Tabs>
+        </Box>
+
+      </div>
 
       {/* CATEGORY SECTIONS */}
       {categories.map((cat) => {
@@ -416,7 +377,7 @@ function MenuPage() {
               {lang === "ar" ? cat.name_ar : cat.name}
             </Typography>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 my-8">
               {list.map((p) => (
                 <CardComponent
                   key={p._id}
@@ -432,7 +393,6 @@ function MenuPage() {
           </Box>
         );
       })}
-
       {/* Popup Dialog */}
       <Dialog
         open={openPopup}

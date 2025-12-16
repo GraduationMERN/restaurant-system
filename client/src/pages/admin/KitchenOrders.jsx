@@ -221,7 +221,7 @@ export default function KitchenOrders() {
   return (
     <>
       <PageMeta title="Kitchen Dashboard" description="Prepare and manage orders" />
-      <PageBreadcrumb pageTitle="Kitchen Dashboard" />
+      {isAdmin &&<PageBreadcrumb pageTitle="Kitchen Dashboard" />}
 
       {/* New Order Alert */}
       {newOrderAlert && (
