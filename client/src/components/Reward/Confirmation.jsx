@@ -4,7 +4,7 @@ import React from 'react'
 export default function Confirmation({selectedReward, onClick,onReject}) {
   return (
      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-sm text-center animate-fadeIn">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl w-[90%] max-w-sm text-center animate-fadeIn">
             <h2 className="text-xl font-semibold mb-4">{t("Confirm")}</h2>
             <p className="text-gray-600 mb-6">
               {t("Redeem")} <span className="font-bold">{selectedReward.title}</span> {t("for")}{" "}
