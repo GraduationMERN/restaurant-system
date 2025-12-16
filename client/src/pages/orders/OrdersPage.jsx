@@ -36,7 +36,6 @@ export default function OrdersPage() {
   } = useSelector((state) => state.orders);
 
   const { user } = useSelector((state) => state.auth);
-  const [guestActiveOrder, setGuestActiveOrderLocal] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);

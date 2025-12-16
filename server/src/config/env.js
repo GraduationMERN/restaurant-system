@@ -14,6 +14,7 @@ export const env = {
     refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
     sendgridApiKey: process.env.SENDGRID_API_KEY,
     frontendUrl: process.env.FRONTEND_URL,
+    frontDemo: process.env.FRONTEND_DEMO_URL,
     googleId: process.env.GOOGLE_CLIENT_ID,
     googleSecret: process.env.GOOGLE_CLIENT_SECRET,
     serverURI: process.env.GOOGLE_REDIRECT_URI,

@@ -42,9 +42,8 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://brandbite-nng5vjxbr-negms-projects.vercel.app",
   "https://brandbite-three.vercel.app",
-  "https://restaurant-system-zcar.vercel.app",
+  env.frontDemo,
   env.frontendUrl,
 ].filter(Boolean);
 

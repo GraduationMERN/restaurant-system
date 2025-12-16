@@ -19,7 +19,7 @@ export default function RewardsList({rewards,groupedRewards, setSelectedReward,s
                             <FaStarOfLife className="text-secondary" />
                         </h2>
 
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-5">
                             {items.map((item) => {
                                 const product = item.productId;
                                 return (
