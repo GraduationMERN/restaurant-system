@@ -11,11 +11,13 @@ export const useRole = () => {
 
   const memo = useMemo(() => {
     const role = (user?.role || "").toString().toLowerCase();
+    // For demo: allow all authenticated users to have all roles
+    const hasAccess = !!user;
     return {
-      isAdmin: role === "admin",
-      isCashier: role === "cashier",
-      isKitchen: role === "kitchen",
-      isCustomer: role === "customer",
+      isAdmin: hasAccess,
+      isCashier: hasAccess,
+      isKitchen: hasAccess,
+      isCustomer: hasAccess,
       user,
     };
     // Only recompute when user identity or role value changes
