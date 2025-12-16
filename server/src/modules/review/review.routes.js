@@ -11,6 +11,10 @@ import {
 
 import { uploadCloud } from "../../middlewares/uploadCloudinary.middleware.js";
 
+import authMiddleware from "../../middlewares/auth.middleware.js";
+import roleMiddleware from "../../middlewares/role.middleware.js";
+import optionalAuthMiddleware from "../../middlewares/optionalAuthMiddleware.js";
+
 const router = express.Router();
 
 // Public routes
@@ -20,7 +24,7 @@ router.get("/order/:orderId", getReviewsByOrder);
 router.get("/user/:userId", getReviewsByUser);
 
 // Protected routes
-router.post("/",  uploadCloud.array("photos", 3), createReview);
+router.post("/",optionalAuthMiddleware,  uploadCloud.array("photos", 3), createReview);
 router.put("/:id",  updateReview);
 router.delete("/:id", deleteReview);
 

@@ -1,28 +1,57 @@
 import express from "express";
 import * as orderController from "./order.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
+import optionalAuthMiddleware from "../../middlewares/optionalAuthMiddleware.js";
 import roleMiddleware from "../../middlewares/role.middleware.js";
+import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 
 const router = express.Router();
+// ============= PUBLIC/GUEST ROUTES =============
 
-// ORDER CREATION
-router.post("/from-cart", orderController.createOrderFromCart); // Create from cart
-router.post("/direct", orderController.createDirectOrder);     // Create direct order
+// Ensure guest ID is generated and cookie is set
+router.get("/guest-id", optionalAuthMiddleware, orderController.getGuestId);
 
-// ORDER RETRIEVAL
-router.get("/:id", orderController.getOrder);                  // Get order by ID
-router.get("/user/:userId", orderController.getUserOrders);    // Get user orders
-router.get("/cart/:cartId", orderController.getOrderByCartId); // Get order by cart ID
-router.get("/kitchen/active", orderController.getActiveOrders); // Get active orders
+router.post("/from-cart", optionalAuthMiddleware, orderController.createOrderFromCart);
+router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder);
 
-// ORDER UPDATES
-router.patch("/:id/status", authMiddleware, roleMiddleware("admin", "kitchen", "cashier"), orderController.updateOrderStatus);      // Update status
-router.patch("/:id/payment", authMiddleware, roleMiddleware("admin", "cashier"), orderController.updatePaymentStatus);   // Update payment
-router.patch("/:id/customer-info", authMiddleware, roleMiddleware("admin"), orderController.updateCustomerInfo); // Update customer info
-router.patch("/:id/link-user", authMiddleware, roleMiddleware("admin"), orderController.linkUserToOrder);     // Link user to order
+// ============= CUSTOMER ROUTES =============
+router.get("/active", optionalAuthMiddleware, orderController.getActiveOrder);
+router.get("/history", optionalAuthMiddleware, orderController.getOrderHistoryForUser);
 
-// ORDER MANAGEMENT
-router.post("/search", orderController.searchOrders);          // Search orders
-router.delete("/:id", orderController.deleteOrder);            // Delete order
+// ============= PUBLIC/GUEST ROUTES (continued) =============
+
+
+// Global: attach requestId + optional auth for allowed routes
+router.use(requestIdMiddleware);
+
+// ---- GET ----
+router.get("/recent", optionalAuthMiddleware, orderController.getRecentOrdersList);
+
+router.get("/", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
+// ---- STATS ----
+router.get("/stats/overview", optionalAuthMiddleware, orderController.getOverviewStats);
+router.get("/stats/daily", optionalAuthMiddleware, orderController.getDailyStats);
+router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopItems);
+
+
+
+// ============= CASHIER ROUTES =============
+router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);
+
+router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
+router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
+
+// ---- ADMIN/CASHIER ----
+router.patch("/:id/status", authMiddleware, roleMiddleware("cashier", "admin"), orderController.updateOrderStatus);
+router.patch("/:id/payment", authMiddleware, roleMiddleware("cashier", "admin"), orderController.updatePaymentStatus);
+
+// ============= ADMIN ROUTES =============
+router.get("/user/:userId", authMiddleware, orderController.getUserOrders);
+
+router.get("/session/:sessionId", optionalAuthMiddleware, orderController.getOrderByStripeSession);
+// ---- CUSTOMER ---- 
+
+router.get("/:id", optionalAuthMiddleware, orderController.getOrder);
+router.delete("/:id", authMiddleware, roleMiddleware("admin", "cashier"), orderController.deleteOrder);
 
 export default router;

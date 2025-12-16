@@ -37,7 +37,41 @@ class NotificationService {
       });
     }
     async sendToAdmin(notification) {
-        this.io.to("admin").emit("notification", notification);
+      if (!this.io) return null;
+
+      // Persist admin notification for listing and mark-as-read features
+      try {
+        const created = await NotificationRepository.create({
+          ...notification,
+          // admin-wide notifications have no userId
+          userId: null,
+        });
+
+        // Emit created notification (with _id and createdAt) to admin room
+        this.io.to("admin").emit("notification", created);
+        return created;
+      } catch (e) {
+        console.error("Failed to persist admin notification", e);
+        return null;
+      }
+    }
+
+      // Send a notification to a role room (e.g., 'cashier', 'kitchen')
+      async sendToRole(role, notification) {
+        if (!this.io) return null;
+
+        try {
+          const created = await NotificationRepository.create({
+            ...notification,
+            role,
+          });
+
+          this.io.to(role).emit("notification", created);
+          return created;
+        } catch (e) {
+          console.error("Failed to persist role notification", e);
+          return null;
+        }
       }
   
     getUserNotifications(userId) {

@@ -28,7 +28,7 @@ router.get("/google", (req, res) => {
     "https://accounts.google.com/o/oauth2/v2/auth?" +
     new URLSearchParams({
       client_id: env.googleId,
-      redirect_uri: `${env.serverURI}/auth/google/callback`,
+      redirect_uri: env.serverURI,
       response_type: "code",
       scope: "openid email profile",
       prompt: "consent",
@@ -37,7 +37,21 @@ router.get("/google", (req, res) => {
   res.redirect(redirectUrl);
 });
 router.get("/google/callback", googleCallbackController);
-
+router.get("/test-cookie", (req, res) => {
+  res.cookie("testCookie", "works", {
+    httpOnly: true,
+    sameSite: "None",
+    secure: true,
+    domain: ".your-domain.com", // Your actual domain
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  
+  res.json({ 
+    message: "Cookie set", 
+    env: process.env.NODE_ENV,
+    frontendUrl: env.frontendUrl 
+  });
+});
 router.post("/logout", logoutController);
 
 export default router;

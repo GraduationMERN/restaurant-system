@@ -21,29 +21,29 @@ import {
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, addReward, deleteReward, updateReward } from "../../redux/slices/rewardSlice";
-
-const initialPrograms = [
-  { name: "Free Dessert", points: 500, type: "dessert", desc: "Get any dessert for free" },
-  { name: "10% Off Next Order", points: 750, type: "discount", desc: "Save 10% on your next purchase" },
-  { name: "Free Drink", points: 300, type: "drink", desc: "Any beverage on the house" },
-  { name: "Free Appetizer", points: 400, type: "appetizer", desc: "Start your meal with a free appetizer" },
-];
+import { fetchProducts } from "../../redux/slices/ProductSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [form, setForm] = useState({ name: "", points: "", type: "discount", desc: "" });
+  const [form, setForm] = useState({ productId: "", points: "", type: "discount", desc: "" });
+  const [saving, setSaving] = useState(false);
   const totalPointsIssued = useMemo(() => 45230, []);
   const activeMembers = useMemo(() => 1247, []);
   const rewardsRedeemed = useMemo(() => 892, []);
   const dispatch = useDispatch()
-   const { reward, loading, error } = useSelector((state) => state.reward);
-
-   const rewards = reward || []
-  useEffect(()=>{
+  const toast = useToast();
+  const { reward, loading, error } = useSelector((state) => state.reward);
+  const { list } = useSelector((state) => state.product);
+  
+  const rewards = reward || []
+  useEffect(() => {
     dispatch(getAllRewards())
-    console.log(rewards)
-  },[dispatch])
+    dispatch(fetchProducts());
+  }, [dispatch])
+
+
   const iconForType = (type) => {
     if (type === "discount") return <DollarLineIcon className="size-6" />;
     if (type === "drink") return <PlugInIcon className="size-6" />;
@@ -53,28 +53,46 @@ export default function Rewards() {
 
   const openAdd = () => {
     setEditingIndex(null);
-    setForm({ name: "", pointsRequired: "", image: "" });
+    setForm({ productId: "", pointsRequired: "", image: "" });
     setIsOpen(true);
   };
   const openEdit = (idx) => {
-    const p = rewards[idx];
+    const r = rewards[idx];
     setEditingIndex(idx);
-    setForm({ name: p.name, points: String(p.pointsRequired || p.points), type: p.type || "discount", desc: p.desc || "" });
+
+    setForm({
+      productId: r.productId?._id || "",
+      points: String(r.pointsRequired || r.points || ""),
+      type: r.type || "discount",
+      desc: r.desc || ""
+    });
+
     setIsOpen(true);
   };
+
   const closeModal = () => setIsOpen(false);
-  const handleSave = () => {
-    const name = form.name.trim();
+  const handleSave = async () => {
     const points = Number(form.points);
-    if (!name || Number.isNaN(points) || points <= 0) return;
-    const payload = { name, pointsRequired: points, type: form.type, desc: form.desc.trim() };
-    if (editingIndex !== null) {
-      const id = rewards[editingIndex]._id;
-      dispatch(updateReward({ id, data: payload }));
-    } else {
-      dispatch(addReward(payload));
+    if (!form.productId || Number.isNaN(points) || points <= 0) return;
+    const payload = {
+      productId: form.productId,
+      pointsRequired: points,
+    };
+    setSaving(true);
+    try {
+      if (editingIndex !== null) {
+        const id = rewards[editingIndex]._id;
+        await dispatch(updateReward({ id, data: payload }));
+      } else {
+        await dispatch(addReward(payload));
+      }
+      setIsOpen(false);
+      toast.showToast({ message: editingIndex !== null ? "Reward updated" : "Reward created", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: "Failed to save reward", type: "error" });
+    } finally {
+      setSaving(false);
     }
-    setIsOpen(false);
   };
   const deleteProgram = (idx) => {
     const id = rewards[idx]._id;
@@ -159,8 +177,15 @@ export default function Rewards() {
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{editingIndex !== null ? "Edit Reward" : "Add Reward"}</h3>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label>Reward Name</Label>
-              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+              <Label>Select Product</Label>
+              <Select
+                options={list.map((p) => ({
+                  value: p._id,
+                  label: p.name
+                }))}
+                defaultValue={form.productId}
+                onChange={(val) => setForm((f) => ({ ...f, productId: val }))}
+              />
             </div>
             <div>
               <Label>Points</Label>
@@ -185,8 +210,8 @@ export default function Rewards() {
             </div>
           </div>
           <div className="mt-6 flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={closeModal}>Cancel</Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button variant="outline" onClick={closeModal} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} loading={saving}>Save</Button>
           </div>
         </div>
       </Modal>

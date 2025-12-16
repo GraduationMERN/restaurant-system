@@ -1,15 +1,42 @@
 import { useModal } from "../../hooks/useModal";
+import { useSelector, useDispatch } from "react-redux";
+import { useState } from "react";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import api from "../../api/axios";
+import { setUser } from "../../redux/slices/authSlice";
+import { useToast } from "../../hooks/useToast";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const { user } = useSelector((s) => s.auth || {});
+  const dispatch = useDispatch();
+  const toast = useToast();
+  const [country, setCountry] = useState(user?.address?.country || "");
+  const [cityState, setCityState] = useState(user?.address?.cityState || "");
+  const [postalCode, setPostalCode] = useState(user?.address?.postalCode || "");
+  const [taxId, setTaxId] = useState(user?.address?.taxId || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = { address: { country, cityState, postalCode, taxId } };
+      // Optimistic UI update
+      const prev = user;
+      dispatch(setUser({ ...user, address: payload.address }));
+      const res = await api.patch("/api/users/me", payload);
+      if (res?.data?.user) dispatch(setUser(res.data.user));
+      else dispatch(setUser(prev));
+      closeModal();
+      toast.showToast({ message: "Changes saved", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: "Failed to save changes", type: "error" });
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <>
@@ -26,7 +53,7 @@ export default function UserAddressCard() {
                   Country
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  United States.
+                  {user?.address?.country || ""}
                 </p>
               </div>
 
@@ -35,7 +62,7 @@ export default function UserAddressCard() {
                   City/State
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  Phoenix, Arizona, United States.
+                  {user?.address?.cityState || ""}
                 </p>
               </div>
 
@@ -44,7 +71,7 @@ export default function UserAddressCard() {
                   Postal Code
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  ERT 2489
+                  {user?.address?.postalCode || ""}
                 </p>
               </div>
 
@@ -53,7 +80,7 @@ export default function UserAddressCard() {
                   TAX ID
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  AS4568384
+                  {user?.address?.taxId || ""}
                 </p>
               </div>
             </div>
@@ -92,35 +119,35 @@ export default function UserAddressCard() {
               Update your details to keep your profile up-to-date.
             </p>
           </div>
-          <form className="flex flex-col">
+          <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
-                  <Input type="text" value="United States" />
+                  <Input type="text" value={country} onChange={(e) => setCountry(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" value="Arizona, United States." />
+                  <Input type="text" value={cityState} onChange={(e) => setCityState(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>Postal Code</Label>
-                  <Input type="text" value="ERT 2489" />
+                  <Input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
 
                 <div>
                   <Label>TAX ID</Label>
-                  <Input type="text" value="AS4568384" />
+                  <Input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" type="submit" loading={saving}>
                 Save Changes
               </Button>
             </div>

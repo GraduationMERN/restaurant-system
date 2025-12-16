@@ -1,0 +1,127 @@
+// Register service worker for PWA notifications
+export async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+}
+
+// Request notification permission from user
+// notificationUtils.js (This function remains unchanged)
+
+// notificationUtils.js (Utility for native API)
+export async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+    }
+
+    // Only try to request permission if it hasn't been denied
+    if (Notification.permission !== 'denied') {
+        // THIS IS THE ONLY LINE THAT TRIGGERS THE NATIVE PROMPT
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+
+    return false; // Permission is 'denied' or unsupported
+}
+
+// In a React component or utility logic that manages the UI
+async function showStyledPermissionPrompt() {
+    // 1. Check if permission is already finalized
+    if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+        console.log(`Permission is already ${Notification.permission}. Aborting soft prompt.`);
+        return;
+    }
+
+    // 2. SHOW YOUR CUSTOM, STYLED UI (e.g., a modal)
+    // NOTE: This function (displayCustomModal) must block execution until the user clicks
+    const userAgreed = await displayCustomModal({
+        title: "Stay Updated on Your Order!",
+        // ... other styling/content
+    });
+
+    // 3. If the user clicks 'Yes, notify me' in your custom UI
+    if (userAgreed) {
+        // **CRITICAL:** Call the utility function to trigger the NATIVE prompt once.
+        return requestNotificationPermission(); 
+    }
+    
+    // If user clicks 'No thanks', we do nothing, and the soft prompt is dismissed.
+}
+
+// Send a push notification (client-side)
+export function sendNotification(title, options = {}) {
+  if (Notification.permission === 'granted') {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // Use service worker for background notifications
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(title, {
+          icon: '/icon.png',
+          badge: '/icon.png',
+          ...options
+        });
+      });
+    } else {
+      // Fallback to regular notification
+      new Notification(title, {
+        icon: '/icon.png',
+        ...options
+      });
+    }
+  }
+}
+
+// Subscribe to push notifications
+export async function subscribeToPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push notifications not supported');
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY)
+    });
+
+    // Send subscription to backend
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(subscription),
+      credentials: 'include'
+    });
+
+    console.log('Subscribed to push notifications');
+    return subscription;
+  } catch (error) {
+    console.error('Failed to subscribe to push notifications:', error);
+    return null;
+  }
+}
+
+// Helper function to convert base64 to Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}

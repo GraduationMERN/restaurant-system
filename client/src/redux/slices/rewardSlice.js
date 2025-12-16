@@ -85,6 +85,18 @@ export const updatePoints = createAsyncThunk(
   }
 );
 
+export const getUserRedemptions = createAsyncThunk(
+  "reward/getUserRedemptions",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/api/reward/my-redemptions`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data.error);
+    }
+  }
+);
+
 const rejected = (state, action) => {
   state.loading = false;
   state.error = action.payload;
@@ -93,18 +105,26 @@ const rejected = (state, action) => {
 const fulfilled = (state, action) => {
   state.loading = false;
   state.reward = action.payload;
+  // populate rewardById map for quick lookup
+  state.rewardById = Array.isArray(action.payload)
+    ? action.payload.reduce((acc, r) => ((acc[r._id] = r), acc), {})
+    : state.rewardById;
   state.error = null;
 };
 
 const fulfilledById = (state, action) => {
   state.loading = false;
-  state.rewardById = action.payload;
+  const r = action.payload;
+  state.rewardById = state.rewardById || {};
+  if (r && r._id) state.rewardById[r._id] = r;
   state.error = null;
 };
 
 const fulfilledAdded = (state, action) => {
   state.loading = false;
   state.reward = state.reward ? [...state.reward, action.payload] : [action.payload];
+  state.rewardById = state.rewardById || {};
+  if (action.payload && action.payload._id) state.rewardById[action.payload._id] = action.payload;
   state.error = null;
 };
 
@@ -112,6 +132,8 @@ const fulfilledDeleted = (state, action) => {
   state.loading = false;
   const id = action.payload;
   state.reward = state.reward ? state.reward.filter((r) => r._id !== id) : [];
+  state.rewardById = state.rewardById || {};
+  if (id && state.rewardById[id]) delete state.rewardById[id];
   state.error = null;
 };
 
@@ -121,6 +143,8 @@ const fulfilledUpdated = (state, action) => {
   if (Array.isArray(state.reward)) {
     state.reward = state.reward.map((r) => (r._id === updated._id ? updated : r));
   }
+  state.rewardById = state.rewardById || {};
+  if (updated && updated._id) state.rewardById[updated._id] = updated;
   state.error = null;
 };
 
@@ -147,6 +171,8 @@ const rewardSlice = createSlice({
     reward: null,
     items: [],
     totalPrice: 0,
+    rewardById: {},
+    userRedemptions: [],
     loading: false,
     error: null,
   },
@@ -173,7 +199,14 @@ const rewardSlice = createSlice({
       .addCase(redeemReward.rejected, rejected)
       .addCase(updatePoints.pending, pending)
       .addCase(updatePoints.fulfilled, fulfilledUpdatePoints)
-      .addCase(updatePoints.rejected, rejected);
+      .addCase(updatePoints.rejected, rejected)
+      .addCase(getUserRedemptions.pending, pending)
+      .addCase(getUserRedemptions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userRedemptions = Array.isArray(action.payload) ? action.payload : [];
+        state.error = null;
+      })
+      .addCase(getUserRedemptions.rejected, rejected);
   },
 });
 

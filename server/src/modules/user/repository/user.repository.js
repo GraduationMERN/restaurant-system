@@ -62,3 +62,17 @@ export const decrementUserPoints = async (userId, points, session = null) => {
   if (!updated) return null; // indicates insufficient points or user not found
   return updated;
 };
+
+export const updateUserProfile = async (userId, updates) => {
+  const allowed = [
+    "name",
+    "phoneNumber",
+    "bio",
+    "address",
+  ];
+  const payload = {};
+  for (const key of allowed) {
+    if (updates[key] !== undefined) payload[key] = updates[key];
+  }
+  return await User.findByIdAndUpdate(userId, payload, { new: true }).select("-password");
+};
