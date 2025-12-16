@@ -1,16 +1,19 @@
 import axios from "axios";
 
-// Use Vite environment variable VITE_API_BASE_URL (must be defined in an .env file at project root)
-// Vite exposes variables to client code via import.meta.env and they must start with VITE_
+// Read the base URL from .env
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+axios.defaults.withCredentials = true;
 
-// Use environment variable or fallback to backend URL
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL, 
   withCredentials: true,
-  timeout: 10000,
+  // timeout: 10000,
 });
 
-api.interceptors.response.use((response) => response);
-
+// Optional: keep the interceptor
+api.interceptors.request.use((config) => {
+  // Ensure cookies are sent with every request
+  config.withCredentials = true;
+  return config;
+});
 export default api;

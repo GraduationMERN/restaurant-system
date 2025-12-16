@@ -4,34 +4,57 @@ import {
   Clock4,
   Star,
   Gift,
-  Moon,
   LogInIcon,
   Menu,
   X,
+  ShoppingCart,
+  User,
+  LifeBuoy,
+  HelpCircle,
 } from "lucide-react";
+import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { useSelector } from "react-redux";
+import LogoutButton from "./ui/button/LogoutButton";
+import LoginButton from "./ui/button/LoginButton";
+import { useRole } from "../hooks/useRole";
 
 export default function CombinedNavbar() {
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+
 
   const isActive = (path) => location.pathname === path;
 
+  const { isAdmin } = useRole();
+
+  // Close sidebar when clicking a nav item (useful on mobile)
+  const handleNavClick = () => setIsOpen(false);
+
   return (
     <>
-      {/* ================= DESKTOP NAV (≥ md) ================= */}
+      {/* BACKDROP (only visible on md and up when sidebar is open) */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:block "
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* DESKTOP SIDEBAR */}
       <aside
         className={`
           hidden md:block
-          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300
+          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300 z-50 
           ${isOpen ? "w-52" : "w-16"}
         `}
+        onClick={(e) => e.stopPropagation()} // prevent backdrop clicks from bubbling inside
       >
-        <div className="flex flex-col h-full py-4 gap-2">
-
+        <div className="flex flex-col h-full py-4 gap-2 dark:bg-black">
           {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -39,7 +62,17 @@ export default function CombinedNavbar() {
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-
+          {/* Admin view toggle */}
+            {isOpen && isAdmin && (
+              <div className="px-2">
+                <button
+                onClick={() => {window.location.replace("/admin")}}
+                  className="px-3 py-2 bg-primary text-white rounded-md hover:opacity-90"
+                >
+                Switch to Admin
+                </button>
+              </div>
+            )}
           {/* Language + Dark Mode */}
           <div className="flex justify-between items-center px-2">
             {isOpen && (
@@ -64,9 +97,10 @@ export default function CombinedNavbar() {
               </>
             )}
 
-            <button className="px-2 py-2 hover:bg-gray-100 rounded-md">
-              <Moon size={20} />
-            </button>
+            <div className="">
+              <ThemeToggleButton />
+            </div>
+            
           </div>
 
           {/* Navigation Items */}
@@ -76,6 +110,7 @@ export default function CombinedNavbar() {
             label={t("home")}
             active={isActive("/")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -84,6 +119,7 @@ export default function CombinedNavbar() {
             label={t("menu")}
             active={isActive("/menu")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -92,6 +128,7 @@ export default function CombinedNavbar() {
             label={t("orders")}
             active={isActive("/orders")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -100,6 +137,7 @@ export default function CombinedNavbar() {
             label={t("reviews")}
             active={isActive("/reviews")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
 
           <DesktopNavItem
@@ -108,34 +146,46 @@ export default function CombinedNavbar() {
             label={t("rewards")}
             active={isActive("/rewards")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
-
           <DesktopNavItem
-            to="/login"
-            icon={<LogInIcon size={20} />}
-            label={t("Login")}
-            active={isActive("/login")}
+            to="/support"
+            icon={<HelpCircle size={20} />}
+            label={"Support"}
+            active={isActive("/support")}
             isOpen={isOpen}
+            onClick={handleNavClick}
           />
+          {isAuthenticated ? (
+            <LogoutButton isOpen={isOpen} />
+          ) : (
+            <LoginButton isOpen={isOpen} />
+          )}
         </div>
       </aside>
 
-      {/* ================= MOBILE NAV (sm only) ================= */}
+      {/* MOBILE NAV (fixed bottom) */}
       <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
-        <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
-          {/* Language */}
-          {i18n.language == "en" && (
+        <div className="w-full h-14 flex justify-around items-center px-4">
+          {/* Language toggles (mobile) */}
+          {i18n.language === "en" && (
             <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
           )}
-          {i18n.language == "ar" && (
+          {i18n.language === "ar" && (
             <button onClick={() => i18n.changeLanguage("en")}>EN</button>
           )}
+
+          {/* Theme toggle (mobile) */}
+          <div className="flex items-center">
+            <ThemeToggleButton />
+          </div>
 
           <MobileNavItem
             to="/"
             icon={<Home size={20} />}
             label={t("home")}
             active={isActive("/")}
+            onClick={handleNavClick}
           />
 
           <MobileNavItem
@@ -143,6 +193,7 @@ export default function CombinedNavbar() {
             icon={<Utensils size={20} />}
             label={t("menu")}
             active={isActive("/menu")}
+            onClick={handleNavClick}
           />
 
           <MobileNavItem
@@ -150,6 +201,7 @@ export default function CombinedNavbar() {
             icon={<Clock4 size={20} />}
             label={t("orders")}
             active={isActive("/orders")}
+            onClick={handleNavClick}
           />
 
           <MobileNavItem
@@ -157,14 +209,31 @@ export default function CombinedNavbar() {
             icon={<Star size={20} />}
             label={t("reviews")}
             active={isActive("/reviews")}
+            onClick={handleNavClick}
           />
 
           <MobileNavItem
             to="/rewards"
-            icon={<Gift size={20} />}
+            icon={<Gift size={20} className="text-secondary" />}
             label={t("rewards")}
             active={isActive("/rewards")}
+            onClick={handleNavClick}
           />
+          <MobileNavItem
+            to="/support"
+            icon={<LifeBuoy size={20} />}
+            label={"Support"}
+            active={isActive("/support")}
+            onClick={handleNavClick}
+          />
+          {isAdmin && (
+            <button
+              onClick={() => {window.location.replace("/admin")}}
+              className="px-3 py-2 rounded-md bg-primary text-white"
+            >
+               Admin
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -172,29 +241,75 @@ export default function CombinedNavbar() {
 }
 
 /* ------------ Desktop Nav Item ------------ */
-function DesktopNavItem({ to, icon, label, active, isOpen }) {
+function DesktopNavItem({ to, icon, label, active, isOpen, onClick, badge }) {
+  // Note: onClick used to optionally close sidebar or perform other actions
   return (
     <Link
       to={to}
+      onClick={() => onClick && onClick()}
       className={`
         px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
         ${active ? "text-primary" : "text-muted"}
       `}
     >
-      {icon}
-      {isOpen && <span className="text-sm">{label}</span>}
+      <div className="relative">
+        {icon}
+        {/* Badge */}
+        {badge > 0 && (
+          <span
+            className="absolute -top-2 -right-2 text-white text-[10px] font-bold flex items-center justify-center"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              borderRadius: "50%",
+              height: "18px",
+              minWidth: "18px",
+              padding: "0 4px",
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      {isOpen && (
+        <span
+          className={`text-sm ${label === "Rewards" ? "text-secondary" : ""}`}
+        >
+          {label}
+        </span>
+      )}
     </Link>
   );
 }
 
 /* ------------ Mobile Nav Item ------------ */
-function MobileNavItem({ to, icon, label, active }) {
+function MobileNavItem({ to, icon, label, active, onClick, badge }) {
   return (
     <Link
       to={to}
-      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"}`}
+      onClick={() => onClick && onClick()}
+      className={`flex flex-col items-center ${
+        active ? "text-primary" : "text-muted"
+      }`}
     >
-      {icon}
+      <div className="relative">
+        {icon}
+        {/* Badge */}
+        {badge > 0 && (
+          <span
+            className="absolute -top-2 -right-3 text-white text-[10px] font-bold flex items-center justify-center"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              borderRadius: "50%",
+              height: "16px",
+              minWidth: "16px",
+              padding: "0 4px",
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+
       <span className="text-xs">{label}</span>
     </Link>
   );

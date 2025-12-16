@@ -4,59 +4,94 @@ import Dashboard from "./Dashboard";
 import Orders from "./Orders";
 import Rewards from "./Rewards";
 import Menu from "./Menu";
+import Categories from "./Categories";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
+import RewardOrders from "./RewardOrders";
+import Users from "./Users";
 
 export default function Admin() {
-    const { section: rawSection } = useParams();
-    const allowed = new Set(["dashboard", "orders", "menu", "reviews", "rewards", "settings", "profile"]);
-    const section = rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
+  const { section: rawSection } = useParams();
+  const allowed = new Set([
+    "dashboard",
+    "orders",
+    "menu",
+    "reviews",
+    "categories",
+    "rewards",
+    "settings",
+    "profile",
+    "users",
+    "reward-orders",
+  ]);
+  const section =
+    rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
 
-    return (
-        <>
-            <PageMeta title="Admin" description="All sections in one page" />
-            {section === "dashboard" && (
-                <section id="dashboard" className="mt-0">
-                    <Dashboard />
-                </section>
-            )}
-            {section === "orders" && (
-                <section id="orders" className="mt-8">
-                    <Orders />
-                </section>
-            )}
+  return (
+    <>
+      <PageMeta title="Admin" description="All sections in one page" />
+      {section === "dashboard" && (
+        <section id="dashboard" className="mt-0">
+          <Dashboard />
+        </section>
+      )}
+      {section === "orders" && (
+        <section id="orders" className="mt-8">
+          <Orders />
+        </section>
+      )}
 
-            {section === "menu" && (
-                <section id="menu" className="mt-8">
-                    <Menu />
-                </section>
-            )}
+      {section === "menu" && (
+        <section id="menu" className="mt-8">
+          <Menu />
+        </section>
+      )}
 
-            {section === "reviews" && (
-                <section id="reviews" className="mt-8">
-                    <Reviews />
-                </section>
-            )}
+      {section === "categories" && (
+        <section id="categories" className="mt-8">
+          <Categories />
+        </section>
+      )}
 
-            {section === "rewards" && (
-                <section id="rewards" className="mt-8">
-                    <Rewards />
-                </section>
-            )}
+      {section === "reviews" && (
+        <section id="reviews" className="mt-8">
+          <Reviews />
+        </section>
+      )}
 
-            {section === "settings" && (
-                <section id="settings" className="mt-8">
-                    <Settings />
-                </section>
-            )}
+      {section === "rewards" && (
+        <section id="rewards" className="mt-8">
+          <Rewards />
+        </section>
+      )}
+      {section === "reward-orders" && (
+        <section id="reward-orders" className="mt-8">
+          <RewardOrders />
+        </section>
+      )}
 
-            {section === "profile" && (
-                <section id="profile" className="mt-8">
-                    <UserProfiles />
-                </section>
-            )}
-        </>
-    );
+      {section === "settings" && (
+        <section id="settings" className="mt-8">
+          <Settings />
+        </section>
+      )}
+      {section === "users" && (
+        <section id="users" className="mt-8">
+          <Users />
+        </section>
+      )}
+
+      {section === "profile" && (
+        <section id="profile" className="mt-8">
+          <UserProfiles />
+        </section>
+      )}
+      {section === "users" && (
+        <section id="users" className="mt-8">
+          <Users />
+        </section>
+      )}
+    </>
+  );
 }
-

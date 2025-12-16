@@ -1,6 +1,7 @@
 import { env } from "../../../config/env.js";
 import {
   forgetPasswordService,
+  googleAuthService,
   loginUserService,
   logoutUserService,
   registerUserService,
@@ -8,29 +9,31 @@ import {
 } from "../service/auth.service.js";
 import { refreshTokenService } from "../service/refreshToken.service.js";
 import { verifyOtpService } from "../service/verifyOtp.service.js";
+import orderModel from "../../order.module/orderModel.js";
 
-const cookieOptions = {
+const isProduction = process.env.NODE_ENV === "production";
+
+// Base cookie options. Use more restrictive SameSite in development for testing
+// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+const cookieOptionsBase = {
   httpOnly: true,
-  secure: true,
+  sameSite: "Lax", // Changed from None to Lax for better compatibility
+  secure: true, // Keep secure for HTTPS
   maxAge: 24 * 60 * 60 * 1000,
-  sameSite: "none",
+  path: "/", // Reverted back to "/"
 };
 
+// Allow an explicit cookie domain to be set via env (e.g. ".example.com").
+// This helps when frontend and backend are on subdomains of the same eTLD+1.
+const cookieOptions = {
+  ...cookieOptionsBase,
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+};
 export const registerUserController = async (req, res) => {
   try {
-    // const { newUser, token } = await registerUserService(req.body);
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   maxAge: 24 * 60 * 60 * 1000,
-    //   sameSite: "none",
-    // });
     const { message } = await registerUserService(req.body);
     res.status(201).json({
-      message: "Registered successfully",
-      user: {
-        message,
-      },
+      message,
     });
   } catch (err) {
     console.log(err);
@@ -40,26 +43,43 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
+     console.log("=== LOGIN ATTEMPT ===");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("Frontend URL:", env.frontendUrl);
+    console.log("Request origin:", req.headers.origin);
+    console.log("Request headers:", req.headers);
+    console.log("Cookies received:", req.cookies);
+
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await loginUserService(
       email,
       password
     );
+    
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
+    
 
     res.status(200).json({
       message: "Logged in successfully",
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
+        avatarUrl: user.avatarUrl,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        address: user.address,
       },
     });
   } catch (err) {
+    console.error("Login error in production:", err.message);
     res.status(401).json({ message: err.message });
   }
 };
@@ -69,12 +89,18 @@ export const getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({
+    // Count completed orders for this user
+    const completedOrders = await orderModel.countDocuments({
+      user: user._id,
+      status: "completed",
+    });
+    return res.status(200).json({
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      points:user.points
+      points: user.points,
+      orderCount: completedOrders,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -98,6 +124,8 @@ export const verifyOTP = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        points: user.points,
       },
     });
   } catch (err) {
@@ -144,32 +172,30 @@ export const googleCallbackController = async (req, res) => {
 
   try {
     const { refreshToken, accessToken, user } = await googleAuthService(code);
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-
-    res.redirect(env.frontendUrl);
+    // Redirect to frontend instead of sending JSON
+    res.redirect(
+      `${env.frontendUrl}?name=${encodeURIComponent(
+        user.name
+      )}&email=${encodeURIComponent(user.email)}`
+    );
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     await logoutUserService(refreshToken);
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
