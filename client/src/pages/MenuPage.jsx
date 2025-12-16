@@ -229,7 +229,7 @@ function MenuPage() {
             flexWrap="wrap"
             className="w-full"
           >
-            <div className="w-full flex justify-center mb-4 px-2">
+            <div className="w-full  flex justify-center my-5 px-2">
               <div
                 className="
               flex items-center 
