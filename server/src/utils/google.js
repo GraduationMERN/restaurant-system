@@ -6,7 +6,7 @@ export async function exchangeGoogleCodeForTokens(code) {
     code,
     client_id: env.googleId,
     client_secret: env.googleSecret,
-    redirect_uri: `${env.serverURI}/auth/google/callback`,
+    redirect_uri: `${env.serverURI}`,
     grant_type: "authorization_code",
   });
 

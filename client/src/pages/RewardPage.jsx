@@ -8,8 +8,10 @@ import Confirmation from '../components/Reward/Confirmation';
 import Redemptions from '../components/Reward/Redemptions';
 import MileStones from '../components/Reward/MileStones';
 import RewardsList from '../components/Reward/RewardsList';
+import NotifyToLogin from '../components/Reward/LoginFirst';
 
 export default function RewardPage() {
+
   const dispatch = useDispatch();
   const { reward } = useSelector((state) => state.reward || {});
   const { user} = useSelector((state) => state.auth);
@@ -21,14 +23,11 @@ export default function RewardPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedReward, setSelectedReward] = useState(null);
   const [showRedemptions, setShowRedemptions] = useState(false);
+  const [notifyLogin, setNotifyLogin] = useState(!user);
   const userName = user?.name || "Guest";
   useEffect(() => {
     dispatch(getAllRewards());
   }, [dispatch]);
-
-  useEffect(() => {
-    setUserPoints(points);
-  }, [points]);
 
    useEffect(() => {
     document.body.classList.add('custom-scrollbar-page');
@@ -82,15 +81,17 @@ export default function RewardPage() {
   };
   return (
     <>
+  
       {/* HEADER */}
       <MileStones milestones={milestones} points={points} userName={userName} maxMilestone={maxMilestone} userPoints={userPoints} handleViewRedemptions={handleViewRedemptions} progress={progress} />
-
       {/* REWARDS LIST */}
       <RewardsList rewards={rewards} groupedRewards={groupedRewards} setSelectedReward={setSelectedReward} setShowConfirm={setShowConfirm} canRedeem={canRedeem}/>
       {showConfirm && (
         <Confirmation selectedReward = {selectedReward} onClick={() => {handleRedeem(selectedReward); setShowConfirm(false)}} onReject={() => setShowConfirm(false)}/>
       )}
-
+      {notifyLogin && (
+      <NotifyToLogin  onClick={() => setShowRedemptions(false)} onLeter={()=>{setNotifyLogin(false)}}/>
+    )}
       {/* REDEMPTIONS HISTORY MODAL */}
       {showRedemptions && (
         <Redemptions  userRedemptions = {userRedemptions} onClick={() => setShowRedemptions(false)} viewDetails={(redemption) => navigate(`/reward-order/${redemption._id}`, { state: { order: redemption } })}/>

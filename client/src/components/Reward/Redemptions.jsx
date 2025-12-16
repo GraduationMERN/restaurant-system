@@ -58,7 +58,6 @@ export default function Redemptions({userRedemptions, onClick, viewDetails}) {
                         </div>
                       )}
                       <button
-                    //    onClick={() => navigate(`/reward-order/${redemption._id}`, { state: { order: redemption } })}
                         onClick={()=>viewDetails(redemption)}
                         className="mt-3 text-sm text-secondary hover:underline font-medium"
                       >
