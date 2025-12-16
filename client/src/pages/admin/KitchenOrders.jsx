@@ -19,16 +19,13 @@ import { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
 import socketClient from "../../utils/socketRedux";
 import { useRole } from "../../hooks/useRole";
 import { useToast } from "../../hooks/useToast";
+import StaffNavbar from "../../components/StaffNavbar";
 import { 
   Clock, 
   ChefHat, 
   CheckCircle, 
-  AlertCircle, 
   Package, 
-  Users, 
-  TrendingUp,
   Bell,
-  Filter,
   SortAsc
 } from "lucide-react";
 
@@ -214,8 +211,9 @@ export default function KitchenOrders() {
   return (
     <>
       <PageMeta title="Kitchen Dashboard" description="Prepare and manage orders" />
-      <PageBreadcrumb pageTitle="Kitchen Dashboard" />
-
+      
+      {isAdmin &&<PageBreadcrumb pageTitle="Kitchen Dashboard" />}
+      {isKitchen && <StaffNavbar />}
       {/* New Order Alert */}
       {newOrderAlert && (
         <div className="mb-4 animate-pulse">

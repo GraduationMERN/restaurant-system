@@ -14,10 +14,10 @@ const STATUS_OPTIONS = [
 
 export default function FilterBar({ activeFilter, onFilterChange }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 mb-6">
       <div className="flex items-center gap-3 mb-4">
         <Filter className="w-5 h-5 text-slate-600" />
-        <h3 className="font-bold text-slate-900">Filter by Status</h3>
+        <h3 className="font-bold text-slate-900 dark:text-white">Filter by Status</h3>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -28,7 +28,7 @@ export default function FilterBar({ activeFilter, onFilterChange }) {
             className={`px-4 py-2 rounded-full font-medium transition-all duration-200 ${
               activeFilter === status.value
                 ? "bg-amber-600 text-white shadow-lg scale-105"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-slate-100 text-slate-700 dark:text-white dark:border-gray-800  dark:bg-gray-700 hover:text-white hover:bg-slate-200 border dark:hover:bg-gray-900 dark:hover:border-gray-800"
             }`}
           >
             {status.label}

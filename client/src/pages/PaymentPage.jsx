@@ -44,7 +44,7 @@ const PaymentPage = () => {
   const { products = [], totalPrice = 0 } = useSelector((state) => state.cart || {});
   
   // State
-  const [paymentMethod, setPaymentMethod] = useState("instore");
+  const [paymentMethod, setPaymentMethod] = useState("Online");
   const [branchName, setBranchName] = useState("El Shatby Outlet");
   const [localError, setLocalError] = useState("");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);

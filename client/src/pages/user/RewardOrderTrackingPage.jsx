@@ -3,8 +3,13 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
 import { io } from 'socket.io-client';
 import { showStatusNotification } from '../../utils/notifications';
+import { Phone, Star } from 'lucide-react';
+import { useToast } from '../../hooks/useToast';
+import { useDispatch } from 'react-redux';
+import { createReview } from "../../redux/slices/reviewSlice";
 
 export default function RewardOrderTrackingPage() {
+  const dispatch = useDispatch();
   const { id } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -12,7 +17,10 @@ export default function RewardOrderTrackingPage() {
   const [timeRemaining, setTimeRemaining] = useState(329); // 5:49 in seconds
   const [socket, setSocket] = useState(null);
   const orderId = order?._id || id;
-
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+   const [reviewText, setReviewText] = useState("");
+    const toast = useToast();
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!orderId) return; // Don't connect if we don't have an order ID
@@ -75,13 +83,37 @@ export default function RewardOrderTrackingPage() {
   // Format date
   const formatDate = (date) => {
     if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
+  const handleCallRestaurant = () => {
+    // Replace with actual restaurant phone number
+    const restaurantPhone = "+201234567890";
+    window.location.href = `tel:${restaurantPhone}`;
+  };
+
+   const handleSubmitReview = async () => {
+  
+      try {
+        const formData = new FormData();
+        formData.append("rating", String(reviewRating));
+        formData.append("comment", reviewText || "");
+        // Dispatch createReview which expects FormData
+        await dispatch(createReview(formData)).unwrap();
+  
+        toast.showToast({ message: "Thank you for your review!", type: "success" });
+  
+        setShowReviewModal(false);
+        setReviewRating(5);
+        setReviewText("");
+      } catch (err) {
+        toast.showToast({ message: err?.message || "Failed to submit review", type: "error" });
+      }
+    };
   // status notifications are handled by shared util (showStatusNotification)
 
   // Get reward title
@@ -94,28 +126,28 @@ export default function RewardOrderTrackingPage() {
     { label: 'Ready', completed: order?.status === 'Ready' }
   ];
 
- return (
+  return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
-        {! order ? (
+        {!order ? (
           // No order state - show basic info
           <div className="bg-white rounded-2xl p-8 shadow-sm text-center ">
             <FaCheckCircle className="w-16 h-16 text-secondary mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Reward Order Confirmed!</h1>
             <p className="text-gray-600 mb-6">Your reward redemption has been processed.</p>
-            
+
             <div className="bg-blue-50 rounded-xl p-4 mb-6">
               <p className="text-gray-700">Order ID: <span className="font-semibold">{id}</span></p>
             </div>
 
             <div className="flex gap-3 justify-center">
-              <button 
+              <button
                 onClick={() => navigate('/orders')}
                 className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
               >
                 My Orders
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/rewards')}
                 className="px-6 py-2 bg-secondary text-white rounded-xl font-medium hover:bg-secondary/90 transition-colors"
               >
@@ -129,8 +161,8 @@ export default function RewardOrderTrackingPage() {
             {/* Order Confirmation Card */}
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm mb-6 overflow-x-hidden">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-                  <FaCheckCircle className="w-8 h-8 text-primary" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary/10 rounded-full mb-4">
+                  <FaCheckCircle className="w-8 h-8 text-secondary" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
                 <p className="text-gray-600">Order confirmed! Kindly pick up your reward.</p>
@@ -148,19 +180,17 @@ export default function RewardOrderTrackingPage() {
                   {statusSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="flex flex-col items-center flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${
-                          step.completed ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'
-                        }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${step.completed ? 'bg-secondary text-white' : 'bg-gray-300 text-gray-600'
+                          }`}>
                           <FaCheckCircle className="w-5 h-5" />
                         </div>
-                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-primary' : 'text-gray-600'}`}>
+                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-secondary' : 'text-gray-600'}`}>
                           {step.label}
                         </p>
                       </div>
                       {idx < statusSteps.length - 1 && (
-                        <div className={`flex-1 h-1 transition-colors mb-6 ${
-                          step.completed ? 'bg-primary' : 'bg-gray-300'
-                        }`} />
+                        <div className={`flex-1 h-1 transition-colors mb-6 ${step.completed ? 'bg-secondary' : 'bg-gray-300'
+                          }`} />
                       )}
                     </React.Fragment>
                   ))}
@@ -171,7 +201,7 @@ export default function RewardOrderTrackingPage() {
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-2 text-gray-700 mb-2">
                   <FaClock className="w-5 h-5" />
-                  <span className="font-semibold text-2xl text-primary">{formatTime(timeRemaining)}</span>
+                  <span className="font-semibold text-2xl text-secondary">{formatTime(timeRemaining)}</span>
                   <span className="text-gray-600">Estimated ready time</span>
                 </div>
                 <p className="text-sm text-gray-600">We will let you know when your reward is ready.</p>
@@ -179,17 +209,79 @@ export default function RewardOrderTrackingPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 flex-col md:flex-row">
-                <button className="flex-1 px-4 py-3 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
-                  <span>📞</span>
+                <button
+                  onClick={handleCallRestaurant}
+                  className="flex-1 px-4 py-3 border-2 border-secondary text-secondary rounded-xl font-semibold hover:bg-secondary/10 dark:hover:bg-secondary/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-5 h-5" />
                   Call the restaurant
                 </button>
-                <button className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                  <span>⭐</span>
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="flex-1 px-4 py-3 bg-secondary hover:bg-secondary/90 dark:bg-secondary dark:hover:bg-secondary/90 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  <Star className="w-5 h-5" />
                   Rate your experience
                 </button>
               </div>
             </div>
 
+            {showReviewModal && (
+              <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Rate Your Experience
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    How was your order?
+                  </p>
+
+                  {/* Star Rating */}
+                  <div className="flex justify-center gap-2 mb-6">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className={`text-3xl transition-transform hover:scale-110 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+                          }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Review Text */}
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Share your feedback (optional)..."
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mb-6 focus:outline-none focus:ring-2 focus:ring-secondary"
+                    rows="4"
+                  />
+
+                  {/* Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleSubmitReview}
+                      className="w-full bg-secondary hover:bg-secondary/90 dark:bg-secondary dark:hover:bg-secondary/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                    >
+                      Submit Review
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowReviewModal(false);
+                        setReviewRating(5);
+                        setReviewText("");
+                      }}
+                      className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Order Details Card */}
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
@@ -220,11 +312,10 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="flex justify-between items-center text-gray-600">
                   <span>Status</span>
-                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                    order.status === 'Ready' ? 'bg-green-100 text-green-700' :
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${order.status === 'Ready' ? 'bg-green-100 text-green-700' :
                     order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
                     {order.status || 'Preparing'}
                   </span>
                 </div>
@@ -245,19 +336,19 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-900">Total Points</span>
-                  <span className="text-2xl font-bold text-primary">{order.pointsUsed}</span>
+                  <span className="text-2xl font-bold text-secondary">{order.pointsUsed}</span>
                 </div>
               </div>
 
               {/* Bottom Action Buttons */}
               <div className="flex gap-3 mt-8 flex-col md:flex-row">
-                <button 
+                <button
                   onClick={() => navigate('/orders')}
                   className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
                 >
                   My Orders
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/rewards')}
                   className="flex-1 px-4 py-3 bg-secondary text-white rounded-xl font-semibold hover:bg-secondary/90 transition-colors"
                 >

@@ -9,9 +9,12 @@ import OrdersTab from "./components/OrdersTab";
 import DirectOrderTab from "./components/DirectOrderTab";
 import api from "../../api/axios";
 import { useToast } from "../../hooks/useToast";
+import { useRole } from "../../hooks/useRole";
+import StaffNavbar from "../../components/StaffNavbar";
 
 export default function CashierDashboard() {
   const toast = useToast();
+  const { isCashier, isAdmin } = useRole();
   const [activeTab, setActiveTab] = useState("orders");
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -69,8 +72,8 @@ export default function CashierDashboard() {
   return (
     <>
       <PageMeta title="Cashier Dashboard" description="Manage orders and payments" />
-      <PageBreadcrumb pageTitle="Cashier Dashboard" />
-
+      {isAdmin && <PageBreadcrumb pageTitle="Cashier Dashboard" />}
+      {isCashier && <StaffNavbar />}  
       <div className="space-y-6">
         {/* Header with Stats Summary */}
         <ComponentCard>

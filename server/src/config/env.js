@@ -14,6 +14,7 @@ export const env = {
     refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
     sendgridApiKey: process.env.SENDGRID_API_KEY,
     frontendUrl: process.env.FRONTEND_URL,
+    frontDemo: process.env.FRONTEND_DEMO_URL,
     googleId: process.env.GOOGLE_CLIENT_ID,
     googleSecret: process.env.GOOGLE_CLIENT_SECRET,
     serverURI: process.env.GOOGLE_REDIRECT_URI,
@@ -29,6 +30,8 @@ export const env = {
     llmApiUrl: process.env.GROQ_API_URL,
     embeddingModel: process.env.EMBEDDING_MODEL || 'Xenova/all-MiniLM-L6-v2',
     llmModel: process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
+    geminiApiKey: process.env.GEMINI_API_KEY,
+    geminiModel: process.env.GEMINI_MODEL,
     topK: parseInt(process.env.TOP_K || '3'),
 };
 

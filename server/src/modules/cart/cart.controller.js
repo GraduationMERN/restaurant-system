@@ -3,6 +3,14 @@ import { getCartForUserService, addToCartService } from "./cart.service.js";
 import { getProductByIdService } from "../product/product.service.js";
 import { v4 as uuidv4 } from "uuid";
 
+// Helper function to populate cart with product details including productPoints
+async function populateCartWithProductPoints(cart) {
+  if (!cart || !cart.products || cart.products.length === 0) return cart;
+  
+  const populatedCart = await cart.populate('products.productId');
+  return populatedCart;
+}
+
 //getCartUserId for both guest and registered users
 // function getCartUserId(req, res) {
 //     if (req.user?._id) return req.user._id.toString(); // مستخدم مسجل
@@ -62,6 +70,13 @@ export const getCartForUser = async (req, res) => {
       });
       await cart.save();
     }
+    
+    // Populate with product details to include productPoints
+    cart = await populateCartWithProductPoints(cart);
+        cart.products = cart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -227,7 +242,15 @@ export const addToCart = async (req, res) => {
 
     await product.save();
     await cart.save();
-    res.status(201).json(cart);
+    
+    // Populate with product details to include productPoints
+    const populatedCart = await populateCartWithProductPoints(cart);
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
+    
+    res.status(201).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -310,7 +333,13 @@ export const deleteProductFromCart = async (req, res) => {
     await product.save();
     await cart.save();
 
-    res.status(200).json(cart);
+    // Populate with product details to include productPoints
+    const populatedCart = await populateCartWithProductPoints(cart);
+  populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
+    res.status(200).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -430,7 +459,13 @@ export const updateCartQuantity = async (req, res) => {
     await product.save();
     await cart.save();
 
-    res.status(200).json(cart);
+    // Populate with product details to include productPoints
+    const populatedCart = await populateCartWithProductPoints(cart);
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
+    res.status(200).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -502,9 +537,15 @@ export const clearCart = async (req, res) => {
 
     await cart.save();
 
+    // Populate with product details to include productPoints
+    const populatedCart = await populateCartWithProductPoints(cart);
+      populatedCart.products = populatedCart.products.map(product => ({
+      ...product.toObject(),
+      selectedOptions: product.selectedOptions || {}
+    }));
     res.status(200).json({
       message: "Cart cleared successfully",
-      cart,
+      cart: populatedCart,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
