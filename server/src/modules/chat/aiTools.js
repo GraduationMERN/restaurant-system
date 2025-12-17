@@ -21,10 +21,36 @@ import { embeddingsModel } from "../../config/ai.js";
 // ============================================================
 // TOOL 1: MENU SEARCH (Enhanced with stock & availability)
 // ============================================================
+
+// Arabic to English translation for common food terms
+const ARABIC_TO_ENGLISH = {
+  "قهوة": "coffee", "شاي": "tea", "عصير": "juice",
+  "برجر": "burger", "بيتزا": "pizza", "سلطة": "salad",
+  "دجاج": "chicken", "لحم": "beef", "سمك": "fish",
+  "بطاطس": "fries", "رز": "rice", "خبز": "bread",
+  "ميلك شيك": "milkshake", "ايس كريم": "ice cream",
+  "كيك": "cake", "حلويات": "dessert", "مشروبات": "drinks",
+  "ساندويتش": "sandwich", "باستا": "pasta", "شوربة": "soup",
+  "فطور": "breakfast", "غداء": "lunch", "عشاء": "dinner",
+};
+
+function translateQuery(query) {
+  let translated = query.toLowerCase();
+  for (const [ar, en] of Object.entries(ARABIC_TO_ENGLISH)) {
+    if (translated.includes(ar)) {
+      translated = translated.replace(ar, en);
+    }
+  }
+  return translated;
+}
+
 export const menuSearchTool = tool(
   async ({ query, categoryName }) => {
     try {
-      console.log(`[Tool:menu_search] Query: "${query}", Category: "${categoryName || 'all'}"`);
+      // Translate Arabic to English for better search
+      const originalQuery = query;
+      const searchQuery = translateQuery(query);
+      console.log(`[Tool:menu_search] Query: "${originalQuery}" -> "${searchQuery}", Category: "${categoryName || 'all'}"`);
 
       let results = [];
 
@@ -48,9 +74,9 @@ export const menuSearchTool = tool(
       }
 
       // If no category or no results, use vector search
-      if (results.length === 0 && query) {
+      if (results.length === 0 && searchQuery) {
         try {
-          const queryVector = await embeddingsModel.embedQuery(query);
+          const queryVector = await embeddingsModel.embedQuery(searchQuery);
 
         results = await Product.aggregate([
           {
@@ -80,14 +106,14 @@ export const menuSearchTool = tool(
           console.error(`[Tool:menu_search] Vector search error:`, vectorErr.message);
         }
 
-        // Fallback: text search
+        // Fallback: text search (search both original Arabic and translated English)
         if (results.length === 0) {
-          console.log(`[Tool:menu_search] Fallback to text search for: ${query}`);
+          console.log(`[Tool:menu_search] Fallback to text search for: ${searchQuery}`);
           results = await Product.find({
             $or: [
-              { name: new RegExp(query, "i") },
-              { name_ar: new RegExp(query, "i") },
-              { desc: new RegExp(query, "i") },
+              { name: new RegExp(searchQuery, "i") },
+              { name_ar: new RegExp(originalQuery, "i") },
+              { desc: new RegExp(searchQuery, "i") },
             ],
           })
             .select("name name_ar desc basePrice imgURL options stock _id")
@@ -97,43 +123,27 @@ export const menuSearchTool = tool(
       }
 
       if (!results.length) {
-        return JSON.stringify({
-          found: false,
-          message: "لم يتم العثور على منتجات مطابقة",
-          message_en: "No matching products found",
-        });
+        return "No matching products found. Try a different search term or browse categories.";
       }
 
-      // Format results (compact for token efficiency)
-      const products = results.map((p) => ({
-        id: p._id.toString(),
-        name: p.name,
-        name_ar: p.name_ar || p.name,
-        price: p.basePrice,
-        desc: p.desc?.substring(0, 100) || "",
-        image: p.imgURL || "",
-        available: p.stock > 0,
-        stock: p.stock,
-        options: p.options?.map((o) => ({
-          name: o.name,
-          name_ar: o.name_ar,
-          required: o.required,
-          choices: o.choices?.map((c) => ({
-            label: c.label,
-            label_ar: c.label_ar,
-            priceDelta: c.priceDelta,
-          })),
-        })) || [],
-      }));
+      // PRE-FORMAT as Markdown - saves AI tokens
+      const formatted = results.map((p) => {
+        let card = `**${p.name}** - ${p.basePrice} EGP`;
+        if (p.imgURL) card += `\n![${p.name}](${p.imgURL})`;
+        if (p.desc) card += `\n${p.desc.substring(0, 80)}`;
+        if (p.stock <= 0) card += `\n⚠️ *Out of stock*`;
+        if (p.options?.length) {
+          const opts = p.options.map(o => o.name).join(", ");
+          card += `\n*Options: ${opts}*`;
+        }
+        card += `\n\`ID: ${p._id}\``;
+        return card;
+      }).join("\n\n---\n\n");
 
-      return JSON.stringify({
-        found: true,
-        count: products.length,
-        products,
-      });
+      return `Found ${results.length} item(s):\n\n${formatted}`;
     } catch (error) {
       console.error("[Tool:menu_search] Error:", error);
-      return JSON.stringify({ found: false, error: "Error searching menu" });
+      return "Error searching menu. Please try again.";
     }
   },
   {
@@ -154,18 +164,12 @@ export const getCategoriesList = tool(
     try {
       const categories = await Category.find().select("name name_ar imgURL");
       
-      return JSON.stringify({
-        success: true,
-        categories: categories.map(c => ({
-          id: c._id.toString(),
-          name: c.name,
-          name_ar: c.name_ar || c.name,
-          image: c.imgURL
-        }))
-      });
+      // PRE-FORMAT as Markdown
+      const list = categories.map(c => `• **${c.name}**`).join("\n");
+      return `📂 **Menu Categories:**\n\n${list}\n\nAsk about any category to see items!`;
     } catch (error) {
       console.error("[Tool:get_categories] Error:", error);
-      return JSON.stringify({ success: false, error: "Error fetching categories" });
+      return "Error fetching categories. Please try again.";
     }
   },
   {
@@ -327,36 +331,21 @@ export const getCartTool = tool(
       const cart = await Cart.findOne({ userId: participantId }).populate("products.productId");
 
       if (!cart || cart.products.length === 0) {
-        return JSON.stringify({
-          empty: true,
-          message: "السلة فارغة",
-          message_en: "Cart is empty",
-          items: [],
-          totalPrice: 0,
-        });
+        return "🛒 Your cart is empty.\n\nBrowse our menu to add items!";
       }
 
-      const items = cart.products.map((p) => ({
-        cartItemId: p._id.toString(),
-        productId: p.productId?._id?.toString() || p.productId?.toString(),
-        name: p.productId?.name || "Unknown",
-        name_ar: p.productId?.name_ar || p.productId?.name || "Unknown",
-        quantity: p.quantity,
-        price: p.price,
-        totalPrice: p.price * p.quantity,
-        selectedOptions: p.selectedOptions || {},
-        image: p.productId?.imgURL || "",
-      }));
+      // PRE-FORMAT as Markdown
+      const items = cart.products.map(p => {
+        const name = p.productId?.name || "Item";
+        const qty = p.quantity;
+        const price = p.price * p.quantity;
+        return `• **${name}** x${qty} - ${price} EGP`;
+      }).join("\n");
 
-      return JSON.stringify({
-        empty: false,
-        itemCount: items.length,
-        items,
-        totalPrice: cart.totalPrice,
-      });
+      return `🛒 **Your Cart:**\n\n${items}\n\n**Total: ${cart.totalPrice} EGP**\n\nReady to checkout?`;
     } catch (error) {
       console.error("[Tool:get_cart] Error:", error);
-      return JSON.stringify({ empty: true, error: "Error fetching cart" });
+      return "Error fetching cart. Please try again.";
     }
   },
   {
@@ -822,18 +811,32 @@ export const createOrderTool = tool(
       cart.totalPrice = 0;
       await cart.save();
 
+      // PRE-FORMAT as Markdown confirmation
+      const confirmationMsg = `✅ **Order Confirmed!**
+
+🧾 **Order #${order.orderNumber}**
+
+📋 **Summary:**
+${items.map(i => `• ${i.name} x${i.quantity} - ${i.totalPrice} EGP`).join("\n")}
+
+💰 **Totals:**
+• Subtotal: ${subtotal} EGP
+• VAT (14%): ${Math.round(vat * 100) / 100} EGP
+${discount > 0 ? `• Discount: -${discount} EGP\n` : ""}• **Total: ${Math.round(totalAmount * 100) / 100} EGP**
+
+🚀 **Service:** ${serviceType}
+💳 **Payment:** ${paymentMethod === "online" ? "Online (Stripe)" : "Pay at counter"}
+
+Thank you for your order! 🎉`;
+
       return JSON.stringify({
         success: true,
         orderId: order._id.toString(),
         orderNumber: order.orderNumber,
-        subtotal,
-        vat: Math.round(vat * 100) / 100,
-        discount,
         totalAmount: Math.round(totalAmount * 100) / 100,
         paymentMethod,
         serviceType,
-        message: "تم إنشاء الطلب بنجاح",
-        message_en: "Order created successfully",
+        message: confirmationMsg,
       });
     } catch (error) {
       console.error("[Tool:create_order] Error:", error);

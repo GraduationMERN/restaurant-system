@@ -8,99 +8,121 @@ import {
   orderingTools,
   checkoutTools,
   paymentTools,
-  supportTools,
 } from "./aiTools.js";
+import Cart from "../cart/Cart.js";
+import Category from "../category/Category.js";
+import Restaurant from "../restaurant/restaurant.model.js";
 
 // ============================================================
-// SYSTEM PROMPTS
+// CACHING - Reduce database calls
 // ============================================================
+let restaurantCache = { data: null, expires: 0 };
+let categoriesCache = { data: null, expires: 0 };
 
-const BASE_SYSTEM_PROMPT = `You are a smart restaurant assistant.
+async function getCachedRestaurant() {
+  if (Date.now() < restaurantCache.expires && restaurantCache.data) {
+    return restaurantCache.data;
+  }
+  restaurantCache.data = await Restaurant.findOne();
+  restaurantCache.expires = Date.now() + 300000; // 5 min
+  return restaurantCache.data;
+}
 
-CRITICAL: NEVER write function/tool names like "<function=X>" in your text. Call tools properly, don't mention them.
+async function getCachedCategories() {
+  if (Date.now() < categoriesCache.expires && categoriesCache.data) {
+    return categoriesCache.data;
+  }
+  categoriesCache.data = await Category.find().select("name name_ar imgURL");
+  categoriesCache.expires = Date.now() + 300000;
+  return categoriesCache.data;
+}
 
-CORE RULES:
-1. Be friendly, concise, and helpful
-2. Default to ENGLISH. Only use Arabic if the user writes in Arabic.
-3. Always use tools to get real data - NEVER make up prices, products, or info
-4. Show images using Markdown: ![name](url)
-5. For orders, always confirm product details before adding to cart
-6. NEVER add items to cart unless the user explicitly asks
+// ============================================================
+// COMPRESSED SYSTEM PROMPTS (~200 tokens vs ~600)
+// ============================================================
+const BASE_SYSTEM_PROMPT = `Restaurant AI assistant.
 
-IMPORTANT:
-- Do NOT add items without user confirmation
-- When user asks for menu, use menu_search or get_categories
-- Show product images when displaying products
+RULES:
+- **IMPORTANT: Match the user's language.** If user writes Arabic, respond in Arabic. If user writes English, respond in English.
+- Use tools for real data. Never invent info
+- Images: ![name](url)
+- Never add to cart without user confirmation
 
-PARTICIPANT INFO:
-- ID: {participantId}
-- Type: {participantType}
-- Language: {language}`;
+User: {participantId} ({participantType}), Lang: {language}`;
 
 const STATE_PROMPTS = {
-  greeting: `
-Current State: GREETING
-Your job: Greet the customer warmly. Ask how you can help.
-Options: Browse menu, ask about restaurant, place order
-Available actions: Search menu, get restaurant info, get categories`,
-
-  browsing: `
-Current State: BROWSING MENU  
-Your job: Help customer explore the menu. Show products with images and prices.
-When customer wants something specific, use add_to_cart tool.
-Always confirm: product name, quantity, size/options if applicable.`,
-
-  ordering: `
-Current State: ORDERING
-Your job: Help customer build their order.
-- Use add_to_cart to add items (only when user confirms)
-- Use update_cart_item to modify quantities
-- Use get_cart to show current cart
-When customer says they're done, move to cart review.`,
-
-  cart_review: `
-Current State: CART REVIEW
-Your job: Show cart summary and ask if customer wants to:
-1. Add more items
-2. Modify quantities  
-3. Proceed to checkout`,
-
-  service_type: `
-Current State: SERVICE TYPE SELECTION
-Your job: Ask customer how they want their order:
-- Dine-in: Need table number
-- Pickup: No extra info needed
-- Delivery: Need delivery address`,
-
-  delivery_info: `
-Current State: COLLECTING DELIVERY INFO
-Your job: Get customer's delivery address.`,
-
-  table_info: `
-Current State: COLLECTING TABLE NUMBER
-Your job: Get the table number from customer.`,
-
-  coupon: `
-Current State: COUPON CHECK
-Your job: Ask if customer has a coupon or promo code.`,
-
-  order_summary: `
-Current State: ORDER SUMMARY
-Your job: Show complete order summary. Ask customer to confirm.`,
-
-  payment: `
-Current State: PAYMENT
-Your job: Ask payment method:
-- Online: Will redirect to Stripe payment page
-- In-store: Customer pays at cashier`,
-
-  completed: `
-Current State: ORDER COMPLETED
-Your job: Thank the customer and provide order number.`,
+  greeting: "\nState: GREETING. Greet warmly, offer help with menu/ordering.",
+  browsing: "\nState: BROWSING. Show menu items with images & prices. Use add_to_cart only on request.",
+  ordering: "\nState: ORDERING. Help build order. Use get_cart to show cart.",
+  cart_review: "\nState: CART REVIEW. Show cart, ask: add more / modify / checkout?",
+  service_type: "\nState: SERVICE TYPE. Ask: dine-in (table#) / pickup / delivery (address)?",
+  delivery_info: "\nState: DELIVERY. Get delivery address.",
+  table_info: "\nState: TABLE. Get table number.",
+  coupon: "\nState: COUPON. Ask for promo code.",
+  order_summary: "\nState: SUMMARY. Show order total, ask to confirm.",
+  payment: "\nState: PAYMENT. Ask: online (Stripe) or in-store?",
+  completed: "\nState: DONE. Thank customer, give order number.",
 };
 
 // ============================================================
-// TOOL SELECTION BY STATE
+// DIRECT PATTERNS - Skip AI for simple queries
+// ============================================================
+const DIRECT_PATTERNS = [
+  {
+    regex: /^(hi|hello|مرحبا|اهلا|السلام|hey)/i,
+    response: async (session) => {
+      const rest = await getCachedRestaurant();
+      const name = rest?.restaurantName || "our restaurant";
+      const lang = session.language === "ar";
+      return lang 
+        ? `مرحباً بك في ${name}! 👋\n\nكيف يمكنني مساعدتك اليوم?\n- تصفح المنيو\n- طلب أكل\n- معلومات عن المطعم`
+        : `Welcome to ${name}! 👋\n\nHow can I help you today?\n- Browse the menu\n- Place an order\n- Restaurant info`;
+    }
+  },
+  {
+    regex: /(show|view|what.*in).*(cart|سلة)/i,
+    response: async (session) => {
+      const cart = await Cart.findOne({ userId: session.participantId }).populate("products.productId");
+      if (!cart || cart.products.length === 0) {
+        return session.language === "ar" ? "سلتك فارغة 🛒" : "Your cart is empty 🛒";
+      }
+      const items = cart.products.map(p => 
+        `• **${p.productId?.name || "Item"}** x${p.quantity} - ${p.price * p.quantity} EGP`
+      ).join("\n");
+      const total = session.language === "ar" ? "الإجمالي" : "Total";
+      return `🛒 **${session.language === "ar" ? "سلتك" : "Your Cart"}:**\n\n${items}\n\n**${total}: ${cart.totalPrice} EGP**`;
+    }
+  },
+  {
+    regex: /(categories|أقسام|فئات|sections)/i,
+    response: async (session) => {
+      const cats = await getCachedCategories();
+      const lang = session.language === "ar";
+      const items = cats.map(c => `• ${lang ? c.name_ar || c.name : c.name}`).join("\n");
+      return lang 
+        ? `📂 **الأقسام:**\n\n${items}`
+        : `📂 **Categories:**\n\n${items}`;
+    }
+  },
+  {
+    regex: /(menu|منيو|قائمة الطعام)$/i,
+    response: async (session) => {
+      const rest = await getCachedRestaurant();
+      if (rest?.branding?.menuImage) {
+        return `![Menu](${rest.branding.menuImage})`;
+      }
+      const cats = await getCachedCategories();
+      const lang = session.language === "ar";
+      const items = cats.map(c => `• ${lang ? c.name_ar || c.name : c.name}`).join("\n");
+      return lang 
+        ? `📋 **المنيو:**\n\n${items}\n\nاختر قسم أو اسألني عن أي طبق!`
+        : `📋 **Our Menu:**\n\n${items}\n\nPick a category or ask about any item!`;
+    }
+  },
+];
+
+// ============================================================
+// TOOL SELECTION BY STATE (reduced tool sets)
 // ============================================================
 function getToolsForState(state) {
   switch (state) {
@@ -122,7 +144,7 @@ function getToolsForState(state) {
     case "completed":
       return greetingTools;
     default:
-      return allTools;
+      return greetingTools;
   }
 }
 
@@ -165,32 +187,26 @@ function determineNextState(currentState, aiResponse, toolResults) {
 }
 
 // ============================================================
-// BUILD MESSAGES FOR LLM
+// BUILD MESSAGES - Reduced history (5 instead of 10)
 // ============================================================
 function buildMessages(session, userMessage) {
   const systemPrompt = BASE_SYSTEM_PROMPT
     .replace("{participantId}", session.participantId)
     .replace("{participantType}", session.participantType)
     .replace("{language}", session.language || "en")
-    + "\n" + (STATE_PROMPTS[session.state] || STATE_PROMPTS.greeting);
+    + (STATE_PROMPTS[session.state] || STATE_PROMPTS.greeting);
 
   const messages = [new SystemMessage(systemPrompt)];
 
-  const history = session.getRecentMessages(10);
+  // Reduced from 10 to 5 messages
+  const history = session.getRecentMessages ? session.getRecentMessages(5) : (session.messages?.slice(-5) || []);
   for (const msg of history) {
     if (msg.role === "user") {
       messages.push(new HumanMessage(msg.content));
     } else if (msg.role === "assistant") {
       messages.push(new AIMessage(msg.content));
-    } else if (msg.role === "tool") {
-      messages.push(
-        new ToolMessage({
-          tool_call_id: msg.toolCallId || "unknown",
-          content: msg.content,
-          name: msg.toolName || "unknown",
-        })
-      );
     }
+    // Skip tool messages in history - saves tokens
   }
 
   messages.push(new HumanMessage(userMessage));
@@ -219,8 +235,7 @@ async function executeTools(toolCalls, session) {
         }
       }
 
-      const tools = allTools;
-      const tool = tools.find((t) => t.name === toolCall.name);
+      const tool = allTools.find((t) => t.name === toolCall.name);
 
       if (tool) {
         result = await tool.invoke(args);
@@ -251,7 +266,7 @@ async function executeTools(toolCalls, session) {
 }
 
 // ============================================================
-// MAIN CHAT PROCESSOR
+// MAIN CHAT PROCESSOR (with direct patterns)
 // ============================================================
 export async function processUserMessage(userMessage, sessionId, participantId, participantType = "guest", userId = null) {
   try {
@@ -266,17 +281,37 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
       userId
     );
 
-    // Detect language - default to English, only switch if Arabic detected
+    // Detect language - follow the user's language each message
     const detectedLang = conversationManager.detectLanguage(userMessage);
-    if (detectedLang === "ar" && session.language !== "ar") {
-      await conversationManager.updateLanguage(sessionId, "ar");
-      session.language = "ar";
-    } else if (!session.language) {
-      session.language = "en";
+    if (detectedLang !== session.language) {
+      await conversationManager.updateLanguage(sessionId, detectedLang);
+      session.language = detectedLang;
     }
 
-    console.log(`[Chat] Current state: ${session.state}, Language: ${session.language}`);
+    console.log(`[Chat] State: ${session.state}, Lang: ${session.language}`);
 
+    // ========== CHECK DIRECT PATTERNS FIRST ==========
+    for (const pattern of DIRECT_PATTERNS) {
+      if (pattern.regex.test(userMessage)) {
+        console.log(`[Chat] Direct pattern matched: ${pattern.regex}`);
+        const directResponse = await pattern.response(session);
+        
+        // Save to history
+        await conversationManager.addMessage(sessionId, "user", userMessage);
+        await conversationManager.addMessage(sessionId, "assistant", directResponse);
+        
+        return {
+          success: true,
+          answer: directResponse,
+          state: session.state,
+          action: null,
+          actionData: null,
+          sessionId: session.sessionId,
+        };
+      }
+    }
+
+    // ========== NORMAL AI FLOW ==========
     const messages = buildMessages(session, userMessage);
     const tools = getToolsForState(session.state);
     const llmWithTools = chatModel.bindTools(tools);
@@ -284,22 +319,26 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
     console.log(`[Chat] Calling LLM with ${tools.length} tools...`);
     let aiResponse = await llmWithTools.invoke(messages);
 
-    let iterations = 5;
+    let iterations = 5; // Allow more iterations
     const allToolResults = [];
 
     while (aiResponse.tool_calls && aiResponse.tool_calls.length > 0 && iterations > 0) {
       iterations--;
-      console.log(`[Chat] AI wants to call ${aiResponse.tool_calls.length} tool(s)`);
+      console.log(`[Chat] AI calling ${aiResponse.tool_calls.length} tool(s)`);
 
       const toolResults = await executeTools(aiResponse.tool_calls, session);
       allToolResults.push(...toolResults);
 
       messages.push(aiResponse);
       for (const result of toolResults) {
+        // Compress tool results to save tokens
+        const compressedResult = result.result.length > 500 
+          ? result.result.substring(0, 500) + "..."
+          : result.result;
         messages.push(
           new ToolMessage({
             tool_call_id: result.id,
-            content: result.result,
+            content: compressedResult,
             name: result.name,
           })
         );
@@ -308,19 +347,32 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
       aiResponse = await llmWithTools.invoke(messages);
     }
 
-    await conversationManager.addMessage(sessionId, "user", userMessage);
-    await conversationManager.addMessage(sessionId, "assistant", aiResponse.content);
-
-    for (const result of allToolResults) {
-      await conversationManager.addMessage(sessionId, "tool", result.result, result.name, result.id);
+    // FALLBACK: If AI response is empty, use last tool result
+    let finalAnswer = aiResponse.content;
+    if (!finalAnswer || !finalAnswer.trim()) {
+      console.log(`[Chat] AI response empty, using last tool result as fallback`);
+      const lastToolResult = allToolResults[allToolResults.length - 1];
+      if (lastToolResult) {
+        finalAnswer = lastToolResult.result;
+      } else {
+        finalAnswer = "I found the information. How can I help further?";
+      }
     }
 
+    // Save to history (only if content exists)
+    await conversationManager.addMessage(sessionId, "user", userMessage);
+    if (finalAnswer && finalAnswer.trim()) {
+      await conversationManager.addMessage(sessionId, "assistant", finalAnswer);
+    }
+
+    // State transition
     const nextState = determineNextState(session.state, aiResponse, allToolResults);
     if (nextState !== session.state) {
-      console.log(`[Chat] State transition: ${session.state} -> ${nextState}`);
+      console.log(`[Chat] State: ${session.state} -> ${nextState}`);
       await conversationManager.updateState(sessionId, nextState);
     }
 
+    // Check for actions
     let action = null;
     let actionData = null;
 
@@ -343,11 +395,11 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
       };
     }
 
-    console.log(`[Chat] Response: "${aiResponse.content?.substring(0, 100)}..."`);
+    console.log(`[Chat] Response: "${finalAnswer?.substring(0, 100)}..."`);
 
     return {
       success: true,
-      answer: aiResponse.content,
+      answer: finalAnswer,
       state: nextState,
       action,
       actionData,
@@ -364,7 +416,7 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
 }
 
 // ============================================================
-// GET SESSION INFO (for loading chat history)
+// GET SESSION INFO
 // ============================================================
 export async function getSessionInfo(sessionId) {
   try {
