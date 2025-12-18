@@ -349,17 +349,21 @@ export const joinSocketRooms = (socket, user) => {
   }
 
   if (user.role) {
+    console.log(`[JOIN ROOMS] User role: ${user.role}, joining...`);
     socket.emit("joinRole", user.role);
 
     if (user.role === "kitchen") {
+      console.log("[JOIN ROOMS] Joining kitchen room");
       socket.emit("joinKitchen");
     }
 
     if (user.role === "cashier") {
+      console.log("[JOIN ROOMS] Joining cashier room");
       socket.emit("joinCashier");
     }
 
     if (user.role === "admin") {
+      console.log("[JOIN ROOMS] Joining admin room");
       socket.emit("joinAdmin");
     }
   }
@@ -385,7 +389,7 @@ const sendNotificationToSW = (notificationData) => {
 
 export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
-  const BASE = import.meta.env.VITE_SOCKET_URL || 'https://brand-bite.onrender.com';
+  const BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
   try {
     console.log("Initializing socket with base:", BASE, "withCredentials:", options.withCredentials || true);
     socketInstance = ioClient(BASE, {
