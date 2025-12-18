@@ -197,14 +197,14 @@ function MenuPage() {
   return (
     <>
       <div className="sticky top-0 z-20  pt-5 pl-5 bg-gray-50 rounded-2xl py-3 dark:bg-gray-800">
-        <p className="text-2xl font-bold">
-          {t("Hello")}, {user ? user.name : t("Guest")}
+        <p className="text-xl md:text-2xl font-semibold">
+          {t("Hello")}, <span className="text-primary font-bold">{user ? user.name.split(" ")[0] : t("Guest")}</span>
         </p>
         {/* CART */}
         <div className="absolute right-6 top-3">
           <button
             onClick={() => navigate("/checkout")}
-            className="relative bg-white  text-primary px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
+            className="relative bg-white dark:bg-gray-900 text-primary px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
           >
             <ShoppingCart size={20} />
             {totalItems > 0 && (
