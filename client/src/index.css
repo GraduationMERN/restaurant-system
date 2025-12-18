@@ -9,6 +9,19 @@
   --color-secondary: #fff;
   /* … other tokens … */
 }
+/* ===== iOS NOTCH FIX ===== */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-default);
+}
+
+/* Safe area support for iPhone notch / dynamic island */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--bg-default);
+}
 
 :root {
   --color-accent: #7c3aed; /* purple 600 */
