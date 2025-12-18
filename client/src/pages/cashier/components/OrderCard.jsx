@@ -34,7 +34,7 @@ export default function OrderCard({
   onUpdatePayment,
   onDelete,
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
 
@@ -64,7 +64,7 @@ export default function OrderCard({
         {/* Customer Info */}
         <div className="flex items-center gap-1 text-slate-600 text-sm mb-2">
           <User className="w-4 h-4" />
-          <span>{order.customerName || "Walk-In Customer"}</span>
+          <span>{order.customerInfo?.name || order.customerName || "Walk-In Customer"}</span>
         </div>
 
         {/* Time & Items */}
