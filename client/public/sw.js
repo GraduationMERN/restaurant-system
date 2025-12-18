@@ -69,6 +69,12 @@ self.addEventListener('message', event => {
   if (type === 'SHOW_NOTIFICATION') {
     const { title, body, icon = '/images/logo/logo-icon.svg', badge = '/images/logo/logo-icon.svg', tag, data: notificationData, actions } = data;
 
+    // Check if notification permission is granted before attempting to show
+    if (Notification.permission !== 'granted') {
+      console.warn('Notification permission not granted for this origin');
+      return;
+    }
+
     event.waitUntil(
       self.registration.showNotification(title, {
         body,

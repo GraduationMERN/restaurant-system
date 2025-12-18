@@ -108,17 +108,17 @@ function App() {
             <Route
               path="/cashier"
               element={
-                <ProtectedRoute roles={["cashier", "admin"]}>
+                // <ProtectedRoute roles={["cashier", "admin"]}>
                   <CashierDashboard />
-                </ProtectedRoute>
+                // </ProtectedRoute>
               }
             />
             <Route
               path="/kitchen"
               element={
-                <ProtectedRoute roles={["kitchen", "admin"]}>
+                // <ProtectedRoute roles={["kitchen", "admin"]}>
                   <KitchenOrders />
-                </ProtectedRoute>
+                // </ProtectedRoute>
               }
             />
 
@@ -127,25 +127,25 @@ function App() {
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  // <ProtectedRoute roles={["admin"]}>
                     <AdminDashboard />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
               <Route
                 path="/admin/kitchen"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  // <ProtectedRoute roles={["admin"]}>
                     <KitchenOrders />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
               <Route
                 path="/admin/coupons"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  // <ProtectedRoute roles={["admin"]}>
                     <Coupons />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
             </Route>

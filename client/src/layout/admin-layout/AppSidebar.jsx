@@ -14,6 +14,7 @@ const navItems = [
   { icon: <ShootingStarIcon />, name: "Reviews", path: "/admin/reviews" },
   { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
   { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },
+  { icon: <DollarLineIcon />, name: "Offers", path: "/admin/offers" },
   { icon: <DollarLineIcon />, name: "Coupons", path: "/admin/coupons" },
   { icon: <UserCircleIcon />, name: "Users", path: "/admin/users" },
   { icon: <BoxIconLine />, name: "Kitchen", path: "/kitchen" },

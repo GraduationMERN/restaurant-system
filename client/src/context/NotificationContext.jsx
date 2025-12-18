@@ -35,7 +35,7 @@ export const NotificationProvider = ({ children }) => {
       const res = await fetch(url, { credentials: "include" });
       const json = await res.json();
       
-      if (json && json.notifications) {
+      if (json && json.notifications && Array.isArray(json.notifications)) {
         const normalized = json.notifications.map((n) => ({ ...n, id: n._id || n.id }));
         
         if (append) {
@@ -44,20 +44,30 @@ export const NotificationProvider = ({ children }) => {
           setNotifications(normalized);
         }
         
+        // Handle pagination data safely with defaults
+        const paginationData = json.pagination || {};
         setPagination({
-          page: json.pagination.page,
-          limit: json.pagination.limit,
-          hasMore: json.pagination.hasMore,
+          page: paginationData.page || page,
+          limit: paginationData.limit || 20,
+          hasMore: paginationData.hasMore !== false,
           loading: false,
         });
         
         // Update unread count
         const allNotifications = append ? [...notifications, ...normalized] : normalized;
         setUnreadCount(allNotifications.filter((n) => !n.isRead).length);
+      } else {
+        // Handle unexpected response format
+        setPagination({
+          page,
+          limit: 20,
+          hasMore: false,
+          loading: false,
+        });
       }
     } catch (err) {
       console.error("Failed to fetch admin notifications", err);
-      setPagination(prev => ({ ...prev, loading: false }));
+      setPagination(prev => ({ ...prev, loading: false, hasMore: false }));
     }
   };
 

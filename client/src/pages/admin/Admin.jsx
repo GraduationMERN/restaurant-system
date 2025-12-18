@@ -10,6 +10,7 @@ import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
 import RewardOrders from "./RewardOrders";
 import Users from "./Users";
+import Offers from "./Offers";
 
 export default function Admin() {
   const { section: rawSection } = useParams();
@@ -24,6 +25,7 @@ export default function Admin() {
     "profile",
     "users",
     "reward-orders",
+    "offers",
   ]);
   const section =
     rawSection && allowed.has(rawSection) ? rawSection : "dashboard";
@@ -72,6 +74,12 @@ export default function Admin() {
         {section === "reward-orders" && (
           <section id="reward-orders" className={contentClasses}>
             <RewardOrders />
+          </section>
+        )}
+
+        {section === "offers" && (
+          <section id="offers" className={contentClasses}>
+            <Offers />
           </section>
         )}
 

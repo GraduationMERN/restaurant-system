@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchReviews } from "../redux/slices/reviewSlice";
 import { useModal } from "../hooks/useModal";
@@ -14,12 +14,31 @@ export default function ReviewsPage() {
   const { isOpen, openModal, closeModal } = useModal();
   const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
+  const [offers, setOffers] = useState([]);
 
   const { error, warning, success } = useToast();
 
+  // Fetch reviews
   useEffect(() => {
     dispatch(fetchReviews());
   }, [dispatch]);
+
+  // Fetch active offers
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const res = await api.get("/api/offers");
+        if (res.data?.success && res.data?.data) {
+          setOffers(res.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch offers:", err);
+        // Silently fail - offers are optional
+      }
+    };
+
+    fetchOffers();
+  }, []);
 
   const handleOpenReviewModal = async () => {
     if (!user?.id) {
@@ -41,6 +60,8 @@ export default function ReviewsPage() {
     }
   };
 
+  const featuredOffer = offers.length > 0 ? offers[0] : null;
+
   return (
     <div className="ms-10 me-10 my-10">
       <h2 className="text-2xl font-bold mb-4">{t("reviews")}</h2>
@@ -54,7 +75,7 @@ export default function ReviewsPage() {
 
       <ReviewModal isOpen={isOpen} close={closeModal} />
 
-      {loading ? <p>{t("loading")}</p> : <ReviewsGrid reviews={reviews} />}
+      {loading ? <p>{t("loading")}</p> : <ReviewsGrid reviews={reviews} featuredOffer={featuredOffer} />}
     </div>
   );
 }

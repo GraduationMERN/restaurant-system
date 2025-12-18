@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "timeago.js";
+import FeaturedOfferCard from "../offers/FeaturedOfferCard";
 
-export default function ReviewsGrid({ reviews }) {
+export default function ReviewsGrid({ reviews, featuredOffer }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const { t } = useTranslation();
 
@@ -17,58 +18,72 @@ export default function ReviewsGrid({ reviews }) {
       : (parts[0][0] + parts[1][0]).toUpperCase();
   };
 
+  const approvedReviews = reviews.filter((review) => review.status === "approved");
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3">
-      {reviews.map((review) => {
-        if (review.status !== "approved") return null;
+      {/* Featured Offer - Display first on desktop, or after a few reviews on mobile */}
+      {featuredOffer && (
+        <div className="hidden md:block lg:col-span-2">
+          <FeaturedOfferCard offer={featuredOffer} />
+        </div>
+      )}
 
-        const userName = review.user?.name || t("anonymous");
-        const initials = getInitials(review.user?.name);
+      {/* Reviews */}
+      {approvedReviews.map((review, index) => {
+        // Show featured offer on mobile after 2 reviews
+        const showMobileOffer =
+          featuredOffer && index === 2 && window.innerWidth < 1024;
 
         return (
-          <div
-            key={review._id}
-            className="border  dark:bg-gray-800 dark:border-gray-700 p-4 rounded-lg shadow-sm shadow-primary/50 dark:shadow-none"
-          >
-            {/* User info */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-full bg-gray-800 dark:bg-gray-300 flex items-center justify-center text-white font-bold">
-                {initials}
+          <React.Fragment key={`review-${review._id}`}>
+            {showMobileOffer && (
+              <div className="col-span-1 md:hidden">
+                <FeaturedOfferCard offer={featuredOffer} />
               </div>
-              <span className="font-medium">{userName}</span>
-              <p className="text-xs text-gray-500">
-                      {format(review.createdAt)}
-                    </p>
-            </div>
+            )}
 
-            {/* Rating */}
-            <div className="flex items-center gap-1 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className={i < review.rating ? "text-yellow-400" : "text-gray-300"}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
+            <div className="border  dark:bg-gray-800 dark:border-gray-700 p-4 rounded-lg shadow-sm shadow-primary/50 dark:shadow-none">
+              {/* User info */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-gray-800 dark:bg-gray-300 flex items-center justify-center text-white font-bold">
+                  {getInitials(review.user?.name)}
+                </div>
+                <span className="font-medium">{review.user?.name || t("anonymous")}</span>
+                <p className="text-xs text-gray-500">
+                  {format(review.createdAt)}
+                </p>
+              </div>
 
-            {/* Comment */}
-            <p className="mt-1">{review.comment || t("no_comment")}</p>
+              {/* Rating */}
+              <div className="flex items-center gap-1 mb-2">
+                {[...Array(5)].map((_, i) => (
+                  <span
+                    key={i}
+                    className={i < review.rating ? "text-yellow-400" : "text-gray-300"}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
 
-            {/* Photos */}
-            <div className="flex gap-2 mt-2">
-              {review.photos?.map((photo) => (
-                <img
-                  key={photo.public_id || photo.url}
-                  src={photo.url}
-                  alt="review"
-                  className="h-16 w-16 object-cover rounded cursor-pointer"
-                  onClick={() => setSelectedPhoto(photo.url)}
-                />
-              ))}
+              {/* Comment */}
+              <p className="mt-1">{review.comment || t("no_comment")}</p>
+
+              {/* Photos */}
+              <div className="flex gap-2 mt-2">
+                {review.photos?.map((photo) => (
+                  <img
+                    key={photo.public_id || photo.url}
+                    src={photo.url}
+                    alt="review"
+                    className="h-16 w-16 object-cover rounded cursor-pointer"
+                    onClick={() => setSelectedPhoto(photo.url)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          </React.Fragment>
         );
       })}
 
