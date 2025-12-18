@@ -1,55 +1,25 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import api from "../../api/axios"; // Your existing axios instance
-import { v4 as uuidv4 } from "uuid"; // You need to install this: npm install uuid
-
-// --- Helper: Manage Guest ID ---
-const getGuestId = () => {
-  // Check if ID exists in local storage, if not, create one
-  let id = localStorage.getItem("guest_session_id");
-  if (!id) {
-    id = uuidv4();
-    localStorage.setItem("guest_session_id", id);
-  }
-  return id;
-};
-
-// --- Helper: Extract Product Data from AI Response ---
-// The AI sends a text like: "- Product: Burger | Price: 100... ![img](url)"
-// We parse this to create the 'relevantItems' cards for your UI.
-const parseProductsFromText = (text) => {
-  const items = [];
-  if (!text) return items;
-
-  // Split response by logical blocks (items usually separated by newlines or markers)
-  // Our backend uses "---" or distinct bullet points.
-  const blocks = text.split(/(?=- Product:)/i);
-
-  blocks.forEach((block) => {
-    // Regex to extract details based on the format defined in aiTools.js
-    const nameMatch = block.match(/Product:\s*(.*?)(?:\n|\||$)/i);
-    const priceMatch = block.match(/Price:\s*(\d+)/i);
-    const imgMatch = block.match(/!\[.*?\]\((.*?)\)/); // Extracts URL from Markdown image
-
-    if (nameMatch && priceMatch) {
-      items.push({
-        name: nameMatch[1].replace(/\(.*\)/, "").trim(), // Remove Arabic name for cleaner UI card
-        price: priceMatch[1],
-        img: imgMatch ? imgMatch[1] : null, // If image exists
-      });
-    }
-  });
-
-  return items;
-};
+import api from "../../api/axios";
 
 // --- Async Thunks ---
 
 export const checkChatbotHealth = createAsyncThunk(
   "chatbot/health",
   async () => {
-    // Adjusted endpoint to match standard convention, or keep yours
     const res = await api.get("/api/chatBot/health");
     return res.data;
+  }
+);
+
+export const loadChatHistory = createAsyncThunk(
+  "chatbot/loadHistory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/chatBot/history");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to load history");
+    }
   }
 );
 
@@ -57,15 +27,7 @@ export const sendChatMessage = createAsyncThunk(
   "chatbot/send",
   async (message, { rejectWithValue }) => {
     try {
-      const guestId = getGuestId();
-
-      // Sending Guest ID is crucial for the 'create_order' tool to work
-      const res = await api.post(
-        "/api/chatBot/chat", // Ensure this matches your server.js route
-        { message },
-        { headers: { "x-guest-id": guestId } }
-      );
-
+      const res = await api.post("/api/chatBot/chat", { message });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Error connecting to AI");
@@ -73,20 +35,62 @@ export const sendChatMessage = createAsyncThunk(
   }
 );
 
+export const resetChatSession = createAsyncThunk(
+  "chatbot/reset",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/api/chatBot/reset", {});
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Error resetting session");
+    }
+  }
+);
+
 // --- Suggestions Configuration ---
 const initialSuggestions = {
   initial: [
-    { text: "🍕 Show me pizzas", query: "What pizzas do you have?" },
-    { text: "🥗 Vegetarian options", query: "Do you have vegetarian food?" },
-    { text: "🍰 Best desserts", query: "Show me desserts with pictures" },
-    { text: "🧾 My Order", query: "Track my order status" }, // Added tracking
+    { text: "📋 Show Menu", query: "Show me the menu" },
+    { text: "🍔 Burgers", query: "I want to see burgers" },
+    { text: "🍕 Pizza", query: "Show me pizza options" },
+    { text: "🛒 My Cart", query: "What's in my cart?" },
   ],
-  followup: [
-    { text: "💰 Any deals?", query: "Do you have any special offers?" },
-    { text: "🌶️ Spicy options", query: "I like spicy food" },
-    { text: "✅ Confirm Order", query: "Yes, please confirm the order" }, // Helpful for closing deals
-    { text: "🥤 Drinks", query: "What drinks do you have?" },
+  ordering: [
+    { text: "➕ Add More", query: "I want to add more items" },
+    { text: "🛒 View Cart", query: "Show my cart" },
+    { text: "✅ Checkout", query: "I'm done, checkout please" },
   ],
+  checkout: [
+    { text: "🏠 Delivery", query: "Delivery please" },
+    { text: "🏪 Pickup", query: "I'll pick it up" },
+    { text: "🪑 Dine-in", query: "I'll eat here" },
+  ],
+  payment: [
+    { text: "💳 Pay Online", query: "I'll pay online" },
+    { text: "💵 Pay at Store", query: "I'll pay at the store" },
+  ],
+};
+
+// --- Get suggestions based on state ---
+const getSuggestionsForState = (state) => {
+  switch (state) {
+    case "greeting":
+    case "browsing":
+      return initialSuggestions.initial;
+    case "ordering":
+    case "cart_review":
+      return initialSuggestions.ordering;
+    case "service_type":
+    case "delivery_info":
+    case "table_info":
+    case "coupon":
+    case "order_summary":
+      return initialSuggestions.checkout;
+    case "payment":
+      return initialSuggestions.payment;
+    default:
+      return initialSuggestions.initial;
+  }
 };
 
 // --- Slice ---
@@ -95,17 +99,15 @@ const chatbotSlice = createSlice({
   initialState: {
     isActive: false,
     isWaiting: false,
-    messages: [
-      {
-        type: "bot",
-        content: "Hello! 👋 I'm TastyBot. I can show you the menu, pictures of food, and take your order directly here!",
-        time: new Date().toISOString(),
-      },
-    ],
+    isLoaded: false,
+    messages: [],
     suggestions: initialSuggestions.initial,
-    relevantItems: [], // Populated dynamically from AI response
     backendStatus: "unknown",
     error: null,
+    sessionId: null,
+    conversationState: "greeting",
+    lastAction: null,
+    restaurantInfo: null,
   },
   reducers: {
     toggleChatbot(state) {
@@ -120,11 +122,28 @@ const chatbotSlice = createSlice({
     setInitialSuggestions(state) {
       state.suggestions = initialSuggestions.initial;
     },
-    setFollowupSuggestions(state) {
-      state.suggestions = initialSuggestions.followup;
+    clearChat(state) {
+      state.messages = [];
+      state.suggestions = initialSuggestions.initial;
+      state.conversationState = "greeting";
+      state.lastAction = null;
+      state.isLoaded = false;
+      state.sessionId = null;
     },
-    clearRelevantItems(state) {
-      state.relevantItems = [];
+    setRestaurantInfo(state, action) {
+      state.restaurantInfo = action.payload;
+    },
+    setWelcomeMessage(state, action) {
+      const restaurantName = action.payload || "Our Restaurant";
+      if (state.messages.length === 0) {
+        state.messages = [
+          {
+            type: "bot",
+            content: `Welcome! 👋 I'm ${restaurantName}'s assistant. How can I help you today? You can browse our menu, place an order, or ask any questions!`,
+            time: new Date().toISOString(),
+          },
+        ];
+      }
     },
   },
   extraReducers: (builder) => {
@@ -137,6 +156,27 @@ const chatbotSlice = createSlice({
         state.backendStatus = "down";
       })
 
+      // Load Chat History
+      .addCase(loadChatHistory.pending, (state) => {
+        state.isWaiting = true;
+      })
+      .addCase(loadChatHistory.fulfilled, (state, action) => {
+        state.isWaiting = false;
+        state.isLoaded = true;
+        const data = action.payload || {};
+        
+        if (data.success && data.messages && data.messages.length > 0) {
+          state.messages = data.messages;
+          state.conversationState = data.state || "greeting";
+          state.sessionId = data.sessionId;
+          state.suggestions = getSuggestionsForState(data.state);
+        }
+      })
+      .addCase(loadChatHistory.rejected, (state) => {
+        state.isWaiting = false;
+        state.isLoaded = true;
+      })
+
       // Send Message
       .addCase(sendChatMessage.pending, (state) => {
         state.isWaiting = true;
@@ -147,48 +187,66 @@ const chatbotSlice = createSlice({
         const data = action.payload || {};
 
         if (data.success) {
-          // 1. Add Bot Response
           state.messages.push({
             type: "bot",
             content: data.answer,
             time: new Date().toISOString(),
           });
 
-          // 2. Smart Parsing: Extract products for the UI Cards
-          // The backend sends a text string; we extract JSON-like data for the cards
-          const extractedItems = parseProductsFromText(data.answer);
-
-          if (extractedItems.length > 0) {
-            state.relevantItems = extractedItems;
-            state.suggestions = initialSuggestions.followup;
-          } else {
-            // Keep previous items or clear? Usually clear if context changes
-            // state.relevantItems = []; 
+          if (data.sessionId) {
+            state.sessionId = data.sessionId;
           }
 
-          // 3. Action Handling
-          if (data.action === "create_order") {
-            // You could trigger a UI confetti or sound effect here via state
-            state.suggestions = [{ text: "Track Order", query: "Track my order" }];
+          if (data.state) {
+            state.conversationState = data.state;
+            state.suggestions = getSuggestionsForState(data.state);
           }
 
+          if (data.action) {
+            state.lastAction = data.action;
+
+            if (data.action === "order_created") {
+              state.suggestions = [
+                { text: "📦 Track Order", query: "Where's my order?" },
+                { text: "🆕 New Order", query: "I want to order again" },
+              ];
+            }
+
+            if (data.action === "payment_redirect" && data.actionData?.checkoutUrl) {
+              window.open(data.actionData.checkoutUrl, "_blank");
+            }
+          }
         } else {
-          // Handle Logic Error from Backend
           state.messages.push({
             type: "bot",
-            content: data.answer || "Sorry, I couldn't understand that.",
+            content: data.answer || "Sorry, something went wrong. Please try again.",
             time: new Date().toISOString(),
           });
         }
       })
-      .addCase(sendChatMessage.rejected, (state) => {
+      .addCase(sendChatMessage.rejected, (state, action) => {
         state.isWaiting = false;
+        state.error = action.payload;
         state.messages.push({
           type: "bot",
-          content: "😔 Connection lost. Please try again later.",
+          content: "😔 Connection error. Please try again later.",
           time: new Date().toISOString(),
         });
         state.suggestions = initialSuggestions.initial;
+      })
+
+      // Reset Session
+      .addCase(resetChatSession.fulfilled, (state) => {
+        state.messages = [
+          {
+            type: "bot",
+            content: "Conversation cleared. How can I help you?",
+            time: new Date().toISOString(),
+          },
+        ];
+        state.suggestions = initialSuggestions.initial;
+        state.sessionId = null;
+        state.conversationState = "greeting";
       });
   },
 });
@@ -198,8 +256,9 @@ export const {
   addLocalMessage,
   clearSuggestions,
   setInitialSuggestions,
-  setFollowupSuggestions,
-  clearRelevantItems,
+  clearChat,
+  setRestaurantInfo,
+  setWelcomeMessage,
 } = chatbotSlice.actions;
 
 export default chatbotSlice.reducer;

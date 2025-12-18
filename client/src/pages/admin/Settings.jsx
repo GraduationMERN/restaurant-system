@@ -28,7 +28,12 @@ export default function Settings() {
     settings.branding?.logoUrl || ""
   );
   const [logoFile, setLogoFile] = useState(null);
+  const [menuImagePreview, setMenuImagePreview] = useState(
+    settings.branding?.menuImage || ""
+  );
+  const [menuImageFile, setMenuImageFile] = useState(null);
   const fileInputRef = useRef(null);
+  const menuImageInputRef = useRef(null);
 
   const [notifyNewOrder, setNotifyNewOrder] = useState(true);
   const [notifyReview, setNotifyReview] = useState(true);
@@ -59,6 +64,7 @@ export default function Settings() {
       setPrimaryColor(data.branding?.primaryColor || "#FF5733");
       setSecondaryColor(data.branding?.secondaryColor || "#33C3FF");
       setLogoPreview(data.branding?.logoUrl || "");
+      setMenuImagePreview(data.branding?.menuImage || "");
       setAboutTitle(data.about?.title || "About Us");
       setAboutContent(data.about?.content || "");
       setSupportEmail(data.support?.email || "");
@@ -87,6 +93,20 @@ export default function Settings() {
         logoUrl = uploadRes.data.logoUrl;
       }
 
+      // Upload menu image if there's a new file
+      let menuImage = menuImagePreview;
+      if (menuImageFile) {
+        const formData = new FormData();
+        formData.append('menuImage', menuImageFile);
+        
+        const uploadRes = await api.post('/api/restaurant/upload-menu-image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        menuImage = uploadRes.data.menuImageUrl;
+      }
+
       const payload = {
         restaurantName,
         description,
@@ -96,6 +116,7 @@ export default function Settings() {
           primaryColor,
           secondaryColor,
           logoUrl,
+          menuImage,
         },
         about: { title: aboutTitle, content: aboutContent },
         support: { email: supportEmail, phone: supportPhone },
@@ -110,6 +131,7 @@ export default function Settings() {
       
       // Clear the file state after successful save
       setLogoFile(null);
+      setMenuImageFile(null);
     } catch (error) {
       toast.showToast({ message: "Failed to save settings", type: "error" });
     } finally {
@@ -310,6 +332,50 @@ export default function Settings() {
                         const reader = new FileReader();
                         reader.onloadend = () =>
                           setLogoPreview(String(reader.result || ""));
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Menu Image (for Chatbot)</Label>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  Upload an image of your menu that the chatbot will display to customers
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="h-24 w-36 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+                    {menuImagePreview ? (
+                      <img
+                        src={menuImagePreview}
+                        alt="Menu preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                        No Image
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    className="hover:bg-primary transition-all duration-300 px-7 py-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-sm hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-primary cursor-pointer"
+                    type="button"
+                    onClick={() => menuImageInputRef.current?.click()}
+                    value={menuImagePreview ? "Change Menu Image" : "Upload Menu Image"}
+                  />
+
+                  <input
+                    ref={menuImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file && file.type.startsWith("image/")) {
+                        setMenuImageFile(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () =>
+                          setMenuImagePreview(String(reader.result || ""));
                         reader.readAsDataURL(file);
                       }
                     }}
