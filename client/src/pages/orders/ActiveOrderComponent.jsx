@@ -233,14 +233,9 @@ export default function ActiveOrderComponent({ order }) {
 
         {/* Buttons */}
         <div className="flex gap-3">
-          <button
-            onClick={() => navigate(`/orders/${order._id}`)}
-            className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition"
-          >
-            View Details
-          </button>
+         
 
-          {["pending", "confirmed"].includes(order.status) && (
+          {order.status === "pending" && (
             <button
               onClick={() => setShowCancelConfirm(true)}
               className="py-3 px-4 border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-semibold rounded-xl transition flex items-center gap-2"
@@ -248,6 +243,12 @@ export default function ActiveOrderComponent({ order }) {
               <XCircle className="w-5 h-5" />
               Cancel
             </button>
+          )}
+          
+          {order.status !== "pending" && (
+            <div className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl text-center font-semibold">
+              ✓ Cannot cancel - Order already {order.status}
+            </div>
           )}
         </div>
       </div>

@@ -391,16 +391,8 @@ export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
   
   // Determine backend URL with fallback
-  let BASE = 
-              import.meta.env.VITE_SOCKET_URL || 
-              import.meta.env.VITE_API_BASE_URL || 
-             'https://brand-bite.onrender.com' ||
-             window.location.origin;
-  
-  // Ensure it's a proper URL
-  if (!BASE.startsWith('http://') && !BASE.startsWith('https://')) {
-    BASE = window.location.origin;
-  }
+  let BASE = import.meta.env.VITE_SOCKET_URL ||  
+             'https://brand-bite.onrender.com'
   
   try {
     console.log("[SOCKET INIT] Connecting to:", BASE, "withCredentials: true");
