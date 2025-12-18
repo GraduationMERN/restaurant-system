@@ -50,7 +50,7 @@ io.on("connection", (socket) => {
   // Cashier-specific room for order updates
   socket.on("joinCashier", () => {
     socket.join("cashier");
-    // console.log(`Socket ${socket.id} joined cashier room`);
+    console.log(`[SOCKET] Cashier joined room. Socket ID: ${socket.id}`);
      });
   // Allow users to join reward order specific room for real-time updates
   socket.on("join_reward_order", (data) => {

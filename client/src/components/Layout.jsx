@@ -20,7 +20,7 @@ export default function Layout({ children }) {
   );
   return (
 
-    <div className="lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none md:pl-18">
+    <div className={`lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none ${shouldHideUI ? "md:pl-0" : "md:pl-18"}`}>
 
       {!shouldHideUI && <DesktopNav />}
 
