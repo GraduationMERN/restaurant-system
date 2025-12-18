@@ -227,45 +227,77 @@ const AppSidebar = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Logo - Hidden on small and medium screens (below lg) */}
-      <div className={`hidden lg:flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-800 ${
-        !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+      <div className={`hidden lg:flex items-center px-4 py-4 border-b border-gray-200 dark:border-gray-800 ${
+        !isExpanded && !isHovered ? "lg:justify-center" : "justify-between"
       }`}>
-        <Link to="/" className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {isExpanded || isHovered ? (
             <>
-              <img
-                src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
-                alt="Logo"
-                width={120}
-                height={40}
-                className="object-contain "
-              />
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
-                Admin
-              </span>
+              <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-sm flex-shrink-0">
+                <img
+                  src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
+                  {settings.restaurantName || "Restaurant"}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Admin Panel</span>
+              </div>
             </>
           ) : (
-            <img
-              src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
-            />
+            <div className="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-sm">
+              <img
+                src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
           )}
-        </Link>
+        </div>
+        {(isExpanded || isHovered) && (
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-primary hover:text-white text-gray-600 dark:text-gray-400 transition-all duration-200 group"
+            title="Open Site"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        )}
       </div>
 
       {/* Alternative: Show minimal logo on mobile when sidebar is open */}
       {isMobileOpen && (
-        <div className="lg:hidden flex items-center justify-center px-4 py-6 border-b border-gray-200 dark:border-gray-800">
-          <img
-            src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
-            alt="Logo"
-            width={32}
-            height={32}
-            className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
-          />
+        <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-sm">
+              <img
+                src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+              {settings.restaurantName || "Restaurant"}
+            </span>
+          </div>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-primary hover:text-white text-gray-600 dark:text-gray-400 transition-all duration-200"
+            title="Open Site"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
         </div>
       )}
 
