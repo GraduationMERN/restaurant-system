@@ -3,6 +3,7 @@ import {
   getRestaurant,
   updateRestaurant,
   uploadLogo,
+  uploadMenuImage,
 } from "./restaurant.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import roleMiddleware from "../../middlewares/role.middleware.js";
@@ -20,6 +21,15 @@ app.post(
   roleMiddleware("admin"),
   uploadCloud.single("logo"),
   uploadLogo
+);
+
+// Upload menu image (admin only)
+app.post(
+  "/upload-menu-image",
+  authMiddleware,
+  roleMiddleware("admin"),
+  uploadCloud.single("menuImage"),
+  uploadMenuImage
 );
 
 export default app;
