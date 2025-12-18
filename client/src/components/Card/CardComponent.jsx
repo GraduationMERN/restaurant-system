@@ -91,7 +91,7 @@ export default function CardComponent({
               {/* {product?.name || "Product"} */}
               {lang==='ar'?(product.name_ar||product.name):product.name}
             </div>
-            <span className="text-xs text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
+            <span className="text-xs hidden lg:block text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
               {/* {product.desc} */}
               {lang==='ar'?(product.desc_ar||product.desc):product.desc}
             </span>
