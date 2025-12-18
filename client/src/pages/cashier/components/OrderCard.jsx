@@ -34,143 +34,141 @@ export default function OrderCard({
   onUpdatePayment,
   onDelete,
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
 
-  // Calculate prep time
   const createdTime = new Date(order.createdAt).getTime();
   const now = new Date().getTime();
   const prepTime = Math.floor((now - createdTime) / 1000 / 60); // minutes
 
- return (
-  <div
-    className={`bg-white dark:bg-gray-800 border-2 ${colors.border} dark:border-gray-700 rounded-2xl p-5 mb-5 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}
-  >
-    {/* Header Row */}
-    <div className="flex items-start justify-between mb-4">
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
-            Order #{order._id?.slice(-6).toUpperCase() || order._id?.toUpperCase()}
-          </h3>
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-bold ${colors.badge} ${colors.text} uppercase`}
-          >
-            {order.status}
-          </span>
-        </div>
-
-        {/* Customer Info */}
-        <div className="flex items-center gap-1 text-slate-600 text-sm mb-2">
-          <User className="w-4 h-4" />
-          <span>{order.customerName || "Walk-In Customer"}</span>
-        </div>
-
-        {/* Time & Items */}
-        <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>{prepTime} min ago</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <ChefHat className="w-4 h-4" />
-            <span>{order.items?.length || 0} items</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <DollarSign className="w-4 h-4" />
-            <span className="font-bold text-amber-600">
-              ${(order.totalAmount || order.total || 0).toFixed(2)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Action Buttons */}
-      <div className="flex gap-2 ml-4 items-start">
-        <button
-          onClick={() => onUpdateStatus(order)}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
-          title="Update Status"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onDelete(order._id)}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
-          title="Delete Order"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className={`${colors.badge} ${colors.text} p-2 rounded-lg transition-transform transform ${
-            expanded ? "rotate-180" : ""
-          }`}
-        >
-          <ChevronDown className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-
-    {/* Expanded Details */}
-    {expanded && (
-      <div className="border-t-2 border-slate-200 pt-4 mt-4 space-y-4">
-        {/* Items List */}
-        <div>
-          <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
-          <ul className="space-y-2">
-            {order.items?.map((item, idx) => (
-              <li
-                key={idx}
-                className="flex justify-between items-center text-sm text-slate-700 bg-slate-50 p-2 rounded-lg shadow-sm"
-              >
-                <span>
-                  {item.name || item.productId?.name} x {item.quantity}
-                </span>
-                <span className="font-bold">
-                  ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Payment Status */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className="text-sm font-bold text-slate-700">Payment:</span>
-          <div className="flex gap-2 flex-wrap">
+  return (
+    <div
+      className={`bg-white dark:bg-gray-900 border-2 ${colors.border} rounded-2xl p-5 mb-5 transition-all duration-300 hover:shadow-2xl `}
+    >
+      {/* Header Row */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
+              Order #{order._id?.slice(-6).toUpperCase() || order._id?.toUpperCase()}
+            </h3>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
+              className={`px-3 py-1 rounded-full text-sm font-bold ${colors.badge} ${colors.text} uppercase`}
             >
-              {order.paymentStatus || "pending"}
+              {order.status}
             </span>
-            {order.paymentMethod && (
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-800">
-                {order.paymentMethod}
+          </div>
+
+          {/* Customer Info */}
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm mb-2">
+            <User className="w-4 h-4" />
+            <span>{order.customerInfo?.name || order.customerName || "Walk-In Customer"}</span>
+          </div>
+
+          {/* Time & Items */}
+          <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>{prepTime} min ago</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ChefHat className="w-4 h-4" />
+              <span>{order.items?.length || 0} items</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="font-bold text-[#7B4019]">
+                ${(order.totalAmount || order.total || 0).toFixed(2)}
               </span>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 flex-wrap mt-2">
+        {/* Quick Action Buttons */}
+        <div className="flex gap-2 ml-4 items-start">
           <button
-            onClick={() => onViewDetails(order)}
-            className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
+            onClick={() => onUpdateStatus(order)}
+            className="bg-[#7B4019] hover:bg-[#593114] text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform "
+            title="Update Status"
           >
-            Full Details
+            <Edit2 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onUpdatePayment(order)}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
+            onClick={() => onDelete(order._id)}
+            className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform "
+            title="Delete Order"
           >
-            Payment
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className={`${colors.badge} ${colors.text} p-2 rounded-lg transition-transform transform ${
+              expanded ? "rotate-180" : ""
+            }`}
+          >
+            <ChevronDown className="w-4 h-4" />
           </button>
         </div>
       </div>
-    )}
-  </div>
-);
 
+      {/* Expanded Details */}
+      {expanded && (
+        <div className="border-t-2 border-slate-200 dark:border-slate-700 pt-4 mt-4 space-y-4">
+          {/* Items List */}
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Items</h4>
+            <ul className="space-y-2">
+              {order.items?.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-gray-800 p-2 rounded-lg shadow-sm hover:bg-[#FDE1A5] transition-colors"
+                >
+                  <span>
+                    {item.name || item.productId?.name} x {item.quantity}
+                  </span>
+                  <span className="font-bold text-[#7B4019]">
+                    ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Payment Status */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Payment:</span>
+            <div className="flex gap-2 flex-wrap">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
+              >
+                {order.paymentStatus || "pending"}
+              </span>
+              {order.paymentMethod && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 dark:bg-gray-700 text-slate-800 dark:text-slate-200">
+                  {order.paymentMethod}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 flex-wrap mt-2">
+            <button
+              onClick={() => onViewDetails(order)}
+              className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Full Details
+            </button>
+            <button
+              onClick={() => onUpdatePayment(order)}
+              className="flex-1 bg-[#7B4019] hover:bg-[#593114] text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Payment
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

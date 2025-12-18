@@ -72,7 +72,7 @@ export default function StatusUpdateModal({
           <div className="bg-blue-50  rounded-lg p-4 mb-6 border border-blue-200 dark:bg-gray-900 dark:border-blue-800">
             <div className="text-xs text-blue-600 font-bold mb-2 dark:text-white">Customer</div>
             <div className="font-bold text-slate-900 dark:text-gray-400">
-              {order.customerName || "Walk-In Customer"}
+              {order.customerInfo?.name || order.customerName || "Walk-In Customer"}
             </div>
           </div>
         </div>
