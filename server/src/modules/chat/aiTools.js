@@ -53,9 +53,24 @@ export const menuSearchTool = tool(
       console.log(`[Tool:menu_search] Query: "${originalQuery}" -> "${searchQuery}", Category: "${categoryName || 'all'}"`);
 
       let results = [];
+      let exactMatch = null;
 
-      // If category specified, filter by category first
-      if (categoryName) {
+      // FIRST: Try exact name match (most specific)
+      exactMatch = await Product.findOne({
+        $or: [
+          { name: new RegExp(`^${searchQuery}$`, "i") },
+          { name_ar: new RegExp(`^${originalQuery}$`, "i") },
+        ],
+        stock: { $gt: 0 },
+      }).select("name name_ar desc basePrice imgURL options stock _id");
+
+      if (exactMatch) {
+        results = [exactMatch];
+        console.log(`[Tool:menu_search] Exact match found: ${exactMatch.name}`);
+      }
+
+      // If category specified and no exact match, filter by category
+      if (results.length === 0 && categoryName) {
         const category = await Category.findOne({
           $or: [
             { name: new RegExp(categoryName, "i") },
@@ -69,44 +84,44 @@ export const menuSearchTool = tool(
             stock: { $gt: 0 },
           })
             .select("name name_ar desc basePrice imgURL options stock _id")
-            .limit(10);
+            .limit(5);
         }
       }
 
-      // If no category or no results, use vector search
+      // If no results yet, use vector search but limit to 1
       if (results.length === 0 && searchQuery) {
         try {
           const queryVector = await embeddingsModel.embedQuery(searchQuery);
 
-        results = await Product.aggregate([
-          {
-            $vectorSearch: {
-              index: "vector_index",
-              path: "embedding",
-              queryVector: queryVector,
-              numCandidates: 100,
-              limit: 10,
+          results = await Product.aggregate([
+            {
+              $vectorSearch: {
+                index: "vector_index",
+                path: "embedding",
+                queryVector: queryVector,
+                numCandidates: 20,
+                limit: 1, // Only get best match
+              },
             },
-          },
-          {
-            $project: {
-              name: 1,
-              name_ar: 1,
-              desc: 1,
-              basePrice: 1,
-              imgURL: 1,
-              options: 1,
-              stock: 1,
-              _id: 1,
+            {
+              $project: {
+                name: 1,
+                name_ar: 1,
+                desc: 1,
+                basePrice: 1,
+                imgURL: 1,
+                options: 1,
+                stock: 1,
+                _id: 1,
+              },
             },
-          },
           ]);
           console.log(`[Tool:menu_search] Vector search returned ${results.length} results`);
         } catch (vectorErr) {
           console.error(`[Tool:menu_search] Vector search error:`, vectorErr.message);
         }
 
-        // Fallback: text search (search both original Arabic and translated English)
+        // Fallback: text search - return best match only
         if (results.length === 0) {
           console.log(`[Tool:menu_search] Fallback to text search for: ${searchQuery}`);
           results = await Product.find({
@@ -117,30 +132,55 @@ export const menuSearchTool = tool(
             ],
           })
             .select("name name_ar desc basePrice imgURL options stock _id")
-            .limit(10);
+            .limit(1); // Only best match
           console.log(`[Tool:menu_search] Text search returned ${results.length} results`);
         }
       }
 
       if (!results.length) {
-        return "No matching products found. Try a different search term or browse categories.";
+        return "لم أجد هذا المنتج. جرب اسم تاني أو اختار من الأقسام.\n\nNo matching products found. Try a different name or browse categories.";
       }
 
-      // PRE-FORMAT as Markdown - saves AI tokens
-      const formatted = results.map((p) => {
-        let card = `**${p.name}** - ${p.basePrice} EGP`;
-        if (p.imgURL) card += `\n![${p.name}](${p.imgURL})`;
-        if (p.desc) card += `\n${p.desc.substring(0, 80)}`;
-        if (p.stock <= 0) card += `\n⚠️ *Out of stock*`;
-        if (p.options?.length) {
-          const opts = p.options.map(o => o.name).join(", ");
-          card += `\n*Options: ${opts}*`;
+      // Format single product with full details
+      const p = results[0];
+      let card = `**${p.name}**`;
+      if (p.name_ar) card += ` (${p.name_ar})`;
+      card += `\n\n`;
+      
+      if (p.imgURL) card += `![${p.name}](${p.imgURL})\n\n`;
+      
+      card += `💰 **السعر:** ${p.basePrice} EGP\n`;
+      
+      if (p.desc) card += `📝 ${p.desc}\n`;
+      
+      if (p.stock <= 0) {
+        card += `\n⚠️ **غير متوفر حالياً**`;
+      }
+      
+      if (p.options?.length) {
+        card += `\n**الخيارات المتاحة:**\n`;
+        for (const opt of p.options) {
+          card += `• ${opt.name}${opt.required ? ' (مطلوب)' : ''}: `;
+          if (opt.choices?.length) {
+            card += opt.choices.map(c => c.priceDelta > 0 ? `${c.label} (+${c.priceDelta})` : c.label).join(', ');
+          }
+          card += '\n';
         }
-        card += `\n\`ID: ${p._id}\``;
-        return card;
-      }).join("\n\n---\n\n");
+      }
+      
+      card += `\n\`ID: ${p._id}\``;
+      
+      // If we have more results for category browsing, show them
+      if (categoryName && results.length > 1) {
+        card = `**${categoryName}:**\n\n`;
+        for (const prod of results.slice(0, 5)) {
+          card += `• **${prod.name}** - ${prod.basePrice} EGP\n`;
+          if (prod.imgURL) card += `  ![](${prod.imgURL})\n`;
+        }
+        card += `\nاختار واحد وقولي عاوز ايه!`;
+      }
 
-      return `Found ${results.length} item(s):\n\n${formatted}`;
+      return card;
     } catch (error) {
       console.error("[Tool:menu_search] Error:", error);
       return "Error searching menu. Please try again.";
@@ -152,6 +192,74 @@ export const menuSearchTool = tool(
     schema: z.object({
       query: z.string().describe("The food item, ingredient, or flavor to search for"),
       categoryName: z.string().optional().describe("Optional category name to filter by (e.g., 'Burgers', 'Drinks', 'مشروبات')"),
+    }),
+  }
+);
+
+// ============================================================
+// TOOL 1.5: GET PRODUCT DETAILS (show before adding to cart)
+// ============================================================
+export const getProductDetailsTool = tool(
+  async ({ productId }) => {
+    try {
+      console.log(`[Tool:get_product_details] Product ID: "${productId}"`);
+      
+      const product = await Product.findById(productId)
+        .populate("categoryId", "name name_ar");
+      
+      if (!product) {
+        return "Product not found. Please try searching again.";
+      }
+
+      // Format product details nicely
+      let details = `**${product.name}**`;
+      if (product.name_ar) details += ` (${product.name_ar})`;
+      details += `\n\n`;
+      
+      if (product.imgURL) {
+        details += `![${product.name}](${product.imgURL})\n\n`;
+      }
+      
+      details += `💰 **السعر / Price:** ${product.basePrice} EGP\n`;
+      
+      if (product.desc) {
+        details += `📝 **الوصف / Description:** ${product.desc}\n`;
+      }
+      
+      if (product.stock <= 0) {
+        details += `\n⚠️ **غير متوفر حالياً / Out of Stock**`;
+      } else if (product.stock <= 5) {
+        details += `\n⚡ **متبقي ${product.stock} فقط / Only ${product.stock} left**`;
+      }
+      
+      if (product.options && product.options.length > 0) {
+        details += `\n\n**الخيارات المتاحة / Available Options:**\n`;
+        for (const opt of product.options) {
+          details += `• **${opt.name}**${opt.required ? ' (مطلوب/required)' : ''}: `;
+          if (opt.choices && opt.choices.length > 0) {
+            const choicesList = opt.choices.map(c => {
+              if (c.priceDelta && c.priceDelta > 0) {
+                return `${c.label} (+${c.priceDelta} EGP)`;
+              }
+              return c.label;
+            }).join(', ');
+            details += choicesList;
+          }
+          details += '\n';
+        }
+      }
+      
+      return details;
+    } catch (error) {
+      console.error("[Tool:get_product_details] Error:", error);
+      return "Error getting product details. Please try again.";
+    }
+  },
+  {
+    name: "get_product_details",
+    description: "Get full details of a product by ID. Use BEFORE adding to cart to show customer the product info, price, options. Always show this first, then ask for confirmation before adding to cart.",
+    schema: z.object({
+      productId: z.string().describe("The product ID to get details for"),
     }),
   }
 );
@@ -977,6 +1085,7 @@ export const websiteGuideTool = tool(
 // ============================================================
 export const allTools = [
   menuSearchTool,
+  getProductDetailsTool,
   getCategoriesList,
   restaurantInfoTool,
   submitSupportTool,
@@ -992,8 +1101,8 @@ export const allTools = [
 
 // Tools for different conversation states (to reduce context)
 export const greetingTools = [menuSearchTool, getCategoriesList, restaurantInfoTool, websiteGuideTool];
-export const browsingTools = [menuSearchTool, getCategoriesList, restaurantInfoTool, getCartTool, addToCartTool];
-export const orderingTools = [menuSearchTool, getCartTool, addToCartTool, updateCartItemTool, getSuggestionsTool];
+export const browsingTools = [menuSearchTool, getProductDetailsTool, getCategoriesList, getCartTool, addToCartTool];
+export const orderingTools = [menuSearchTool, getProductDetailsTool, getCartTool, addToCartTool, updateCartItemTool, getSuggestionsTool];
 export const checkoutTools = [getCartTool, validateCouponTool, createOrderTool];
-export const paymentTools = [initiatePaymentTool];
+export const paymentTools = [initiatePaymentTool, createOrderTool];
 export const supportTools = [submitSupportTool, restaurantInfoTool];
