@@ -6,7 +6,6 @@ import Rewards from "./Rewards";
 import Menu from "./Menu";
 import Categories from "./Categories";
 import Reviews from "./Reviews";
-import Instagram from "./Instagram";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
 import RewardOrders from "./RewardOrders";
