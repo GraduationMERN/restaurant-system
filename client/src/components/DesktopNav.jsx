@@ -11,22 +11,25 @@ import {
   User,
   LifeBuoy,
   HelpCircle,
+  ChevronDown,
+  ChefHat,
+  LayoutDashboard,
+  CreditCard,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import LogoutButton from "./ui/button/LogoutButton";
 import LoginButton from "./ui/button/LoginButton";
 import { useRole } from "../hooks/useRole";
 
 export default function CombinedNavbar() {
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-
 
   const isActive = (path) => location.pathname === path;
 
@@ -156,6 +159,15 @@ export default function CombinedNavbar() {
             isOpen={isOpen}
             onClick={handleNavClick}
           />
+          
+          {/* Spacer to push user section to bottom */}
+          <div className="flex-1" />
+          
+          {/* User Profile Section */}
+          {isAuthenticated && user && (
+            <UserDropdown isOpen={isOpen} user={user} onNavClick={handleNavClick} />
+          )}
+          
           {isAuthenticated ? (
             <LogoutButton isOpen={isOpen} />
           ) : (
@@ -165,21 +177,9 @@ export default function CombinedNavbar() {
       </aside>
 
       {/* MOBILE NAV (fixed bottom) */}
-      <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
-        <div className="w-full h-14 flex justify-around items-center px-4">
-          {/* Language toggles (mobile) */}
-          {i18n.language === "en" && (
-            <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
-          )}
-          {i18n.language === "ar" && (
-            <button onClick={() => i18n.changeLanguage("en")}>EN</button>
-          )}
-
-          {/* Theme toggle (mobile) */}
-          <div className="flex items-center">
-            <ThemeToggleButton />
-          </div>
-
+      <div className="block md:hidden w-full bg-surface shadow-lg fixed bottom-0 left-0 z-50 border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+        <div className="w-full h-16 flex justify-around items-center px-2">
+          {/* Home */}
           <MobileNavItem
             to="/"
             icon={<Home size={20} />}
@@ -188,6 +188,7 @@ export default function CombinedNavbar() {
             onClick={handleNavClick}
           />
 
+          {/* Menu */}
           <MobileNavItem
             to="/menu"
             icon={<Utensils size={20} />}
@@ -196,6 +197,7 @@ export default function CombinedNavbar() {
             onClick={handleNavClick}
           />
 
+          {/* Orders */}
           <MobileNavItem
             to="/orders"
             icon={<Clock4 size={20} />}
@@ -204,35 +206,31 @@ export default function CombinedNavbar() {
             onClick={handleNavClick}
           />
 
-          <MobileNavItem
-            to="/reviews"
-            icon={<Star size={20} />}
-            label={t("reviews")}
-            active={isActive("/reviews")}
-            onClick={handleNavClick}
-          />
-
-          <MobileNavItem
-            to="/rewards"
-            icon={<Gift size={20} className="text-secondary" />}
-            label={t("rewards")}
-            active={isActive("/rewards")}
-            onClick={handleNavClick}
-          />
+          {/* Support */}
           <MobileNavItem
             to="/support"
-            icon={<LifeBuoy size={20} />}
+            icon={<HelpCircle size={20} />}
             label={"Support"}
             active={isActive("/support")}
             onClick={handleNavClick}
           />
-          {isAdmin && (
-            <button
-              onClick={() => {window.location.replace("/admin")}}
-              className="px-3 py-2 rounded-md bg-primary text-white"
-            >
-               Admin
-            </button>
+
+          {/* Theme Toggle */}
+          <div className="flex flex-col items-center">
+            <ThemeToggleButton />
+          </div>
+
+          {/* User Dropdown / Login */}
+          {isAuthenticated && user ? (
+            <MobileUserDropdown user={user} onNavClick={handleNavClick} />
+          ) : (
+            <MobileNavItem
+              to="/login"
+              icon={<User size={20} />}
+              label={t("login")}
+              active={isActive("/login")}
+              onClick={handleNavClick}
+            />
           )}
         </div>
       </div>
@@ -312,5 +310,188 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
 
       <span className="text-xs">{label}</span>
     </Link>
+  );
+}
+
+/* ------------ User Dropdown ------------ */
+function UserDropdown({ isOpen, user, onNavClick }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const displayName = user?.name || user?.email?.split("@")[0] || "User";
+  const avatarUrl = user?.avatarUrl || "/images/user/owner.jpg";
+  const role = user?.role || "customer";
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getRoleLink = () => {
+    switch (role) {
+      case "admin":
+        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+      case "kitchen":
+        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+      case "cashier":
+        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+      default:
+        return null;
+    }
+  };
+
+  const roleLink = getRoleLink();
+
+  return (
+    <div className="relative px-2" ref={dropdownRef}>
+      <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className={`flex items-center gap-2 w-full px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+          isOpen ? "justify-start" : "justify-center"
+        }`}
+      >
+        <img
+          src={avatarUrl}
+          alt={displayName}
+          className="w-8 h-8 rounded-full object-cover border-2 border-primary/30"
+        />
+        {isOpen && (
+          <>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium text-gray-800 dark:text-white truncate max-w-[120px]">
+                {displayName}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{role}</p>
+            </div>
+            <ChevronDown
+              size={16}
+              className={`text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+            />
+          </>
+        )}
+      </button>
+
+      {/* Dropdown Menu */}
+      {dropdownOpen && (
+        <div className={`absolute ${isOpen ? "left-2 right-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50`}>
+          <Link
+            to="/profile"
+            onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <User size={16} />
+            Profile
+          </Link>
+          {roleLink && (
+            <Link
+              to={roleLink.to}
+              onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {roleLink.icon}
+              {roleLink.label}
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------ Mobile User Dropdown ------------ */
+function MobileUserDropdown({ user, onNavClick }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const { profile } = useSelector((state) => state.userProfile || {});
+
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl || "/images/user/owner.jpg";
+  const role = user?.role || "customer";
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getRoleLink = () => {
+    switch (role) {
+      case "admin":
+        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+      case "kitchen":
+        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+      case "cashier":
+        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+      default:
+        return null;
+    }
+  };
+
+  const roleLink = getRoleLink();
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="flex flex-col items-center"
+      >
+        <img
+          src={avatarUrl}
+          alt="User"
+          className="w-7 h-7 rounded-full object-cover border-2 border-primary/40"
+        />
+        <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Me</span>
+      </button>
+
+      {/* Dropdown Menu - appears above the button */}
+      {dropdownOpen && (
+        <div className="absolute bottom-full right-0 mb-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+          <Link
+            to="/profile"
+            onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <User size={16} />
+            Profile
+          </Link>
+          <Link
+            to="/reviews"
+            onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <Star size={16} />
+            Reviews
+          </Link>
+          <Link
+            to="/rewards"
+            onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <Gift size={16} className="text-secondary" />
+            Rewards
+          </Link>
+          {roleLink && (
+            <Link
+              to={roleLink.to}
+              onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
+              className="flex items-center gap-2 px-3 py-2.5 text-sm text-white bg-primary hover:bg-primary/90"
+            >
+              {roleLink.icon}
+              {roleLink.label}
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

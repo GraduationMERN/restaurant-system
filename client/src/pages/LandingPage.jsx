@@ -179,7 +179,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen bg-white dark:bg-gray-900 transition-all duration-1000 ${
+      className={`min-h-screen  dark:bg-gray-900 transition-all duration-1000 ${
         isRTL ? "rtl" : "ltr"
       }`}
     >
