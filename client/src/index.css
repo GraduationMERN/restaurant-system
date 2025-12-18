@@ -9,6 +9,19 @@
   --color-secondary: #fff;
   /* … other tokens … */
 }
+/* ===== iOS NOTCH FIX ===== */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-default);
+}
+
+/* Safe area support for iPhone notch / dynamic island */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--bg-default);
+}
 
 :root {
   --color-accent: #7c3aed; /* purple 600 */
@@ -291,4 +304,73 @@ body.custom-scrollbar-page::-webkit-scrollbar-track {
 .animate-slideIn {
   animation: slideIn 0.2s ease-out forwards;
 }
+
+/* Reward Page Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+/* Milestone celebration animations */
+@keyframes celebrate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.animate-celebrate {
+  animation: celebrate 0.6s ease-in-out;
+}
+
+.animate-sparkle {
+  animation: sparkle 1s ease-in-out infinite;
+}
+
+/* Circle background animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-10px) scale(1.02); }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
 

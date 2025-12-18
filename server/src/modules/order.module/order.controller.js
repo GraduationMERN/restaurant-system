@@ -288,7 +288,7 @@ export const createDirectOrder = async (req, res) => {
     // Socket events (use global.io)
     if (global.io) {
       global.io.to("kitchen").emit("order:new", populatedOrder);
-      global.io.to("cashier").emit("order:direct", populatedOrder);
+      global.io.to("cashier").emit("order:new", populatedOrder);
     }
 
     res.status(201).json({

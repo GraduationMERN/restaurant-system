@@ -23,13 +23,18 @@ export default function RewardsList({rewards,groupedRewards, setSelectedReward,s
                             {items.map((item) => {
                                 const product = item.productId;
                                 return (
-                                    <CardComponent 
-                                    onClick={() => {
-                                        if (!canRedeem(item.pointsRequired)) return;
-                                        setSelectedReward(item);
-                                        setShowConfirm(true)
-                                    }}
-                                     item={item} product={product} key={item._id} canRedeem={canRedeem} isReward={true} />
+                                    <CardComponent
+                                        onClick={() => {
+                                            if (!canRedeem(item.pointsRequired)) return;
+                                            setSelectedReward(item);
+                                            setShowConfirm(true)
+                                        }}
+                                        item={item}
+                                        product={product}
+                                        key={item._id}
+                                        canRedeem={canRedeem}
+                                        isReward={true}
+                                    />
                                 );
                             })}
                         </div>
