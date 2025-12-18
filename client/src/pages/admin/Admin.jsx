@@ -6,6 +6,7 @@ import Rewards from "./Rewards";
 import Menu from "./Menu";
 import Categories from "./Categories";
 import Reviews from "./Reviews";
+import Instagram from "./Instagram";
 import Settings from "./Settings";
 import UserProfiles from "./UserProfiles";
 import RewardOrders from "./RewardOrders";
@@ -20,6 +21,7 @@ export default function Admin() {
     "reviews",
     "categories",
     "rewards",
+    "instagram",
     "settings",
     "profile",
     "users",
@@ -67,6 +69,11 @@ export default function Admin() {
         {section === "rewards" && (
           <section id="rewards" className={contentClasses}>
             <Rewards />
+          </section>
+        )}
+        {section === "instagram" && (
+          <section id="instagram" className={contentClasses}>
+            <Instagram />
           </section>
         )}
         {section === "reward-orders" && (

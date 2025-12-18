@@ -2,7 +2,7 @@ import app from "./app.js";
 import { env } from "./src/config/env.js";
 import http from "http";
 import { Server } from "socket.io";
-import NotificationService from "./src/modules/notification/notification.service.js";
+import NotificationService from "./src/modules/instagram/notification/notification.service.js";
 
 const PORT = env.port;
 
