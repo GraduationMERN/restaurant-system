@@ -5,6 +5,7 @@ import Button from "../../components/ui/button/Button";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Select from "../../components/form/Select";
+import Checkbox from "../../components/form/input/Checkbox";
 import { Modal } from "../../components/ui/modal";
 import { useMemo, useState } from "react";
 import {
@@ -21,26 +22,39 @@ import {
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, addReward, deleteReward, updateReward } from "../../redux/slices/rewardSlice";
+import { getAllRewardOrders } from "../../redux/slices/rewardOrderSlice";
 import { fetchProducts } from "../../redux/slices/ProductSlice";
 import { useToast } from "../../hooks/useToast";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [form, setForm] = useState({ productId: "", points: "", type: "discount", desc: "" });
+  const [form, setForm] = useState({ isFromProduct: true, productId: "", name: "", points: "", type: "free_product", desc: "", image: null });
   const [saving, setSaving] = useState(false);
-  const totalPointsIssued = useMemo(() => 45230, []);
-  const activeMembers = useMemo(() => 1247, []);
-  const rewardsRedeemed = useMemo(() => 892, []);
+
+
+
   const dispatch = useDispatch()
   const toast = useToast();
   const { reward, loading, error } = useSelector((state) => state.reward);
+  const { items: rewardOrders } = useSelector((state) => state.rewardOrders);
   const { list } = useSelector((state) => state.product);
+
   
+  const totalPointsIssued = useMemo(() => {
+    return rewardOrders.reduce((sum, order) => sum + (order.pointsUsed || 0), 0);
+  }, [rewardOrders]);
+
+  const activeMembers = useMemo(() => {
+    const uniqueUsers = new Set(rewardOrders.map(order => order.userId?._id || order.userId));
+    return uniqueUsers.size;
+  }, [rewardOrders]);
+  const rewardsRedeemed = useMemo(() => rewardOrders.length, [rewardOrders]);
   const rewards = reward || []
   useEffect(() => {
     dispatch(getAllRewards())
     dispatch(fetchProducts());
+    dispatch(getAllRewardOrders({ page: 1, limit: 1000 }));
   }, [dispatch])
 
 
@@ -53,7 +67,7 @@ export default function Rewards() {
 
   const openAdd = () => {
     setEditingIndex(null);
-    setForm({ productId: "", pointsRequired: "", image: "" });
+    setForm({ isFromProduct: true, productId: "", name: "", points: "", type: "free_product", desc: "", image: null });
     setIsOpen(true);
   };
   const openEdit = (idx) => {
@@ -61,10 +75,13 @@ export default function Rewards() {
     setEditingIndex(idx);
 
     setForm({
+      isFromProduct: !!r.productId,
       productId: r.productId?._id || "",
+      name: r.name || "",
       points: String(r.pointsRequired || r.points || ""),
-      type: r.type || "discount",
-      desc: r.desc || ""
+      type: r.type || "free_product",
+      desc: r.desc || "",
+      image: null // For edit, maybe not handling image update for now
     });
 
     setIsOpen(true);
@@ -73,11 +90,23 @@ export default function Rewards() {
   const closeModal = () => setIsOpen(false);
   const handleSave = async () => {
     const points = Number(form.points);
-    if (!form.productId || Number.isNaN(points) || points <= 0) return;
-    const payload = {
-      productId: form.productId,
-      pointsRequired: points,
-    };
+    if (Number.isNaN(points) || points <= 0) return;
+    if (form.isFromProduct && !form.productId) return;
+    if (!form.isFromProduct && !form.name) return;
+
+    const payload = new FormData();
+    if (form.isFromProduct) {
+      payload.append('productId', form.productId);
+    } else {
+      payload.append('name', form.name);
+      if (form.image) {
+        payload.append('image', form.image);
+      }
+    }
+    payload.append('pointsRequired', points);
+    payload.append('type', form.type);
+    if (form.desc) payload.append('desc', form.desc);
+
     setSaving(true);
     try {
       if (editingIndex !== null) {
@@ -174,31 +203,53 @@ export default function Rewards() {
 
       <Modal isOpen={isOpen} onClose={closeModal}>
         <div className="p-6 sm:p-8">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{editingIndex !== null ? "Edit Reward" : "Add Reward"}</h3>
+          <h3 className="font-semibold text-gray-800 dark:text-white/90">{editingIndex !== null ? "Edit Reward" : "Add Reward"}</h3>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label>Select Product</Label>
-              <Select
-                options={list.map((p) => ({
-                  value: p._id,
-                  label: p.name
-                }))}
-                defaultValue={form.productId}
-                onChange={(val) => setForm((f) => ({ ...f, productId: val }))}
+              <Checkbox
+                label="Is this reward from a product?"
+                checked={form.isFromProduct}
+                onChange={(checked) => setForm((f) => ({ ...f, isFromProduct: checked }))}
               />
             </div>
+            {form.isFromProduct ? (
+              <div className="sm:col-span-2">
+                <Label>Select Product</Label>
+                <Select
+                  options={list.map((p) => ({
+                    value: p._id,
+                    label: p.name
+                  }))}
+                  defaultValue={form.productId}
+                  onChange={(val) => setForm((f) => ({ ...f, productId: val }))}
+                />
+              </div>
+            ) : (
+              <>
+                <div className="sm:col-span-2">
+                  <Label>Reward Name</Label>
+                  <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Reward Image</Label>
+                  <Input type="file" accept="image/*" onChange={(e) => setForm((f) => ({ ...f, image: e.target.files[0] }))} />
+                </div>
+              </>
+            )}
             <div>
               <Label>Points</Label>
               <Input type="number" value={form.points} onChange={(e) => setForm((f) => ({ ...f, points: e.target.value }))} />
             </div>
+
             <div>
               <Label>Type</Label>
               <Select
                 options={[
+                  { value: "free_product", label: "Free Product" },
                   { value: "discount", label: "Discount" },
-                  { value: "dessert", label: "Dessert" },
-                  { value: "drink", label: "Drink" },
-                  { value: "appetizer", label: "Appetizer" },
+                  { value: "multiplier", label: "Multiplier" },
+                  { value: "coupon", label: "Coupon" },
+                  { value: "generic", label: "Generic" },
                 ]}
                 defaultValue={form.type}
                 onChange={(val) => setForm((f) => ({ ...f, type: val }))}

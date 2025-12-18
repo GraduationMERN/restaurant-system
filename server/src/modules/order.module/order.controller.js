@@ -431,15 +431,28 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Authorization: Restrict cashiers from changing to 'preparing' or 'ready'
-    // Only kitchen and admin can update orders to these statuses
-    const isCashier = user?.role === "cashier";
-    if (isCashier && ["preparing", "ready"].includes(status)) {
-      return res.status(403).json({
-        success: false,
-        message: "Cashiers cannot change orders to 'preparing' or 'ready'. Only kitchen staff can update these statuses."
-      });
+    // Authorization: Role-based status update restrictions
+    const userRole = user?.role;
+    console.log("User role:", userRole, "Status:", status);
+    
+    if (userRole === "cashier") {
+      // Cashiers can update to any status except 'preparing' and 'ready'
+      if (["preparing", "ready"].includes(status)) {
+        return res.status(403).json({
+          success: false,
+          message: "Cashiers cannot change orders to 'preparing' or 'ready'. Only kitchen staff can update these statuses."
+        });
+      }
+    } else if (userRole === "kitchen") {
+      // Kitchen can only update to 'preparing' or 'ready'
+      if (!["preparing", "ready"].includes(status)) {
+        return res.status(403).json({
+          success: false,
+          message: "Kitchen staff can only change orders to 'preparing' or 'ready'."
+        });
+      }
     }
+    // Admin can update to any status
 
     // Find order
     const order = await Order.findById(id);

@@ -111,18 +111,43 @@ export default function Dashboard() {
         description="Restaurant admin dashboard"
       />
       <PageBreadcrumb pageTitle="Dashboard" />
-      <div className="space-y-6 px-0">
-        <EcommerceMetrics metrics={metrics} />
+      
+      {/* Main content container - centered on small/medium screens */}
+      <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          {/* Center EcommerceMetrics on small/medium screens */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-7xl">
+              <EcommerceMetrics metrics={metrics} />
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <StatisticsChart title="Sales Trend" categories={weeklyCategories} series={[{ name: "Sales", data: weeklySales }]} />
-          <MonthlySalesChart title="Top Selling Items" labels={topItemsAgg.labels} series={topItemsAgg.values} />
-        </div>
+          {/* Charts grid - centered on small/medium screens */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-7xl">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <StatisticsChart 
+                  title="Sales Trend" 
+                  categories={weeklyCategories} 
+                  series={[{ name: "Sales", data: weeklySales }]} 
+                />
+                <MonthlySalesChart 
+                  title="Top Selling Items" 
+                  labels={topItemsAgg.labels} 
+                  series={topItemsAgg.values} 
+                />
+              </div>
+            </div>
+          </div>
 
-        <div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Recent Orders</h3>
-            <RecentOrders orders={recentOrders} />
+          {/* Recent Orders - centered on small/medium screens */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-7xl">
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5 lg:p-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Recent Orders</h3>
+                <RecentOrders orders={recentOrders} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

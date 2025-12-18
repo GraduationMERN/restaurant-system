@@ -29,10 +29,6 @@ export default function RewardPage() {
     dispatch(getAllRewards());
   }, [dispatch]);
 
-  useEffect(() => {
-    setUserPoints(points);
-  }, [points]);
-
    useEffect(() => {
     document.body.classList.add('custom-scrollbar-page');
     return () => {

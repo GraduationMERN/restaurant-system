@@ -25,6 +25,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllCategories } from "../redux/slices/CategorySlice";
 import { fetchProducts } from "../redux/slices/ProductSlice";
+import { getAllRewards } from "../redux/slices/rewardSlice";
 import CardComponent from "../components/Card/CardComponent";
 import { addToCart } from "../redux/slices/cartSlice";
 import { useTranslation } from "react-i18next";
@@ -39,7 +40,7 @@ function MenuPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
-
+    const { user} = useSelector((state) => state.auth);
   const isMobile = useMediaQuery("(max-width:768px)");
 
   const categories = useSelector((state) => state.category.list);
@@ -57,13 +58,6 @@ function MenuPage() {
   const categoryRefs = useRef({});
   const tabRefs = useRef({});
 
-  const tabsWrapperRef = useRef(null);
-  const [pillStyle, setPillStyle] = useState({});
-
-  // const categoriesTabs = categories.map((cat) => cat.name.toUpperCase());
-  const categoriesTabs = categories.map((cat) =>
-    lang === "ar" ? cat?.name_ar : cat?.name.toUpperCase()
-  );
 
   //   const products = useSelector((state) => state.product.list)
 
@@ -106,6 +100,7 @@ function MenuPage() {
   useEffect(() => {
     dispatch(getAllCategories());
     dispatch(fetchProducts());
+    dispatch(getAllRewards());
   }, [dispatch]);
 
   useEffect(() => {
@@ -201,50 +196,55 @@ function MenuPage() {
   /* ---------------- RENDER ---------------- */
   return (
     <>
-      <div className="sticky top-0 z-20 bg-gray-50 rounded-2xl py-3 dark:bg-gray-800">
-            <Typography variant="h4" fontWeight={700} ml={2} mt={2}>
-        {t("menu.title")}
-      </Typography>
-            {/* CART */}
-          <div className="absolute right-6 top-3">
-        <button
-          onClick={() => navigate("/checkout")}
-          className="relative bg-primary/80  text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
-        >
-          <ShoppingCart size={20} />
-          {totalItems > 0 && (
-            <span className="absolute -top-2 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              {totalItems}
-            </span>
-          )}
-        </button>
-      </div>
-        <div className="flex flex-col mb-5 items-center">
-                {/* SEARCH */}
+      <div className="sticky top-0 z-20  pt-5 pl-5 bg-gray-50 rounded-2xl py-3 dark:bg-gray-800">
+        <p className="text-xl md:text-2xl font-semibold">
+          {t("Hello")}, <span className="text-primary font-bold">{user ? user.name.split(" ")[0] : t("Guest")}</span>
+        </p>
+        {/* CART */}
+        <div className="absolute right-6 top-3">
+          <button
+            onClick={() => navigate("/checkout")}
+            className="relative bg-white dark:bg-gray-900 text-primary px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
+          >
+            <ShoppingCart size={20} />
+            {totalItems > 0 && (
+              <span className="absolute -top-2 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+        <div className="flex flex-col  items-center">
+          {!user &&
+
+          <div className="w-2/3 mb-15 mt-5">
+            <span className="text-gray-500 underline flex justify-end cursor-pointer" onClick={()=>{navigate("/rewards")}}>see details</span>
+            <ProgressBar />
+          </div>
+    }
+          {/* SEARCH */}
           <Box
             display="flex"
-            justifyContent="space-between"
             alignItems="center"
-            mb={3}
             flexWrap="wrap"
-            className="w-full mt-2"
+            className="w-full"
           >
-            <div className="w-full flex justify-center mb-4 px-2">
+            <div className="w-full  flex justify-center my-5 px-2">
               <div
                 className="
               flex items-center 
-              w-full md:w-1/2 
-              bg-[var(--surface)] 
-              border border-[var(--color-primary)] 
-              rounded-2xl 
+              w-full 
+              bg-surface 
+              border border-primary/50
+              rounded-xl 
               shadow-sm
               px-4 py-2 
-              focus-within:border-[var(--color-primary)]
+              focus-within:border-primary
               transition-all duration-200
             "
               >
                 <SearchIcon
-                  className="text-[var(--color-muted)] mr-2"
+                  className="text-muted mr-2"
                   sx={{ fontSize: 22 }}
                 />
 
@@ -257,17 +257,15 @@ function MenuPage() {
                 w-full 
                 bg-transparent 
                 outline-none 
-                text-[var(--color-on-surface)] 
-                placeholder:text-[var(--color-muted)]
+                text-surface 
+                placeholder:text-muted
                 text-sm
               "
                 />
               </div>
             </div>
           </Box>
-          <div className="w-2/3">
-            <ProgressBar />
-          </div>
+
         </div>
         {/* TABS */}
         <Box

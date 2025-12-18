@@ -31,16 +31,16 @@ export default function CardComponent({
          hover:shadow-lg transition duration-200 overflow-hidden`}
     >
       {isReward ? (
-        <div className="w-1/2  lg:w-full lg:h-1/2 flex items-center gap-4">
-          {product?.imgURL ? (
+        <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center gap-4">
+          {product?.imgURL || item?.image ? (
             <img
-              src={product.imgURL}
-              alt={product.name}
-              className="rounded-xl object-cover  shadow-sm"
+              src={product?.imgURL || item?.image}
+              alt={product?.name || item?.name || "Reward"}
+              className="max-h-full min-w-full rounded-xl object-cover shadow-sm"
             />
           ) : (
             <div className="object-cover bg-gray-100  rounded-xl flex items-center justify-center shadow-inner">
-              <Gift className="text-gray-400" />
+              <Gift className="text-gray-400 text-6xl " />
             </div>
           )}
         </div>
@@ -63,7 +63,7 @@ export default function CardComponent({
                   : "text-muted"
               }`}
             >
-              {product?.name || "Reward"}
+              {product?.name || item?.name || "Reward"}
             </span>
             {item.pointsRequired}
           </h3>
@@ -77,7 +77,7 @@ export default function CardComponent({
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
-            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
+            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-270">
               +
             </span>
           </button>
@@ -91,7 +91,7 @@ export default function CardComponent({
               {/* {product?.name || "Product"} */}
               {lang==='ar'?(product.name_ar||product.name):product.name}
             </div>
-            <span className="text-xs text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
+            <span className="text-xs hidden lg:block text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
               {/* {product.desc} */}
               {lang==='ar'?(product.desc_ar||product.desc):product.desc}
             </span>
