@@ -31,6 +31,7 @@ import recommendationRoutes from "./src/modules/recommendation/recommendation.ro
 import aiProductRoutes from "./src/modules/ai_product/aiProduct.routes.js"; // AI Vision
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
+import adminProfileRoutes from "./src/modules/adminProfile/adminProfile.route.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -108,6 +109,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/user-profile", adminProfileRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 
