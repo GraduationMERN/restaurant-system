@@ -22,7 +22,7 @@ import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/modules/review/review.routes.js";
 import couponRoutes from "./src/modules/coupon/coupon.route.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
-import notificationRoutes from "./src/modules/notification/notification.routes.js";
+import notificationRoutes from "./src/modules/instagram/notification/notification.routes.js";
 import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
