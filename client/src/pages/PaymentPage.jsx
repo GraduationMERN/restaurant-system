@@ -7,6 +7,7 @@ import { createStripeSession, verifyPaymentStatus, clearPaymentState } from "../
 import { fetchOrderById } from "../redux/slices/orderSlice";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CreditCard, Store, CheckCircle, AlertCircle } from "lucide-react";
+import api from "../api/axios";
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -44,7 +45,7 @@ const PaymentPage = () => {
   const { products = [], totalPrice = 0 } = useSelector((state) => state.cart || {});
   
   // State
-  const [paymentMethod, setPaymentMethod] = useState("Online");
+  const [paymentMethod, setPaymentMethod] = useState("online");
   const [branchName, setBranchName] = useState("El Shatby Outlet");
   const [localError, setLocalError] = useState("");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
@@ -145,6 +146,21 @@ const PaymentPage = () => {
     setLocalError("");
 
     try {
+      // First, update the order with the correct payment method
+      let updatePaymentMethod = "cash"; // Default to cash for in-store
+      if (paymentMethod === "online") {
+        updatePaymentMethod = "card";
+      }
+      
+      console.log(`[PAYMENT] Updating order ${orderId} with payment method: ${updatePaymentMethod}`);
+      
+      // Update order payment method via API
+      await api.patch(`/api/orders/${orderId}/payment-method`, {
+        paymentMethod: updatePaymentMethod
+      });
+
+      console.log(`[PAYMENT] Order updated successfully with payment method: ${updatePaymentMethod}`);
+
       if (paymentMethod === "online") {
         const result = await dispatch(createStripeSession({ 
           orderId, 
