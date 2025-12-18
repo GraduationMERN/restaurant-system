@@ -77,7 +77,7 @@ export default function CardComponent({
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
-            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
+            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-270">
               +
             </span>
           </button>
@@ -91,7 +91,7 @@ export default function CardComponent({
               {/* {product?.name || "Product"} */}
               {lang==='ar'?(product.name_ar||product.name):product.name}
             </div>
-            <span className="text-xs text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
+            <span className="text-xs hidden lg:block text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
               {/* {product.desc} */}
               {lang==='ar'?(product.desc_ar||product.desc):product.desc}
             </span>

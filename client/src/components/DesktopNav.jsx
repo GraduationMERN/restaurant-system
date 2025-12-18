@@ -142,7 +142,7 @@ export default function CombinedNavbar() {
 
           <DesktopNavItem
             to="/rewards"
-            icon={<Gift size={20} />}
+            icon={<Gift size={20} className="text-secondary" />}
             label={t("rewards")}
             active={isActive("/rewards")}
             isOpen={isOpen}

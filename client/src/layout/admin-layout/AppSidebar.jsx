@@ -15,7 +15,7 @@ const navItems = [
   { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
   { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },
   { icon: <DollarLineIcon />, name: "Coupons", path: "/admin/coupons" },
-  { icon: <UserCircleIcon />, name: "users", path: "/admin/users" },
+  { icon: <UserCircleIcon />, name: "Users", path: "/admin/users" },
   { icon: <BoxIconLine />, name: "Kitchen", path: "/kitchen" },
   { icon: <GroupIcon />, name: "Cashier", path: "/cashier" },
   { icon: <SettingsGearIcon />, name: "Settings", path: "/admin/settings" },
@@ -32,7 +32,6 @@ const AppSidebar = () => {
   const [subMenuHeight, setSubMenuHeight] = useState({});
   const subMenuRefs = useRef({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
 
   useEffect(() => {
@@ -82,38 +81,41 @@ const AppSidebar = () => {
   };
 
   const renderMenuItems = (items, menuType) => (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-1">
       {items.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                ? "menu-item-active"
-                : "menu-item-inactive"
-                } cursor-pointer ${!isExpanded && !isHovered
+              className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                openSubmenu?.type === menuType && openSubmenu?.index === index
+                  ? "bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400"
+                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              } ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
                 }`}
             >
               <span
-                className={`menu-item-icon-size  ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-icon-active"
-                  : "menu-item-icon-inactive"
-                  }`}
+                className={`flex items-center justify-center w-5 h-5 ${
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "text-brand-500 dark:text-brand-400"
+                    : "text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300"
+                }`}
               >
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text">{nav.name}</span>
+                <span className="ml-3">{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
+                  className={`ml-auto w-4 h-4 transition-transform duration-200 ${
+                    openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
-                    ? "rotate-180 text-brand-500"
-                    : ""
-                    }`}
+                      ? "rotate-180 text-brand-500 dark:text-brand-400"
+                      : "text-gray-400"
+                  }`}
                 />
               )}
             </button>
@@ -122,19 +124,26 @@ const AppSidebar = () => {
               <Link
                 to={nav.path}
                 onClick={() => { if (isMobileOpen) toggleMobileSidebar(); }}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                  isActive(nav.path)
+                    ? "bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-400"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                } ${!isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "lg:justify-start"
                   }`}
               >
                 <span
-                  className={`menu-item-icon-size ${isActive(nav.path)
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                    }`}
+                  className={`flex items-center justify-center w-5 h-5 ${
+                    isActive(nav.path)
+                      ? "text-brand-500 dark:text-brand-400"
+                      : "text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300"
+                  }`}
                 >
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
+                  <span className="ml-3">{nav.name}</span>
                 )}
               </Link>
             )
@@ -152,35 +161,38 @@ const AppSidebar = () => {
                     : "0px",
               }}
             >
-              <ul className="mt-2 space-y-1 ml-9">
+              <ul className="py-2 space-y-1 ml-11">
                 {nav.subItems.map((subItem) => (
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
                       onClick={() => { if (isMobileOpen) toggleMobileSidebar(); }}
-                      className={`menu-dropdown-item ${isActive(subItem.path)
-                        ? "menu-dropdown-item-active"
-                        : "menu-dropdown-item-inactive"
-                        }`}
+                      className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isActive(subItem.path)
+                          ? "text-brand-600 bg-brand-50 dark:text-brand-400 dark:bg-brand-900/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+                      }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            className={`px-2 py-0.5 text-xs rounded-full ${
+                              isActive(subItem.path)
+                                ? "bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                            }`}
                           >
                             new
                           </span>
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
-                              ? "menu-dropdown-badge-active"
-                              : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            className={`px-2 py-0.5 text-xs rounded-full ${
+                              isActive(subItem.path)
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                            }`}
                           >
                             pro
                           </span>
@@ -199,33 +211,38 @@ const AppSidebar = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen
-          ? "w-[290px]"
-          : isHovered
+      className={`fixed flex flex-col top-0 left-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out z-50
+        ${
+          isExpanded || isMobileOpen
+            ? "w-[290px]"
+            : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
+        ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        }
+        lg:translate-x-0 lg:top-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
-      >
-        <Link to="/" className="flex items-center gap-2">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <> 
+      {/* Logo - Hidden on small and medium screens (below lg) */}
+      <div className={`hidden lg:flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-800 ${
+        !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+      }`}>
+        <Link to="/" className="flex items-center gap-3">
+          {isExpanded || isHovered ? (
+            <>
               <img
                 src={settings.branding?.logoUrl || "/images/logo/logo.svg"}
                 alt="Logo"
                 width={120}
                 height={40}
-                className="object-contain"
+                className="object-contain "
               />
-              <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">Admin</span>
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
+                Admin
+              </span>
             </>
           ) : (
             <img
@@ -233,47 +250,63 @@ const AppSidebar = () => {
               alt="Logo"
               width={32}
               height={32}
-              className="object-contain"
+              className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
             />
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
-          <div className="flex flex-col gap-4">
+
+      {/* Alternative: Show minimal logo on mobile when sidebar is open */}
+      {isMobileOpen && (
+        <div className="lg:hidden flex items-center justify-center px-4 py-6 border-b border-gray-200 dark:border-gray-800">
+          <img
+            src={settings.branding?.logoUrl || "/images/logo/logo-icon.svg"}
+            alt="Logo"
+            width={32}
+            height={32}
+            className="object-contain dark:invert dark:brightness-0 dark:contrast-200"
+          />
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 lg:py-6">
+        <nav className="space-y-6">
+          <div>
+            <h2
+              className={`mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ${
+                !isExpanded && !isHovered ? "lg:hidden" : "px-4"
+              }`}
+            >
+              {isExpanded || isHovered || isMobileOpen ? (
+                "Menu"
+              ) : (
+                <div className="flex justify-center">
+                  <HorizontaLDots className="w-5 h-5" />
+                </div>
+              )}
+            </h2>
+            {renderMenuItems(navItems, "main")}
+          </div>
+          
+          {othersItems.length > 0 && (
             <div>
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
+                className={`mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ${
+                  !isExpanded && !isHovered ? "lg:hidden" : "px-4"
+                }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  "Others"
                 ) : (
-                  <HorizontaLDots className="size-6" />
+                  <div className="flex justify-center">
+                    <HorizontaLDots className="w-5 h-5" />
+                  </div>
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(othersItems, "others")}
             </div>
-            {othersItems.length > 0 && (
-              <div className="">
-                <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                    }`}
-                >
-                  {isExpanded || isHovered || isMobileOpen ? (
-                    "Others"
-                  ) : (
-                    <HorizontaLDots />
-                  )}
-                </h2>
-                {renderMenuItems(othersItems, "others")}
-              </div>
-            )}
-          </div>
+          )}
         </nav>
       </div>
     </aside>

@@ -42,7 +42,7 @@ router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder)
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
 // ---- ADMIN/CASHIER ----
-router.patch("/:id/status", authMiddleware, roleMiddleware("cashier", "admin"), orderController.updateOrderStatus);
+router.patch("/:id/status", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.updateOrderStatus);
 router.patch("/:id/payment", authMiddleware, roleMiddleware("cashier", "admin"), orderController.updatePaymentStatus);
 
 // ============= ADMIN ROUTES =============
