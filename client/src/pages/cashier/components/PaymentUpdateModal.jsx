@@ -102,7 +102,7 @@ export default function PaymentUpdateModal({
         <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
           <div className="text-xs text-purple-600 font-semibold mb-1">Customer</div>
           <div className="font-bold text-slate-900">
-            {order.customerName || "Walk-In Customer"}
+            {order.customerInfo?.name || order.customerName || "Walk-In Customer"}
           </div>
         </div>
       </div>

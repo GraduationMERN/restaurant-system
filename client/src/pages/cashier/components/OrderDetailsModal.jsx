@@ -86,7 +86,7 @@ export default function OrderDetailsModal({ order, onClose }) {
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-slate-600">Name:</span>
-                <span className="font-bold text-slate-900 ml-2">{order.customerName || "Walk-In Customer"}</span>
+                <span className="font-bold text-slate-900 ml-2">{order.customerInfo?.name || order.customerName || "Walk-In Customer"}</span>
               </div>
               {order.customerPhone && (
                 <div className="flex items-center gap-2">
