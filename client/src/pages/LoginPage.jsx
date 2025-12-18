@@ -254,7 +254,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser, getMe } from "../redux/slices/authSlice";
 import GoogleLoginButton from "../components/GoogleLoginButton";
-import { Mail, Lock, ArrowLeft, ChefHat, Star, Users, Tag, Shield } from "lucide-react";
+import { Mail, Lock, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -350,63 +350,235 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-center">
-        {/* Left Column - Branding & Stats */}
-        <div className="lg:w-1/2 w-full max-w-lg">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors flex items-center justify-center p-4 lg:p-8">
+      <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-12 lg:gap-16 items-stretch">
+        {/* Mobile: Login Form First */}
+        <div className="lg:hidden w-full order-1">
+          <div className="mb-6">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors group"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Back to Home
+            </button>
+          </div>
+          
+          {/* Mobile Login Form */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Welcome Back</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Sign in to your account
+              </p>
+            </div>
+            
+            <div className="p-6">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-shake">
+                  <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">{error}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      onKeyPress={handleKeyPress}
+                      className={`w-full pl-10 pr-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${
+                        errors.email && touched.email
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                  {errors.email && touched.email && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Password
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700"
+                    >
+                      Forgot?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      onKeyPress={handleKeyPress}
+                      className={`w-full pl-10 pr-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${
+                        errors.password && touched.password
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {errors.password && touched.password && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.password}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Logging in...
+                    </span>
+                  ) : "Sign In"}
+                </button>
+              </form>
+
+              <div className="mt-6">
+                <GoogleLoginButton />
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
+                  Don't have an account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-semibold text-orange-600 dark:text-orange-400"
+                  >
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: Left Column (Branding & Stats) - Now smaller */}
+        <div className="hidden lg:flex lg:w-2/5 flex-col justify-center">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors mb-8 group"
+            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors mb-10 group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </button>
 
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-8 lg:p-12 shadow-2xl mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-20 -translate-x-20"></div>
+          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <ChefHat className="w-8 h-8 text-white" />
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <ChefHat className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-white">BrandBite</h1>
+                <h1 className="text-2xl font-bold text-white">BrandBite</h1>
               </div>
-              <p className="text-white/90 text-lg mb-8">
+              <p className="text-white/90 mb-10 text-base">
                 Welcome back to the best restaurant experience in the world. 
                 Your culinary journey continues here.
               </p>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Tag className="w-5 h-5 text-white" />
-                    <span className="text-white font-bold text-2xl">20% OFF</span>
+              <div className="space-y-4">
+                {/* Clickable Offer Card */}
+                <div 
+                  onClick={() => navigate("/menu")}
+                  className="bg-white/20 backdrop-blur-sm rounded-xl p-4 cursor-pointer group hover:bg-white/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/30"
+                  tabIndex={0}
+                  role="button"
+                  onKeyPress={(e) => e.key === 'Enter' && navigate("/menu")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center">
+                        <Tag className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-xl">20% OFF</p>
+                        <p className="text-white/80 text-sm">Special Offer</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
-                  <p className="text-white/80 text-sm">Special Offer for Members</p>
+                  <p className="text-white/70 text-xs mt-2">Click to explore menu & order now</p>
                 </div>
                 
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="w-5 h-5 text-white" />
-                    <span className="text-white font-bold text-2xl">89</span>
+                {/* Clickable Reviews Card */}
+                <div 
+                  onClick={() => navigate("/reviews")}
+                  className="bg-white/20 backdrop-blur-sm rounded-xl p-4 cursor-pointer group hover:bg-white/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/30"
+                  tabIndex={0}
+                  role="button"
+                  onKeyPress={(e) => e.key === 'Enter' && navigate("/reviews")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center">
+                        <Star className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-xl">89</p>
+                        <p className="text-white/80 text-sm">Excellent Reviews</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
-                  <p className="text-white/80 text-sm">Excellent Reviews</p>
+                  <p className="text-white/70 text-xs mt-2">Click to read customer stories</p>
                 </div>
                 
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 col-span-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-white" />
-                    <span className="text-white font-bold text-2xl">500+</span>
+                {/* Clickable Customers Card */}
+                <div 
+                  onClick={() => navigate("/reward")}
+                  className="bg-white/20 backdrop-blur-sm rounded-xl p-4 cursor-pointer group hover:bg-white/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/30"
+                  tabIndex={0}
+                  role="button"
+                  onKeyPress={(e) => e.key === 'Enter' && navigate("/reward")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-xl">500+</p>
+                        <p className="text-white/80 text-sm">Happy Customers</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
-                  <p className="text-white/80 text-sm">Happy Customers</p>
+                  <p className="text-white/70 text-xs mt-2">Click to join our rewards program</p>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400 text-sm">
+          <div className="mt-8 flex items-center gap-6 text-gray-600 dark:text-gray-400 text-sm">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               <span>Secure Login</span>
@@ -419,36 +591,33 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column - Login Form */}
-        <div className="lg:w-1/2 w-full max-w-md">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {/* Form Header */}
-            <div className="p-8 border-b border-gray-100 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
+        {/* Desktop: Right Column (Login Form) */}
+        <div className="hidden lg:flex lg:w-3/5 items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden w-full max-w-xl">
+            <div className="p-10 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Sign in to access your account and continue your journey
               </p>
             </div>
 
-            {/* Form Content */}
-            <div className="p-8">
+            <div className="p-10">
               {error && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl animate-shake">
+                <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl animate-shake">
                   <p className="text-red-600 dark:text-red-400 text-center font-medium">{error}</p>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
+              <form onSubmit={handleSubmit} className="space-y-8">
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-3"
                   >
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 dark:text-gray-500" />
                     <input
                       type="email"
                       id="email"
@@ -457,11 +626,11 @@ export default function LoginPage() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       onKeyPress={handleKeyPress}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700/50 border ${
+                      className={`w-full pl-14 pr-4 py-4 bg-gray-50 dark:bg-gray-700/50 border ${
                         errors.email && touched.email
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                           : "border-gray-200 dark:border-gray-600 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-500/20"
-                      } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none transition-all duration-200`}
+                      } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none transition-all duration-200 text-base`}
                       placeholder="john@example.com"
                     />
                   </div>
@@ -475,24 +644,23 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Password Field */}
                 <div>
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="flex justify-between items-center mb-3">
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      className="block text-lg font-medium text-gray-700 dark:text-gray-300"
                     >
                       Password
                     </label>
                     <Link
                       to="/forgot-password"
-                      className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+                      className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors text-base"
                     >
                       Forgot password?
                     </Link>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 dark:text-gray-500" />
                     <input
                       type="password"
                       id="password"
@@ -501,11 +669,11 @@ export default function LoginPage() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       onKeyPress={handleKeyPress}
-                      className={`w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700/50 border ${
+                      className={`w-full pl-14 pr-4 py-4 bg-gray-50 dark:bg-gray-700/50 border ${
                         errors.password && touched.password
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                           : "border-gray-200 dark:border-gray-600 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-500/20"
-                      } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none transition-all duration-200`}
+                      } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none transition-all duration-200 text-base`}
                       placeholder="••••••••"
                     />
                   </div>
@@ -519,31 +687,29 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl text-lg"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       Logging in...
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <ChefHat className="w-5 h-5" />
+                    <span className="flex items-center justify-center gap-3">
+                      <ChefHat className="w-6 h-6" />
                       Sign In to BrandBite
                     </span>
                   )}
                 </button>
               </form>
 
-              {/* Divider */}
-              <div className="relative my-8">
+              <div className="relative my-10">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                 </div>
@@ -554,25 +720,22 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Google Login */}
               <GoogleLoginButton />
 
-              {/* Sign Up Link */}
-              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-700 text-center">
+                <p className="text-gray-600 dark:text-gray-400">
                   Don't have an account?{" "}
                   <Link
                     to="/register"
-                    className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+                    className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors text-lg"
                   >
                     Join 500+ Happy Customers
                   </Link>
                 </p>
               </div>
               
-              {/* Forgot Password Link */}
               <div className="mt-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                <p className="text-gray-500 dark:text-gray-400">
                   Need help?{" "}
                   <Link
                     to="/support"
@@ -581,6 +744,68 @@ export default function LoginPage() {
                     Contact Support
                   </Link>
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: Branding/Stats Section (Comes after form) */}
+        <div className="lg:hidden w-full order-2 mt-8">
+          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <ChefHat className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">BrandBite</h2>
+                <p className="text-white/80 text-xs">The best restaurant in the world</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div 
+                onClick={() => navigate("/menu")}
+                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-white" />
+                    <span className="text-white font-bold">20% OFF</span>
+                  </div>
+                  <span className="text-white/80 text-xs">Special Offer</span>
+                </div>
+              </div>
+              
+              <div 
+                onClick={() => navigate("/reviews")}
+                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-white" />
+                    <span className="text-white font-bold">89</span>
+                  </div>
+                  <span className="text-white/80 text-xs">Reviews</span>
+                </div>
+              </div>
+              
+              <div 
+                onClick={() => navigate("/rewards")}
+                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-white" />
+                    <span className="text-white font-bold">500+</span>
+                  </div>
+                  <span className="text-white/80 text-xs">Happy Customers</span>
+                </div>
               </div>
             </div>
           </div>

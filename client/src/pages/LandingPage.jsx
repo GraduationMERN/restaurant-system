@@ -581,7 +581,7 @@ export default function LandingPage() {
       </div>
 
       {/* Global Animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes expandImage {
           from {
             opacity: 0;
