@@ -233,12 +233,7 @@ export default function ActiveOrderComponent({ order }) {
 
         {/* Buttons */}
         <div className="flex gap-3">
-          <button
-            onClick={() => navigate(`/orders/${order._id}`)}
-            className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition"
-          >
-            View Details
-          </button>
+         
 
           {["pending", "confirmed"].includes(order.status) && (
             <button
