@@ -152,6 +152,7 @@ export const createOrderFromCart = async (req, res) => {
 
     // Socket events (use global.io to avoid circular import)
     if (global.io) {
+      console.log(`[SOCKET] Emitting order:new to cashier & kitchen. Order: ${populatedOrder.orderNumber}`);
       // Emit to specific rooms
       global.io.to("cashier").emit("order:new", populatedOrder);
       global.io.to("kitchen").emit("order:new", populatedOrder);
@@ -160,6 +161,8 @@ export const createOrderFromCart = async (req, res) => {
       if (populatedOrder.customerId) {
         global.io.to(`user:${populatedOrder.customerId}`).emit("order:created", populatedOrder);
       }
+    } else {
+      console.warn("[SOCKET] global.io NOT available for emitting order:new");
     }
 
     // Send push notification to user
