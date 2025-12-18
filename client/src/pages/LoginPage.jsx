@@ -366,7 +366,7 @@ export default function LoginPage() {
           
           {/* Mobile Login Form */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-primary/70 to-primary text-center">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Welcome Back</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Sign in to your account
@@ -748,68 +748,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
         {/* Mobile: Branding/Stats Section (Comes after form) */}
-        <div className="lg:hidden w-full order-2 mt-8">
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <ChefHat className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">BrandBite</h2>
-                <p className="text-white/80 text-xs">The best restaurant in the world</p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div 
-                onClick={() => navigate("/menu")}
-                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
-                role="button"
-                tabIndex={0}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-white" />
-                    <span className="text-white font-bold">20% OFF</span>
-                  </div>
-                  <span className="text-white/80 text-xs">Special Offer</span>
-                </div>
-              </div>
-              
-              <div 
-                onClick={() => navigate("/reviews")}
-                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
-                role="button"
-                tabIndex={0}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-white" />
-                    <span className="text-white font-bold">89</span>
-                  </div>
-                  <span className="text-white/80 text-xs">Reviews</span>
-                </div>
-              </div>
-              
-              <div 
-                onClick={() => navigate("/rewards")}
-                className="bg-white/20 backdrop-blur-sm rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform"
-                role="button"
-                tabIndex={0}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-white" />
-                    <span className="text-white font-bold">500+</span>
-                  </div>
-                  <span className="text-white/80 text-xs">Happy Customers</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

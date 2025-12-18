@@ -138,7 +138,7 @@ export default function RegistrationForm() {
 
           {/* Mobile Form */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-primary to-primary/80 dark:border-gray-700">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Join BrandBite</h2>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Create your account
