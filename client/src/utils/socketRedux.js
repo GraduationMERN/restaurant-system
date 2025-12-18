@@ -389,16 +389,31 @@ const sendNotificationToSW = (notificationData) => {
 
 export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
-  const BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  
+  // Determine backend URL with fallback
+  let BASE = import.meta.env.VITE_API_BASE_URL || 
+             import.meta.env.VITE_SOCKET_URL || 
+             'https://brand-bite.onrender.com' ||
+             window.location.origin;
+  
+  // Ensure it's a proper URL
+  if (!BASE.startsWith('http://') && !BASE.startsWith('https://')) {
+    BASE = window.location.origin;
+  }
+  
   try {
-    console.log("Initializing socket with base:", BASE, "withCredentials:", options.withCredentials || true);
+    console.log("[SOCKET INIT] Connecting to:", BASE, "withCredentials: true");
     socketInstance = ioClient(BASE, {
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],  // Add fallback to polling
       withCredentials: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
       ...options
     });
 
-    // attach listeners
+    // Attach listeners
     setupSocketListeners(socketInstance);
 
     // auto-join rooms if store set
@@ -412,7 +427,7 @@ export const initSocket = (options = {}) => {
 
     return socketInstance;
   } catch (e) {
-    console.error("Failed to init socket", e.message);
+    console.error("[SOCKET ERROR] Failed to init socket:", e.message);
     return null;
   }
 };
