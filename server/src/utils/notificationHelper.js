@@ -1,4 +1,4 @@
-import pushNotificationService from '../modules/notification/pushNotification.service.js';
+import pushNotificationService from '../modules/instagram/notification/pushNotification.service.js';
 import { io } from '../../server.js';
 
 /**

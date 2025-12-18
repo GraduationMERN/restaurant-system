@@ -22,7 +22,7 @@ import usersRoutes from "./src/modules/user/routes/user.routes.js";
 import reviewRoutes from "./src/modules/review/review.routes.js";
 import couponRoutes from "./src/modules/coupon/coupon.route.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
-import notificationRoutes from "./src/modules/notification/notification.routes.js";
+import notificationRoutes from "./src/modules/instagram/notification/notification.routes.js";
 import categoryRoutes from "./src/modules/category/category.routes.js";
 import cartRoutes from "./src/modules/cart/cart.routes.js";
 import productRoutes from "./src/modules/product/product.routes.js";
@@ -31,6 +31,7 @@ import recommendationRoutes from "./src/modules/recommendation/recommendation.ro
 import aiProductRoutes from "./src/modules/ai_product/aiProduct.routes.js"; // AI Vision
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
+import instagramRoutes from "./src/modules/instagram/instagram.route.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -106,6 +107,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api", instagramRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 

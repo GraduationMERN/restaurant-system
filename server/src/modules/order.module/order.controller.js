@@ -5,7 +5,7 @@ import Order from "../order.module/orderModel.js";
 // Avoid importing server.js here to prevent circular imports.
 // Use `global.io` and `global.notificationService` which are set in `server.js` after initialization.
 import { notificationService , io } from "../../../server.js";
-import pushNotificationService from "../notification/pushNotification.service.js";
+import pushNotificationService from "../instagram/notification/pushNotification.service.js";
 import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 import { earningPoints } from "../rewards/reward.service.js";
 import { v4 as uuidv4 } from "uuid";
