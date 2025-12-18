@@ -747,7 +747,7 @@ className="flex-0 px-4 py-3 rounded-xl
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold">Pick delivery location</h3>
+              <h3 className="font-semibold">Pick  location</h3>
               <div className="flex items-center gap-2">
                 <button onClick={() => setShowMapPicker(false)} className="text-sm text-gray-500">Cancel</button>
               </div>
