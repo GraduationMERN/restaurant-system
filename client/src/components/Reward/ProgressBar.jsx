@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react'
-import { FaStarOfLife } from 'react-icons/fa';
+import React, { useEffect, useRef, useState } from 'react'
+import { TbGiftFilled } from "react-icons/tb";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
+import { gsap } from 'gsap';
 
 export default function ProgressBar({ Reward }) {
     const navigate = useNavigate()
@@ -10,50 +11,124 @@ export default function ProgressBar({ Reward }) {
     const { reward } = useSelector((state) => state.reward || {});
 
     const points = user?.points || 0;
-    const [userPoints, setUserPoints] = useState(points);
-
-    useEffect(() => {
-        setUserPoints(points);
-    }, [points]);
+    const progressBarRef = useRef(null);
+    const milestoneRefs = useRef([]);
+    const [celebratedMilestones, setCelebratedMilestones] = useState(new Set());
 
     const rewards = reward || [];
     const milestones = [...new Set(rewards.map(r => r.pointsRequired))].sort((a, b) => a - b);
     const maxMilestone = milestones[milestones.length - 1] || 1;
-    const progress = Math.min((points / maxMilestone) * 100, 100);
+    const targetProgress = Math.min((points / maxMilestone) * 100, 100);
+
+    // Animate progress bar with GSAP
+    useEffect(() => {
+        if (progressBarRef.current) {
+            gsap.to(progressBarRef.current, {
+                width: `${targetProgress}%`,
+                duration: 2,
+                ease: "power2.out"
+            });
+        }
+    }, [targetProgress]);
+
+    // Check for new milestone achievements and animate
+    useEffect(() => {
+        const newMilestones = milestones.filter(m => points >= m && !celebratedMilestones.has(m));
+
+        newMilestones.forEach((milestone, index) => {
+            const milestoneIndex = milestones.indexOf(milestone);
+            const milestoneElement = milestoneRefs.current[milestoneIndex];
+
+            if (milestoneElement) {
+                // Animate the milestone achievement
+                const tl = gsap.timeline();
+
+                // Bounce animation for the gift icon
+                tl.to(milestoneElement.querySelector('.gift-icon'), {
+                    scale: 1.5,
+                    duration: 0.3,
+                    ease: "back.out(1.7)",
+                    yoyo: true,
+                    repeat: 1
+                })
+                // Pulse effect
+                .to(milestoneElement.querySelector('.gift-icon'), {
+                    scale: 1.2,
+                    duration: 0.2,
+                    ease: "power2.inOut",
+                    yoyo: true,
+                    repeat: 3
+                }, "-=0.5")
+                // Color transition
+                .to(milestoneElement.querySelector('.milestone-text'), {
+                    color: 'var(--color-secondary)', // secondary color
+                    fontWeight: 600,
+                    duration: 0.5
+                }, "-=1");
+
+                // Add ping effect
+                const pingElement = milestoneElement.querySelector('.ping-effect');
+                if (pingElement) {
+                    gsap.fromTo(pingElement,
+                        { scale: 0, opacity: 1 },
+                        { scale: 3, opacity: 0, duration: 1, ease: "power2.out" }
+                    );
+                }
+            }
+        });
+
+        if (newMilestones.length > 0) {
+            setCelebratedMilestones(prev => new Set([...prev, ...newMilestones]));
+        }
+    }, [points, milestones, celebratedMilestones]);
+
     return (
         <div className="relative mt-6">
             {!user & !Reward && (
                 <div className="absolute inset-0 p-12 -top-7 -right-6 z-20 flex items-center justify-center bg-white/10 dark:bg-gray-900/10 backdrop-blur-xs rounded-lg">
-                    <p className="font-semibold text-center  md:text-xl text-secondary cursor-pointer " onClick={() => navigate("/login")}>
+                    <p className="font-semibold text-center text-sm md:text-xl text-secondary cursor-pointer " onClick={() => navigate("/login")}>
                             {t("Login_Reward")}
                     </p>
                 </div>
             )}
             {/* Base line */}
-            <div className="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden relative">
                 <div
-                    className="bg-secondary/90 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                />
+                    ref={progressBarRef}
+                    className="bg-gradient-to-r from-secondary/50 via-secondary to-secondary h-full rounded-full relative"
+                    style={{ width: `${targetProgress}%` }}
+                >
+                    {/* Animated shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                </div>
             </div>
             {/* Milestone markers */}
             <div className="relative w-full">
                 {milestones.map((m, i) => {
                     const leftPos = (m / maxMilestone) * 100;
+                    const isAchieved = points >= m;
                     return (
-                        <div>
-                            <div
-                                key={i}
-                                className="absolute top-0 flex flex-col items-center"
-                                style={{ left: `${leftPos}%`, transform: "translateX(-50%)" }}
-                            >
-                                <FaStarOfLife
-                                    className={`relative -top-5 w-7 h-7 font-bold ${points >= m ? "text-secondary" : "text-secondary/60"}`}
+                        <div
+                            key={i}
+                            ref={el => milestoneRefs.current[i] = el}
+                            className="absolute flex flex-col items-center"
+                            style={{ left: `${leftPos}%`, transform: "translateX(-50%)" }}
+                        >
+                            <div className="relative">
+                                <TbGiftFilled
+                                    className={`gift-icon relative -top-7 w-9 h-9 font-bold transition-all duration-500 ${
+                                        isAchieved ? "text-secondary brightness-120 drop-shadow-lg" : "text-secondary/80"
+                                    }`}
                                 />
-                                    <span className={`text-xs text-secondary`}>
-                                        {m}
-                                    </span>
+                                {isAchieved && (
+                                    <div className="ping-effect absolute -top-8 -left-8 w-24 h-24 bg-secondary/20 rounded-full"></div>
+                                )}
                             </div>
+                            <span className={`milestone-text text-xs -mt-3 transition-all duration-500 ${
+                                isAchieved ? "text-secondary font-semibold" : "text-secondary/80"
+                            }`}>
+                                {m}
+                            </span>
                         </div>
                     );
                 })}

@@ -80,12 +80,18 @@ export default function RewardPage() {
     }
   };
   return (
-    <>
-  
-      {/* HEADER */}
-      <MileStones milestones={milestones} points={points} userName={userName} maxMilestone={maxMilestone} userPoints={userPoints} handleViewRedemptions={handleViewRedemptions} progress={progress} />
-      {/* REWARDS LIST */}
-      <RewardsList rewards={rewards} groupedRewards={groupedRewards} setSelectedReward={setSelectedReward} setShowConfirm={setShowConfirm} canRedeem={canRedeem}/>
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Background decorative circles */}
+
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* HEADER */}
+        <MileStones milestones={milestones} points={points} userName={userName} maxMilestone={maxMilestone} userPoints={userPoints} handleViewRedemptions={handleViewRedemptions} progress={progress} />
+        {/* REWARDS LIST */}
+        <RewardsList rewards={rewards} groupedRewards={groupedRewards} setSelectedReward={setSelectedReward} setShowConfirm={setShowConfirm} canRedeem={canRedeem}/>
+      </div>
+
       {showConfirm && (
         <Confirmation selectedReward = {selectedReward} onClick={() => {handleRedeem(selectedReward); setShowConfirm(false)}} onReject={() => setShowConfirm(false)}/>
       )}
@@ -96,6 +102,6 @@ export default function RewardPage() {
       {showRedemptions && (
         <Redemptions  userRedemptions = {userRedemptions} onClick={() => setShowRedemptions(false)} viewDetails={(redemption) => navigate(`/reward-order/${redemption._id}`, { state: { order: redemption } })}/>
       )}
-    </>
+    </div>
   );
 }
