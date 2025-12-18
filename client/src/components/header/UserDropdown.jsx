@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser, logout } from "../../redux/slices/authSlice";
+import { fetchUserProfile } from "../../redux/slices/userProfileSlice";
 import { useNavigate } from "react-router-dom";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
@@ -9,8 +10,21 @@ import { Link } from "react-router";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useSelector((s) => s.auth || {});
+  const { profile } = useSelector((s) => s.userProfile || {});
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Fetch profile on mount to get latest avatar
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch, user]);
+
+  // Use profile avatar first, then auth user avatar, then default
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl || "/images/user/owner.jpg";
+  const displayName = profile?.displayName || user?.name || "User";
+  const displayEmail = profile?.email || user?.email || "";
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -36,10 +50,10 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <img src={user?.avatarUrl || "/images/user/owner.jpg"} alt="User" className="w-full h-full object-cover" />
+          <img src={avatarUrl} alt="User" className="w-full h-full object-cover" />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">{user?.name || "User"}</span>
+        <span className="block mr-1 font-medium text-theme-sm">{displayName}</span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
             }`}
@@ -66,10 +80,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.name || "User"}
+            {displayName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user?.email || ""}
+            {displayEmail}
           </span>
         </div>
 
