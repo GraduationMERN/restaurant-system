@@ -31,15 +31,15 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-50">
+    <header className="sticky top-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-20">
       {/* Full width container for mobile/tablet, constrained width for desktop */}
-      <div className="w-full xl:pl-[90px] xl:transition-all xl:duration-300 xl:ease-in-out">
+      <div className="w-full xl:transition-all xl:duration-300 xl:ease-in-out">
         <div className="flex items-center justify-between w-full px-4 py-3 xl:px-6 xl:py-4">
-          {/* Left - Hamburger + Logo */}
+          {/* Left - Hamburger only (Logo is in sidebar) */}
           <div className="flex items-center gap-3">
             {/* Hamburger Icon - Visible only on mobile/tablet */}
             <button
-              className="flex xl:hidden items-center justify-center w-10 h-10 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="flex lg:hidden items-center justify-center w-10 h-10 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={handleToggle}
               aria-label="Toggle Sidebar"
             >
@@ -63,19 +63,6 @@ const AppHeader = () => {
                 </svg>
               )}
             </button>
-
-            {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <img
-                src={
-                  settings.branding?.logoDarkModeUrl && document.documentElement.classList.contains("dark")
-                    ? settings.branding.logoDarkModeUrl
-                    : settings.branding?.logoUrl || "/images/logo/logo.svg"
-                }
-                alt="Logo"
-                className="h-8 w-auto object-contain"
-              />
-            </Link>
           </div>
 
           {/* Right Controls - Always visible */}

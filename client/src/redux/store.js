@@ -12,10 +12,10 @@ import ordersReducer from "./slices/ordersSlice";
 import paymentReducer from "./slices/paymentSlice";
 import kitchenReducer from "./slices/kitchenSlice";
 import cashierReducer from "./slices/cashierSlice";
-
 import rewardOrderReducer from "./slices/rewardOrderSlice";
 import recommendationReducer from "./slices/recommendationSlice";
 import aiProductReducer from "./slices/aiProductSlice";
+import userProfileReducer from "./slices/userProfileSlice";
 
 export const store = configureStore({
   reducer: {
@@ -35,5 +35,6 @@ export const store = configureStore({
     cashier: cashierReducer,
     recommendations: recommendationReducer,
     aiProduct: aiProductReducer,
+    userProfile: userProfileReducer,
   },
 });

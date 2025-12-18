@@ -1,43 +1,52 @@
 import { useModal } from "../../hooks/useModal";
-import { useSelector, useDispatch } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
-import api from "../../api/axios";
-import { setUser } from "../../redux/slices/authSlice";
 import { useToast } from "../../hooks/useToast";
+import { updateUserProfile } from "../../redux/slices/userProfileSlice";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const { profile } = useSelector((state) => state.userProfile);
   const toast = useToast();
-  const [country, setCountry] = useState(user?.address?.country || "");
-  const [cityState, setCityState] = useState(user?.address?.cityState || "");
-  const [postalCode, setPostalCode] = useState(user?.address?.postalCode || "");
-  const [taxId, setTaxId] = useState(user?.address?.taxId || "");
+  
+  const [country, setCountry] = useState("");
+  const [cityState, setCityState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [taxId, setTaxId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Sync form state with profile
+  useEffect(() => {
+    if (profile?.address) {
+      setCountry(profile.address.country || "");
+      setCityState(profile.address.cityState || "");
+      setPostalCode(profile.address.postalCode || "");
+      setTaxId(profile.address.taxId || "");
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { address: { country, cityState, postalCode, taxId } };
-      // Optimistic UI update
-      const prev = user;
-      dispatch(setUser({ ...user, address: payload.address }));
-      const res = await api.patch("/api/users/me", payload);
-      if (res?.data?.user) dispatch(setUser(res.data.user));
-      else dispatch(setUser(prev));
+      const payload = { 
+        address: { country, cityState, postalCode, taxId } 
+      };
+      
+      await dispatch(updateUserProfile(payload)).unwrap();
       closeModal();
       toast.showToast({ message: "Changes saved", type: "success" });
     } catch (err) {
-      toast.showToast({ message: "Failed to save changes", type: "error" });
+      toast.showToast({ message: err || "Failed to save changes", type: "error" });
     } finally {
       setSaving(false);
     }
   };
+
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -53,7 +62,7 @@ export default function UserAddressCard() {
                   Country
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {user?.address?.country || ""}
+                  {profile?.address?.country || "-"}
                 </p>
               </div>
 
@@ -62,7 +71,7 @@ export default function UserAddressCard() {
                   City/State
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {user?.address?.cityState || ""}
+                  {profile?.address?.cityState || "-"}
                 </p>
               </div>
 
@@ -71,7 +80,7 @@ export default function UserAddressCard() {
                   Postal Code
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {user?.address?.postalCode || ""}
+                  {profile?.address?.postalCode || "-"}
                 </p>
               </div>
 
@@ -80,7 +89,7 @@ export default function UserAddressCard() {
                   TAX ID
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {user?.address?.taxId || ""}
+                  {profile?.address?.taxId || "-"}
                 </p>
               </div>
             </div>
