@@ -134,7 +134,7 @@ export default function LandingPage() {
       navigate: "/reviews",
     },
     {
-      image: "https://media.istockphoto.com/id/1251768924/photo/pink-piggy-bank-with-life-belt.jpg?s=612x612&w=0&k=20&c=vFf4ClK44lfGsMWfQTowqIScnSfZPuAJquARuFhcfRg=",
+      image: "/images/support_icon.png",
       title: t("Support"),
       description: t("FAQ_and_help"),
       color: "text-emerald-600 dark:text-emerald-400",
