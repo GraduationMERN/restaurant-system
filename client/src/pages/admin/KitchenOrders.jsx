@@ -20,6 +20,7 @@ import socketClient from "../../utils/socketRedux";
 import { useRole } from "../../hooks/useRole";
 import { useToast } from "../../hooks/useToast";
 import StaffNavbar from "../../components/StaffNavbar";
+import AdminScrollToTopButton from "../../components/common/AdminScrollToTopButton";
 import { 
   Clock, 
   ChefHat, 
@@ -809,6 +810,9 @@ export default function KitchenOrders() {
           </div>
         )}
       </Modal>
+
+      {/* Scroll to Top Button */}
+      <AdminScrollToTopButton />
     </>
   );
 }

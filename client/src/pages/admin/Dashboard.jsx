@@ -2,6 +2,8 @@ import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import RecentOrders from "../../components/ecommerce/RecentOrders";
+import PeakHoursChart from "../../components/ecommerce/PeakHoursChart";
+import RevenueByDayChart from "../../components/ecommerce/RevenueByDayChart";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useEffect, useMemo, useState } from "react";
@@ -14,11 +16,10 @@ export default function Dashboard() {
     customers: { value: 0, changePct: 0 },
     rating: { value: 0, changePct: 0 },
   });
-  const [weeklyCategories, setWeeklyCategories] = useState([]);
-  const [weeklySales, setWeeklySales] = useState([]);
   const [topLabels, setTopLabels] = useState([]);
   const [topSeries, setTopSeries] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [peakHours, setPeakHours] = useState([]);
 
   useEffect(() => {
     const today = new Date();
@@ -52,27 +53,14 @@ export default function Dashboard() {
       }
     }
 
-    async function loadDaily() {
-      try {
-        const res = await api.get(`/api/orders/stats/daily`, { params: { days: 7 } });
-        const data = res.data?.data || [];
-        const cats = data.map((d) => d._id);
-        const vals = data.map((d) => Math.round(d.revenue || 0));
-        setWeeklyCategories(cats);
-        setWeeklySales(vals);
-      } catch (e) {
-        console.error("Failed to load daily stats", e);
-      }
-    }
-
     async function loadTopItems() {
       try {
-        const from = new Date();
-        from.setMonth(from.getMonth() - 1);
-        const res = await api.get(`/api/orders/stats/top-items`, { params: { from: iso(from), to: iso(today), by: "product" } });
+        const res = await api.get(`/api/orders/stats/top-items`, { params: { by: "product" } });
         const data = res.data?.data || [];
-        setTopLabels(data.map((x) => x.label || "Unknown"));
-        setTopSeries(data.map((x) => x.quantity || 0));
+        if (data.length > 0) {
+          setTopLabels(data.map((x) => x.label || x.name || "Unknown"));
+          setTopSeries(data.map((x) => x.quantity || 0));
+        }
       } catch (e) {
         console.error("Failed to load top items", e);
       }
@@ -96,10 +84,19 @@ export default function Dashboard() {
       }
     }
 
+    async function loadPeakHours() {
+      try {
+        const res = await api.get(`/api/orders/stats/peak-hours`);
+        setPeakHours(res.data?.data || []);
+      } catch (e) {
+        console.error("Failed to load peak hours", e);
+      }
+    }
+
     loadMetrics();
-    loadDaily();
     loadTopItems();
     loadRecent();
+    loadPeakHours();
   }, []);
 
   const topItemsAgg = useMemo(() => ({ labels: topLabels, values: topSeries }), [topLabels, topSeries]);
@@ -112,38 +109,47 @@ export default function Dashboard() {
       />
       <PageBreadcrumb pageTitle="Dashboard" />
       
-      {/* Main content container - centered on small/medium screens */}
       <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* Center EcommerceMetrics on small/medium screens */}
+          {/* Metrics Cards */}
           <div className="flex justify-center">
             <div className="w-full max-w-7xl">
               <EcommerceMetrics metrics={metrics} />
             </div>
           </div>
 
-          {/* Charts grid - centered on small/medium screens */}
+          {/* Row 1: Sales Trend - Full Width */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-7xl">
+              <StatisticsChart title="Sales Trend" />
+            </div>
+          </div>
+
+          {/* Row 2: Top Selling & Revenue by Day */}
           <div className="flex justify-center">
             <div className="w-full max-w-7xl">
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <StatisticsChart 
-                  title="Sales Trend" 
-                  categories={weeklyCategories} 
-                  series={[{ name: "Sales", data: weeklySales }]} 
-                />
                 <MonthlySalesChart 
                   title="Top Selling Items" 
                   labels={topItemsAgg.labels} 
                   series={topItemsAgg.values} 
                 />
+                <RevenueByDayChart />
               </div>
             </div>
           </div>
 
-          {/* Recent Orders - centered on small/medium screens */}
+          {/* Row 3: Peak Hours - Full Width */}
           <div className="flex justify-center">
             <div className="w-full max-w-7xl">
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5 lg:p-6">
+              <PeakHoursChart data={peakHours} />
+            </div>
+          </div>
+
+          {/* Recent Orders */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-7xl">
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900/50 sm:p-5 lg:p-6">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Recent Orders</h3>
                 <RecentOrders orders={recentOrders} />
               </div>

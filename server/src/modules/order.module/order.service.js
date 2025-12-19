@@ -193,6 +193,9 @@ class OrderService {
   async getDailyStats(days) { return orderRepo.getDailyStats(days); }
   async getTopItems(from, to, by) { return orderRepo.getTopItems(from, to, by); }
   async getRecentOrders(limit) { return orderRepo.getRecentOrders(limit); }
+  async getPeakHours() { return orderRepo.getPeakHours(); }
+  async getRevenueByDayOfWeek() { return orderRepo.getRevenueByDayOfWeek(); }
+  async getMonthlyRevenue() { return orderRepo.getMonthlyRevenue(); }
   // ==========
   async orderUpdate(orderId, updates) { return orderRepo.update(orderId, updates); }
   async updateStatus(orderId, newStatus) {

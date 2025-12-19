@@ -34,6 +34,9 @@ router.get("/all-orders-rewards", authMiddleware, roleMiddleware("cashier", "adm
 router.get("/stats/overview", optionalAuthMiddleware, orderController.getOverviewStats);
 router.get("/stats/daily", optionalAuthMiddleware, orderController.getDailyStats);
 router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopItems);
+router.get("/stats/peak-hours", optionalAuthMiddleware, orderController.getPeakHours);
+router.get("/stats/revenue-by-day", optionalAuthMiddleware, orderController.getRevenueByDayOfWeek);
+router.get("/stats/monthly", optionalAuthMiddleware, orderController.getMonthlyRevenue);
 
 
 

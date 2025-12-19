@@ -11,6 +11,7 @@ import api from "../../api/axios";
 import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
 import StaffNavbar from "../../components/StaffNavbar";
+import AdminScrollToTopButton from "../../components/common/AdminScrollToTopButton";
 
 export default function CashierDashboard() {
   const toast = useToast();
@@ -175,6 +176,9 @@ export default function CashierDashboard() {
           </div>
         </ComponentCard>
       </div>
+
+      {/* Scroll to Top Button */}
+      <AdminScrollToTopButton />
     </>
   );
 }

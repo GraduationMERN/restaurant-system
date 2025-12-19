@@ -62,7 +62,7 @@ export default function CombinedNavbar() {
           {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="px-4 py-2 hover:bg-gray-100 flex items-center"
+            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -218,7 +218,7 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick, badge }) {
       to={to}
       onClick={() => onClick && onClick()}
       className={`
-        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
+        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
         ${active ? "text-primary" : "text-muted"}
       `}
     >

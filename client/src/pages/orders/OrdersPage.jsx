@@ -233,13 +233,6 @@ export default function OrdersPage() {
         description="Track your restaurant orders in real-time"
       />
 
-      <PageBreadcrumb
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "My Orders", href: "/orders", active: true },
-        ]}
-      />
-
       <div className="min-h-screen  bg-gray-50 dark:bg-gray-900 py-6 sm:py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* HEADER */}

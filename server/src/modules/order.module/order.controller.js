@@ -398,7 +398,9 @@ export const getDailyStats = async (req, res) => {
 export const getTopItems = async (req, res) => {
   try {
     const { from = null, to = null, by = "product" } = req.query;
+    console.log("getTopItems called with:", { from, to, by });
     const data = await orderService.getTopItems(from, to, by);
+    console.log("getTopItems result:", data);
     res.json({ success: true, data });
   } catch (err) {
     console.error("Get top items error:", err);
@@ -413,6 +415,36 @@ export const getRecentOrdersList = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("Get recent orders error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getPeakHours = async (req, res) => {
+  try {
+    const data = await orderService.getPeakHours();
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get peak hours error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getRevenueByDayOfWeek = async (req, res) => {
+  try {
+    const data = await orderService.getRevenueByDayOfWeek();
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get revenue by day error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getMonthlyRevenue = async (req, res) => {
+  try {
+    const data = await orderService.getMonthlyRevenue();
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Get monthly revenue error:", err);
     res.status(400).json({ success: false, message: err.message });
   }
 };

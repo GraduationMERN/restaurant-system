@@ -185,38 +185,89 @@ class OrderRepository {
       if (from) match.createdAt.$gte = new Date(from);
       if (to) match.createdAt.$lte = new Date(to);
     }
+    
+    // Simple aggregation - just use the name stored in items array
     const pipeline = [
-      { $match: match },
+      ...(Object.keys(match).length ? [{ $match: match }] : []),
       { $unwind: "$items" },
       {
         $group: {
-          _id: by === "category" ? "$items.productId" : "$items.productId",
-          name: { $first: "$items.name" },
+          _id: "$items.name",
           quantity: { $sum: "$items.quantity" },
           revenue: { $sum: "$items.totalPrice" }
         }
       },
       { $sort: { quantity: -1 } },
       { $limit: 10 },
-      // optional lookup to product for category
-      ...(by === "category"
-        ? [
-          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
-          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-          { $group: { _id: "$product.categoryId", quantity: { $sum: "$quantity" }, revenue: { $sum: "$revenue" } } },
-          { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "category" } },
-          { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-          { $project: { label: "$category.name", quantity: 1, revenue: 1 } },
-          { $sort: { quantity: -1 } },
-        ]
-        : [
-          { $lookup: { from: "products", localField: "_id", foreignField: "_id", as: "product" } },
-          { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-          { $project: { label: { $ifNull: ["$product.name", "$name"] }, quantity: 1, revenue: 1 } },
-        ]
-      )
+      { $project: { _id: 0, label: "$_id", quantity: 1, revenue: 1 } }
     ];
+    
     return Order.aggregate(pipeline);
+  }
+
+  // Peak hours - orders count by hour of day
+  async getPeakHours() {
+    return Order.aggregate([
+      {
+        $group: {
+          _id: { $hour: "$createdAt" },
+          count: { $sum: 1 },
+          revenue: { $sum: "$totalAmount" }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          hour: "$_id",
+          count: 1,
+          revenue: 1,
+          _id: 0
+        }
+      }
+    ]);
+  }
+
+  // Revenue by day of week (0=Sunday, 6=Saturday)
+  async getRevenueByDayOfWeek() {
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const result = await Order.aggregate([
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          revenue: { $sum: "$totalAmount" },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Map to day names
+    return result.map(r => ({
+      day: dayNames[r._id - 1] || "Unknown",
+      dayIndex: r._id,
+      revenue: r.revenue,
+      orders: r.orders
+    }));
+  }
+
+  // Monthly revenue
+  async getMonthlyRevenue() {
+    const result = await Order.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          revenue: { $sum: "$totalAmount" },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    return result.map(r => ({
+      month: r._id,
+      revenue: r.revenue,
+      orders: r.orders
+    }));
   }
 
   async getRecentOrders(limit = 5) {
