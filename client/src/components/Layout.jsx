@@ -33,15 +33,18 @@ export default function Layout({ children }) {
 
       {/* Mobile bottom navbar */}
       {!shouldHideUI && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-primary/60 z-[100000] dark:bg-gray-900 dark:text-white">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-primary/60 z-100000 dark:bg-gray-900 dark:text-white">
           <div className="w-full h-16 flex justify-between items-center px-4">
             <Navbar />
           </div>
         </div>
       )}
-      {/* Hiding Chatbot */}
+
+      {/* Chatbot with Scroll to Top Button */}
       {!shouldHideUI && <Chatbot />}
     </div>
 
   );
 }
+
+

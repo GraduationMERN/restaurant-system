@@ -12,6 +12,7 @@ import {
   setWelcomeMessage,
 } from "../../redux/slices/chatbotSlice";
 import { useSettings } from "../../context/SettingContext";
+import ScrollToTopButton from "../common/ScrollToTopButton";
 import "./Chatbot.css";
 
 // Common Emojis data
@@ -923,21 +924,28 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Toggle Button */}
-      <button
-        className="chatbot-toggle"
-        aria-label="Toggle chatbot"
-        aria-expanded={isActive}
-        onClick={onToggle}
-        style={{ backgroundColor: primaryColor }}
-      >
-        <span className="toggle-icon chat-icon" aria-hidden="true">
-          <ChatIcon />
-        </span>
-        <span className="toggle-icon close-icon" aria-hidden="true">
-          <CloseIcon />
-        </span>
-      </button>
+      {/* Floating Buttons Container */}
+      <div className="flex items-center gap-3">
+        {/* Scroll to Top Button */}
+        <ScrollToTopButton />
+        
+        {/* Toggle Button */}
+        <button
+          className="chatbot-toggle"
+          aria-label="Toggle chatbot"
+          aria-expanded={isActive}
+          onClick={onToggle}
+          style={{ backgroundColor: primaryColor }}
+        >
+          <span className="toggle-icon chat-icon" aria-hidden="true">
+            <ChatIcon />
+          </span>
+          <span className="toggle-icon close-icon" aria-hidden="true">
+            <CloseIcon />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
+
