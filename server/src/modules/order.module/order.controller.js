@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import orderService from "./order.service.js";
 import PaymentService from "../payment/paymentService.js";
 import Order from "../order.module/orderModel.js";
+import RewardOrder from "../rewards/rewardOrder.js";
 // Avoid importing server.js here to prevent circular imports.
 // Use `global.io` and `global.notificationService` which are set in `server.js` after initialization.
 import { notificationService , io } from "../../../server.js";
@@ -457,71 +458,109 @@ export const updateOrderStatus = async (req, res) => {
     }
     // Admin can update to any status
 
-    // Find order
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found"
-      });
+    let updatedOrder;
+    let isRewardOrder = false;
+
+    // Try to find as regular order first
+    let order = await Order.findById(id);
+    if (order) {
+      // Update regular order
+      order.status = status;
+      
+      // Update estimated time if provided
+      if (estimatedTime) {
+        order.estimatedTime = estimatedTime;
+        order.estimatedReadyTime = new Date(Date.now() + estimatedTime * 60000);
+      }
+
+      await order.save({ validateModifiedOnly: true });
+
+      // Populate for response
+      updatedOrder = await Order.findById(order._id)
+        .populate('user', 'name email')
+        .populate('createdBy', 'name')
+        .lean();
+    } else {
+      // Try to find as reward order
+      order = await RewardOrder.findById(id);
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found"
+        });
+      }
+
+      isRewardOrder = true;
+      
+      // Update reward order
+      order.status = status;
+      await order.save({ validateModifiedOnly: true });
+
+      // Populate for response
+      updatedOrder = await RewardOrder.findById(order._id)
+        .populate({
+          path: "rewardId",
+          populate: { path: "productId" }
+        })
+        .populate("userId", 'name email')
+        .lean();
+
+      // Add type and other fields for consistency
+      updatedOrder = {
+        ...updatedOrder,
+        type: 'reward',
+        orderNumber: `R-${order._id.toString().slice(-6)}`,
+        user: updatedOrder.userId,
+        reward: updatedOrder.rewardId,
+        pointsUsed: updatedOrder.pointsUsed,
+        createdAt: updatedOrder.redeemedAt
+      };
     }
-
-    // Update status
-    order.status = status;
-    
-    // Update estimated time if provided
-    if (estimatedTime) {
-      order.estimatedTime = estimatedTime;
-      order.estimatedReadyTime = new Date(Date.now() + estimatedTime * 60000);
-    }
-
-    await order.save({ validateModifiedOnly: true });
-
-    // Populate for response
-    const populatedOrder = await Order.findById(order._id)
-      .populate('user', 'name email')
-      .populate('createdBy', 'name')
-      .lean();
 
     // Socket events (use global.io)
     if (global.io) {
       // Emit full order data to all listeners
       global.io.emit("order:status-changed", {
-        orderId: populatedOrder._id,
-        _id: populatedOrder._id,
-        status: populatedOrder.status,
-        orderNumber: populatedOrder.orderNumber,
-        estimatedReadyTime: populatedOrder.estimatedReadyTime,
-        updatedBy: user?.name || "System"
+        orderId: updatedOrder._id,
+        _id: updatedOrder._id,
+        status: updatedOrder.status,
+        orderNumber: updatedOrder.orderNumber,
+        estimatedReadyTime: updatedOrder.estimatedReadyTime,
+        updatedBy: user?.name || "System",
+        type: isRewardOrder ? 'reward' : 'regular'
       });
 
       // Room-specific events with full order data
       if (["preparing", "ready"].includes(status)) {
-        global.io.to("kitchen").emit("order:kitchen-update", populatedOrder);
+        global.io.to("kitchen").emit("order:kitchen-update", updatedOrder);
       }
 
       if (status === "ready") {
-        global.io.to("cashier").emit("order:ready-notification", populatedOrder);
+        global.io.to("cashier").emit("order:ready-notification", updatedOrder);
       }
-      if (status === "completed") {
-        await earningPoints(populatedOrder._id);
+
+      // Only earn points for regular orders when completed
+      if (status === "completed" && !isRewardOrder) {
+        await earningPoints(updatedOrder._id);
       }
 
       // Customer notification (standardize to `user:<id>`)
-      if (populatedOrder.customerId) {
-        global.io.to(`user:${populatedOrder.customerId}`).emit("order:your-status-changed", {
-          orderId: populatedOrder._id,
-          _id: populatedOrder._id,
-          status: populatedOrder.status,
-          estimatedTime: populatedOrder.estimatedTime,
-          estimatedReadyTime: populatedOrder.estimatedReadyTime
+      const customerId = isRewardOrder ? updatedOrder.userId?._id : updatedOrder.customerId;
+      if (customerId) {
+        global.io.to(`user:${customerId}`).emit("order:your-status-changed", {
+          orderId: updatedOrder._id,
+          _id: updatedOrder._id,
+          status: updatedOrder.status,
+          estimatedTime: updatedOrder.estimatedTime,
+          estimatedReadyTime: updatedOrder.estimatedReadyTime,
+          type: isRewardOrder ? 'reward' : 'regular'
         });
       }
     }
 
     res.json({
       success: true,
-      data: populatedOrder,
+      data: updatedOrder,
       message: `Order status updated to ${status}`
     });
   } catch (err) {
@@ -760,16 +799,44 @@ export const getOrder = async (req, res) => {
     console.log("[GET ORDER] User:", { _id: user?._id, isGuest: user?.isGuest });
     console.log("[GET ORDER] Cookies:", req.cookies);
 
-    const order = await Order.findById(id)
+    let order = await Order.findById(id)
       .populate('user', 'name email phone')
       .populate('createdBy', 'name')
       .lean();
 
+    let isRewardOrder = false;
+
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found"
-      });
+      // Try to find as reward order
+      order = await RewardOrder.findById(id)
+        .populate({
+          path: "rewardId",
+          populate: { path: "productId" }
+        })
+        .populate("userId", 'name email phone')
+        .lean();
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found"
+        });
+      }
+
+      isRewardOrder = true;
+
+      // Format reward order for consistency
+      order = {
+        ...order,
+        type: 'reward',
+        orderNumber: `R-${order._id.toString().slice(-6)}`,
+        user: order.userId,
+        reward: order.rewardId,
+        pointsUsed: order.pointsUsed,
+        createdAt: order.redeemedAt,
+        totalAmount: 0, // Reward orders don't have monetary value
+        status: order.status
+      };
     }
 
     console.log("[GET ORDER] Found order with customerId:", order.customerId);
@@ -781,14 +848,15 @@ export const getOrder = async (req, res) => {
     // 3. OR User is staff (admin, cashier, kitchen)
     const userId = getOrderUserId(req, res);
     const userIdStr = user?._id?.toString();
-    const isOwner = userIdStr && order.customerId === userIdStr;
-    const isGuestOwner = !user?._id && userId === order.customerId;
+    const orderCustomerId = order.customerId || (isRewardOrder ? order.user?._id?.toString() : null);
+    const isOwner = userIdStr && orderCustomerId === userIdStr;
+    const isGuestOwner = !user?._id && userId === orderCustomerId;
     const isStaff = ["admin", "cashier", "kitchen"].includes(user?.role);
 
     console.log("[GET ORDER] Permission check:", {
       userId,
       userIdStr,
-      orderCustomerId: order.customerId,
+      orderCustomerId,
       isOwner,
       isGuestOwner,
       isStaff
@@ -966,6 +1034,113 @@ export const getOrderHistoryForUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Get order history error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ==============================
+// GET ALL ORDERS AND REWARD ORDERS (COMBINED)
+// ==============================
+export const getAllOrdersAndRewardOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, status } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Build filter for regular orders
+    const orderFilter = {};
+    if (status) orderFilter.status = status;
+
+    // Build filter for reward orders
+    const rewardOrderFilter = {};
+    if (status) rewardOrderFilter.status = status;
+
+    // Fetch both types of orders in parallel
+    const [regularOrdersResult, rewardOrdersResult] = await Promise.all([
+      // Regular orders
+      Promise.all([
+        Order.find(orderFilter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit))
+          .populate('user', 'name email phone')
+          .populate('createdBy', 'name')
+          .lean(),
+        Order.countDocuments(orderFilter)
+      ]),
+      // Reward orders - with error handling
+      Promise.all([
+        RewardOrder.find(rewardOrderFilter)
+          .populate({
+            path: "rewardId",
+            populate: { path: "productId" }
+          })
+          .populate("userId", 'name email phone')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit))
+          .lean()
+          .catch(err => {
+            console.error("Error fetching reward orders:", err);
+            return [];
+          }),
+        RewardOrder.countDocuments(rewardOrderFilter).catch(err => {
+          console.error("Error counting reward orders:", err);
+          return 0;
+        })
+      ])
+    ]);
+
+    const [regularOrders, regularOrdersCount] = regularOrdersResult;
+    const [rewardOrders, rewardOrdersCount] = rewardOrdersResult;
+
+    // Combine and sort all orders by createdAt
+    const allOrders = [
+      ...regularOrders.map(order => ({
+        ...order,
+        type: 'regular',
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount || order.total,
+        status: order.status,
+        createdAt: order.createdAt,
+        user: order.user,
+        createdBy: order.createdBy
+      })),
+      ...rewardOrders.map(order => ({
+        ...order,
+        type: 'reward',
+        orderNumber: `R-${order._id.toString().slice(-6)}`,
+        totalAmount: 0, // Reward orders don't have monetary value
+        status: order.status,
+        createdAt: order.redeemedAt,
+        user: order.userId,
+        reward: order.rewardId,
+        pointsUsed: order.pointsUsed
+      }))
+    ].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      // Handle invalid dates
+      if (isNaN(dateA.getTime())) return 1;
+      if (isNaN(dateB.getTime())) return -1;
+      return dateB - dateA;
+    });
+
+    // Apply pagination to combined results
+    const totalCombined = regularOrdersCount + rewardOrdersCount;
+    const paginatedOrders = allOrders.slice(0, parseInt(limit));
+
+    res.json({
+      success: true,
+      data: paginatedOrders,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalCombined,
+        pages: Math.ceil(totalCombined / limit)
+      }
+    });
+  } catch (err) {
+    console.error("Get all orders and reward orders error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -7,8 +7,8 @@ const RewardOrderSchema = new mongoose.Schema(
     pointsUsed: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Preparing", "Confirmed", "Ready", "Completed"],
-      default: "Preparing"
+      enum: ["pending", "confirmed", "preparing", "ready", "completed"],
+      default: "pending"
     },
     redeemedAt: { type: Date, default: Date.now },
     address: { type: String, default: null },
