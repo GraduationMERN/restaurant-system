@@ -194,7 +194,12 @@ export default function KitchenOrders() {
 
   const getPreparationProgress = (orderId) => {
     const order = activeOrders.find(o => o._id === orderId);
-    if (!order?.items) return 0;
+    if (!order) return 0;
+    
+    // Reward orders are always 100% complete (no preparation needed)
+    if (order.type === 'reward') return 100;
+    
+    if (!order.items) return 0;
     
     if (order.preparationProgress !== undefined) {
       return order.preparationProgress;
@@ -422,20 +427,26 @@ export default function KitchenOrders() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        ORDER #{order.orderNumber}
+                        {order.type === 'reward' ? 'REWARD REDEMPTION' : 'ORDER'} #{order.orderNumber}
                       </p>
                       <p className="font-bold text-gray-900 dark:text-white">
-                        {order.customerInfo?.name || "Guest"}
+                        {order.user?.name || order.customerInfo?.name || "Guest"}
                       </p>
-                      {order.serviceType && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {order.serviceType} • {order.items?.length || 0} items
+                      {order.type === 'reward' ? (
+                        <p className="text-sm text-purple-600 dark:text-purple-400">
+                          Reward Redemption • {order.pointsUsed} points used
                         </p>
+                      ) : (
+                        order.serviceType && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                            {order.serviceType} • {order.items?.length || 0} items
+                          </p>
+                        )
                       )}
                     </div>
 
-                    {/* Progress Bar */}
-                    {order.status === "preparing" && (
+                    {/* Progress Bar - Only for regular orders */}
+                    {order.status === "preparing" && order.type !== 'reward' && (
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Preparation Progress</span>
@@ -446,6 +457,21 @@ export default function KitchenOrders() {
                             className="h-full bg-purple-500 transition-all duration-300"
                             style={{ width: `${progress}%` }}
                           />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reward Order Info */}
+                    {order.type === 'reward' && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Reward Item</span>
+                          <span className="font-medium text-purple-600">{order.reward?.productId?.name || 'Reward Item'}</span>
+                        </div>
+                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                          <span className="text-sm text-purple-700 dark:text-purple-300">
+                            Ready for pickup - No preparation required
+                          </span>
                         </div>
                       </div>
                     )}
@@ -461,73 +487,108 @@ export default function KitchenOrders() {
                       </span>
                     </div>
 
-                    {/* Items List */}
-                    <div className="max-h-48 overflow-y-auto">
-                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                        ITEMS TO PREPARE
-                      </p>
-                      <div className="space-y-2">
-                        {order.items?.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {item.quantity}x {item.name}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                                  <span className="truncate">
-                                    {Object.entries(item.selectedOptions).map(([key, val]) => `${key}: ${val}`).join(', ')}
-                                  </span>
-                                )}
-                              </p>
+                    {/* Items List - Only for regular orders */}
+                    {order.type !== 'reward' && (
+                      <div className="max-h-48 overflow-y-auto">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                          ITEMS TO PREPARE
+                        </p>
+                        <div className="space-y-2">
+                          {order.items?.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {item.quantity}x {item.name}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                                    <span className="truncate">
+                                      {Object.entries(item.selectedOptions).map(([key, val]) => `${key}: ${val}`).join(', ')}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              {order.status === "preparing" && (
+                                <button
+                                  onClick={() => handleItemPreparation(
+                                    order._id, 
+                                    item._id || item.productId, 
+                                    !preparationProgress[order._id]?.[item._id || item.productId]
+                                  )}
+                                  className={`ml-2 p-1 rounded ${
+                                    preparationProgress[order._id]?.[item._id || item.productId]
+                                      ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                                  }`}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
-                            {order.status === "preparing" && (
-                              <button
-                                onClick={() => handleItemPreparation(
-                                  order._id, 
-                                  item._id || item.productId, 
-                                  !preparationProgress[order._id]?.[item._id || item.productId]
-                                )}
-                                className={`ml-2 p-1 rounded ${
-                                  preparationProgress[order._id]?.[item._id || item.productId]
-                                    ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                                }`}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                    {order.status === "confirmed" && (
-                      <Button
-                        onClick={() => handleStatusChange(order._id, "preparing")}
-                        className="w-full bg-purple-500 hover:bg-purple-600"
-                      >
-                        Start Preparing
-                      </Button>
-                    )}
-                    {order.status === "preparing" && (
-                      <Button
-                        onClick={() => handleStatusChange(order._id, "ready")}
-                        className="w-full bg-green-500 hover:bg-green-600"
-                      >
-                        Mark as Ready
-                      </Button>
-                    )}
-                    {order.status === "ready" && (
-                      <div className="text-center px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded font-medium">
-                        Ready for Pickup
-                      </div>
+                    {order.type === 'reward' ? (
+                      /* Reward Order Actions */
+                      <>
+                        {order.status === "pending" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "confirmed")}
+                            className="w-full bg-blue-500 hover:bg-blue-600"
+                          >
+                            Confirm Reward
+                          </Button>
+                        )}
+                        {order.status === "confirmed" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "ready")}
+                            className="w-full bg-green-500 hover:bg-green-600"
+                          >
+                            Mark as Ready
+                          </Button>
+                        )}
+                        {order.status === "ready" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "completed")}
+                            className="w-full bg-emerald-500 hover:bg-emerald-600"
+                          >
+                            Complete Reward
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      /* Regular Order Actions */
+                      <>
+                        {order.status === "confirmed" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "preparing")}
+                            className="w-full bg-purple-500 hover:bg-purple-600"
+                          >
+                            Start Preparing
+                          </Button>
+                        )}
+                        {order.status === "preparing" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "ready")}
+                            className="w-full bg-green-500 hover:bg-green-600"
+                          >
+                            Mark as Ready
+                          </Button>
+                        )}
+                        {order.status === "ready" && (
+                          <div className="text-center px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded font-medium">
+                            Ready for Pickup
+                          </div>
+                        )}
+                      </>
                     )}
                     <button
                       onClick={() => setViewOrder(order)}

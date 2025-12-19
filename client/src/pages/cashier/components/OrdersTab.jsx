@@ -139,7 +139,7 @@ export default function OrdersTab() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await api.get("api/orders");
+      const response = await api.get("api/orders/all-orders-rewards");
       setOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);

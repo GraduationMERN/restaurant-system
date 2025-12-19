@@ -28,6 +28,7 @@ router.use(requestIdMiddleware);
 router.get("/recent", optionalAuthMiddleware, orderController.getRecentOrdersList);
 
 router.get("/", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
+router.get("/all-orders-rewards", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getAllOrdersAndRewardOrders);
 // ---- STATS ----
 router.get("/stats/overview", optionalAuthMiddleware, orderController.getOverviewStats);
 router.get("/stats/daily", optionalAuthMiddleware, orderController.getDailyStats);
