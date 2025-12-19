@@ -319,7 +319,7 @@ function UserDropdown({ isOpen, user, onNavClick }) {
   const dropdownRef = useRef(null);
 
   const displayName = user?.name || user?.email?.split("@")[0] || "User";
-  const avatarUrl = user?.avatarUrl || "/images/user/owner.jpg";
+  const avatarUrl = user?.avatarUrl;
   const role = user?.role || "customer";
 
   // Close dropdown when clicking outside
@@ -356,11 +356,12 @@ function UserDropdown({ isOpen, user, onNavClick }) {
           isOpen ? "justify-start" : "justify-center"
         }`}
       >
-        <img
+        {avatarUrl && <img
           src={avatarUrl}
           alt={displayName}
           className="w-8 h-8 rounded-full object-cover border-2 border-primary/30"
-        />
+        />}
+        {!avatarUrl && <User size={20} className="w-8 h-8 rounded-full object-cover border-2 border-primary/30" />}
         {isOpen && (
           <>
             <div className="flex-1 text-left">
