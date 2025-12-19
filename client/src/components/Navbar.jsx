@@ -187,7 +187,7 @@ export default function Navbar() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-primary/90"
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-primary/90"
                 >
                   {roleLink.icon}
                   {roleLink.label}
