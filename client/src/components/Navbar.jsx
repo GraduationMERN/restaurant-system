@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser, logout } from "../redux/slices/authSlice";
+import { fetchUserProfile } from "../redux/slices/userProfileSlice";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
 import { useState, useRef, useEffect } from "react";
 
@@ -24,6 +25,13 @@ export default function Navbar() {
   const role = user?.role || "customer";
 
   const isActive = (path) => location.pathname === path;
+
+  // Fetch user profile when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !profile) {
+      dispatch(fetchUserProfile());
+    }
+  }, [isAuthenticated, profile, dispatch]);
 
   const handleLogout = async () => {
     try {
@@ -164,7 +172,7 @@ export default function Navbar() {
 
           {/* Dropdown Menu - appears above the button */}
           {dropdownOpen && (
-            <div className="absolute bottom-full right-0 mb-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+            <div className="absolute bottom-full right-0 mb-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999]">
               <Link
                 to="/profile"
                 onClick={() => setDropdownOpen(false)}
