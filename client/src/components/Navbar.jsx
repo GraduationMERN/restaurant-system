@@ -1,8 +1,11 @@
-import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut, HelpCircle } from "lucide-react";
+import { Home, Utensils, Clock4, Star, Gift, User, LogOut, HelpCircle, LayoutDashboard, ChefHat, CreditCard } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../redux/slices/authSlice"; // adjust path
+import { logoutUser, logout } from "../redux/slices/authSlice";
+import { fetchUserProfile } from "../redux/slices/userProfileSlice";
+import { ThemeToggleButton } from "./common/ThemeToggleButton";
+import { useState, useRef, useEffect } from "react";
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
@@ -11,41 +14,83 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   const { isAuthenticated, user } = useSelector(state => state.auth);
+  const { profile } = useSelector(state => state.userProfile || {});
   const cartItem = useSelector(state => state.cart.products);
   const totalItems = cartItem.reduce((acc, item) => acc + item.quantity, 0);
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl;
+  const role = user?.role || "customer";
+
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    dispatch(logoutUser());
-    navigate("/menu");
+  // Fetch user profile when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !profile) {
+      dispatch(fetchUserProfile());
+    }
+  }, [isAuthenticated, profile, dispatch]);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser());
+      dispatch(logout());
+      setDropdownOpen(false);
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
+
+  // Get role-specific dashboard link
+  const getRoleLink = () => {
+    switch (role) {
+      case "admin":
+        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+      case "kitchen":
+        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+      case "cashier":
+        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+      default:
+        return null;
+    }
+  };
+
+  const roleLink = getRoleLink();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="w-full flex justify-between items-center">
 
       {/* Language Switch */}
-      {i18n.language === "en" ? (
-        <button
-          onClick={() => i18n.changeLanguage("ar")}
-          className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors"
-        >
-          <span className="text-xs font-medium">AR</span>
-        </button>
-      ) : (
-        <button
-          onClick={() => i18n.changeLanguage("en")}
-          className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors"
-        >
-          <span className="text-xs font-medium">EN</span>
-        </button>
-      )}
+      <button
+        onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")}
+        className="flex flex-col items-center text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+      >
+        <span className="text-xs font-medium">{i18n.language === "en" ? "ع" : "En"}</span>
+      </button>
 
-      {/* Normal Navbar Buttons */}
+      {/* Dark Mode Toggle */}
+      <div className="flex flex-col items-center">
+        <ThemeToggleButton />
+      </div>
+
       {/* Home */}
       <Link
         to="/"
-        className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Home size={20} />
         <span className="text-xs">{t("home")}</span>
@@ -54,7 +99,7 @@ export default function Navbar() {
       {/* Menu */}
       <Link
         to="/menu"
-        className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Utensils size={20} />
         <span className="text-xs">{t("menu")}</span>
@@ -63,40 +108,102 @@ export default function Navbar() {
       {/* Orders */}
       <Link
         to="/orders"
-        className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/orders") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Clock4 size={20} />
         <span className="text-xs">{t("orders")}</span>
       </Link>
 
+      {/* Reviews */}
+      <Link
+        to="/reviews"
+        className={`flex flex-col items-center transition-colors ${isActive("/reviews") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
+      >
+        <Star size={20} />
+        <span className="text-xs">{t("reviews")}</span>
+      </Link>
 
       {/* Rewards */}
       <Link
         to="/rewards"
-        className={`flex flex-col items-center transition-colors text-secondary/60 ${isActive("/rewards") ? "text-secondary" : "text-gray-600 hover:text-secondary"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-secondary" : "text-gray-600 dark:text-gray-400 hover:text-secondary"}`}
       >
-        <Gift size={20} />
+        <Gift size={20} className="text-secondary" />
         <span className="text-xs">{t("rewards")}</span>
       </Link>
 
-      {/* LOGIN / LOGOUT */}
+      {/* Support */}
+      <Link
+        to="/support"
+        className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
+      >
+        <HelpCircle size={20} />
+        <span className="text-xs">{t("Support")}</span>
+      </Link>
+
+
+
+      {/* User Profile with Dropdown / Login */}
       {!isAuthenticated ? (
         <Link
           to="/login"
-          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-primary" : "text-gray-600 hover:text-primary"
-            }`}
+          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
         >
           <User size={20} />
           <span className="text-xs">{t("login")}</span>
         </Link>
       ) : (
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center text-gray-600 hover:text-red-600 transition-colors"
-        >
-          <LogOut size={20} />
-          <span className="text-xs">{t("logout")}</span>
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex flex-col items-center"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="w-7 h-7 rounded-full object-cover border-2 border-primary/40"
+              />
+            ) : (
+              <User size={20} className="text-gray-600 dark:text-gray-400" />
+            )}
+            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Me</span>
+          </button>
+
+          {/* Dropdown Menu - appears above the button */}
+          {dropdownOpen && (
+            <div className="absolute bottom-full right-0 mb-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999]">
+              <Link
+                to="/profile"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <User size={16} />
+                Profile
+              </Link>
+              {roleLink && (
+                <a
+                  href={roleLink.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setDropdownOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-primary/90"
+                >
+                  {roleLink.icon}
+                  {roleLink.label}
+                </a>
+              )}
+              <div className="border-t border-gray-200 dark:border-gray-700"></div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+              >
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
     </div>

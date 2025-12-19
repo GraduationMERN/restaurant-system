@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../../redux/slices/usersSlice";
+import { fetchUsers, updateUserRole } from "../../redux/slices/usersSlice";
 import { registerUser } from "../../redux/slices/authSlice";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
+import { Plus, X, User, Mail, Phone, Shield, ChevronDown, Loader2 } from "lucide-react";
 
 const validateField = (name, value) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,9 +41,16 @@ const validateField = (name, value) => {
   }
 };
 
+const roleColors = {
+  admin: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  cashier: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  kitchen: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  customer: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+};
+
 export default function Users() {
   const dispatch = useDispatch();
-  const { users, loading } = useSelector((state) => state.users);
+  const { users, loading, updating } = useSelector((state) => state.users);
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,10 +70,7 @@ export default function Users() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData({ ...formData, [name]: value });
-
-    // live validation
     setErrors((prev) => ({
       ...prev,
       [name]: validateField(name, value),
@@ -75,7 +80,6 @@ export default function Users() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate all fields before submit
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const error = validateField(key, formData[key]);
@@ -84,13 +88,13 @@ export default function Users() {
 
     setErrors(newErrors);
 
-    // If any errors exist, stop submission
     if (Object.keys(newErrors).length > 0) return;
 
     setSubmitting(true);
     try {
       await dispatch(registerUser(formData));
-      toast.showToast({ message: "User created", type: "success" });
+      toast.showToast({ message: "User created successfully", type: "success" });
+      dispatch(fetchUsers());
     } catch (err) {
       toast.showToast({ message: "Failed to create user", type: "error" });
     } finally {
@@ -108,136 +112,296 @@ export default function Users() {
     setShowForm(false);
   };
 
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await dispatch(updateUserRole({ userId, role: newRole })).unwrap();
+      toast.showToast({ message: "Role updated successfully", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: err || "Failed to update role", type: "error" });
+    }
+  };
+
   return (
-    <div className="min-h-screen text-white p-10 space-y-10">
-      <h1 className="text-4xl font-semibold text-primary">Staff Management</h1>
-
-      <button
-        onClick={() => setShowForm(!showForm)}
-        className="bg-primary px-6 py-2 rounded-xl shadow-lg text-lg hover:opacity-90 transition"
-      >
-        Add Staff
-      </button>
-
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 rounded-2xl shadow-xl bg-secondary space-y-5 max-w-lg animate-fadeIn"
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            Staff Management
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Manage your team members and their roles
+          </p>
+        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/25"
         >
-          <div className="grid grid-cols-2 gap-4">
-            {/* Name */}
-            <div>
-              <label className="block mb-1 text-primary">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Name"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus-primary"
-              />
-              {errors.name && (
-                <p className="text-red-400 text-sm mt-1">{errors.name}</p>
-              )}
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? "Cancel" : "Add Staff"}
+        </button>
+      </div>
+
+      {/* Add Staff Form */}
+      {showForm && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm animate-fadeIn">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Add New Staff Member
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter name"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="Enter phone number"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+                {errors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter email"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Role
+                </label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                >
+                  <option value="kitchen">Kitchen</option>
+                  <option value="cashier">Cashier</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block mb-1 text-primary">Phone Number</label>
-              <input
-                type="text"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="Phone Number"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus-primary"
-              />
-              {errors.phoneNumber && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.phoneNumber}
-                </p>
-              )}
+            <div className="flex justify-end pt-2">
+              <Button type="submit" loading={submitting}>
+                Create Staff Member
+              </Button>
             </div>
-
-            {/* Email */}
-            <div>
-              <label className="block mb-1 text-primary">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus-primary"
-              />
-              {errors.email && (
-                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block mb-1 text-primary">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus-primary"
-              />
-              {errors.password && (
-                <p className="text-red-400 text-sm mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Role */}
-            <div>
-              <label className="block mb-1 text-primary">Role</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus-primary"
-              >
-                <option value="kitchen" className="text-gray-900">
-                  Kitchen
-                </option>
-                <option value="cashier" className="text-gray-900">
-                  Cashier
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <Button type="submit" loading={submitting} className="w-full">Submit</Button>
-        </form>
+          </form>
+        </div>
       )}
 
-      {loading && <p className="text-primary text-lg mt-5">Loading users...</p>}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3 text-gray-500">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Loading users...</span>
+          </div>
+        </div>
+      )}
 
+      {/* Users List - Card View for Mobile, Table for Desktop */}
       {!loading && (
-        <table className="w-full text-left mt-5 bg-gray-800 rounded-xl overflow-hidden">
-          <thead className="bg-primary text-gray-900">
-            <tr>
-              <th className="p-3">Name</th>
-              <th className="p-3">Phone</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Role</th>
-            </tr>
-          </thead>
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {users.map((user) => (
+              <div
+                key={user._id || user.id}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {user.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-          <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className="border-b border-gray-700">
-                <td className="p-3">{user.name}</td>
-                <td className="p-3">{user.phoneNumber}</td>
-                <td className="p-3">{user.email}</td>
-                <td className="p-3 capitalize">{user.role}</td>
-              </tr>
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Phone className="w-4 h-4" />
+                  <span>{user.phoneNumber}</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Role:</span>
+                  <div className="relative">
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user._id || user.id, e.target.value)}
+                      disabled={updating === (user._id || user.id)}
+                      className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
+                    >
+                      <option value="customer">Customer</option>
+                      <option value="kitchen">Kitchen</option>
+                      <option value="cashier">Cashier</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    {updating === (user._id || user.id) ? (
+                      <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
+                    ) : (
+                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" />
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    User
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Phone
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Email
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Role
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {users.map((user) => (
+                  <tr
+                    key={user._id || user.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {user.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                      {user.phoneNumber}
+                    </td>
+                    <td className="px-6 py-4">
+                      <a
+                        href={`mailto:${user.email}`}
+                        className="text-primary hover:underline"
+                      >
+                        {user.email}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="relative inline-block">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user._id || user.id, e.target.value)}
+                          disabled={updating === (user._id || user.id)}
+                          className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
+                        >
+                          <option value="customer">Customer</option>
+                          <option value="kitchen">Kitchen</option>
+                          <option value="cashier">Cashier</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        {updating === (user._id || user.id) ? (
+                          <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
+                        ) : (
+                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty State */}
+          {users.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                No staff members yet
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Click "Add Staff" to create your first team member.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
