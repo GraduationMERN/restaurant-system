@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, updateUserRole } from "../../redux/slices/usersSlice";
+import { fetchUsers, updateUserRole, deleteUser } from "../../redux/slices/usersSlice";
 import { registerUser } from "../../redux/slices/authSlice";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
-import { Plus, X, User, Mail, Phone, Shield, ChevronDown, Loader2 } from "lucide-react";
+import { Plus, X, User, Mail, Phone, Shield, ChevronDown, Loader2, Trash2 } from "lucide-react";
 
 const validateField = (name, value) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,7 +50,7 @@ const roleColors = {
 
 export default function Users() {
   const dispatch = useDispatch();
-  const { users, loading, updating } = useSelector((state) => state.users);
+  const { users, loading, updating, deleting } = useSelector((state) => state.users);
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -118,6 +118,18 @@ export default function Users() {
       toast.showToast({ message: "Role updated successfully", type: "success" });
     } catch (err) {
       toast.showToast({ message: err || "Failed to update role", type: "error" });
+    }
+  };
+
+  const handleDelete = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to delete "${userName}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await dispatch(deleteUser(userId)).unwrap();
+      toast.showToast({ message: "User deleted successfully", type: "success" });
+    } catch (err) {
+      toast.showToast({ message: err || "Failed to delete user", type: "error" });
     }
   };
 
@@ -291,25 +303,39 @@ export default function Users() {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Role:</span>
-                  <div className="relative">
-                    <select
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user._id || user.id, e.target.value)}
-                      disabled={updating === (user._id || user.id)}
-                      className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
-                    >
-                      <option value="customer">Customer</option>
-                      <option value="kitchen">Kitchen</option>
-                      <option value="cashier">Cashier</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                    {updating === (user._id || user.id) ? (
-                      <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
-                    ) : (
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" />
-                    )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Role:</span>
+                    <div className="relative">
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user._id || user.id, e.target.value)}
+                        disabled={updating === (user._id || user.id)}
+                        className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
+                      >
+                        <option value="customer">Customer</option>
+                        <option value="kitchen">Kitchen</option>
+                        <option value="cashier">Cashier</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      {updating === (user._id || user.id) ? (
+                        <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
+                      ) : (
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" />
+                      )}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => handleDelete(user._id || user.id, user.name)}
+                    disabled={deleting === (user._id || user.id)}
+                    className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                    title="Delete user"
+                  >
+                    {deleting === (user._id || user.id) ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             ))}
@@ -331,6 +357,9 @@ export default function Users() {
                   </th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                     Role
+                  </th>
+                  <th className="text-center px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -380,6 +409,20 @@ export default function Users() {
                           <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" />
                         )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDelete(user._id || user.id, user.name)}
+                        disabled={deleting === (user._id || user.id)}
+                        className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                        title="Delete user"
+                      >
+                        {deleting === (user._id || user.id) ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}

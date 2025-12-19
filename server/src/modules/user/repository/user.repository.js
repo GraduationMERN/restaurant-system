@@ -76,3 +76,29 @@ export const updateUserProfile = async (userId, updates) => {
   }
   return await User.findByIdAndUpdate(userId, payload, { new: true }).select("-password");
 };
+
+// Update user role
+export const updateUserRoleById = async (userId, role) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+  return await User.findByIdAndUpdate(
+    userId,
+    { role },
+    { new: true }
+  ).select("-password");
+};
+
+// Update user avatar
+export const updateUserAvatar = async (userId, avatarUrl) => {
+  return await User.findByIdAndUpdate(
+    userId,
+    { avatarUrl },
+    { new: true }
+  ).select("-password");
+};
+
+// Delete user by ID
+export const deleteUserById = async (userId) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+  return await User.findByIdAndDelete(userId);
+};
+
