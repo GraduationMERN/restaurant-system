@@ -179,7 +179,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen bg-white dark:bg-gray-900 transition-all duration-1000 ${
+      className={`min-h-screen  dark:bg-gray-900 transition-all duration-1000 ${
         isRTL ? "rtl" : "ltr"
       }`}
     >
@@ -286,7 +286,7 @@ export default function LandingPage() {
           >
             <div className="relative w-40 h-40 mx-auto mb-8">
               {/* Decorative circle */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full opacity-20 animate-pulse-slow" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/40 rounded-full opacity-20 animate-pulse-slow" />
               <div className="absolute inset-4 rounded-full border-4 border-white/50 dark:border-gray-700/50" />
               <div className="absolute inset-8 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-gray-800 transition-transform duration-500 group-hover:scale-105">
                 <img
@@ -299,10 +299,9 @@ export default function LandingPage() {
                   loading="lazy"
                 />
               </div>
-              <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-amber-500 animate-spin-slow" />
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 bg-clip-text text-transparent dark:from-amber-400 dark:via-orange-400 dark:to-amber-300 mb-4 font-serif tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary/40 via-primary to-secondary bg-clip-text text-transparent dark:from-amber-400 dark:via-orange-400 dark:to-amber-300 mb-4 font-serif tracking-tight">
               {settings.restaurantName || t("welcome")}
             </h1>
 
@@ -311,15 +310,15 @@ export default function LandingPage() {
             </p>
 
             {/* Decorative separator */}
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-amber-300 dark:to-amber-600" />
-              <ChefHat className="w-6 h-6 text-amber-500 dark:text-amber-400" />
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-amber-300 dark:to-amber-600" />
+            <div className="hidden lg:flex  items-center justify-center gap-4 mt-8">
+              <div className="h-px w-16  bg-gradient-to-r from-transparent to-secondary dark:to-secondary" />
+              <ChefHat className=" w-6 h-6 text-secondary" />
+              <div className="h-px w-16 bg-gradient-to-l from-transparent to-secondary dark:to-secondary" />
             </div>
           </div>
 
           {/* Action Cards Grid with Staggered Animation */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {actionCards.map((card, index) => (
               <button
                 key={index}
@@ -373,7 +372,7 @@ export default function LandingPage() {
             }`}
           >
             {/* Background pattern */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/70 via-secondary to-primary" />
             <div
               className="absolute inset-0 opacity-10"
               style={{ backgroundImage: svgPattern }}
@@ -412,7 +411,7 @@ export default function LandingPage() {
                       {t("Special Rewards for Customers")}
                     </p>
                     <p className="text-lg font-semibold">
-                      Join 500+ Happy Customers
+                      {t("Join 500+ Happy Customers")}
                     </p>
                   </div>
                 </div>
@@ -420,7 +419,7 @@ export default function LandingPage() {
 
               <button
                 onClick={() => navigate("/register")}
-                className="w-full md:w-auto bg-white text-amber-700 font-bold py-4 px-8 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-2xl text-lg group flex items-center justify-center gap-3"
+                className="w-full md:w-auto bg-white text-secondary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-2xl text-lg group flex items-center justify-center gap-3"
               >
                 <span>{t("Register_rewards")}</span>
                 <ArrowRight

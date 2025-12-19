@@ -66,11 +66,11 @@ export default function OrdersTab() {
       });
       // Update modal if open
       if (statusUpdateOrder && statusUpdateOrder._id === (data.orderId || data._id)) {
-        setStatusUpdateOrder((prev) => ({
+        setStatusUpdateOrder((prev) => prev ? ({
           ...prev,
           status: data.status,
           estimatedReadyTime: data.estimatedReadyTime || prev.estimatedReadyTime,
-        }));
+        }) : null);
       }
     };
 
@@ -98,20 +98,20 @@ export default function OrdersTab() {
       }
       // Update modal if open
       if (paymentUpdateOrder && paymentUpdateOrder._id === (data.orderId || data._id)) {
-        setPaymentUpdateOrder((prev) => ({
+        setPaymentUpdateOrder((prev) => prev ? ({
           ...prev,
           paymentStatus: data.paymentStatus,
           paidAt: data.paidAt || prev.paidAt,
-        }));
+        }) : null);
       }
     };
 
     // Listen for new orders
     const handleNewOrder = (order) => {
-      console.log("Cashier: New order received", order);
+      console.log("✅ [CASHIER] New order received via socket:", order?.orderNumber, order?._id);
       setOrders((prevOrders) => [order, ...prevOrders]);
       toast.showToast({
-        message: `📋 New order: #${order.orderNumber}`,
+        message: `📋 New order: #${order.orderNumber} from ${order.customerInfo?.name || "Guest"}`,
         type: "success",
         duration: 3000,
       });
@@ -122,6 +122,8 @@ export default function OrdersTab() {
     socket.on("order:payment-updated", handlePaymentChange);
     socket.on("order:your-payment-updated", handlePaymentChange);
     socket.on("order:new", handleNewOrder);
+    socket.on("order:created", handleNewOrder);
+    socket.on("order:direct", handleNewOrder);
 
     return () => {
       socket.off("order:status-changed", handleStatusChange);
@@ -129,13 +131,15 @@ export default function OrdersTab() {
       socket.off("order:payment-updated", handlePaymentChange);
       socket.off("order:your-payment-updated", handlePaymentChange);
       socket.off("order:new", handleNewOrder);
+      socket.off("order:created", handleNewOrder);
+      socket.off("order:direct", handleNewOrder);
     };
   }, [statusUpdateOrder, paymentUpdateOrder, user]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await api.get("api/orders");
+      const response = await api.get("api/orders/all-orders-rewards");
       setOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);

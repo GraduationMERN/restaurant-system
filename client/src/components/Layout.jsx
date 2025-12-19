@@ -20,7 +20,7 @@ export default function Layout({ children }) {
   );
   return (
 
-    <div className="lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none md:pl-18">
+    <div className={`lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none ${shouldHideUI ? "md:pl-0" : "md:pl-18"}`}>
 
       {!shouldHideUI && <DesktopNav />}
 
@@ -33,7 +33,7 @@ export default function Layout({ children }) {
 
       {/* Mobile bottom navbar */}
       {!shouldHideUI && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-50 dark:bg-gray-900 dark:text-white">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-primary/60 z-50 dark:bg-gray-900 dark:text-white">
           <div className="w-full h-16 flex justify-between items-center px-4">
             <Navbar />
           </div>

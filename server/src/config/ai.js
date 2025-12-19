@@ -14,7 +14,7 @@ console.log("⚙️  Initializing AI Models (Groq + Official Local Embeddings)..
 export const chatModel = new ChatGroq({
   apiKey: env.groqApiKey,
   model: env.llmModel,
-  temperature: 0,
+  temperature: 0.1, // Slightly above 0 for better tool calling
   maxRetries: 2,
 });
 

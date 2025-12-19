@@ -36,6 +36,10 @@ const restaurantSchema = new mongoose.Schema(
         type: String,
         default: "",
       },
+      menuImage: {
+        type: String,
+        default: "",
+      },
     },
 
     notifications: {

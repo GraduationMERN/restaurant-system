@@ -18,7 +18,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    navigate("/");
+    navigate("/menu");
   };
 
   return (
@@ -28,14 +28,14 @@ export default function Navbar() {
       {i18n.language === "en" ? (
         <button
           onClick={() => i18n.changeLanguage("ar")}
-          className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+          className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors"
         >
           <span className="text-xs font-medium">AR</span>
         </button>
       ) : (
         <button
           onClick={() => i18n.changeLanguage("en")}
-          className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+          className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors"
         >
           <span className="text-xs font-medium">EN</span>
         </button>
@@ -45,7 +45,7 @@ export default function Navbar() {
       {/* Home */}
       <Link
         to="/"
-        className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
       >
         <Home size={20} />
         <span className="text-xs">{t("home")}</span>
@@ -54,7 +54,7 @@ export default function Navbar() {
       {/* Menu */}
       <Link
         to="/menu"
-        className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
       >
         <Utensils size={20} />
         <span className="text-xs">{t("menu")}</span>
@@ -63,7 +63,7 @@ export default function Navbar() {
       {/* Orders */}
       <Link
         to="/orders"
-        className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+        className={`flex flex-col items-center transition-colors ${isActive("orders/:id") ? "text-primary" : "text-gray-600 hover:text-primary"}`}
       >
         <Clock4 size={20} />
         <span className="text-xs">{t("orders")}</span>
@@ -73,7 +73,7 @@ export default function Navbar() {
       {/* Rewards */}
       <Link
         to="/rewards"
-        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
+        className={`flex flex-col items-center transition-colors text-secondary/60 ${isActive("/rewards") ? "text-secondary" : "text-gray-600 hover:text-secondary"}`}
       >
         <Gift size={20} />
         <span className="text-xs">{t("rewards")}</span>
@@ -83,7 +83,7 @@ export default function Navbar() {
       {!isAuthenticated ? (
         <Link
           to="/login"
-          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+          className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-primary" : "text-gray-600 hover:text-primary"
             }`}
         >
           <User size={20} />

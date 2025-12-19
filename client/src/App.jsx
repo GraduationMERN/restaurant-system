@@ -37,6 +37,7 @@ import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
 import Support from "./pages/Support";
+import ProfilePage from "./pages/ProfilePage";
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
@@ -100,6 +101,7 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             <Route path="/support" element={<Support />} />
+            <Route path="/profile" element={<ProfilePage />} />
 
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />

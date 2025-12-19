@@ -21,6 +21,7 @@ export default function Admin() {
     "reviews",
     "categories",
     "rewards",
+    "instagram",
     "settings",
     "profile",
     "users",
@@ -69,6 +70,11 @@ export default function Admin() {
         {section === "rewards" && (
           <section id="rewards" className={contentClasses}>
             <Rewards />
+          </section>
+        )}
+        {section === "instagram" && (
+          <section id="instagram" className={contentClasses}>
+            <Instagram />
           </section>
         )}
         {section === "reward-orders" && (
