@@ -1067,7 +1067,7 @@ export const getAllOrdersAndRewardOrders = async (req, res) => {
           .lean(),
         Order.countDocuments(orderFilter)
       ]),
-      // Reward orders
+      // Reward orders - with error handling
       Promise.all([
         RewardOrder.find(rewardOrderFilter)
           .populate({
@@ -1078,8 +1078,15 @@ export const getAllOrdersAndRewardOrders = async (req, res) => {
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit))
-          .lean(),
-        RewardOrder.countDocuments(rewardOrderFilter)
+          .lean()
+          .catch(err => {
+            console.error("Error fetching reward orders:", err);
+            return [];
+          }),
+        RewardOrder.countDocuments(rewardOrderFilter).catch(err => {
+          console.error("Error counting reward orders:", err);
+          return 0;
+        })
       ])
     ]);
 
@@ -1109,7 +1116,14 @@ export const getAllOrdersAndRewardOrders = async (req, res) => {
         reward: order.rewardId,
         pointsUsed: order.pointsUsed
       }))
-    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    ].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      // Handle invalid dates
+      if (isNaN(dateA.getTime())) return 1;
+      if (isNaN(dateB.getTime())) return -1;
+      return dateB - dateA;
+    });
 
     // Apply pagination to combined results
     const totalCombined = regularOrdersCount + rewardOrdersCount;
