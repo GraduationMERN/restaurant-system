@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
   semanticSearch,
+  imageSearch,
   clearSearch,
   clearSuggestions,
   setQuery,
 } from "../../redux/slices/searchSlice";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { CircularProgress } from "@mui/material";
 
 /**
@@ -17,6 +19,7 @@ import { CircularProgress } from "@mui/material";
  * AI-powered search bar with:
  * - Debounced semantic search
  * - "Did you mean?" suggestions
+ * - Image-based search (upload photo to search)
  * - Quick autocomplete dropdown
  * - Bilingual support (EN/AR)
  */
@@ -37,6 +40,8 @@ const SmartSearchBar = ({
     results,
     suggestions,
     isSearching,
+    isImageSearching,
+    imageDescription,
     lastSearchedQuery,
   } = useSelector((state) => state.search);
 
@@ -44,10 +49,13 @@ const SmartSearchBar = ({
   const [inputValue, setInputValue] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Debounced search
   const performSearch = useCallback(
@@ -83,6 +91,43 @@ const SmartSearchBar = ({
     }, debounceMs);
   };
 
+  // Handle image selection
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    setSelectedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Clear text search
+    setInputValue("");
+    dispatch(setQuery(""));
+
+    // Perform image search
+    dispatch(imageSearch({ imageFile: file, limit: 10, lang }));
+    setShowDropdown(true);
+  };
+
+  // Clear image search
+  const clearImageSelection = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   // Handle suggestion click
   const handleSuggestionClick = (suggestion) => {
     setInputValue(suggestion.text);
@@ -100,6 +145,7 @@ const SmartSearchBar = ({
     setInputValue("");
     setShowDropdown(false);
     setSelectedIndex(-1);
+    clearImageSelection();
     dispatch(clearSearch());
   };
 
@@ -108,12 +154,18 @@ const SmartSearchBar = ({
     setInputValue("");
     setShowDropdown(false);
     setSelectedIndex(-1);
+    clearImageSelection();
     dispatch(clearSearch());
     // Notify parent that search was cleared
     if (onSearchResults) {
       onSearchResults([]);
     }
     inputRef.current?.focus();
+  };
+
+  // Trigger file input click
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
   };
 
   // Keyboard navigation
@@ -189,6 +241,51 @@ const SmartSearchBar = ({
 
   return (
     <div className="smart-search-container relative w-full">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageSelect}
+        className="hidden"
+        aria-label="Upload image to search"
+      />
+
+      {/* Image Preview (when image is selected) */}
+      {imagePreview && (
+        <div className="mb-2 flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
+          <img
+            src={imagePreview}
+            alt="Search image"
+            className="w-12 h-12 rounded-lg object-cover"
+          />
+          <div className="flex-1 text-sm">
+            {isImageSearching ? (
+              <span className="text-muted flex items-center gap-2">
+                <CircularProgress size={14} />
+                {lang === "ar" ? "جاري تحليل الصورة..." : "Analyzing image..."}
+              </span>
+            ) : imageDescription ? (
+              <span className="text-gray-700 dark:text-gray-300">
+                {imageDescription.length > 60 
+                  ? imageDescription.slice(0, 60) + "..." 
+                  : imageDescription}
+              </span>
+            ) : null}
+          </div>
+          <button
+            onClick={() => {
+              clearImageSelection();
+              dispatch(clearSearch());
+            }}
+            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+            aria-label="Remove image"
+          >
+            <CloseIcon sx={{ fontSize: 18 }} className="text-muted" />
+          </button>
+        </div>
+      )}
+
       {/* Search Input */}
       <div
         className="
@@ -231,8 +328,18 @@ const SmartSearchBar = ({
           <CircularProgress size={18} className="text-primary mr-2" />
         )}
 
+        {/* Camera/Image upload button */}
+        <button
+          onClick={handleCameraClick}
+          className="p-1.5 hover:bg-primary/10 rounded-full transition-colors mr-1"
+          aria-label={lang === "ar" ? "بحث بالصورة" : "Search by image"}
+          title={lang === "ar" ? "بحث بالصورة" : "Search by image"}
+        >
+          <CameraAltIcon sx={{ fontSize: 20 }} className="text-primary" />
+        </button>
+
         {/* Clear button */}
-        {inputValue && (
+        {(inputValue || imagePreview) && (
           <button
             onClick={handleClear}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -338,7 +445,7 @@ const SmartSearchBar = ({
           )}
 
           {/* No results */}
-          {!isSearching && results.length === 0 && inputValue.length >= minChars && (
+          {!isSearching && results.length === 0 && (inputValue.length >= minChars || imagePreview) && (
             <div className="p-4 text-center text-muted">
               {lang === "ar" ? "لا توجد نتائج" : "No results found"}
             </div>

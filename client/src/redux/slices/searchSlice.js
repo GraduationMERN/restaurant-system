@@ -42,6 +42,31 @@ export const quickSearch = createAsyncThunk(
   }
 );
 
+/**
+ * Image-based search
+ * Uploads image and gets matching products
+ */
+export const imageSearch = createAsyncThunk(
+  "search/image",
+  async ({ imageFile, limit = 10, lang = "en" }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      formData.append("limit", limit);
+      formData.append("lang", lang);
+      
+      const res = await api.post("/api/search/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Image search failed"
+      );
+    }
+  }
+);
+
 // Slice
 const searchSlice = createSlice({
   name: "search",
@@ -52,9 +77,13 @@ const searchSlice = createSlice({
     quickResults: [],
     isSearching: false,
     isQuickSearching: false,
+    isImageSearching: false,
     error: null,
     totalResults: 0,
     lastSearchedQuery: "",
+    // Image search specific
+    imageDescription: null,
+    searchedImageUrl: null,
   },
   reducers: {
     setQuery(state, action) {
@@ -68,12 +97,18 @@ const searchSlice = createSlice({
       state.error = null;
       state.totalResults = 0;
       state.lastSearchedQuery = "";
+      state.imageDescription = null;
+      state.searchedImageUrl = null;
     },
     clearSuggestions(state) {
       state.suggestions = [];
     },
     clearQuickResults(state) {
       state.quickResults = [];
+    },
+    clearImageSearch(state) {
+      state.imageDescription = null;
+      state.searchedImageUrl = null;
     },
   },
   extraReducers: (builder) => {
@@ -106,9 +141,31 @@ const searchSlice = createSlice({
       .addCase(quickSearch.rejected, (state, action) => {
         state.isQuickSearching = false;
         state.quickResults = [];
+      })
+
+      // Image Search
+      .addCase(imageSearch.pending, (state) => {
+        state.isImageSearching = true;
+        state.isSearching = true;
+        state.error = null;
+      })
+      .addCase(imageSearch.fulfilled, (state, action) => {
+        state.isImageSearching = false;
+        state.isSearching = false;
+        state.results = action.payload.results || [];
+        state.totalResults = action.payload.totalResults || 0;
+        state.imageDescription = action.payload.description || null;
+        state.searchedImageUrl = action.payload.originalImageUrl || null;
+        state.suggestions = []; // No suggestions for image search
+      })
+      .addCase(imageSearch.rejected, (state, action) => {
+        state.isImageSearching = false;
+        state.isSearching = false;
+        state.error = action.payload || "Image search failed";
       });
   },
 });
 
-export const { setQuery, clearSearch, clearSuggestions, clearQuickResults } = searchSlice.actions;
+export const { setQuery, clearSearch, clearSuggestions, clearQuickResults, clearImageSearch } = searchSlice.actions;
 export default searchSlice.reducer;
+
