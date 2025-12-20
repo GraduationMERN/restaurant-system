@@ -18,6 +18,7 @@ import aiProductReducer from "./slices/aiProductSlice";
 import userProfileReducer from "./slices/userProfileSlice";
 import searchReducer from "./slices/searchSlice";
 import couponReducer from './slices/couponSlice';
+import staffChatReducer from "./slices/staffChatSlice";
 
 export const store = configureStore({
   reducer: {
@@ -40,5 +41,6 @@ export const store = configureStore({
     userProfile: userProfileReducer,
     search: searchReducer,
     coupon: couponReducer,
+    staffChat: staffChatReducer,
   },
 });
