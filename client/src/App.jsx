@@ -32,7 +32,7 @@ import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import CashierDashboard from "./pages/cashier/CashierDashboard";
-import KitchenOrders from "./pages/admin/KitchenOrders";
+import KitchenOrders from "./pages/kitchen/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
