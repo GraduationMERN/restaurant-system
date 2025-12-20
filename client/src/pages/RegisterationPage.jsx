@@ -130,20 +130,47 @@ export default function RegistrationForm() {
         <div className="lg:hidden w-full order-1">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors mb-6 group"
+            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary transition-colors mb-6 group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </button>
 
           {/* Mobile Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-primary to-primary/80 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Join BrandBite</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Create your account
-              </p>
+          <div className="bg-gradient-to-br from-primary/80 via-primary to-secondary rounded-2xl p-5 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <ChefHat className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">BrandBite</h2>
+                <p className="text-white/80 text-xs">Join the food revolution</p>
+              </div>
             </div>
+            
+            {/* Simple Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center">
+                <div className="text-white font-bold text-lg">500+</div>
+                <div className="text-white/70 text-xs">Customers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-white font-bold text-lg">89</div>
+                <div className="text-white/70 text-xs">Reviews</div>
+              </div>
+              <div className="text-center">
+                <div className="text-white font-bold text-lg">24/7</div>
+                <div className="text-white/70 text-xs">Service</div>
+              </div>
+            </div>
+            
+            {/* Quick Animated Element */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                <ChefHat className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </div>
 
             <div className="p-6">
               {error && (
@@ -200,7 +227,7 @@ export default function RegistrationForm() {
                         errors.email && touched.email
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
                       placeholder="Enter your email"
                     />
                   </div>
@@ -228,7 +255,7 @@ export default function RegistrationForm() {
                         errors.phoneNumber && touched.phoneNumber
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
                       placeholder="Enter phone number"
                     />
                   </div>
@@ -256,7 +283,7 @@ export default function RegistrationForm() {
                         errors.password && touched.password
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-orange-500 transition-all duration-200`}
                       placeholder="Create password"
                     />
                   </div>
@@ -268,7 +295,7 @@ export default function RegistrationForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  className="w-full  bg-gradient-to-r from-primary/80 via-primary via-85% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -294,7 +321,7 @@ export default function RegistrationForm() {
                 </p>
               </div>
             </div>
-          </div>
+          
         </div>
 
         {/* Desktop: Left Column (Smaller) - Animation Column */}
@@ -308,7 +335,7 @@ export default function RegistrationForm() {
           </button>
 
           {/* Animated Illustration Container */}
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-8 shadow-2xl relative overflow-hidden animate-float-gentle">
+          <div className="bg-gradient-to-br from-primary via-primary/70 via-85% to-secondary rounded-3xl p-8 shadow-2xl relative overflow-hidden animate-float-gentle">
             {/* Floating Food Icons */}
             <div className="absolute inset-0 overflow-hidden">
               {foodIcons.map((food, index) => (
@@ -457,7 +484,7 @@ export default function RegistrationForm() {
                       className={`w-full pl-12 pr-4 py-3.5 bg-transparent border ${
                         errors.name && touched.name
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600 focus:border-orange-500"
+                          : "border-gray-300 dark:border-gray-600 focus:border-primary/80"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-orange-500/20 transition-all duration-200`}
                       placeholder="Enter your full name"
                     />
@@ -488,7 +515,7 @@ export default function RegistrationForm() {
                       className={`w-full pl-12 pr-4 py-3.5 bg-transparent border ${
                         errors.email && touched.email
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600 focus:border-orange-500"
+                          : "border-gray-300 dark:border-gray-600 focus:border-primary/80"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-orange-500/20 transition-all duration-200`}
                       placeholder="Enter your email"
                     />
@@ -519,7 +546,7 @@ export default function RegistrationForm() {
                       className={`w-full pl-12 pr-4 py-3.5 bg-transparent border ${
                         errors.phoneNumber && touched.phoneNumber
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600 focus:border-orange-500"
+                          : "border-gray-300 dark:border-gray-600 focus:border-primary/80"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-orange-500/20 transition-all duration-200`}
                       placeholder="Enter phone number"
                     />
@@ -555,7 +582,7 @@ export default function RegistrationForm() {
                       className={`w-full pl-12 pr-4 py-3.5 bg-transparent border ${
                         errors.password && touched.password
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600 focus:border-orange-500"
+                          : "border-gray-300 dark:border-gray-600 focus:border-primary/80"
                       } rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:focus:ring-orange-500/20 transition-all duration-200`}
                       placeholder="Create a strong password"
                     />
@@ -569,7 +596,7 @@ export default function RegistrationForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
+                  className="w-full bg-gradient-to-r from-primary/80 via-primary via-85% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -589,7 +616,7 @@ export default function RegistrationForm() {
                   Already have an account?{" "}
                   <Link
                     to="/login"
-                    className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+                    className="font-semibold text-primary/80 hover:text-primary transition-colors"
                   >
                     Sign in here
                   </Link>
@@ -601,42 +628,9 @@ export default function RegistrationForm() {
 
         {/* Mobile: Left Column (Comes after form) */}
         <div className="lg:hidden w-full order-2 mt-6">
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-5 shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <ChefHat className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">BrandBite</h2>
-                <p className="text-white/80 text-xs">Join the food revolution</p>
-              </div>
-            </div>
-            
-            {/* Simple Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center">
-                <div className="text-white font-bold text-lg">500+</div>
-                <div className="text-white/70 text-xs">Customers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-white font-bold text-lg">89</div>
-                <div className="text-white/70 text-xs">Reviews</div>
-              </div>
-              <div className="text-center">
-                <div className="text-white font-bold text-lg">24/7</div>
-                <div className="text-white/70 text-xs">Service</div>
-              </div>
-            </div>
-            
-            {/* Quick Animated Element */}
-            <div className="flex justify-center">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                <ChefHat className="w-8 h-8 text-white" />
-              </div>
-            </div>
-          </div>
+        
         </div>
       </div>
-    </div>
+      </div>
   );
 }
