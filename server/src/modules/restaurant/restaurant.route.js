@@ -4,6 +4,7 @@ import {
   updateRestaurant,
   uploadLogo,
   uploadMenuImage,
+  generateMenuImage,
 } from "./restaurant.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import roleMiddleware from "../../middlewares/role.middleware.js";
@@ -30,6 +31,14 @@ app.post(
   roleMiddleware("admin"),
   uploadCloud.single("menuImage"),
   uploadMenuImage
+);
+
+// Generate menu image from products (admin only)
+app.post(
+  "/generate-menu-image",
+  authMiddleware,
+  roleMiddleware("admin"),
+  generateMenuImage
 );
 
 export default app;

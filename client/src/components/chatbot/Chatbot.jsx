@@ -12,6 +12,7 @@ import {
   setWelcomeMessage,
 } from "../../redux/slices/chatbotSlice";
 import { useSettings } from "../../context/SettingContext";
+import ScrollToTopButton from "../common/ScrollToTopButton";
 import "./Chatbot.css";
 
 // Common Emojis data
@@ -317,8 +318,8 @@ const GifPicker = ({ onSelect, onClose, primaryColor }) => {
 
   // Sample trending GIFs (in production, use Giphy/Tenor API)
   const trendingGifs = [
-    "https://media.giphy.com/media/l0MYGb1LuZ3n7dRnO/giphy.gif",
-    "https://media.giphy.com/media/3o7TKU8RvQuomFfUUU/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTV2ZTBhdzFmbmJieXFvaW9ienBjbndxMmlsemN6OWN6ODdhZTZjeiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/L3UFa9OvkOjA6c16Xn/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3amtkOW5panE2MHU0bXQzano3cGx4MnQwY3NjaXdsc2s3c251dno0YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wjEQMRyynvrdx5g7Mn/giphy.gif",
     "https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif",
     "https://media.giphy.com/media/26gsspfbt1HfVQ9va/giphy.gif",
     "https://media.giphy.com/media/3oz8xIsloV7zOmt81G/giphy.gif",
@@ -923,21 +924,28 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Toggle Button */}
-      <button
-        className="chatbot-toggle"
-        aria-label="Toggle chatbot"
-        aria-expanded={isActive}
-        onClick={onToggle}
-        style={{ backgroundColor: primaryColor }}
-      >
-        <span className="toggle-icon chat-icon" aria-hidden="true">
-          <ChatIcon />
-        </span>
-        <span className="toggle-icon close-icon" aria-hidden="true">
-          <CloseIcon />
-        </span>
-      </button>
+      {/* Floating Buttons Container */}
+      <div className="flex items-center gap-3">
+        {/* Scroll to Top Button */}
+        <ScrollToTopButton />
+        
+        {/* Toggle Button */}
+        <button
+          className="chatbot-toggle"
+          aria-label="Toggle chatbot"
+          aria-expanded={isActive}
+          onClick={onToggle}
+          style={{ backgroundColor: primaryColor }}
+        >
+          <span className="toggle-icon chat-icon" aria-hidden="true">
+            <ChatIcon />
+          </span>
+          <span className="toggle-icon close-icon" aria-hidden="true">
+            <CloseIcon />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
+

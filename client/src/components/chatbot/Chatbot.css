@@ -87,14 +87,14 @@
   transform: rotate(-90deg) scale(0.5);
 }
 
-/* Greeting Bubble */
+/* Greeting Bubble - Compact */
 .greeting-bubble {
   background: var(--cb-bg);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  padding: 16px;
-  margin-bottom: 12px;
-  max-width: 280px;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  margin-bottom: 1px;
+  max-width: 220px;
   position: relative;
   animation: slideIn 0.4s ease-out;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -118,13 +118,13 @@
 
 .greeting-close {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 4px;
+  right: 4px;
   background: transparent;
   border: none;
   color: var(--cb-text-light);
   cursor: pointer;
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
   transition: var(--cb-transition);
   display: flex;
@@ -138,32 +138,32 @@
 }
 
 .greeting-close svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .greeting-content {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding-right: 24px;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding-right: 20px;
 }
 
 .greeting-wave {
-  font-size: 20px;
+  font-size: 14px;
 }
 
 .greeting-content strong {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--cb-text);
 }
 
 .greeting-bubble p {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--cb-text-light);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Chat Window - Normal State */

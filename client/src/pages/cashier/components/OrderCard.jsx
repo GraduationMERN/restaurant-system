@@ -27,21 +27,26 @@ const PAYMENT_STATUS_COLORS = {
   refunded: "bg-blue-100 text-blue-800",
 };
 
-export default function OrderCard({
-  order,
-  onViewDetails,
-  onUpdateStatus,
-  onUpdatePayment,
-  onDelete,
-}) {
-  const [expanded, setExpanded] = useState(false);
+export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdatePayment, onDelete,}) {
+  const [expanded, setExpanded] = useState(true);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
+
+  // Check if this is a reward order
+  const isRewardOrder = order.type === 'reward';
 
   // Calculate prep time
   const createdTime = new Date(order.createdAt).getTime();
   const now = new Date().getTime();
   const prepTime = Math.floor((now - createdTime) / 1000 / 60); // minutes
+
+  // Get customer name
+  const customerName = order.user?.name || order.customerInfo?.name || "Walk-In Customer";
+
+  // Get order number
+  const orderNumber = isRewardOrder 
+    ? order.orderNumber 
+    : (order.orderNumber || order._id?.slice(-6).toUpperCase());
 
  return (
   <div
@@ -52,35 +57,47 @@ export default function OrderCard({
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
-            Order #{order._id?.slice(-6).toUpperCase() || order._id?.toUpperCase()}
+            {isRewardOrder ? `Reward ${orderNumber}` : `Order #${orderNumber}`}
           </h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-bold ${colors.badge} ${colors.text} uppercase`}
           >
             {order.status}
           </span>
+          {isRewardOrder && (
+            <span className="px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-700 uppercase">
+              Reward
+            </span>
+          )}
         </div>
 
         {/* Customer Info */}
         <div className="flex items-center gap-1 text-slate-600 text-sm mb-2">
           <User className="w-4 h-4" />
-          <span>{order.customerName || "Walk-In Customer"}</span>
+          <span>{customerName}</span>
         </div>
 
-        {/* Time & Items */}
+        {/* Time & Items/Reward Info */}
         <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             <span>{prepTime} min ago</span>
           </div>
-          <div className="flex items-center gap-1">
-            <ChefHat className="w-4 h-4" />
-            <span>{order.items?.length || 0} items</span>
-          </div>
+          {isRewardOrder ? (
+            <div className="flex items-center gap-1">
+              <ChefHat className="w-4 h-4" />
+              <span>1 item</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <ChefHat className="w-4 h-4" />
+              <span>{order.items?.length || 0} items</span>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             <DollarSign className="w-4 h-4" />
             <span className="font-bold text-amber-600">
-              ${(order.totalAmount || order.total || 0).toFixed(2)}
+              {isRewardOrder ? `${order.pointsUsed} pts` : `$${(order.totalAmount || order.total || 0).toFixed(2)}`}
             </span>
           </div>
         </div>
@@ -116,61 +133,83 @@ export default function OrderCard({
     {/* Expanded Details */}
     {expanded && (
       <div className="border-t-2 border-slate-200 pt-4 mt-4 space-y-4">
-        {/* Items List */}
-        <div>
-          <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
-          <ul className="space-y-2">
-            {order.items?.map((item, idx) => (
-              <li
-                key={idx}
-                className="flex justify-between items-center text-sm text-slate-700 bg-slate-50 p-2 rounded-lg shadow-sm"
-              >
+        {isRewardOrder ? (
+          /* Reward Order Details */
+          <div>
+            <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
+            <ul className="space-y-2">
+              <li className="flex justify-between items-center text-sm text-slate-700 bg-purple-50 p-2 rounded-lg shadow-sm">
                 <span>
-                  {item.name || item.productId?.name} x {item.quantity}
+                  {order.reward?.productId?.name || 'Reward Item'} x 1
                 </span>
-                <span className="font-bold">
-                  ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
+                <span className="font-bold text-purple-700">
+                  {order.pointsUsed} pts
                 </span>
               </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Payment Status */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className="text-sm font-bold text-slate-700">Payment:</span>
-          <div className="flex gap-2 flex-wrap">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
-            >
-              {order.paymentStatus || "pending"}
-            </span>
-            {order.paymentMethod && (
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-800">
-                {order.paymentMethod}
-              </span>
-            )}
+            </ul>
           </div>
-        </div>
+        ) : (
+          /* Regular Order Details */
+          <>
+            {/* Items List */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
+              <ul className="space-y-2">
+                {order.items?.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="flex justify-between items-center text-sm text-slate-700 bg-slate-50 p-2 rounded-lg shadow-sm"
+                  >
+                    <span>
+                      {item.name || item.productId?.name} x {item.quantity}
+                    </span>
+                    <span className="font-bold">
+                      ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 flex-wrap mt-2">
-          <button
-            onClick={() => onViewDetails(order)}
-            className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
-          >
-            Full Details
-          </button>
-          <button
-            onClick={() => onUpdatePayment(order)}
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
-          >
-            Payment
-          </button>
+            {/* Payment Status */}
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-sm font-bold text-slate-700">Payment:</span>
+              <div className="flex gap-2 flex-wrap">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
+                >
+                  {order.paymentStatus || "pending"}
+                </span>
+                {order.paymentMethod && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-800">
+                    {order.paymentMethod}
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Quick Action Buttons */}
+
+          {!isRewardOrder && (
+             <div className="flex gap-2 flex-wrap mt-2">
+            <button
+              onClick={() => onViewDetails(order)}
+              className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Full Details
+            </button>
+            <button
+              onClick={() => onUpdatePayment(order)}
+              className="flex-1 bg-[#7B4019] hover:bg-[#593114] text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Payment
+            </button>
+          </div>
+          )}
         </div>
-      </div>
     )}
-  </div>
-);
-
+    </div>
+  );
 }

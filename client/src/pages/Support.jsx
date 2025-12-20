@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import PageMeta from "../components/common/PageMeta";
 import { useSettings } from "../context/SettingContext";
 import api from "../api/axios";
@@ -17,6 +17,9 @@ import {
   Heart,
   Users,
   CheckCircle,
+  Facebook,
+  Instagram,
+  Twitter,
 } from "lucide-react";
 
 export default function Support() {
@@ -28,7 +31,7 @@ export default function Support() {
   const [status, setStatus] = useState(null);
   const { settings } = useSettings();
   const [openFaq, setOpenFaq] = useState(null);
-  const [activePolicy, setActivePolicy] = useState("terms");
+  const [activePolicy, setActivePolicy] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -53,6 +56,40 @@ export default function Support() {
   };
 
   const faqIcons = [HelpCircle, MessageCircle, FileText, Shield];
+
+  // CountUp Animation Component
+  const CountUp = ({ end, suffix = "", decimals = 0, isLoaded }) => {
+    const [count, setCount] = useState(0);
+    const countRef = useRef(null);
+    const hasAnimated = useRef(false);
+
+    useEffect(() => {
+      if (!isLoaded || hasAnimated.current) return;
+      
+      hasAnimated.current = true;
+      const duration = 2000;
+      const startTime = Date.now();
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const currentValue = easeOutQuart * end;
+        
+        setCount(currentValue);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      requestAnimationFrame(animate);
+    }, [end, isLoaded]);
+
+    return <span ref={countRef}>{count.toFixed(decimals)}{suffix}</span>;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
@@ -110,14 +147,21 @@ export default function Support() {
               
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: Heart, label: "Made with Love", value: "100%" },
-                  { icon: Users, label: "Happy Customers", value: "10K+" },
-                  { icon: Clock, label: "Years Experience", value: "5+" },
-                  { icon: CheckCircle, label: "Quality Rating", value: "4.9★" },
+                  { icon: Heart, label: "Made with Love", value: 100, suffix: "%" },
+                  { icon: Users, label: "Happy Customers", value: 10, suffix: "K+" },
+                  { icon: Clock, label: "Years Experience", value: 5, suffix: "+" },
+                  { icon: CheckCircle, label: "Quality Rating", value: 4.9, suffix: "★", decimals: 1 },
                 ].map((stat, idx) => (
                   <div key={idx} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center hover:bg-white/20 transition-all duration-300">
                     <stat.icon className="w-6 h-6 mx-auto mb-2 text-white/80" />
-                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="text-2xl font-bold">
+                      <CountUp 
+                        end={stat.value} 
+                        suffix={stat.suffix} 
+                        decimals={stat.decimals || 0}
+                        isLoaded={isLoaded}
+                      />
+                    </div>
                     <div className="text-sm text-white/70">{stat.label}</div>
                   </div>
                 ))}
@@ -135,7 +179,7 @@ export default function Support() {
             <p className="text-gray-600 dark:text-gray-400">Quick answers to common questions</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-4 items-start">
             {(settings?.faqs || []).map((faq, idx) => {
               const IconComponent = faqIcons[idx % faqIcons.length];
               return (
@@ -175,47 +219,40 @@ export default function Support() {
           </div>
         </div>
 
-        {/* Policies Section */}
+        {/* Policies Section - Compact Collapsible */}
         <div className={`mb-12 transition-all duration-700 delay-300 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
-          <div className="bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-3xl p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-              Our Policies
-            </h2>
-            
-            {/* Tabs */}
-            <div className="flex justify-center gap-2 mb-6">
+          <div className="bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700/50 rounded-2xl overflow-hidden">
+            {/* Policy Tabs */}
+            <div className="flex">
               {[
                 { id: "terms", label: "Terms of Service", icon: FileText },
                 { id: "privacy", label: "Privacy Policy", icon: Shield },
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActivePolicy(tab.id)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all duration-300 ${
+                  onClick={() => setActivePolicy(activePolicy === tab.id ? null : tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-4 font-medium transition-all duration-300 ${
                     activePolicy === tab.id
-                      ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/25"
-                      : "bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? "bg-gradient-to-r from-primary to-secondary text-white"
+                      : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.id === "terms" ? "Terms" : "Privacy"}</span>
+                  <tab.icon className="w-5 h-5" />
+                  <span className="text-base font-semibold">{tab.label}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${activePolicy === tab.id ? "rotate-180" : ""}`} />
                 </button>
               ))}
             </div>
 
-            {/* Content */}
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 min-h-[200px]">
-              <div className="prose dark:prose-invert max-w-none">
-                {activePolicy === "terms" ? (
-                  <div className="text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed">
-                    {settings?.policies?.terms || "Terms of service content will appear here."}
-                  </div>
-                ) : (
-                  <div className="text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed">
-                    {settings?.policies?.privacy || "Privacy policy content will appear here."}
-                  </div>
-                )}
+            {/* Collapsible Content */}
+            <div className={`overflow-hidden transition-all duration-300 ${activePolicy ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="p-6 max-h-[350px] overflow-y-auto">
+                <div className="text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed text-sm">
+                  {activePolicy === "terms" 
+                    ? (settings?.policies?.terms || "Terms of service content will appear here.")
+                    : (settings?.policies?.privacy || "Privacy policy content will appear here.")
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -346,14 +383,27 @@ export default function Support() {
               <div className="mt-8 pt-6 border-t border-white/10">
                 <p className="text-white/60 text-sm mb-4">Follow us on social media</p>
                 <div className="flex gap-3">
-                  {["Facebook", "Instagram", "Twitter"].map((social, idx) => (
-                    <button
-                      key={idx}
-                      className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors duration-300"
-                    >
-                      <span className="text-xs font-medium">{social[0]}</span>
-                    </button>
-                  ))}
+                  <a
+                    href="#"
+                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center hover:scale-110 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300"
+                    title="Facebook"
+                  >
+                    <Facebook className="w-5 h-5 text-white" />
+                  </a>
+                  <a
+                    href="#"
+                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center hover:scale-110 hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300"
+                    title="Instagram"
+                  >
+                    <Instagram className="w-5 h-5 text-white" />
+                  </a>
+                  <a
+                    href="#"
+                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-800 to-black flex items-center justify-center hover:scale-110 hover:shadow-lg hover:shadow-gray-500/30 transition-all duration-300"
+                    title="Twitter / X"
+                  >
+                    <Twitter className="w-5 h-5 text-white" />
+                  </a>
                 </div>
               </div>
             </div>

@@ -5,6 +5,7 @@ import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 
+
 const LayoutContent = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
@@ -24,6 +25,9 @@ const LayoutContent = () => {
           <Outlet />
         </div>
       </div>
+
+      {/* Scroll to Top Button */}
+
     </div >
   );
 };
@@ -39,3 +43,4 @@ const AppLayout = () => {
 };
 
 export default AppLayout;
+

@@ -1,5 +1,26 @@
 import mongoose from "mongoose";
 
+// Define DeliveryAddress as a separate schema (RECOMMENDED APPROACH)
+const DeliveryAddressSchema = new mongoose.Schema({
+  address: {
+    type: String,
+    required: true
+  },
+  lat: {
+    type: Number,
+    required: false
+  },
+  lng: {
+    type: Number,
+    required: false
+  },
+  notes: {
+    type: String,
+    required: false,
+    default: ""
+  }
+}, { _id: false }); // No _id for subdocument
+
 const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -28,21 +49,18 @@ const OrderSchema = new mongoose.Schema(
     },
 
     // ============= CUSTOMER IDENTIFICATION =============
-    // SINGLE customer identifier field - Supports both guest and registered
     customerId: {
-      type: String, // Changed: Always String (UUID for guest, ObjectId string for registered)
+      type: String,
       required: true,
       index: true,
     },
 
-    // User reference ONLY for registered users
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
 
-    // Customer type (guest or registered)
     customerType: {
       type: String,
       enum: ["guest", "registered"],
@@ -64,26 +82,15 @@ const OrderSchema = new mongoose.Schema(
       },
     },
 
-    // ============= DELIVERY (Only for delivery type) =============
-    // deliveryAddress: {
-    //   type: String,
-    //   default: "",
-    //   required: function () {
-    //     return this.serviceType === "delivery";
-    //   },
-    // },
-    deliveryAddress: { 
-  address: {
-    type: String,
-    required: function () {
-      return this.serviceType === "delivery";
+    // ============= DELIVERY ADDRESS (FIXED) =============
+    // ✅ CORRECT WAY: Use the separate schema
+    deliveryAddress: {
+      type: DeliveryAddressSchema,
+      required: function () {
+        return this.serviceType === "delivery";
+      },
+      default: undefined  // Important: use undefined, not null
     },
-  },
-  lat: Number,
-  lng: Number,
-  notes: String,
-},
-
 
     // ============= ORDER ITEMS =============
     items: [OrderItemSchema],
@@ -110,31 +117,29 @@ const OrderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["cash", "card","instore", "online"],
+      enum: ["cash", "card", "instore", "online"],
       required: true,
       default: "cash",
     },
 
     paidAt: { type: Date, default: null },
 
-    // Stripe
     stripeSessionId: { type: String, default: null },
     stripePaymentIntent: { type: String, default: null },
 
-    // ============= CUSTOMER INFORMATION (For guests & contact) =============
+    // ============= CUSTOMER INFORMATION =============
     customerInfo: {
       name: { type: String, default: "" },
       phone: { type: String, default: "" },
       email: { type: String, default: "" },
     },
-    stripeCheckoutSessionId: 
-    { type: String, default: null },
-
+    
+    stripeCheckoutSessionId: { type: String, default: null },
 
     // ============= COUPON =============
     couponCode: { type: String, default: null },
     couponDiscount: { type: Number, default: 0 },
-
+    promoCode: { type: String, default: null }, 
     // ============= ORDER STATUS & TRACKING =============
     status: {
       type: String,
@@ -151,8 +156,8 @@ const OrderSchema = new mongoose.Schema(
 
     // ============= TIME ESTIMATES =============
     estimatedTime: {
-      type: Number, // Minutes
-      default: null, // Will be set by cashier
+      type: Number,
+      default: null,
     },
 
     estimatedReadyTime: {
@@ -163,7 +168,7 @@ const OrderSchema = new mongoose.Schema(
     // ============= NOTES =============
     notes: { type: String, default: "" },
 
-    // ============= CREATED BY (Cashier/Admin) =============
+    // ============= CREATED BY =============
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -183,9 +188,8 @@ const OrderSchema = new mongoose.Schema(
   }
 );
 
-// ============= VIRTUALS (SIMPLIFIED) =============
+// ============= VIRTUALS =============
 
-// Progress based on status
 OrderSchema.virtual("progressPercentage").get(function () {
   const progressMap = {
     pending: 0,
@@ -198,7 +202,6 @@ OrderSchema.virtual("progressPercentage").get(function () {
   return progressMap[this.status] || 0;
 });
 
-// Human-readable status
 OrderSchema.virtual("statusText").get(function () {
   const statusText = {
     pending: "Pending",
@@ -211,14 +214,12 @@ OrderSchema.virtual("statusText").get(function () {
   return statusText[this.status] || this.status;
 });
 
-// Customer name (with fallback)
 OrderSchema.virtual("displayName").get(function () {
   if (this.customerInfo?.name) return this.customerInfo.name;
   if (this.user?.name) return this.user.name;
   return "Guest Customer";
 });
 
-// Estimated ready time text
 OrderSchema.virtual("estimatedTimeText").get(function () {
   if (!this.estimatedReadyTime) return "Not set";
   const now = new Date();
@@ -234,7 +235,6 @@ OrderSchema.virtual("estimatedTimeText").get(function () {
 
 // ============= PRE-SAVE MIDDLEWARE =============
 OrderSchema.pre("save", async function (next) {
-  // Generate order number
   if (this.isNew && !this.orderNumber) {
     const date = new Date();
     const timestamp = date.getTime();
@@ -242,15 +242,12 @@ OrderSchema.pre("save", async function (next) {
     this.orderNumber = `ORD-${timestamp}-${random}`;
   }
 
-  // Set customerType based on user reference
   if (this.isNew) {
     if (this.user) {
       this.customerType = "registered";
-      // Ensure customerId matches user._id as string
       this.customerId = this.user.toString();
     } else {
       this.customerType = "guest";
-      // If no customerId, generate one
       if (!this.customerId) {
         this.customerId = `guest_${Date.now()}_${Math.random()
           .toString(36)
@@ -259,7 +256,6 @@ OrderSchema.pre("save", async function (next) {
     }
   }
 
-  // Calculate estimatedReadyTime if estimatedTime changed
   if (this.isModified("estimatedTime") && this.estimatedTime) {
     const now = new Date();
     this.estimatedReadyTime = new Date(
@@ -272,7 +268,6 @@ OrderSchema.pre("save", async function (next) {
 
 // ============= STATIC METHODS =============
 
-// Find active orders (for kitchen/cashier)
 OrderSchema.statics.findActiveOrders = function () {
   return this.find({
     status: { $in: ["confirmed", "preparing", "ready"] },
@@ -282,7 +277,6 @@ OrderSchema.statics.findActiveOrders = function () {
     .populate("createdBy", "name");
 };
 
-// Find orders by customer (works for both guest and registered)
 OrderSchema.statics.findByCustomerId = function (customerId) {
   return this.find({ customerId })
     .sort({ createdAt: -1 })
@@ -290,7 +284,6 @@ OrderSchema.statics.findByCustomerId = function (customerId) {
     .populate("createdBy", "name");
 };
 
-// Find pending orders (for cashier confirmation)
 OrderSchema.statics.findPendingOrders = function () {
   return this.find({ status: "pending", paymentStatus: "paid" })
     .sort({ createdAt: 1 })
@@ -299,19 +292,16 @@ OrderSchema.statics.findPendingOrders = function () {
 
 // ============= INSTANCE METHODS =============
 
-// Check if order can be cancelled
 OrderSchema.methods.canCancel = function () {
   return ["pending", "confirmed"].includes(this.status);
 };
 
-// Update estimated time (cashier dashboard)
 OrderSchema.methods.updateEstimate = function (minutes) {
   this.estimatedTime = minutes;
   this.estimatedReadyTime = new Date(Date.now() + minutes * 60000);
   return this.save();
 };
 
-// Update status with validation
 OrderSchema.methods.updateStatus = function (newStatus) {
   const validTransitions = {
     pending: ["confirmed", "cancelled"],
@@ -330,7 +320,6 @@ OrderSchema.methods.updateStatus = function (newStatus) {
   return this.save();
 };
 
-// Link guest order to registered user
 OrderSchema.methods.linkToUser = function (userId) {
   if (this.customerType === "guest") {
     this.user = userId;
@@ -341,13 +330,13 @@ OrderSchema.methods.linkToUser = function (userId) {
   throw new Error("Order is already linked to a user");
 };
 
-// ============= INDEXES (OPTIMIZED) =============
-OrderSchema.index({ customerId: 1, createdAt: -1 }); // Customer order history
-OrderSchema.index({ status: 1, createdAt: 1 }); // Active orders
-OrderSchema.index({ orderNumber: 1 }); // Quick lookup
-OrderSchema.index({ "customerInfo.phone": 1 }); // Phone lookup
-OrderSchema.index({ estimatedReadyTime: 1 }); // Time-based queries
-OrderSchema.index({ createdBy: 1 }); // Cashier orders
-OrderSchema.index({ stripeSessionId: 1 }, { sparse: true }); // Payment lookup
+// ============= INDEXES =============
+OrderSchema.index({ customerId: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: 1 });
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ "customerInfo.phone": 1 });
+OrderSchema.index({ estimatedReadyTime: 1 });
+OrderSchema.index({ createdBy: 1 });
+OrderSchema.index({ stripeSessionId: 1 }, { sparse: true });
 
 export default mongoose.model("Order", OrderSchema);

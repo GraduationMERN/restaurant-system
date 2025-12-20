@@ -4,6 +4,7 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import Checkbox from "../../components/form/input/Checkbox";
+import ColorPicker from "../../components/form/ColorPicker";
 import Button from "../../components/ui/button/Button";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "../../hooks/useToast";
@@ -32,6 +33,11 @@ export default function Settings() {
     settings.branding?.menuImage || ""
   );
   const [menuImageFile, setMenuImageFile] = useState(null);
+  const [menuImageMode, setMenuImageMode] = useState('upload'); // 'upload' | 'generate'
+  const [menuPrompt, setMenuPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateProgress, setGenerateProgress] = useState(0);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   const fileInputRef = useRef(null);
   const menuImageInputRef = useRef(null);
 
@@ -141,6 +147,53 @@ export default function Settings() {
 
   const triggerLogoUpload = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleGenerateMenuImage = async () => {
+    setIsGenerating(true);
+    setGenerateProgress(0);
+    setGeneratedImageUrl('');
+    
+    // Simulate progress while waiting for API
+    const progressInterval = setInterval(() => {
+      setGenerateProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 15;
+      });
+    }, 500);
+    
+    try {
+      const res = await api.post('/api/restaurant/generate-menu-image', {
+        prompt: menuPrompt
+      });
+      
+      clearInterval(progressInterval);
+      setGenerateProgress(100);
+      
+      setMenuImagePreview(res.data.menuImageUrl);
+      setGeneratedImageUrl(res.data.menuImageUrl);
+      updateSettings(res.data.restaurant);
+      toast.showToast({ message: "Menu image generated successfully!", type: "success" });
+    } catch (error) {
+      clearInterval(progressInterval);
+      setGenerateProgress(0);
+      const message = error.response?.data?.message || "Failed to generate menu image";
+      toast.showToast({ message, type: "error" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (generatedImageUrl) {
+      const link = document.createElement('a');
+      link.href = generatedImageUrl;
+      link.download = 'menu-image.png';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -275,37 +328,17 @@ export default function Settings() {
             <div className="space-y-5">
               {/* Colors Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <ColorPicker
+                  label="Primary Color"
+                  value={primaryColor}
+                  onChange={setPrimaryColor}
+                />
                 <div>
-                  <Label>Primary Color</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-gray-200 bg-transparent p-0.5 cursor-pointer dark:border-gray-800"
-                    />
-                    <Input
-                      type="text"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Reward Color</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-gray-200 bg-transparent p-0.5 cursor-pointer dark:border-gray-800"
-                    />
-                    <Input
-                      type="text"
-                      value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                    />
-                  </div>
+                  <ColorPicker
+                    label="Reward Color"
+                    value={secondaryColor}
+                    onChange={setSecondaryColor}
+                  />
                   <div className="mt-2 flex items-center">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Recommended:</span>
                     <button
@@ -363,27 +396,73 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Menu Image Upload */}
+              {/* Menu Image Upload/Generate */}
               <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                 <Label>Menu Image (for Chatbot)</Label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  Upload an image of your menu for the chatbot to display
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Upload your own image or generate one from your menu products
                 </p>
+                
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-24 overflow-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  {/* Preview Image */}
+                  <div className="h-16 w-24 overflow-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
                     {menuImagePreview ? (
                       <img src={menuImagePreview} alt="Menu preview" className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => menuImageInputRef.current?.click()}
-                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    {menuImagePreview ? "Change Image" : "Upload Image"}
-                  </button>
+                  
+                  {/* Buttons */}
+                  <div className="flex flex-col gap-2">
+                    {/* Generate / Download Button */}
+                    {generatedImageUrl && !isGenerating ? (
+                      <button
+                        type="button"
+                        onClick={handleDownloadImage}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download Image
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleGenerateMenuImage}
+                        disabled={isGenerating}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            Generate Image
+                          </>
+                        )}
+                      </button>
+                    )}
+                    
+                    {/* Upload/Change Button */}
+                    <button
+                      type="button"
+                      onClick={() => menuImageInputRef.current?.click()}
+                      className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      {menuImagePreview ? "Change Image" : "Upload Image"}
+                    </button>
+                  </div>
+                  
                   <input
                     ref={menuImageInputRef}
                     type="file"
@@ -393,6 +472,7 @@ export default function Settings() {
                       const file = e.target.files?.[0] || null;
                       if (file && file.type.startsWith("image/")) {
                         setMenuImageFile(file);
+                        setGeneratedImageUrl(''); // Reset generated URL when uploading new file
                         const reader = new FileReader();
                         reader.onloadend = () => setMenuImagePreview(String(reader.result || ""));
                         reader.readAsDataURL(file);
@@ -400,6 +480,22 @@ export default function Settings() {
                     }}
                   />
                 </div>
+                
+                {/* Progress Bar */}
+                {isGenerating && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                      <span>Generating menu image...</span>
+                      <span>{Math.round(generateProgress)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
+                      <div 
+                        className="h-full bg-purple-600 rounded-full transition-all duration-300"
+                        style={{ width: `${generateProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

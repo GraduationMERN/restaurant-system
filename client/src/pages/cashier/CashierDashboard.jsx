@@ -12,6 +12,7 @@ import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
 import StaffNavbar from "../../components/StaffNavbar";
 
+
 export default function CashierDashboard() {
   const toast = useToast();
   const { isCashier, isAdmin } = useRole();
@@ -33,7 +34,7 @@ export default function CashierDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await api.get("api/orders");
+      const response = await api.get("api/orders/all-orders-rewards");
       const orders = response.data.data || response.data || [];
 
       const totalRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || o.total || 0), 0);
@@ -175,6 +176,9 @@ export default function CashierDashboard() {
           </div>
         </ComponentCard>
       </div>
+
+      {/* Scroll to Top Button */}
+
     </>
   );
 }

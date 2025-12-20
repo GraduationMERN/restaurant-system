@@ -9,12 +9,12 @@ const unwrap = (payload) => {
   return payload;
 };
 
-// Fetch active orders
+// Fetch active orders (regular + reward orders)
 export const fetchKitchenActive = createAsyncThunk(
   "kitchen/fetchActive",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/api/orders/kitchen/active");
+      const res = await api.get("/api/orders/all-orders-rewards");
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);

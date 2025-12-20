@@ -134,7 +134,7 @@ export default function LandingPage() {
       navigate: "/reviews",
     },
     {
-      image: "https://media.istockphoto.com/id/1251768924/photo/pink-piggy-bank-with-life-belt.jpg?s=612x612&w=0&k=20&c=vFf4ClK44lfGsMWfQTowqIScnSfZPuAJquARuFhcfRg=",
+      image: "/images/support_icon.png",
       title: t("Support"),
       description: t("FAQ_and_help"),
       color: "text-emerald-600 dark:text-emerald-400",
@@ -564,7 +564,7 @@ export default function LandingPage() {
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 p-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                   <MapPin className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                  {t("find_us") || "Find Our Location"}
+                  Find Our Location
                 </h3>
               </div>
               <LocationMap />
@@ -573,10 +573,7 @@ export default function LandingPage() {
 
           {/* Footer Note */}
           <div className="text-center mt-12 text-gray-600 dark:text-gray-400">
-            <p className="text-sm">
-              {t("open_hours") || "Open daily from 8:00 AM to 11:00 PM"}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
               © {new Date().getFullYear()} {settings.restaurantName || "Restaurant"}. All rights reserved.
             </p>
           </div>
