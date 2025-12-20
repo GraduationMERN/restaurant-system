@@ -1,3 +1,16 @@
+/**
+ * Recommendation Service - RAG-Powered
+ * =====================================
+ * Upgraded to use Retrieval-Augmented Generation (RAG) for smarter recommendations.
+ * 
+ * Architecture:
+ * 1. RETRIEVAL: MongoDB $vectorSearch for semantic retrieval
+ * 2. AUGMENTATION: Rich context building from cart + retrieved products
+ * 3. GENERATION: LLM selects and explains best recommendations
+ * 
+ * Fallback: Math-based scoring (co-purchase + similarity) if RAG fails
+ */
+
 import mongoose from "mongoose";
 import Product from "../product/Product.js";
 import Order from "../order.module/orderModel.js";
@@ -9,8 +22,18 @@ import { ChatGroq } from "@langchain/groq";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 
-// Initialize OpenAI Model
-// We use temperature 0.2 to ensure consistent JSON formatting
+// --- RAG Imports ---
+import {
+  ragRetrieveForCart,
+  ragRetrieveForProduct,
+  formatContextForLLM,
+  categorizeProduct,
+  calculateAverageCartPrice,
+  filterByPriceRange,
+  ragConfig,
+} from "./rag.service.js";
+
+// Initialize LLM Model
 const llm = new ChatGroq({
   model: "llama-3.1-70b-versatile",
   temperature: 0.2,
@@ -18,18 +41,17 @@ const llm = new ChatGroq({
 });
 
 // --- AI Configuration: Output Schema ---
-// This guarantees the AI returns valid JSON matching our frontend needs
 const RecommendationSchema = z.object({
   recommendations: z.array(
     z.object({
       productId: z.string().describe("The exact Mongo ID of the recommended product from the candidates list"),
       reason: z.string().describe("A short, persuasive marketing reason (max 1 sentence) explaining why this item pairs well with the user's current cart."),
     })
-  ).describe("A list of the top 3 most relevant recommended products"),
+  ).describe("A list of the top recommended products"),
 });
 
 // ==========================================
-// SECTION 1: Mathematical Helper Functions
+// SECTION 1: Legacy Helper Functions (Fallback)
 // ==========================================
 
 function cosineSimilarity(a, b) {
@@ -48,16 +70,7 @@ function cosineSimilarity(a, b) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function categorizeProductName(nameLike) {
-  const t = String(nameLike || "").toLowerCase();
-  if (/(juice|drink|beverage|soda|cola|tea|coffee)/.test(t)) return "drink";
-  if (/(dessert|sweet|cake|ice cream|pie|pudding|brownie|cookie)/.test(t)) return "dessert";
-  if (/(fries|side|salad|soup|appetizer|starter|dip|sauce|bread)/.test(t)) return "side";
-  if (/(burger|pizza|sandwich|shawarma|wrap|meal|plate|steak|pasta|rice|chicken|beef)/.test(t)) return "main";
-  return "other";
-}
-
-// Get how many times a product was bought with other items (Co-occurrence)
+// Co-purchase data for fallback scoring
 async function getCoPurchaseCountsForProduct(productId) {
   const objectId = new mongoose.Types.ObjectId(productId);
   const rows = await Order.aggregate([
@@ -90,77 +103,102 @@ async function getCoPurchaseCountsForProducts(productIds) {
 }
 
 // ==========================================
-// SECTION 2: AI Integration (LangChain)
+// SECTION 2: AI RAG Generation
 // ==========================================
 
 /**
- * Uses LangChain to re-rank the mathematically filtered candidates.
- * It selects items that semantically complement the cart (e.g., Burger -> Fries/Drink).
+ * RAG-enhanced AI reranking with rich context
+ * Uses retrieved context to make smarter recommendations
  */
-async function aiRerankForCart(cartItems, candidates, limitParam = 6) {
+async function aiRerankWithRAG(cartItems, candidates, context, limitParam = 6) {
   if (!candidates.length) return [];
 
-  // 1. Prepare context for the prompt
-  const cartDescription = cartItems
-    .map((p) => `- ${p.name} (Category: ${p.categoryName || "General"}, Type: ${p.type || "other"})`)
-    .join("\n");
+  // Build rich context for LLM
+  const contextText = formatContextForLLM(context);
 
+  // Prepare candidate list with IDs
   const candidatesDescription = candidates
-    .map((c) => `ID: ${c.product._id} | Name: ${c.product.name} | Category: ${c.product.categoryName || "General"} | Type: ${c.typeHint || "other"} | Price: ${c.product.basePrice}`)
+    .slice(0, 20) // Limit to avoid token overflow
+    .map((c) => {
+      const type = categorizeProduct(c);
+      return `ID: ${c._id} | Name: ${c.name} | Category: ${c.categoryName || "General"} | Type: ${type} | Price: ${c.basePrice} EGP | Relevance: ${(c.score || 0).toFixed(2)}`;
+    })
     .join("\n");
 
-  // 2. Define the Prompt Template
+  // Enhanced RAG Prompt - Prioritizing "Frequently Bought Together"
   const promptTemplate = PromptTemplate.fromTemplate(`
-    You are an expert restaurant waiter and sales AI.
+    You are an expert restaurant recommendation AI.
     
-    CURRENT USER CART:
-    {cart}
+    ## CUSTOMER'S CURRENT CART:
+    {context}
 
-    AVAILABLE CANDIDATE ITEMS (Pre-filtered):
+    ## CANDIDATE PRODUCTS (ranked by purchase correlation - items frequently bought together):
     {candidates}
 
-    TASK:
-    Select up to {limit} items from the "Candidates" list that best COMPLEMENT the "User Cart".
-    - Focus on cross-selling: If they have food, suggest drinks, sides, or desserts.
-    - Avoid redundancy: Do not suggest a main dish if they already have one, unless it's a family order.
-    - Ensure diversity: Prefer a balanced mix (e.g., drink + side + dessert) when mains are present.
-    - Provide a short, appetizing reason for each recommendation.
+    ## YOUR TASK:
+    Select up to {limit} items that customers FREQUENTLY BUY TOGETHER with items in the cart.
+    
+    PRIORITY ORDER (most important first):
+    1. **FREQUENTLY BOUGHT TOGETHER** - Items with highest "Relevance" score are bought together most often
+    2. **COMPLEMENTARY ITEMS** - Items that complete the meal (e.g., drink with burger)
+    3. **PRICE MATCH** - Similar price range to cart items
+    
+    RULES:
+    - Prefer items with HIGHER relevance scores (these are statistically proven pairings)
+    - Don't suggest items already in cart
+    - Focus on what ACTUALLY sells together, not theoretical pairings
+    
+    For each recommendation:
+    - Use the exact product ID from candidates list
+    - Write reason like "Frequently ordered with [cart item]" or "Popular combo"
+    - Keep reason short (1 sentence max)
 
-    Return the result strictly in JSON format.
+    Return ONLY valid product IDs from the candidates list above.
   `);
 
-  // 3. Bind the model with the Zod schema for structured output
   const structuredLlm = llm.withStructuredOutput(RecommendationSchema);
   const chain = promptTemplate.pipe(structuredLlm);
 
   try {
-    // 4. Invoke the AI Chain
     const result = await chain.invoke({
-      cart: cartDescription,
+      context: contextText,
       candidates: candidatesDescription,
       limit: Math.max(3, Math.min(12, Number(limitParam) || 6)),
     });
 
+    console.log("[RAG] AI returned", result.recommendations?.length || 0, "recommendations");
     return result.recommendations || [];
   } catch (error) {
-    console.error("LangChain Rerank Failed:", error);
-    return []; // Return empty to trigger fallback
+    console.error("[RAG] AI Rerank Failed:", error.message);
+    return [];
   }
 }
 
 // ==========================================
-// SECTION 3: Main Exported Services
+// SECTION 3: Main Exported Services (RAG)
 // ==========================================
 
 /**
- * Strategy: "Retrieve & Rerank"
- * 1. Retrieve: Use Math (Co-occurrence + Similarity) to get top 15 relevant items.
- * 2. Rerank: Use AI to pick the best 3 complementary items from those 15.
+ * RAG-Powered Cart Recommendations
+ * 
+ * Pipeline:
+ * 1. Fetch cart → Build query embedding
+ * 2. Vector search → Get semantically similar products
+ * 3. Build context → Augment with cart analysis
+ * 4. LLM → Generate personalized recommendations
+ * 5. Fallback → Math-based scoring if needed
  */
 export async function recommendForCart(userId, limit = 3) {
+  console.log(`[RAG] Starting cart recommendations for user: ${userId}`);
+  
   // 1. Fetch User Cart
   const cart = await getCartForUserService(userId);
-  if (!cart || !cart.products || !cart.products.length) return [];
+  console.log(`[RAG] Cart lookup result:`, cart ? `Found cart with ${cart.products?.length || 0} products` : 'No cart found');
+  
+  if (!cart || !cart.products || !cart.products.length) {
+    console.log("[RAG] Empty cart, returning no recommendations");
+    return [];
+  }
 
   const cartProducts = cart.products
     .map((p) => p.productId)
@@ -169,10 +207,150 @@ export async function recommendForCart(userId, limit = 3) {
   if (!cartProducts.length) return [];
   const cartProductIds = cartProducts.map((p) => p._id.toString());
 
-  // 2. Calculate Cart Average Embedding (Math)
+  // 2. Get Co-Purchase Data FIRST (Frequently Bought Together)
+  console.log("[RAG] Fetching co-purchase data...");
+  const coPurchaseMap = await getCoPurchaseCountsForProducts(cartProductIds);
+  console.log(`[RAG] Found ${coPurchaseMap.size} co-purchase relationships`);
+
+  // 3. RAG Retrieval (Semantic)
+  console.log("[RAG] Performing semantic retrieval...");
+  const { candidates, context } = await ragRetrieveForCart(cart.products, {
+    limit: ragConfig.vectorSearchLimit,
+    excludeIds: cartProductIds,
+  });
+
+  console.log(`[RAG] Retrieved ${candidates.length} candidates`);
+
+  // 4. Boost candidates by co-purchase frequency
+  const boostedCandidates = candidates.map(c => {
+    const coCount = coPurchaseMap.get(c._id.toString()) || 0;
+    // Boost score: 60% co-purchase + 40% semantic
+    const boostedScore = (coCount > 0)
+      ? (0.6 * (coCount / Math.max(...coPurchaseMap.values(), 1))) + (0.4 * (c.score || 0.5))
+      : (c.score || 0.5) * 0.5; // Reduce score if never bought together
+    return { ...c, score: boostedScore, coCount };
+  });
+
+  // Sort by boosted score (co-purchase weighted)
+  boostedCandidates.sort((a, b) => b.score - a.score);
+
+  // 5. Price filtering
+  const avgPrice = calculateAverageCartPrice(cart.products);
+  const filteredCandidates = filterByPriceRange(boostedCandidates, avgPrice);
+
+  // 6. AI Reranking with RAG context
+  if (filteredCandidates.length > 0 && context) {
+    const cartItemsInfo = cartProducts.map(p => ({
+      name: p.name,
+      categoryName: p.categoryName,
+      type: categorizeProduct(p)
+    }));
+
+    const aiResults = await aiRerankWithRAG(
+      cartItemsInfo,
+      filteredCandidates,
+      context,
+      limit * 2
+    );
+
+    if (aiResults.length > 0) {
+      return processAIResults(aiResults, filteredCandidates, cartProductIds, limit, context.cart);
+    }
+  }
+
+  // 7. FALLBACK: Use boosted candidates directly if AI fails
+  console.log("[RAG] Using fallback scoring...");
+  return filteredCandidates.slice(0, limit).map(c => ({
+    productId: c._id.toString(),
+    reason: c.coCount > 0 ? "Frequently ordered together" : "Popular item",
+    confidence: Math.round(c.score * 100) / 100
+  }));
+}
+
+/**
+ * Process AI results into final recommendations
+ */
+function processAIResults(aiResults, candidates, cartProductIds, limit, cartInfo) {
+  const candidateMap = new Map(
+    candidates.map(c => [c._id.toString(), c])
+  );
+
+  const finalRecommendations = aiResults
+    .map(aiItem => {
+      const product = candidateMap.get(aiItem.productId);
+      if (!product) return null;
+
+      return {
+        productId: aiItem.productId,
+        reason: aiItem.reason,
+        confidence: 0.95,
+        _type: categorizeProduct(product)
+      };
+    })
+    .filter(item => item !== null);
+
+  // Ensure diversity by type
+  const inCart = new Set(cartProductIds);
+  const pool = finalRecommendations.filter(r => !inCart.has(r.productId));
+
+  const buckets = {
+    drink: [],
+    side: [],
+    dessert: [],
+    main: [],
+    other: []
+  };
+
+  for (const r of pool) {
+    (buckets[r._type] || buckets.other).push(r);
+  }
+
+  // Prioritize based on cart contents
+  const preferred = cartInfo?.hasMain 
+    ? ["drink", "side", "dessert", "other", "main"] 
+    : ["side", "drink", "dessert", "main", "other"];
+
+  const selected = [];
+  for (const t of preferred) {
+    if (selected.length >= limit) break;
+    const b = buckets[t];
+    if (b && b.length) {
+      selected.push(b.shift());
+    }
+  }
+
+  // Fill remaining slots
+  if (selected.length < limit) {
+    const remaining = pool.filter(r => !selected.find(s => s.productId === r.productId));
+    remaining.sort((a, b) => b.confidence - a.confidence);
+    while (selected.length < limit && remaining.length) {
+      selected.push(remaining.shift());
+    }
+  }
+
+  return selected.slice(0, limit).map(r => ({
+    productId: r.productId,
+    reason: r.reason,
+    confidence: r.confidence
+  }));
+}
+
+/**
+ * Fallback: Math-based recommendations when RAG fails
+ */
+async function fallbackRecommendForCart(cart, cartProductIds, limit) {
+  console.log("[Fallback] Using math-based scoring...");
+
+  const cartProducts = cart.products
+    .map((p) => p.productId)
+    .filter((p) => !!p && !!p._id);
+
+  // Calculate average embedding
   const embeddings = [];
   cartProducts.forEach((p) => {
-    if (Array.isArray(p.embedding) && p.embedding.length) embeddings.push(p.embedding);
+    if (Array.isArray(p.embedding) && p.embedding.length) {
+      embeddings.push(p.embedding);
+    }
   });
 
   const avgEmbedding = [];
@@ -187,10 +365,10 @@ export async function recommendForCart(userId, limit = 3) {
     }
   }
 
-  // 3. Get Co-purchase data (Math)
+  // Get co-purchase data
   const coPurchaseMap = await getCoPurchaseCountsForProducts(cartProductIds);
 
-  // 4. Fetch All Available Products (excluding what's in cart)
+  // Fetch available products
   const allProducts = await Product.find({
     stock: { $gt: 0 },
     _id: { $nin: cartProductIds },
@@ -198,148 +376,80 @@ export async function recommendForCart(userId, limit = 3) {
 
   if (!allProducts.length) return [];
 
-  const cartCategoryIds = new Set(
-    cartProducts
-      .map((p) => (p.categoryId ? p.categoryId.toString() : null))
-      .filter(Boolean)
-  );
-  const cartTypes = cartProducts.map((p) =>
-    categorizeProductName((p.categoryName || "") + " " + (p.name || ""))
-  );
-  const cartHasMain = cartTypes.includes("main");
-  let avgPrice = 0;
-  let priceCount = 0;
-  for (const cp of cart.products) {
-    const price = cp?.productId?.basePrice || 0;
-    const qty = cp?.quantity || 1;
-    if (price > 0) {
-      avgPrice += price * qty;
-      priceCount += qty;
-    }
-  }
-  avgPrice = priceCount > 0 ? avgPrice / priceCount : 0;
+  // Score products
+  const scored = allProducts
+    .filter(p => p.basePrice)
+    .map(p => {
+      const similarity = avgEmbedding.length 
+        ? Math.max(0, cosineSimilarity(avgEmbedding, p.embedding || []))
+        : 0;
+      const coCount = coPurchaseMap.get(p._id.toString()) || 0;
+      return { product: p, similarity, coCount };
+    })
+    .filter(c => c.similarity > 0.1 || c.coCount > 0);
 
-  const candidatesStage1 = [];
-  for (const p of allProducts) {
-    if (!p.basePrice) continue;
-    let similarity = cosineSimilarity(avgEmbedding, p.embedding || []);
-    if (similarity < 0) similarity = 0;
-    const coCount = coPurchaseMap.get(p._id.toString()) || 0;
-    const sameCategoryInCart =
-      p.categoryId && cartCategoryIds.has(p.categoryId.toString());
-    const diversity = sameCategoryInCart ? 0 : 1;
-    const typeHint = categorizeProductName((p.categoryName || "") + " " + (p.name || ""));
-    if (similarity > 0.15 || coCount > 0) {
-      candidatesStage1.push({ product: p, similarity, coCount, diversity, typeHint });
-    }
-  }
-  const maxCo = Math.max(...candidatesStage1.map((c) => c.coCount), 0);
-  const maxSim = Math.max(...candidatesStage1.map((c) => c.similarity), 0);
-  const candidatesRaw = candidatesStage1.map((c) => {
-    const coScore = maxCo > 0 ? c.coCount / maxCo : 0;
-    const simScore = maxSim > 0 ? c.similarity / maxSim : 0;
-    let modifier = 1;
-    if (avgPrice > 0) {
-      const ratio = c.product.basePrice / avgPrice;
-      if (ratio > 2.5) modifier *= 0.7;
-      else if (ratio < 0.25) modifier *= 0.85;
-    }
-    let complementBoost = 1;
-    if (cartHasMain) {
-      if (c.typeHint === "drink" || c.typeHint === "dessert" || c.typeHint === "side") complementBoost = 1.25;
-      if (c.typeHint === "main") complementBoost = 0.85;
-    }
-    const retrievalScore = (0.4 * coScore + 0.4 * simScore + 0.2 * c.diversity) * modifier * complementBoost;
-    return { ...c, retrievalScore };
+  // Normalize and rank
+  const maxCo = Math.max(...scored.map(c => c.coCount), 1);
+  const maxSim = Math.max(...scored.map(c => c.similarity), 0.1);
+
+  scored.forEach(c => {
+    c.score = 0.5 * (c.coCount / maxCo) + 0.5 * (c.similarity / maxSim);
   });
-  candidatesRaw.sort((a, b) => b.retrievalScore - a.retrievalScore);
-  const topCandidatesForAI = candidatesRaw.slice(0, 30);
 
-  // 6. AI Reranking Step
-  const cartItemsInfo = cartProducts.map(p => ({
-    name: p.name,
-    categoryName: p.categoryName,
-    type: categorizeProductName((p.categoryName || "") + " " + (p.name || ""))
-  }));
+  scored.sort((a, b) => b.score - a.score);
 
-  const aiResults = await aiRerankForCart(cartItemsInfo, topCandidatesForAI, limit * 2);
-
-  // 7. Process AI Results
-  if (aiResults.length > 0) {
-    const finalRecommendationsRaw = aiResults.map(aiItem => {
-      // Find the full product object from our list
-      const originalCandidate = topCandidatesForAI.find(c => c.product._id.toString() === aiItem.productId);
-
-      if (!originalCandidate) return null;
-
-      return {
-        productId: originalCandidate.product._id.toString(),
-        reason: aiItem.reason, // The AI-generated reason
-        confidence: 0.95, // High confidence because AI selected it
-        _type: originalCandidate.typeHint || "other"
-      };
-    }).filter(item => item !== null);
-
-    const inCart = new Set(cartProductIds);
-    const pool = finalRecommendationsRaw.filter(r => !inCart.has(r.productId));
-    const buckets = {
-      drink: [],
-      side: [],
-      dessert: [],
-      main: [],
-      other: []
-    };
-    for (const r of pool) {
-      (buckets[r._type] || buckets.other).push(r);
-    }
-    const preferred = cartHasMain ? ["drink", "side", "dessert", "other", "main"] : ["side", "drink", "dessert", "main", "other"];
-    const selected = [];
-    for (const t of preferred) {
-      if (selected.length >= limit) break;
-      const b = buckets[t];
-      if (b && b.length) {
-        selected.push(b.shift());
-      }
-    }
-    if (selected.length < limit) {
-      const remaining = pool.filter(r => !selected.find(s => s.productId === r.productId));
-      remaining.sort((a, b) => b.confidence - a.confidence);
-      while (selected.length < limit && remaining.length) {
-        selected.push(remaining.shift());
-      }
-    }
-    if (selected.length < limit) {
-      const pickedIds = new Set(selected.map(r => r.productId));
-      const fillers = candidatesRaw
-        .filter(c => !inCart.has(c.product._id.toString()) && !pickedIds.has(c.product._id.toString()))
-        .slice(0, limit - selected.length)
-        .map(c => ({
-          productId: c.product._id.toString(),
-          reason: "Popular with items in your cart",
-          confidence: 0.7
-        }));
-      selected.push(...fillers);
-    }
-    return selected.slice(0, limit).map(r => ({ productId: r.productId, reason: r.reason, confidence: r.confidence }));
-  }
-
-  // 8. FALLBACK: If AI fails or returns nothing, use Math scores
-  // Simple heuristic reason for fallback
-  return topCandidatesForAI.slice(0, limit).map((c) => ({
+  return scored.slice(0, limit).map(c => ({
     productId: c.product._id.toString(),
     reason: "Popular with items in your cart",
-    confidence: 0.6
+    confidence: Math.round(c.score * 100) / 100
   }));
 }
 
 /**
- * Standard Product-to-Product recommendation.
- * Kept purely mathematical for speed on "Product Details" pages.
+ * RAG-Powered Similar Products
+ * For product detail page - shows products SIMILAR to what customer is viewing
  */
 export async function recommendSimilarToProduct(productId, limit = 5) {
+  console.log(`[RAG] Finding similar products for: ${productId}`);
+
   const baseProduct = await getProductByIdService(productId);
   if (!baseProduct) throw new Error("Product not found");
 
+  // Use RAG retrieval
+  const { candidates } = await ragRetrieveForProduct(baseProduct, { limit: limit * 2 });
+
+  if (candidates.length > 0) {
+    // Score by SIMILARITY (same category matters most for "similar products")
+    const scored = candidates.map(c => {
+      const sameCategory = c.categoryId?.toString() === baseProduct.categoryId?.toString();
+      // 50% category match + 40% semantic similarity + 10% popularity
+      const combinedScore = 
+        (sameCategory ? 0.5 : 0) + 
+        (c.score || 0.5) * 0.4 +
+        0.1;
+      return { ...c, combinedScore, sameCategory };
+    });
+
+    scored.sort((a, b) => b.combinedScore - a.combinedScore);
+
+    return scored.slice(0, limit).map(c => ({
+      productId: c._id.toString(),
+      reason: c.sameCategory
+        ? "Similar item from the same category"
+        : "You might also like",
+      confidence: Math.round(c.combinedScore * 100) / 100
+    }));
+  }
+
+  // Fallback to original algorithm
+  console.log("[Fallback] Using legacy similar products algorithm...");
+  return await fallbackSimilarProducts(baseProduct, productId, limit);
+}
+
+/**
+ * Fallback for similar products
+ */
+async function fallbackSimilarProducts(baseProduct, productId, limit) {
   const allProducts = await Product.find({
     _id: { $ne: productId },
     stock: { $gt: 0 },
@@ -349,51 +459,34 @@ export async function recommendSimilarToProduct(productId, limit = 5) {
 
   const baseEmbedding = baseProduct.embedding || [];
   const coPurchaseMap = await getCoPurchaseCountsForProduct(productId);
-  const candidatesRaw = [];
 
-  for (const p of allProducts) {
-    if (!p.basePrice) continue;
+  const candidatesRaw = allProducts
+    .filter(p => p.basePrice)
+    .map(p => {
+      const sameCategory = baseProduct.categoryId && p.categoryId &&
+        p.categoryId.toString() === baseProduct.categoryId.toString();
+      const similarity = Math.max(0, cosineSimilarity(baseEmbedding, p.embedding || []));
+      const coCount = coPurchaseMap.get(p._id.toString()) || 0;
+      return { product: p, sameCategory, similarity, coCount };
+    });
 
-    const sameCategory = baseProduct.categoryId && p.categoryId &&
-      p.categoryId.toString() === baseProduct.categoryId.toString();
+  // Normalize and score
+  const maxCo = Math.max(...candidatesRaw.map(c => c.coCount), 1);
+  const maxSim = Math.max(...candidatesRaw.map(c => c.similarity), 0.1);
 
-    let similarity = cosineSimilarity(baseEmbedding, p.embedding || []);
-    if (similarity < 0) similarity = 0;
-
-    const coCount = coPurchaseMap.get(p._id.toString()) || 0;
-
-    candidatesRaw.push({ product: p, sameCategory, similarity, coCount });
-  }
-
-  // Normalize and Score
-  const coValues = candidatesRaw.map((c) => c.coCount);
-  const maxCo = Math.max(...coValues, 0);
-  const simValues = candidatesRaw.map((c) => c.similarity);
-  const maxSim = Math.max(...simValues, 0);
-
-  const scored = candidatesRaw.map((c) => {
-    const coScore = maxCo > 0 ? c.coCount / maxCo : 0;
-    const similarityScore = maxSim > 0 ? c.similarity / maxSim : 0;
-    const categoryScore = c.sameCategory ? 1 : 0;
-
-    // Weight: Category (high), Similarity (medium), Co-purchase (medium)
-    // For similar items, we WANT same category.
-    let confidence = 0.5 * categoryScore + 0.3 * coScore + 0.2 * similarityScore;
-
+  const scored = candidatesRaw.map(c => {
+    const coScore = c.coCount / maxCo;
+    const simScore = c.similarity / maxSim;
+    const catScore = c.sameCategory ? 1 : 0;
+    const confidence = 0.5 * catScore + 0.3 * coScore + 0.2 * simScore;
     return { ...c, confidence };
   });
 
   scored.sort((a, b) => b.confidence - a.confidence);
 
-  // Helper for static reasons
-  const buildStaticReason = (candidate) => {
-    if (candidate.sameCategory) return "Similar item from the same category";
-    return "Frequently viewed together";
-  };
-
-  return scored.slice(0, limit).map((c) => ({
+  return scored.slice(0, limit).map(c => ({
     productId: c.product._id.toString(),
-    reason: buildStaticReason(c),
-    confidence: Number(c.confidence.toFixed(2)),
+    reason: c.sameCategory ? "Similar item from the same category" : "Frequently viewed together",
+    confidence: Math.round(c.confidence * 100) / 100
   }));
 }
