@@ -3,6 +3,7 @@ import { env } from "./src/config/env.js";
 import http from "http";
 import { Server } from "socket.io";
 import NotificationService from "./src/modules/notification/notification.service.js";
+import { setupStaffChatSocket } from "./src/modules/staffChat/staffChat.socket.js";
 
 const PORT = env.port;
 
@@ -73,6 +74,9 @@ export const notificationService = new NotificationService(io);
 // Make io and notificationService available globally for use in services
 global.io = io;
 global.notificationService = notificationService;
+
+// Setup Staff Chat socket handlers
+setupStaffChatSocket(io);
 
 // Export io instance for use in other modules
 export { io };

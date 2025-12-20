@@ -1,0 +1,207 @@
+/* Staff Chat - Minimal CSS to complement Chatbot.css */
+
+/* Container */
+.staff-chat-container {
+  position: fixed;
+  bottom: 24px;
+  right: 100px; /* Positioned to the left of customer chatbot */
+  z-index: 9998;
+  font-family: var(--cb-font, "Inter", system-ui, sans-serif);
+}
+
+/* Window */
+.staff-chat-window {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.staff-chat-container.active .staff-chat-window {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Toggle Button */
+.staff-chat-toggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  color: white;
+}
+
+.staff-chat-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.staff-chat-toggle .toggle-icon {
+  position: absolute;
+  transition: all 0.3s ease;
+}
+
+.staff-chat-toggle .users-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.staff-chat-toggle .close-icon {
+  opacity: 0;
+  transform: scale(0.5) rotate(-90deg);
+}
+
+.staff-chat-container.active .staff-chat-toggle .users-icon {
+  opacity: 0;
+  transform: scale(0.5) rotate(90deg);
+}
+
+.staff-chat-container.active .staff-chat-toggle .close-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+
+/* Staff List Sections */
+.staff-chat-section {
+  padding: 8px 0;
+}
+
+.staff-chat-section-title {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cb-primary, #e85c41);
+}
+
+/* Staff/Conversation Item */
+.staff-chat-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.staff-chat-item:hover {
+  background: var(--cb-surface, #f8f9fa);
+}
+
+.staff-chat-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cb-primary, #e85c41), #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.staff-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.staff-chat-avatar span {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.staff-chat-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.staff-chat-item-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--cb-text, #1a1a1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-chat-item-role,
+.staff-chat-item-preview {
+  font-size: 12px;
+  color: var(--cb-text-light, #666);
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-chat-item-time {
+  font-size: 11px;
+  color: var(--cb-text-light, #666);
+  flex-shrink: 0;
+}
+
+/* Unread Badge on Toggle Button */
+.staff-chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #ff4757;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Unread Item Highlight */
+.staff-chat-item.unread {
+  background: rgba(232, 92, 65, 0.08);
+}
+
+.staff-chat-item.unread .staff-chat-item-name {
+  font-weight: 700;
+}
+
+.staff-chat-item.unread .staff-chat-item-preview {
+  color: var(--cb-text, #1a1a1a);
+  font-weight: 500;
+}
+
+/* Unread count badge in list */
+.staff-chat-unread-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--cb-primary, #e85c41);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
