@@ -445,12 +445,15 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-3 mb-6">
                 <Instagram className="w-8 h-8 text-pink-600 dark:text-pink-500" />
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Follow Us
-                </h2>
+  {t("Follow Us")}
+</h2>
               </div>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Tag us <span className="font-bold text-amber-600 dark:text-amber-500">@{settings.restaurantName?.replace(/\s+/g, '') || "ourrestaurant"}</span> to be featured!
-              </p>
+  {t("instagram_tag")}{" "}
+  <span className="font-bold text-amber-600 dark:text-amber-500">
+    @{settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}
+  </span>
+</p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -488,15 +491,16 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center mt-8">
-              <a 
-                href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || "restaurant"}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
-              >
-                <Instagram className="w-5 h-5" />
-                Follow on Instagram
-              </a>
+            <a
+  href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-flex items-center gap-3 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
+>
+  <Instagram className="w-5 h-5" />
+  {t("follow_instagram")}
+</a>
+
             </div>
           </div>
 
@@ -526,8 +530,8 @@ export default function LandingPage() {
                 },
                 {
                   icon: Clock,
-                  title: t("opening_hours") || "Opening Hours",
-                  content: "Mon-Fri: 11AM-10PM\nSat-Sun: 10AM-11PM",
+                  title: t("opening_hours"),
+                  content: "Mon-Fri: 11AM - 10PM\nSat-Sun: 10AM - 11PM",
                   color: "text-amber-600 dark:text-amber-400",
                   bgColor: "bg-amber-100 dark:bg-amber-900/20",
                 },
