@@ -367,8 +367,8 @@ export default function LoginPage() {
           {/* Mobile Login Form */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-primary/70 to-primary text-center">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Welcome Back</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <h2 className="text-3xl font-bold text-white mb-1">Welcome Back</h2>
+              <p className="text-gray-200 dark:text-gray-400 text-sm">
                 Sign in to your account
               </p>
             </div>
@@ -399,7 +399,7 @@ export default function LoginPage() {
                         errors.email && touched.email
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
                       placeholder="john@example.com"
                     />
                   </div>
@@ -415,9 +415,9 @@ export default function LoginPage() {
                     </label>
                     <Link
                       to="/forgot-password"
-                      className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700"
+                      className="text-xs text-primary/80 hover:text-primary"
                     >
-                      Forgot?
+                      Forgot Password?
                     </Link>
                   </div>
                   <div className="relative">
@@ -434,7 +434,7 @@ export default function LoginPage() {
                         errors.password && touched.password
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                      } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-orange-500`}
                       placeholder="••••••••"
                     />
                   </div>
@@ -446,7 +446,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -483,13 +483,13 @@ export default function LoginPage() {
         <div className="hidden lg:flex lg:w-2/5 flex-col justify-center">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors mb-10 group"
+            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary transition-colors mb-10 group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </button>
 
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-primary/80 via-primary via-70% to-secondary rounded-3xl p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16"></div>
             
@@ -654,7 +654,7 @@ export default function LoginPage() {
                     </label>
                     <Link
                       to="/forgot-password"
-                      className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors text-base"
+                      className="text-primary/80 hover:text-primary transition-colors text-base"
                     >
                       Forgot password?
                     </Link>
@@ -690,7 +690,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl text-lg"
+                  className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl text-lg"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -727,7 +727,7 @@ export default function LoginPage() {
                   Don't have an account?{" "}
                   <Link
                     to="/register"
-                    className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors text-lg"
+                    className="font-semibold text-primary/80 hover:text-primary transition-colors text-lg"
                   >
                     Join 500+ Happy Customers
                   </Link>
@@ -739,7 +739,7 @@ export default function LoginPage() {
                   Need help?{" "}
                   <Link
                     to="/support"
-                    className="text-orange-600 dark:text-orange-400 font-medium hover:text-orange-700 dark:hover:text-orange-300 transition-colors hover:underline"
+                    className="text-primary/80 font-medium hover:text-primary transition-colors hover:underline"
                   >
                     Contact Support
                   </Link>
@@ -748,7 +748,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        {/* Mobile: Branding/Stats Section (Comes after form) */}
       </div>
     </div>
   );
