@@ -165,9 +165,9 @@ export default function ActiveOrderComponent({ order }) {
                 </p>
               )}
 
-              {order.serviceType === "delivery" && order.deliveryAddress && (
+              {order.serviceType === "delivery" && order.deliveryAddress?.address && (
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {order.deliveryAddress}
+                  {order.deliveryAddress?.address}
                 </p>
               )}
             </div>
