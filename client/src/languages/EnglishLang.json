@@ -219,7 +219,14 @@
   "product.size": "Size",
   
   "cart.added": "Added to cart",
-  "cart.failed": "Failed to add to cart"
+  "cart.failed": "Failed to add to cart",
+  "off": "OFF",
+  "find_us": "Find Our Location",
+  "Follow Us": "Follow Us",
+  "instagram_tag": "Tag us",
+  "follow_instagram": "Follow on Instagram",
+  "opening_hours": "Opening Hours",
+  "open_hours": "Open daily from 8:00 AM to 11:00 PM"
 
 
 

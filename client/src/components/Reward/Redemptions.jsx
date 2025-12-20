@@ -28,7 +28,7 @@ export default function Redemptions({userRedemptions, onClick, viewDetails}) {
                     <div key={redemption._id} className=" border dark:border-gray-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-semibold text-gray-900">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-200">
                             {redemption.rewardId?.title || redemption.rewardId?.productId?.name || 'Reward'}
                           </h3>
                           <p className="text-sm text-gray-600">ID: {redemption._id}</p>
@@ -44,11 +44,11 @@ export default function Redemptions({userRedemptions, onClick, viewDetails}) {
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-600">Points Used</p>
+                          <p className="text-gray-600 dark:text-gray-400">Points Used</p>
                           <p className="font-semibold">{redemption.pointsUsed}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600">Redeemed Date</p>
+                          <p className="text-gray-600 dark:text-gray-400">Redeemed Date</p>
                           <p className="font-semibold">{new Date(redemption.redeemedAt).toLocaleDateString()}</p>
                         </div>
                       </div>

@@ -127,17 +127,17 @@ export default function RewardOrderTrackingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
         {!order ? (
           // No order state - show basic info
-          <div className="bg-white rounded-2xl p-8 shadow-sm text-center ">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm text-center ">
             <FaCheckCircle className="w-16 h-16 text-secondary mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Reward Order Confirmed!</h1>
             <p className="text-gray-600 mb-6">Your reward redemption has been processed.</p>
 
-            <div className="bg-blue-50 rounded-xl p-4 mb-6">
-              <p className="text-gray-700">Order ID: <span className="font-semibold">{id}</span></p>
+            <div className="bg-blue-50 dark:bg-primary rounded-xl p-4 mb-6">
+              <p className="text-gray-700 dark:text-gray-200">Order ID: <span className="font-semibold">{id}</span></p>
             </div>
 
             <div className="flex gap-3 justify-center">
@@ -157,21 +157,21 @@ export default function RewardOrderTrackingPage() {
           </div>
         ) : (
           // Full order details
-          <>
+          <div>
             {/* Order Confirmation Card */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm mb-6 overflow-x-hidden">
+            <div className="bg-white dark:bg-gray-900 dark:border dark:border-gray-700 rounded-3xl p-6 md:p-8 shadow-sm mb-6 overflow-x-hidden">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary/10 rounded-full mb-4">
                   <FaCheckCircle className="w-8 h-8 text-secondary" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-                <p className="text-gray-600">Order confirmed! Kindly pick up your reward.</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 dark:text-white">Order Confirmed!</h1>
+                <p className="text-gray-600 dark:text-gray-400">Order confirmed! Kindly pick up your reward.</p>
               </div>
 
               {/* Branch Info */}
-              <div className="bg-blue-50 rounded-xl p-4 mb-6 text-center overflow-x-hidden">
-                <p className="text-blue-700 font-semibold">Branch Information</p>
-                <p className="text-gray-700 text-sm mt-1">{order?.address || 'Main Branch'}</p>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6 text-center overflow-x-hidden">
+                <p className="text-secondary font-semibold">Branch Information</p>
+                <p className="text-gray-400 text-sm mt-1">{order?.address || 'Main Branch'}</p>
               </div>
 
               {/* Progress Timeline */}
@@ -283,13 +283,13 @@ export default function RewardOrderTrackingPage() {
               </div>
             )}
             {/* Order Details Card */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white   dark:border dark:bg-gray-900 dark:border-gray-700 rounded-3xl p-6 md:p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 Order #{order._id?.substring(order._id.length - 10).toUpperCase() || id?.substring(id.length - 10).toUpperCase()}
               </h2>
 
               {/* Items */}
-              <div className="border-b border-gray-200 pb-6 mb-6">
+              <div className="border-b border-gray-500 pb-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="text-gray-700 font-semibold">{rewardTitle}</p>
@@ -299,18 +299,18 @@ export default function RewardOrderTrackingPage() {
                       </p>
                     )}
                   </div>
-                  <p className="text-gray-900 font-semibold">Reward Item</p>
+                  <p className="text-gray-900 dark:text-white font-semibold">Reward Item</p>
                 </div>
               </div>
 
               {/* Summary */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center text-gray-600">
+                <div className="flex justify-between dark:text-gray-400 items-center text-gray-600">
                   <span>Points Used</span>
-                  <span className="font-semibold text-gray-900">{order.pointsUsed}</span>
+                  <span className="font-semibold dark:text-white text-gray-900">{order.pointsUsed}</span>
                 </div>
 
-                <div className="flex justify-between items-center text-gray-600">
+                <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
                   <span>Status</span>
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${order.status === 'Ready' ? 'bg-green-100 text-green-700' :
                     order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' :
@@ -321,9 +321,9 @@ export default function RewardOrderTrackingPage() {
                 </div>
 
                 {order.redeemedAt && (
-                  <div className="flex justify-between items-center text-gray-600">
-                    <span>Redeemed Date</span>
-                    <span className="font-semibold text-gray-900">{formatDate(order.redeemedAt)}</span>
+                  <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                    <span >Redeemed Date</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{formatDate(order.redeemedAt)}</span>
                   </div>
                 )}
 
@@ -334,8 +334,8 @@ export default function RewardOrderTrackingPage() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900">Total Points</span>
+                <div className="pt-4 border-t border-gray-500 flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">Total Points</span>
                   <span className="text-2xl font-bold text-secondary">{order.pointsUsed}</span>
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function RewardOrderTrackingPage() {
                 </button>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

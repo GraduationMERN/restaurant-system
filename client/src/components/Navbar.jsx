@@ -126,9 +126,9 @@ export default function Navbar() {
       {/* Rewards */}
       <Link
         to="/rewards"
-        className={`flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-secondary" : "text-gray-600 dark:text-gray-400 hover:text-secondary"}`}
+        className={` group flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-secondary" : "text-secondary/70 hover:text-secondary"}`}
       >
-        <Gift size={20} className="text-secondary" />
+        <Gift size={20} />
         <span className="text-xs">{t("rewards")}</span>
       </Link>
 

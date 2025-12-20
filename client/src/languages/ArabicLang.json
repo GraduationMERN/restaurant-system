@@ -23,7 +23,7 @@
   "Login_Reward": "سجل الدخول لفتح المكافآت الحصرية!",
   "Special Rewards for Customers": "مكافآت خاصة للعملاء",
   "Join 500+ Happy Customers": "انضم إلى أكثر من 500 عميل سعيد",
-    "welcome": "مرحباً في الهيمالايا",
+  "welcome": "مرحباً في الهيمالايا",
   "authentic_cuisine": "مطبخ إيطالي أصيل بلمسة عصرية",
   "browse_menu": "تصفح القائمة",
   "explore_dishes": "استكشف أطباقنا",
@@ -34,7 +34,7 @@
   "claim_now": "احصل عليه الآن",
   "location": "الموقع",
   "call_us": "اتصل بنا",
-  
+
 
   "login": "تسجيل الدخول",
   "welcome_back": "مرحباً بعودتك! يرجى تسجيل الدخول للمتابعة",
@@ -45,7 +45,7 @@
   "no_account": "ليس لديك حساب؟",
   "sign_up_now": "سجل الآن",
   "sign_up": "التسجيل",
-  
+
   "create_account": "إنشاء حساب",
   "join_us": "انضم إلينا اليوم وابدأ",
   "full_name": "الاسم الكامل",
@@ -120,7 +120,7 @@
   "pending": "قيد الانتظار",
   "confirmed": "تم التأكيد",
   "ready": "جاهز",
-  
+
 
   "customer_reviews": "تقييمات العملاء",
   "average_rating": "متوسط التقييم",
@@ -141,7 +141,7 @@
   "helpful": "مفيد",
   "reply": "رد",
   "verified_customer": "عميل موثق",
-  
+
 
   "back": "رجوع",
   "back_to_home": "العودة إلى الرئيسية",
@@ -215,6 +215,14 @@
   "product.size": "الحجم",
 
   "cart.added": "تمت إضافة المنتج إلى السلة",
-  "cart.failed": "تعذّر إضافة المنتج"
+  "cart.failed": "تعذّر إضافة المنتج",
+  "off": "خصم",
+  "find_us": "اعثر علينا",
+  "Follow Us": "تابعنا",
+  "instagram_tag": "اعمل منشن لنا",
+  "follow_instagram": "تابعنا على إنستجرام",
+  "opening_hours": "مواعيد العمل",
+  "open_hours": "مفتوح يوميًا من 8:00 صباحًا حتى 11:00 مساءً"
+
 
 }
