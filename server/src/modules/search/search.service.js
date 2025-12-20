@@ -12,8 +12,10 @@
  */
 
 import mongoose from "mongoose";
+import axios from "axios";
 import Product from "../product/Product.js";
 import { embeddingsModel } from "../../config/ai.js";
+import { env } from "../../config/env.js";
 
 // ==========================================
 // Configuration
@@ -374,8 +376,116 @@ export async function quickSearch(query, limit = 5) {
   }
 }
 
+// ==========================================
+// Section 6: Image Search (Gemini Vision)
+// ==========================================
+
+/**
+ * Analyze image with Gemini Vision API to get food description
+ * @param {string} imageUrl - URL of the image (Cloudinary URL)
+ * @returns {Promise<string>} - Text description of the food in the image
+ */
+async function analyzeImageWithGemini(imageUrl) {
+  const apiKey = env.geminiApiKey;
+  const model = env.geminiModel;
+  
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY for image search");
+  }
+
+  // Fetch image and convert to base64
+  const imageResponse = await axios.get(imageUrl, { responseType: "arraybuffer" });
+  const base64 = Buffer.from(imageResponse.data, "binary").toString("base64");
+  const mime = imageResponse.headers["content-type"] || "image/jpeg";
+
+  const prompt = `You are a food recognition assistant. Analyze this image and describe the food you see.
+  
+Return ONLY a simple description focusing on:
+- The name of the dish/food (e.g., "burger", "pizza", "coffee", "salad")
+- Key ingredients visible (e.g., "cheese", "tomato", "lettuce")
+- Type of cuisine if obvious (e.g., "Italian", "Mexican", "American")
+
+Keep the description short (under 50 words). Focus on identifying what food this is.
+If no food is visible, respond with "unknown food item".
+
+Example response: "A cheeseburger with lettuce, tomato, and pickles. Classic American fast food."`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: prompt },
+          { inlineData: { data: base64, mimeType: mime } },
+        ],
+      },
+    ],
+    generationConfig: { temperature: 0.3 },
+  };
+
+  const response = await axios.post(url, body);
+  const candidates = response.data?.candidates || [];
+  const description = candidates[0]?.content?.parts?.[0]?.text || "food item";
+  
+  console.log(`[ImageSearch] Gemini description: "${description}"`);
+  return description.trim();
+}
+
+/**
+ * Image-based product search
+ * Uses Gemini Vision to understand image content, then semantic search
+ * @param {string} imageUrl - URL of the uploaded image
+ * @param {Object} options - Search options (limit, lang)
+ * @returns {Promise<Object>} - { results, originalImageUrl }
+ */
+export async function imageSearch(imageUrl, options = {}) {
+  const { limit = 10, lang = "en" } = options;
+
+  if (!imageUrl) {
+    return { results: [], originalImageUrl: null };
+  }
+
+  console.log(`[ImageSearch] Processing image: ${imageUrl}`);
+
+  try {
+    // Step 1: Get text description from image using Gemini Vision
+    const description = await analyzeImageWithGemini(imageUrl);
+
+    // Step 2: Generate embedding for the description
+    const queryEmbedding = await embeddingsModel.embedQuery(description.toLowerCase());
+
+    // Step 3: Vector search using the embedding
+    const vectorResults = await performVectorSearch(queryEmbedding, {
+      limit: limit * 2,
+    });
+
+    // Step 4: Format results (use slightly lower threshold for image search)
+    const results = vectorResults
+      .filter(r => r.score >= 0.25)
+      .slice(0, limit)
+      .map(p => formatProductResult(p, lang));
+
+    console.log(`[ImageSearch] Found ${results.length} results for image`);
+
+    return {
+      success: true,
+      results,
+      description,
+      originalImageUrl: imageUrl,
+      totalResults: results.length,
+    };
+
+  } catch (error) {
+    console.error("[ImageSearch] Error:", error.message);
+    throw error;
+  }
+}
+
 export default {
   semanticProductSearch,
   quickSearch,
+  imageSearch,
   searchConfig,
 };
+
