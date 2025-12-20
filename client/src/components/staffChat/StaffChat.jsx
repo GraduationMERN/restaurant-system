@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, memo } from "react";
+import { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchStaffUsers,
@@ -12,6 +12,7 @@ import {
   setTyping,
   markAsRead,
   deleteConversation,
+  uploadAttachment,
 } from "../../redux/slices/staffChatSlice";
 import * as socketClient from "../../utils/socket";
 import { useSettings } from "../../context/SettingContext";
@@ -52,9 +53,9 @@ const SendIcon = () => (
 
 const ImageIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-    <circle cx="9" cy="9" r="2"/>
-    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+    <circle cx="9" cy="9" r="2" />
+    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
   </svg>
 );
 
@@ -95,7 +96,7 @@ const SearchIcon = () => (
   </svg>
 );
 
-// Common Emojis data
+// Common Emojis data (Synced with Chatbot)
 const EMOJI_CATEGORIES = {
   "Frequently Used": ["👍", "👎", "😢", "🙂", "😐", "😊", "🤩"],
   "Smileys & Emotion": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮‍💨", "🤥"],
@@ -145,10 +146,22 @@ const MessageParser = ({ content }) => {
       flushBlock();
       const textBefore = line.substring(0, mdImgMatch.index).trim();
       const textAfter = line.substring(mdImgMatch.index + mdImgMatch[0].length).trim();
+      const alt = mdImgMatch[1];
+      const url = mdImgMatch[2];
+
       if (textBefore) {
         blocks.push({ type: "text", content: textBefore });
       }
-      blocks.push({ type: "image", url: mdImgMatch[2], alt: mdImgMatch[1] });
+
+      if (alt === "Voice") {
+        blocks.push({ type: "voice", url: url });
+      } else if (alt.startsWith("File:")) {
+        const fileName = alt.substring(5);
+        blocks.push({ type: "file", url: url, fileName: fileName });
+      } else {
+        blocks.push({ type: "image", url: url, alt: alt });
+      }
+
       if (textAfter) {
         blocks.push({ type: "text", content: textAfter });
       }
@@ -195,6 +208,39 @@ const MessageParser = ({ content }) => {
                 className="content-image"
                 style={{ maxWidth: "100%", borderRadius: "8px", marginTop: 4 }}
               />
+            </div>
+          );
+        }
+        if (block.type === "voice") {
+          return (
+            <div key={idx} className="content-voice-wrapper" style={{ marginTop: 4 }}>
+              <audio controls src={block.url} style={{ maxWidth: "100%", height: 40 }} />
+            </div>
+          );
+        }
+        if (block.type === "file") {
+          return (
+            <div key={idx} className="content-file-wrapper" style={{ marginTop: 4 }}>
+              <a
+                href={block.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="file-attachment"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 12px",
+                  background: "rgba(0,0,0,0.05)",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  color: "inherit",
+                  fontSize: 13
+                }}
+              >
+                <span>📄</span>
+                <span style={{ textDecoration: "underline" }}>{block.fileName}</span>
+              </a>
             </div>
           );
         }
@@ -334,6 +380,7 @@ const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
   const [isRecording, setIsRecording] = useState(true);
   const [duration, setDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const intervalRef = useRef(null);
@@ -363,12 +410,13 @@ const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
+        setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-      
+
       intervalRef.current = setInterval(() => {
         setDuration(d => d + 1);
       }, 1000);
@@ -402,27 +450,28 @@ const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
       <button className="recorder-cancel" onClick={onClose} type="button">
         <CloseIcon />
       </button>
-      
+
       <div className="waveform">
         {waveformBars.map((height, idx) => (
           <div
             key={idx}
             className="waveform-bar"
-            style={{ 
+            style={{
               height: `${Math.max(10, height * (isRecording ? 1 : 0.3))}%`,
-              backgroundColor: primaryColor 
+              backgroundColor: primaryColor
             }}
           />
         ))}
       </div>
-      
+
       <span className="recorder-duration">{formatDuration(duration)}</span>
-      
-      <button 
-        className="recorder-send" 
-        onClick={isRecording ? stopRecording : () => onSend(audioUrl)}
+
+      <button
+        className="recorder-send"
+        onClick={isRecording ? stopRecording : () => onSend(audioBlob)}
         style={{ backgroundColor: primaryColor }}
         type="button"
+        disabled={!isRecording && !audioBlob}
       >
         {isRecording ? <StopIcon /> : <SendIcon />}
       </button>
@@ -450,15 +499,15 @@ const normalizeId = (id) => {
 // Get other participant from private chat
 const getOtherParticipant = (conversation, currentUserId) => {
   if (!conversation || !conversation.participants) return null;
-  
+
   const currentId = normalizeId(currentUserId);
-  
+
   // Find participant that is NOT the current user
   const other = conversation.participants.find((p) => {
     const participantId = normalizeId(p.userId?._id || p.userId || p);
     return participantId && participantId !== currentId;
   });
-  
+
   return other;
 };
 
@@ -474,6 +523,7 @@ export default function StaffChat() {
   const [view, setView] = useState("list"); // "list" | "chat"
   const [selectedChatInfo, setSelectedChatInfo] = useState(null); // Store selected chat person info
   const [dataFetched, setDataFetched] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -483,17 +533,22 @@ export default function StaffChat() {
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const activeConversationRef = useRef(activeConversation);
+  const conversationsRef = useRef(conversations);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
   }, [activeConversation]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const primaryColor = settings?.branding?.primaryColor || "#e85c41";
 
   // Check if staff
   const isStaff = user && ["admin", "cashier", "kitchen"].includes(user.role);
   const toast = useToast();
-  
+
   // Fetch data once when component mounts (if staff)
   useEffect(() => {
     if (isStaff && !dataFetched) {
@@ -503,7 +558,13 @@ export default function StaffChat() {
     }
   }, [isStaff, dataFetched, dispatch]);
 
-  // Join conversation rooms
+  // Ref for isOpen to access it inside the stable socket handler
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  // Join conversation rooms and handle messages
   useEffect(() => {
     if (!isStaff) return;
 
@@ -514,41 +575,50 @@ export default function StaffChat() {
     // Define handlers
     const handleNewMessage = (data) => {
       console.log("Socket: New Message Received", data);
-      
-      // Dispatch content update
-      dispatch(receiveNewMessage(data));
+
+      // Dispatch content update with current open state
+      dispatch(receiveNewMessage({ ...data, isChatOpen: isOpenRef.current }));
+
+      // Check if we have this conversation in our list
+      // Use ref to avoid re-binding listener when conversations change
+      const conversationExists = conversationsRef.current.some(c => c._id === data.conversationId);
+
+      if (!conversationExists) {
+        console.log("New conversation detected, fetching all...");
+        dispatch(fetchConversations());
+      }
 
       // Force fetch messages if it's the active conversation to ensure sync
-      // Use ref to access latest activeConversation without dependency
       if (activeConversationRef.current && activeConversationRef.current._id === data.conversationId) {
         dispatch(fetchMessages(data.conversationId));
       }
 
       // Notification logic
-      const myId = user?._id?.toString?.() || user?._id;
-      const senderId = data.message.senderId?._id?.toString?.() || data.message.senderId?.toString?.();
+      const myId = normalizeId(user);
+      const senderId = normalizeId(data.message.senderId?._id || data.message.senderId);
       const isMyMessage = myId === senderId;
-      
-      // Use ref for isOpen
+
       if (!isOpenRef.current && !isMyMessage) {
-         toast.showToast({
-            message: `💬 ${data.message.senderName}: ${data.message.content.slice(0, 50)}`,
-            type: "info",
-          });
+        toast.showToast({
+          message: `💬 ${data.message.senderName}: ${data.message.content.slice(0, 50)}`,
+          type: "success",
+        });
       }
     };
-    
+
     // Attach listeners
     if (socket) {
       socket.on("staffChat:newMessage", handleNewMessage);
       socket.on("staffChat:userTyping", (data) => dispatch(setTyping(data)));
 
       // Join rooms if we have conversations
+      // Note: We might need to rejoin if conversations list changes significantly (e.g. new chat)
+      // But usually 'staffUser:{userId}' room handles notifications for new chats.
       if (user && conversations.length > 0) {
-         socket.emit("staffChat:join", { 
-           conversationIds: conversations.map((c) => c._id), 
-           userId: user._id 
-         });
+        socket.emit("staffChat:join", {
+          conversationIds: conversations.map((c) => c._id),
+          userId: user._id
+        });
       }
 
       return () => {
@@ -556,40 +626,18 @@ export default function StaffChat() {
         socket.off("staffChat:userTyping");
       };
     }
-  }, [isStaff, conversations, user, dispatch]); // Removed isOpen from dependency
+  }, [isStaff, user, dispatch, toast]); // Removed conversations from dependency to avoid re-binding
 
-  // Toast notification logic in a separate effect that depends on the latest message
-  // Or better, handle the toast inside the socket handler but access current state via ref?
-  // Let's use a ref for isOpen to access it inside the stable socket handler
-  const isOpenRef = useRef(isOpen);
+  // Watch for new conversations to join their rooms
   useEffect(() => {
-    isOpenRef.current = isOpen;
-  }, [isOpen]);
-
-  // Update handleNewMessage to use Ref
-  useEffect(() => {
-    if (!isStaff) return;
     const socket = socketRef.current;
-    if (!socket) return;
-
-    const onMessage = (data) => {
-      // Don't show toast if it's my own message
-      const myId = user?._id?.toString?.() || user?._id;
-      const senderId = data.message.senderId?._id?.toString?.() || data.message.senderId?.toString?.();
-      
-      const isMyMessage = myId === senderId;
-
-      if (!isOpenRef.current && !isMyMessage) {
-         toast.showToast({
-            message: `💬 ${data.message.senderName}: ${data.message.content.slice(0, 50)}`,
-            type: "info",
-          });
-      }
-    };
-    
-    socket.on("staffChat:newMessage", onMessage);
-    return () => socket.off("staffChat:newMessage", onMessage);
-  }, [isStaff, user, toast]); // Stable dependencies
+    if (socket && user && conversations.length > 0) {
+      socket.emit("staffChat:join", {
+        conversationIds: conversations.map((c) => c._id),
+        // userId is already joined, but no harm sending it again or we can omit
+      });
+    }
+  }, [conversations.length, user]); // Only re-run if number of conversations changes
 
   // Scroll to bottom
   useEffect(() => {
@@ -606,7 +654,7 @@ export default function StaffChat() {
       avatar: staffUser.avatarUrl,
       role: staffUser.role,
     });
-    
+
     const result = await dispatch(getOrCreatePrivateChat(staffUser._id));
     if (result.payload) {
       dispatch(setActiveConversation(result.payload));
@@ -624,7 +672,7 @@ export default function StaffChat() {
       avatar: other?.userId?.avatarUrl,
       role: other?.userId?.role || other?.role,
     });
-    
+
     dispatch(setActiveConversation(conv));
     dispatch(fetchMessages(conv._id));
     // Mark messages as read
@@ -674,22 +722,49 @@ export default function StaffChat() {
     setShowGifPicker(false);
   };
 
-  const onImageSelect = (e) => {
+  const onImageSelect = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // For demo we use object URL. In production, upload file first.
-      const imageUrl = URL.createObjectURL(file);
-      handleSend(`![Image](${imageUrl})`);
+      setIsUploading(true);
+      try {
+        const result = await dispatch(uploadAttachment(file));
+        if (uploadAttachment.fulfilled.match(result)) {
+          const imageUrl = result.payload;
+          handleSend(`![Image](${imageUrl})`);
+        } else {
+          toast.showToast({ message: "Image upload failed", type: "error" });
+        }
+      } catch (error) {
+        console.error(error);
+        toast.showToast({ message: "Image upload error", type: "error" });
+      } finally {
+        setIsUploading(false);
+        e.target.value = "";
+      }
     }
-    e.target.value = "";
   };
 
-  const onVoiceSend = (audioUrl) => {
-    if (audioUrl) {
-      // For demo, just sending a text representation. In real app, upload blob.
-      handleSend(`🎤 Voice message sent`);
+  const onVoiceSend = async (blob) => {
+    if (blob) {
+      setIsUploading(true);
+      try {
+        // Create a File from Blob
+        const file = new File([blob], "voice-message.webm", { type: "audio/webm" });
+        const result = await dispatch(uploadAttachment(file));
+        if (uploadAttachment.fulfilled.match(result)) {
+          const audioUrl = result.payload;
+          handleSend(`![Voice](${audioUrl})`);
+        } else {
+          toast.showToast({ message: "Voice upload failed", type: "error" });
+        }
+      } catch (error) {
+        console.error(error);
+        toast.showToast({ message: "Voice upload error", type: "error" });
+      } finally {
+        setIsUploading(false);
+        setShowVoiceRecorder(false);
+      }
     }
-    setShowVoiceRecorder(false);
   };
 
   // Handle typing
@@ -733,8 +808,8 @@ export default function StaffChat() {
   if (!isStaff) return null;
 
   // Filter out self from staff list
-  const currentId = user?._id?.toString?.() || user?._id;
-  const filteredStaff = staffUsers.filter((s) => (s._id?.toString?.() || s._id) !== currentId);
+  const currentId = normalizeId(user);
+  const filteredStaff = staffUsers.filter((s) => normalizeId(s) !== currentId);
 
   // Get typing users for active conversation
   const typingList = activeConversation ? typingUsers[activeConversation._id] || [] : [];
@@ -743,10 +818,16 @@ export default function StaffChat() {
   // De-duplicate conversations - keep only the most recent one per participant pair
   const getUniqueConversations = () => {
     const seen = new Map();
+    const myId = normalizeId(user);
+
     return conversations.filter((conv) => {
       const other = getOtherParticipant(conv, user._id);
-      const otherId = other?.userId?._id || other?.userId;
-      if (!otherId) return false;
+      // Get robust other ID
+      const otherId = normalizeId(other?.userId?._id || other?.userId || other);
+
+      // If no other participant, or other is me, filter out
+      if (!otherId || otherId === myId) return false;
+
       const key = String(otherId);
       if (seen.has(key)) return false;
       seen.set(key, true);
@@ -754,6 +835,19 @@ export default function StaffChat() {
     });
   };
   const uniqueConversations = getUniqueConversations();
+
+  // Get list of staff who are NOT in recent conversations
+  const getOtherStaff = () => {
+    const conversationUserIds = new Set(
+      uniqueConversations.map(c => {
+        const other = getOtherParticipant(c, user._id);
+        return normalizeId(other?.userId?._id || other?.userId || other);
+      })
+    );
+
+    return filteredStaff.filter(s => !conversationUserIds.has(normalizeId(s._id)));
+  };
+  const otherStaff = getOtherStaff();
 
   // Calculate total unread messages for badge
   const totalUnread = uniqueConversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
@@ -804,17 +898,19 @@ export default function StaffChat() {
                 </div>
               ) : (
                 <>
-                  {/* Recent Conversations */}
+                  {/* Recent Chats Section */}
                   {uniqueConversations.length > 0 && (
                     <div className="staff-chat-section">
-                      <div className="staff-chat-section-title">Recent Chats</div>
+                      <div className="staff-chat-section-title">RECENT CHATS</div>
                       {uniqueConversations.map((conv) => {
                         const other = getOtherParticipant(conv, user._id);
                         const hasUnread = conv.unreadCount > 0;
+                        const lastMsg = conv.lastMessage;
+
                         return (
-                          <div 
-                            key={conv._id} 
-                            className={`staff-chat-item ${hasUnread ? "unread" : ""}`}
+                          <div
+                            key={conv._id}
+                            className={`staff-chat-item recent-chat-item ${hasUnread ? "unread" : ""}`}
                             onClick={() => handleSelectConversation(conv)}
                           >
                             <div className="staff-chat-avatar">
@@ -825,30 +921,44 @@ export default function StaffChat() {
                               )}
                             </div>
                             <div className="staff-chat-item-info">
-                              <div className="staff-chat-item-name">{other?.userId?.name || "Unknown"}</div>
+                              <div className="staff-chat-item-header">
+                                <div className="staff-chat-item-name">{other?.userId?.name || "Unknown"}</div>
+                                {lastMsg && (
+                                  <div className="staff-chat-item-time">{formatTime(lastMsg.timestamp)}</div>
+                                )}
+                              </div>
                               <div className="staff-chat-item-preview">
-                                {conv.lastMessage?.content || "No messages yet"}
+                                {lastMsg?.content ? (
+                                  lastMsg.content.startsWith("![") ? (
+                                    <span>Attachment 📎</span>
+                                  ) : (
+                                    lastMsg.content
+                                  )
+                                ) : (
+                                  "No messages yet"
+                                )}
                               </div>
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                              {conv.lastMessage && (
-                                <div className="staff-chat-item-time">{formatTime(conv.lastMessage.timestamp)}</div>
-                              )}
-                              {hasUnread && (
-                                <span className="staff-chat-unread-count">{conv.unreadCount}</span>
-                              )}
-                            </div>
+                            {hasUnread && (
+                              <div className="staff-chat-unread-badge">
+                                {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* All Staff */}
+                  {/* All Staff Section */}
                   <div className="staff-chat-section">
-                    <div className="staff-chat-section-title">All Staff</div>
-                    {filteredStaff.map((staff) => (
-                      <div key={staff._id} className="staff-chat-item" onClick={() => handleSelectStaff(staff)}>
+                    <div className="staff-chat-section-title">ALL STAFF</div>
+                    {otherStaff.map((staff) => (
+                      <div
+                        key={staff._id}
+                        className="staff-chat-item"
+                        onClick={() => handleSelectStaff(staff)}
+                      >
                         <div className="staff-chat-avatar">
                           {staff.avatarUrl ? (
                             <img src={staff.avatarUrl} alt="" />
@@ -885,8 +995,8 @@ export default function StaffChat() {
                 <h3>{chatInfo.name}</h3>
                 <p>{typingText ? `${typingText} typing...` : chatInfo.role || "Staff"}</p>
               </div>
-              <button 
-                className="header-close-btn" 
+              <button
+                className="header-close-btn"
                 onClick={handleDeleteChat}
                 title="Delete Conversation"
                 style={{ color: "#ff4757", marginRight: 4 }}
@@ -918,28 +1028,20 @@ export default function StaffChat() {
                   const rawSenderId = msg.senderId?._id || msg.senderId || msg.sender?._id || msg.sender;
                   const msgSenderId = normalizeId(rawSenderId);
                   const myId = normalizeId(user);
-                  const isMe = (msgSenderId && myId && msgSenderId === myId) || (msg.senderName === user?.name);
-                  
-                  // Debug log for latest message
-                  if (index === messages.length - 1) {
-                     console.log("MsgDebug:", { 
-                       content: msg.content,
-                       rawSenderId, 
-                       msgSenderId, 
-                       myId, 
-                       isMe, 
-                       senderName: msg.senderName, 
-                       userName: user?.name,
-                       userObj: user
-                     });
-                  }
-                  
+                  const isMe = (msgSenderId && myId && msgSenderId === myId);
+
+                  // Check if previous message was from same sender
+                  const prevMsg = index > 0 ? messages[index - 1] : null;
+                  const prevSenderId = prevMsg ? normalizeId(prevMsg.senderId?._id || prevMsg.senderId || prevMsg.sender?._id || prevMsg.sender) : null;
+                  const isFirstInGroup = !prevMsg || prevSenderId !== msgSenderId;
+                  const showSenderName = !isMe && isFirstInGroup;
+
                   return (
-                    <div key={msg._id} className={`message ${isMe ? "user-message" : "bot-message"}`}>
+                    <div key={msg._id} className={`message ${isMe ? "user-message" : "bot-message"}`} style={{ marginTop: isFirstInGroup ? 16 : 2 }}>
                       <div className="message-content-wrapper">
-                        {/* Show sender name for received messages */}
-                        {!isMe && (
-                          <span style={{ fontSize: 11, color: primaryColor, marginBottom: 2, display: "block" }}>
+                        {/* Show sender name for received messages (grouped) */}
+                        {showSenderName && (
+                          <span style={{ fontSize: 11, color: primaryColor, marginBottom: 2, display: "block", marginLeft: 4 }}>
                             {msg.senderName || "Unknown"}
                           </span>
                         )}
@@ -982,13 +1084,13 @@ export default function StaffChat() {
               )}
 
               {showVoiceRecorder ? (
-                <VoiceRecorder 
+                <VoiceRecorder
                   onClose={() => setShowVoiceRecorder(false)}
                   onSend={onVoiceSend}
                   primaryColor={primaryColor}
                 />
               ) : (
-                <div className="input-container">
+                <div className="inpu  t-container">
                   <div className="input-wrapper">
                     <input
                       type="text"
@@ -1007,14 +1109,15 @@ export default function StaffChat() {
                         onChange={onImageSelect}
                         style={{ display: "none" }}
                       />
-                      <button 
-                        className="input-icon-btn" 
+                      <button
+                        className="input-icon-btn"
                         title="Send image"
                         onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploading}
                       >
                         <ImageIcon />
                       </button>
-                      <button 
+                      <button
                         className={`input-icon-btn ${showEmojiPicker ? "active" : ""}`}
                         title="Add emoji"
                         onClick={() => {
@@ -1022,10 +1125,11 @@ export default function StaffChat() {
                           setShowGifPicker(false);
                         }}
                         style={showEmojiPicker ? { color: primaryColor } : {}}
+                        disabled={isUploading}
                       >
                         <EmojiIcon />
                       </button>
-                      <button 
+                      <button
                         className={`input-icon-btn ${showGifPicker ? "active" : ""}`}
                         title="Add GIF"
                         onClick={() => {
@@ -1033,13 +1137,15 @@ export default function StaffChat() {
                           setShowEmojiPicker(false);
                         }}
                         style={showGifPicker ? { color: primaryColor } : {}}
+                        disabled={isUploading}
                       >
                         <GifIcon />
                       </button>
-                      <button 
-                        className="input-icon-btn" 
+                      <button
+                        className="input-icon-btn"
                         title="Voice message"
                         onClick={() => setShowVoiceRecorder(true)}
+                        disabled={isUploading}
                       >
                         <MicIcon />
                       </button>
@@ -1048,10 +1154,10 @@ export default function StaffChat() {
                     <button
                       className="send-btn"
                       onClick={() => handleSend()}
-                      disabled={!input.trim()}
+                      disabled={!input.trim() || isUploading}
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <SendIcon />
+                      {isUploading ? <div className="spinner-border spinner-border-sm" /> : <SendIcon />}
                     </button>
                   </div>
                 </div>
@@ -1090,13 +1196,12 @@ export default function StaffChat() {
           onClick={() => setIsOpen(!isOpen)}
           style={{ backgroundColor: primaryColor }}
         >
-          <span className="toggle-icon users-icon">
+          <div className="toggle-icon users-icon">
             <UsersIcon />
-          </span>
-          <span className="toggle-icon close-icon">
+          </div>
+          <div className="toggle-icon close-icon">
             <CloseIcon />
-          </span>
-          {/* Unread Badge */}
+          </div>
           {totalUnread > 0 && !isOpen && (
             <span className="staff-chat-badge">{totalUnread > 99 ? "99+" : totalUnread}</span>
           )}

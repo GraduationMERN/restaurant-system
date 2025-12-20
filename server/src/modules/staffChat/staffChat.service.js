@@ -82,9 +82,19 @@ class StaffChatService {
       .sort({ "lastMessage.timestamp": -1, updatedAt: -1 })
       .lean();
 
+    // Filter out self-conversations (where all participants are the current user)
+    // In a self-chat with 2 participants, both have the same userId.
+    const validConversations = conversations.filter(conv => {
+       // Keep conversation only if there is at least one participant who is NOT the current user
+       return conv.participants.some(p => {
+         const pId = p.userId._id || p.userId; // handle populated or unpopulated
+         return pId.toString() !== userId.toString();
+       });
+    });
+
     // Calculate unread count for each conversation
     const conversationsWithUnread = await Promise.all(
-      conversations.map(async (conv) => {
+      validConversations.map(async (conv) => {
         const unreadCount = await StaffMessage.countDocuments({
           conversationId: conv._id,
           senderId: { $ne: userObjectId },

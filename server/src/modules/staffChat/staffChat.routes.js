@@ -1,6 +1,7 @@
 import express from "express";
 import * as staffChatController from "./staffChat.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
+import { uploadCloud } from "../../middlewares/uploadCloudinary.middleware.js";
 
 const router = express.Router();
 
@@ -25,5 +26,8 @@ router.get("/conversations/:id/messages", staffChatController.getMessages);
 router.post("/conversations/:id/messages", staffChatController.sendMessage);
 router.put("/conversations/:id/read", staffChatController.markAsRead);
 router.delete("/conversations/:id", staffChatController.deleteConversation);
+
+// Upload route
+router.post("/upload", uploadCloud.single("file"), staffChatController.uploadAttachment);
 
 export default router;
