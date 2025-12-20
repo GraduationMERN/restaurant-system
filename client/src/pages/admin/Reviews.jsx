@@ -285,7 +285,7 @@ export default function Reviews() {
         {paginated.map((r) => (
           <div
             key={r._id}
-            className="rounded-2xl border border-gray-200 bg-white p-5 dark:bg-white/[0.03]"
+            className="rounded-2xl border dark:border-gray-700 bg-white p-5 dark:bg-gray-800"
           >
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">

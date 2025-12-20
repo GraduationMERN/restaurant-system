@@ -73,11 +73,11 @@ export default function Navbar() {
 
   return (
     <div className="w-full flex justify-between items-center">
-
+      <div className="flex justify-between items-center">
       {/* Language Switch */}
       <button
         onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")}
-        className="flex flex-col items-center text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+        className="flex flex-col items-center text-gray-600 mr-2 dark:text-gray-400 hover:text-primary transition-colors"
       >
         <span className="text-xs font-medium">{i18n.language === "en" ? "ع" : "En"}</span>
       </button>
@@ -86,7 +86,7 @@ export default function Navbar() {
       <div className="flex flex-col items-center">
         <ThemeToggleButton />
       </div>
-
+    </div>
       {/* Home */}
       <Link
         to="/"
@@ -115,13 +115,13 @@ export default function Navbar() {
       </Link>
 
       {/* Reviews */}
-      <Link
+      {/* <Link
         to="/reviews"
         className={`flex flex-col items-center transition-colors ${isActive("/reviews") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Star size={20} />
         <span className="text-xs">{t("reviews")}</span>
-      </Link>
+      </Link> */}
 
       {/* Rewards */}
       <Link
@@ -133,13 +133,13 @@ export default function Navbar() {
       </Link>
 
       {/* Support */}
-      <Link
+      {/* <Link
         to="/support"
         className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <HelpCircle size={20} />
         <span className="text-xs">{t("Support")}</span>
-      </Link>
+      </Link> */}
 
 
 

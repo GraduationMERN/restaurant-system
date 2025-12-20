@@ -4,6 +4,7 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import Checkbox from "../../components/form/input/Checkbox";
+import ColorPicker from "../../components/form/ColorPicker";
 import Button from "../../components/ui/button/Button";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "../../hooks/useToast";
@@ -327,37 +328,17 @@ export default function Settings() {
             <div className="space-y-5">
               {/* Colors Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <ColorPicker
+                  label="Primary Color"
+                  value={primaryColor}
+                  onChange={setPrimaryColor}
+                />
                 <div>
-                  <Label>Primary Color</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-gray-200 bg-transparent p-0.5 cursor-pointer dark:border-gray-800"
-                    />
-                    <Input
-                      type="text"
-                      value={primaryColor}
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Reward Color</Label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="h-10 w-10 rounded-lg border border-gray-200 bg-transparent p-0.5 cursor-pointer dark:border-gray-800"
-                    />
-                    <Input
-                      type="text"
-                      value={secondaryColor}
-                      onChange={(e) => setSecondaryColor(e.target.value)}
-                    />
-                  </div>
+                  <ColorPicker
+                    label="Reward Color"
+                    value={secondaryColor}
+                    onChange={setSecondaryColor}
+                  />
                   <div className="mt-2 flex items-center">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Recommended:</span>
                     <button
