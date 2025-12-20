@@ -191,66 +191,9 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
         )}
 
         {/* Quick Action Buttons */}
-        <div className="flex gap-2 ml-4 items-start">
-          <button
-            onClick={() => onUpdateStatus(order)}
-            className="bg-[#7B4019] hover:bg-[#593114] text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform "
-            title="Update Status"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
+
           {!isRewardOrder && (
-            <button
-              onClick={() => onUpdatePayment(order)}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
-            >
-              Payment
-            </button>
-          )}
-        </div>
-      </div>
-    )}
-      {expanded && (
-        <div className="border-t-2 border-slate-200 dark:border-slate-700 pt-4 mt-4 space-y-4">
-          {/* Items List */}
-          <div>
-            <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Items</h4>
-            <ul className="space-y-2">
-              {order.items?.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-gray-800 p-2 rounded-lg shadow-sm hover:bg-[#FDE1A5] transition-colors"
-                >
-                  <span>
-                    {item.name || item.productId?.name} x {item.quantity}
-                  </span>
-                  <span className="font-bold text-[#7B4019]">
-                    ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Payment Status */}
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Payment:</span>
-            <div className="flex gap-2 flex-wrap">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
-              >
-                {order.paymentStatus || "pending"}
-              </span>
-              {order.paymentMethod && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 dark:bg-gray-700 text-slate-800 dark:text-slate-200">
-                  {order.paymentMethod}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 flex-wrap mt-2">
+             <div className="flex gap-2 flex-wrap mt-2">
             <button
               onClick={() => onViewDetails(order)}
               className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
@@ -264,8 +207,9 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
               Payment
             </button>
           </div>
+          )}
         </div>
-      )}
+    )}
     </div>
   );
 }

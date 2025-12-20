@@ -97,11 +97,6 @@ export default function Admin() {
             <UserProfiles />
           </section>
         )}
-        {section === "users" && (
-          <section id="users" className={contentClasses}>
-            <Users />
-          </section>
-        )}
       </div>
     </>
   );
