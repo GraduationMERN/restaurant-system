@@ -98,7 +98,7 @@ export default function Categories() {
       const action = await dispatch(deleteCategory(id));
       unwrapResult(action);
       await dispatch(getAllCategories());
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return (
@@ -117,13 +117,7 @@ export default function Categories() {
 
       {/* Responsive Grid */}
       <div
-        className="
-  mt-4 
-  grid 
-  grid-cols-1       /* Mobile: 1 card per row */
-  sm:grid-cols-2     /* Tablet + Desktop: 2 cards per row */
-  gap-4
-"
+        className=" mt-4 grid  grid-cols-1  sm:grid-cols-2 gap-4"
       >
         {loading && <div className="p-3">Loading...</div>}
 
@@ -131,8 +125,7 @@ export default function Categories() {
           categories.map((c) => (
             <div
               key={c._id}
-              className="rounded-xl border p-4 flex flex-col sm:flex-row items-center gap-4
-                       hover:shadow-md transition-all bg-white dark:bg-gray-900"
+              className="rounded-xl border dark:border-gray-700 p-4 flex flex-col sm:flex-row items-center gap-4 hover:shadow-md transition-all bg-white dark:bg-gray-800"
             >
               {/* Image */}
               <img
