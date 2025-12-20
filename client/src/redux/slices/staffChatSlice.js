@@ -75,6 +75,18 @@ export const markAsRead = createAsyncThunk(
   }
 );
 
+export const deleteConversation = createAsyncThunk(
+  "staffChat/deleteConversation",
+  async (conversationId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/api/staff-chat/conversations/${conversationId}`);
+      return conversationId;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to delete conversation");
+    }
+  }
+);
+
 // ============ Slice ============
 
 const staffChatSlice = createSlice({
@@ -196,6 +208,15 @@ const staffChatSlice = createSlice({
         const conv = state.conversations.find((c) => c._id === conversationId);
         if (conv) {
           conv.unreadCount = 0;
+        }
+      })
+      // Delete conversation
+      .addCase(deleteConversation.fulfilled, (state, action) => {
+        const conversationId = action.payload;
+        state.conversations = state.conversations.filter((c) => c._id !== conversationId);
+        if (state.activeConversation?._id === conversationId) {
+          state.activeConversation = null;
+          state.messages = [];
         }
       });
   },

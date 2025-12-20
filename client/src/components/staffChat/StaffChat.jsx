@@ -11,6 +11,7 @@ import {
   receiveNewMessage,
   setTyping,
   markAsRead,
+  deleteConversation,
 } from "../../redux/slices/staffChatSlice";
 import * as socketClient from "../../utils/socket";
 import { useSettings } from "../../context/SettingContext";
@@ -101,6 +102,13 @@ const EMOJI_CATEGORIES = {
   "Gestures": ["👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏"],
   "Food & Drink": ["🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑", "🌽", "🥕", "🧄", "🧅", "🥔", "🍔", "🍟", "🍕", "🌭", "🥪", "🌮", "🌯", "🫔", "🥙", "🧆"],
 };
+
+const TrashIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
 
 // Get initials from name
 const getInitials = (name) => {
@@ -592,6 +600,14 @@ export default function StaffChat() {
     }
   }, [input, activeConversation, dispatch, user]);
 
+  const handleDeleteChat = useCallback(() => {
+    if (!activeConversation) return;
+    if (window.confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
+      dispatch(deleteConversation(activeConversation._id));
+      handleBack();
+    }
+  }, [activeConversation, dispatch, handleBack]);
+
   const onEmojiSelect = (emoji) => {
     setInput(prev => prev + emoji);
     setShowEmojiPicker(false);
@@ -813,6 +829,14 @@ export default function StaffChat() {
                 <h3>{chatInfo.name}</h3>
                 <p>{typingText ? `${typingText} typing...` : chatInfo.role || "Staff"}</p>
               </div>
+              <button 
+                className="header-close-btn" 
+                onClick={handleDeleteChat}
+                title="Delete Conversation"
+                style={{ color: "#ff4757", marginRight: 4 }}
+              >
+                <TrashIcon />
+              </button>
               <button className="header-close-btn" onClick={() => setIsOpen(false)}>
                 <CloseIcon />
               </button>

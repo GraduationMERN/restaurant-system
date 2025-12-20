@@ -74,3 +74,14 @@ export const markAsRead = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Delete conversation
+export const deleteConversation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await staffChatService.deleteConversation(id, req.user._id);
+    res.json({ success: true, message: "Conversation deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
