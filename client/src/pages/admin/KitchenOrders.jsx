@@ -126,12 +126,24 @@ export default function KitchenOrders() {
   }, [sortBy, dispatch]);
 
   // Order actions
-  const handleStatusChange = async (orderId, newStatus) => {
+  const handleStatusChange = async (orderId, currentStatus) => {
+    let newStatus;
+
+    // Determine next status based on current status
+    if (currentStatus === "confirmed") {
+      newStatus = "preparing";
+    } else if (currentStatus === "preparing") {
+      newStatus = "ready";
+    } else {
+      // If already ready or any other status, don't change
+      return;
+    }
+
     try {
       await dispatch(changeOrderStatus({ orderId, status: newStatus })).unwrap();
-      toast.showToast({ 
-        message: `Order marked as ${newStatus}`, 
-        type: "success" 
+      toast.showToast({
+        message: `Order marked as ${newStatus}`,
+        type: "success"
       });
       setViewOrder(null);
     } catch (err) {
@@ -411,8 +423,10 @@ export default function KitchenOrders() {
               return (
                 <ComponentCard
                   key={order._id}
-                  className="relative border-2 hover:shadow-lg transition-all duration-300"
+                  className="relative border-2 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  
                 >
+                  <div onClick={() => handleStatusChange(order._id, order.status)}>
                   {/* Status Badge */}
                   <div className="flex items-center justify-between mb-3">
                     <span
@@ -494,11 +508,14 @@ export default function KitchenOrders() {
                             </div>
                             {order.status === "preparing" && (
                               <button
-                                onClick={() => handleItemPreparation(
-                                  order._id, 
-                                  'reward', 
-                                  !preparationProgress[order._id]?.['reward']
-                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleItemPreparation(
+                                    order._id, 
+                                    'reward', 
+                                    !preparationProgress[order._id]?.['reward']
+                                  );
+                                }}
                                 className={`ml-2 p-1 rounded ${
                                   preparationProgress[order._id]?.['reward']
                                     ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
@@ -527,11 +544,14 @@ export default function KitchenOrders() {
                               </div>
                               {order.status === "preparing" && (
                                 <button
-                                  onClick={() => handleItemPreparation(
-                                    order._id, 
-                                    item._id || item.productId, 
-                                    !preparationProgress[order._id]?.[item._id || item.productId]
-                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleItemPreparation(
+                                      order._id, 
+                                      item._id || item.productId, 
+                                      !preparationProgress[order._id]?.[item._id || item.productId]
+                                    );
+                                  }}
                                   className={`ml-2 p-1 rounded ${
                                     preparationProgress[order._id]?.[item._id || item.productId]
                                       ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
@@ -548,76 +568,18 @@ export default function KitchenOrders() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                    {order.type === 'reward' ? (
-                      /* Reward Order Actions */
-                      <>
-                        {order.status === "pending" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "confirmed")}
-                            className="w-full bg-blue-500 hover:bg-blue-600"
-                          >
-                            Confirm Reward
-                          </Button>
-                        )}
-                        {order.status === "confirmed" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "preparing")}
-                            className="w-full bg-purple-500 hover:bg-purple-600"
-                          >
-                            Start Preparing
-                          </Button>
-                        )}
-                        {order.status === "preparing" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "ready")}
-                            className="w-full bg-green-500 hover:bg-green-600"
-                          >
-                            Mark as Ready
-                          </Button>
-                        )}
-                        {order.status === "ready" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "completed")}
-                            className="w-full bg-emerald-500 hover:bg-emerald-600"
-                          >
-                            Complete Reward
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      /* Regular Order Actions */
-                      <>
-                        {order.status === "confirmed" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "preparing")}
-                            className="w-full bg-purple-500 hover:bg-purple-600"
-                          >
-                            Start Preparing
-                          </Button>
-                        )}
-                        {order.status === "preparing" && (
-                          <Button
-                            onClick={() => handleStatusChange(order._id, "ready")}
-                            className="w-full bg-green-500 hover:bg-green-600"
-                          >
-                            Mark as Ready
-                          </Button>
-                        )}
-                        {order.status === "ready" && (
-                          <div className="text-center px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded font-medium">
-                            Ready for Pickup
-                          </div>
-                        )}
-                      </>
-                    )}
+                  {/* View Details Button */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={() => setViewOrder(order)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the card click
+                        setViewOrder(order);
+                      }}
                       className="w-full px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20 rounded border border-brand-200 dark:border-brand-800"
                     >
                       View Details
                     </button>
+                  </div>
                   </div>
                 </ComponentCard>
               );
@@ -782,20 +744,16 @@ export default function KitchenOrders() {
 
               {/* Action Buttons */}
               <div className="space-y-2">
-                {viewOrder.status === "confirmed" && (
+                {(viewOrder.status === "confirmed" || viewOrder.status === "preparing") && (
                   <Button
-                    onClick={() => handleStatusChange(viewOrder._id, "preparing")}
-                    className="w-full bg-purple-500 hover:bg-purple-600"
+                    onClick={() => handleStatusChange(viewOrder._id, viewOrder.status)}
+                    className={`w-full ${
+                      viewOrder.status === "confirmed"
+                        ? "bg-purple-500 hover:bg-purple-600"
+                        : "bg-green-500 hover:bg-green-600"
+                    }`}
                   >
-                    Start Preparing All Items
-                  </Button>
-                )}
-                {viewOrder.status === "preparing" && (
-                  <Button
-                    onClick={() => handleStatusChange(viewOrder._id, "ready")}
-                    className="w-full bg-green-500 hover:bg-green-600"
-                  >
-                    Mark Entire Order as Ready
+                    {viewOrder.status === "confirmed" ? "Start Preparing All Items" : "Mark Entire Order as Ready"}
                   </Button>
                 )}
                 <Button
