@@ -19,6 +19,9 @@ export default function OrderRecommendations() {
   const [byId, setById] = useState({});
   const [addingIds, setAddingIds] = useState({});
 
+  // Debug logging
+  console.log("[OrderRecommendations] Rendering, products:", products?.length, "status:", status, "list:", list?.length);
+
   const signature = useMemo(
     () =>
       JSON.stringify(
@@ -86,14 +89,32 @@ export default function OrderRecommendations() {
   const cartIdsSet = new Set(products.map((p) => p.productId?._id || p.productId));
   const filtered = (list || []).filter((r) => !cartIdsSet.has(r.productId)).slice(0, 5);
 
+  // Don't render anything if cart is empty
+  if (!products.length) return null;
+
   return (
     <div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+        🍽️ You might also like
+      </h3>
+      
       {status === "loading" && (
-        <div className="py-2 text-center text-gray-600">Loading recommendations...</div>
+        <div className="py-4 text-center text-gray-600 dark:text-gray-400">
+          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          Loading recommendations...
+        </div>
       )}
+      
       {status === "failed" && error && (
-        <div className="py-2 text-center text-red-600">{error}</div>
+        <div className="py-2 text-center text-red-600 dark:text-red-400">{error}</div>
       )}
+      
+      {status === "succeeded" && filtered.length === 0 && (
+        <div className="py-2 text-center text-gray-500 dark:text-gray-400 text-sm">
+          No recommendations available right now
+        </div>
+      )}
+      
       {status !== "loading" && !error && filtered.length > 0 && (
         <div className="flex gap-3 overflow-x-auto pb-2">
           {filtered.map((rec) => {
@@ -101,7 +122,7 @@ export default function OrderRecommendations() {
             if (!p) return null;
             const disabled = isOutOfStock(p) || !!addingIds[p._id];
             return (
-              <div key={rec.productId} className="min-w-[180px] border rounded-xl p-2">
+              <div key={rec.productId} className="min-w-[180px] border border-gray-200 dark:border-gray-700 rounded-xl p-2 bg-white dark:bg-gray-800">
                 {p.imgURL && (
                   <img
                     src={p.imgURL}
@@ -109,14 +130,14 @@ export default function OrderRecommendations() {
                     className="w-full h-24 object-cover rounded-lg mb-2"
                   />
                 )}
-                <div className="text-sm font-semibold truncate">{p.name}</div>
+                <div className="text-sm font-semibold truncate text-gray-900 dark:text-white">{p.name}</div>
                 <div className="text-sm text-primary">EGP {p.basePrice}</div>
-                <div className="text-xs text-gray-500 mt-1">{rec.reason}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{rec.reason}</div>
                 <button
                   disabled={disabled}
                   onClick={() => add(p)}
                   className={`mt-2 w-full text-sm rounded-lg py-1.5 ${
-                    disabled ? "bg-gray-300 text-gray-600" : "bg-primary text-white hover:bg-primary/90"
+                    disabled ? "bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-500" : "bg-primary text-white hover:bg-primary/90"
                   }`}
                 >
                   {addingIds[p._id] ? "Adding..." : "Add"}
@@ -129,3 +150,4 @@ export default function OrderRecommendations() {
     </div>
   );
 }
+
