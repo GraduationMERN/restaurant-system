@@ -226,17 +226,6 @@ const MessageParser = ({ content }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="file-attachment"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 12px",
-                  background: "rgba(0,0,0,0.05)",
-                  borderRadius: 8,
-                  textDecoration: "none",
-                  color: "inherit",
-                  fontSize: 13
-                }}
               >
                 <span>📄</span>
                 <span style={{ textDecoration: "underline" }}>{block.fileName}</span>
