@@ -143,6 +143,27 @@ class StaffChatService {
       { $push: { readBy: { userId, readAt: new Date() } } }
     );
   }
+
+  // Delete conversation
+  async deleteConversation(conversationId, userId) {
+    // Verify access
+    const conversation = await StaffConversation.findOne({
+      _id: conversationId,
+      "participants.userId": userId,
+    });
+    
+    if (!conversation) {
+      throw new Error("Conversation not found or access denied");
+    }
+
+    // Delete messages first
+    await StaffMessage.deleteMany({ conversationId });
+    
+    // Delete conversation
+    await StaffConversation.findByIdAndDelete(conversationId);
+    
+    return true;
+  }
 }
 
 export default new StaffChatService();

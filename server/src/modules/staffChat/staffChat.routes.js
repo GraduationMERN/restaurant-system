@@ -24,5 +24,6 @@ router.post("/conversations/private/:userId", staffChatController.getOrCreatePri
 router.get("/conversations/:id/messages", staffChatController.getMessages);
 router.post("/conversations/:id/messages", staffChatController.sendMessage);
 router.put("/conversations/:id/read", staffChatController.markAsRead);
+router.delete("/conversations/:id", staffChatController.deleteConversation);
 
 export default router;
