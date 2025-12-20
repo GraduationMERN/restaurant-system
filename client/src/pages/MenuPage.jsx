@@ -398,21 +398,45 @@ function MenuPage() {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: {
-            borderRadius: 3,
-            p: 2,
+          style: {
+            borderRadius: 12,
+            padding: 16,
+            backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+            color: document.documentElement.classList.contains('dark') ? '#f9fafb' : '#1f2937',
           },
         }}
       >
         {selectedProduct && (
           <>
-            <DialogTitle sx={{ fontWeight: 700 }}>
-              {/* {selectedProduct.name} */}
+            <DialogTitle 
+              sx={{ 
+                fontWeight: 700, 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                color: 'inherit',
+              }}
+            >
               {lang === "ar"
                 ? selectedProduct.name_ar || selectedProduct.name
                 : selectedProduct.name}
+              <IconButton 
+                onClick={handleClosePopup}
+                sx={{ 
+                  color: 'inherit',
+                  '&:hover': { 
+                    bgcolor: 'var(--color-primary)', 
+                    color: 'white' 
+                  }
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </IconButton>
             </DialogTitle>
-            <DialogContent>
+            <DialogContent sx={{ color: 'inherit' }}>
               <Box
                 component="img"
                 src={selectedProduct.imgURL}
@@ -433,8 +457,7 @@ function MenuPage() {
               >
                 {/* الوصف والسعر */}
                 <Box flex={1}>
-                  <Typography color="text.secondary" mb={1}>
-                    {/* {selectedProduct.desc} */}
+                  <Typography sx={{ color: 'inherit', opacity: 0.7 }} mb={1}>
                     {lang === "ar"
                       ? selectedProduct.desc_ar || selectedProduct.desc
                       : selectedProduct.desc}
@@ -465,7 +488,7 @@ function MenuPage() {
                   >
                     +
                   </Button>
-                  <Typography fontWeight={700} my={1}>
+                  <Typography fontWeight={700} my={1} sx={{ color: 'inherit' }}>
                     {quantity}
                   </Typography>
                   <Button
@@ -547,7 +570,7 @@ function MenuPage() {
                   );
                 })}
               {/* Total Price */}
-              <Typography fontWeight={700} mb={2}>
+              <Typography fontWeight={700} mb={2} sx={{ color: 'inherit' }}>
                 {t("popup.total")}: {t("currency")}{" "}
                 {selectedProduct.basePrice * quantity}
               </Typography>
