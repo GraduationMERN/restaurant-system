@@ -1,6 +1,7 @@
 import DesktopNav from "./DesktopNav";
 import Navbar from "./Navbar";
 import Chatbot from "./chatbot/Chatbot";
+import StaffChat from "./staffChat/StaffChat";
 import { useLocation } from "react-router-dom";
 
 export default function Layout({ children }) {
@@ -15,7 +16,11 @@ export default function Layout({ children }) {
     "/forgot-password",
     "/404"
   ];
+  const staffPaths = ["/admin", "/cashier", "/kitchen"];
   const shouldHideUI = hiddenPaths.some(path =>
+    location.pathname.startsWith(path)
+  );
+  const isStaffPath = staffPaths.some(path =>
     location.pathname.startsWith(path)
   );
   return (
@@ -42,9 +47,10 @@ export default function Layout({ children }) {
 
       {/* Chatbot with Scroll to Top Button */}
       {!shouldHideUI && <Chatbot />}
+
+      {/* Staff Chat - only for staff pages */}
+      {isStaffPath && <StaffChat />}
     </div>
 
   );
 }
-
-
