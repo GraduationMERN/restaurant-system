@@ -32,6 +32,7 @@ import aiProductRoutes from "./src/modules/ai_product/aiProduct.routes.js"; // A
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
 import adminProfileRoutes from "./src/modules/adminProfile/adminProfile.route.js";
+import searchRoutes from "./src/modules/search/search.routes.js"; // AI Smart Search
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -112,6 +113,8 @@ app.use("/api/support", supportRoutes);
 app.use("/api/user-profile", adminProfileRoutes);
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
+// Smart Search routes (AI Vector Search)
+app.use("/api/search", searchRoutes);
 
 // Serve uploaded files from /uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

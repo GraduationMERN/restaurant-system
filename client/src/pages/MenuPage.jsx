@@ -34,6 +34,7 @@ import { useNavigate } from "react-router";
 import api from "../api/axios";
 import RecommendedForProduct from "../components/recommendations/RecommendedForProduct";
 import ProgressBar from "../components/Reward/ProgressBar";
+import SmartSearchBar from "../components/common/SmartSearchBar";
 
 function MenuPage() {
   const dispatch = useDispatch();
@@ -222,49 +223,107 @@ function MenuPage() {
             <ProgressBar />
           </div>
     }
-          {/* SEARCH */}
-          <Box
-            display="flex"
-            alignItems="center"
-            flexWrap="wrap"
-            className="w-full"
-          >
-            <div className="w-full  flex justify-center my-5 px-2">
+          {/* SEARCH - Normal + AI Toggle */}
+          <div className="w-full flex justify-center my-5 px-2">
+            <div className="w-full max-w-2xl relative">
+              {/* Normal Search (Default) */}
               <div
                 className="
-              flex items-center 
-              w-full 
-              bg-surface 
-              border border-primary/50
-              rounded-xl 
-              shadow-sm
-              px-4 py-2 
-              focus-within:border-primary
-              transition-all duration-200
-            "
+                  flex items-center 
+                  w-full 
+                  bg-surface 
+                  border border-primary/50
+                  rounded-xl 
+                  shadow-sm
+                  px-4 py-2 
+                  focus-within:border-primary
+                  transition-all duration-200
+                "
               >
-                <SearchIcon
-                  className="text-muted mr-2"
-                  sx={{ fontSize: 22 }}
-                />
-
+                <SearchIcon className="text-muted mr-2" sx={{ fontSize: 22 }} />
+                
                 <input
                   type="text"
                   placeholder={t("search.placeholder")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="
-                w-full 
-                bg-transparent 
-                outline-none 
-                text-surface 
-                placeholder:text-muted
-                text-sm
-              "
+                    w-full 
+                    bg-transparent 
+                    outline-none 
+                    text-surface 
+                    placeholder:text-muted
+                    text-sm
+                  "
                 />
+
+                {/* AI Search Toggle Button */}
+                <button
+                  onClick={() => {
+                    // Open AI Search Modal/Dropdown
+                    setSelectedProduct(null);
+                    setOpenPopup(false);
+                    const modal = document.getElementById('ai-search-modal');
+                    if (modal) modal.classList.toggle('hidden');
+                  }}
+                  className="
+                    ml-2 px-3 py-1.5 
+                    bg-gradient-to-r from-purple-500 to-pink-500
+                    hover:from-purple-600 hover:to-pink-600
+                    text-white text-xs font-semibold
+                    rounded-lg
+                    flex items-center gap-1
+                    transition-all duration-200
+                    shadow-md hover:shadow-lg
+                  "
+                  title={lang === "ar" ? "بحث ذكي بالـ AI" : "AI Smart Search"}
+                >
+                  <span>✨</span>
+                  <span className="hidden sm:inline">{lang === "ar" ? "AI" : "AI"}</span>
+                </button>
+              </div>
+
+              {/* AI Search Modal/Dropdown */}
+              <div 
+                id="ai-search-modal"
+                className="hidden absolute top-full left-0 right-0 mt-2 z-50"
+              >
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-primary/30 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold flex items-center gap-2">
+                      <span className="text-lg">🔮</span>
+                      {lang === "ar" ? "البحث الذكي" : "AI Smart Search"}
+                    </span>
+                    <button 
+                      onClick={() => document.getElementById('ai-search-modal')?.classList.add('hidden')}
+                      className="text-muted hover:text-gray-700 dark:hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <SmartSearchBar
+                    placeholder={lang === "ar" ? "اكتب أي حاجة حتى لو غلط..." : "Type anything, even misspelled..."}
+                    onSearchResults={(results) => {
+                      // Clear normal search when AI provides results or is cleared
+                      if (results.length === 0) {
+                        setSearch(""); // Clear normal search filter
+                      }
+                    }}
+                    onProductClick={(product) => {
+                      setSelectedProduct(product);
+                      setQuantity(1);
+                      setOpenPopup(true);
+                      setSearch(""); // Clear normal search filter
+                      document.getElementById('ai-search-modal')?.classList.add('hidden');
+                    }}
+                  />
+                  <p className="text-xs text-muted mt-2 text-center">
+                    {lang === "ar" ? "جرب: 'cofe' → Coffee ☕" : "Try: 'cofe' → Coffee ☕"}
+                  </p>
+                </div>
               </div>
             </div>
-          </Box>
+          </div>
 
         </div>
         {/* TABS */}
