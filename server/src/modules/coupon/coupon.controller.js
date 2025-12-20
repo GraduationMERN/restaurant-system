@@ -202,3 +202,53 @@ export const validateCoupon = async (req, res) => {
     });
   }
 };
+
+export const applyCoupon = async (req, res) => {
+  try {
+    const { code, orderId } = req.body;
+    const userId = req.user._id;
+    
+    if (!code || !orderId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coupon code and order ID are required',
+      });
+    }
+    
+    const result = await couponService.validateCouponService(
+      code,
+      userId,
+      orderId
+    );
+    
+    if (!result.valid) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+    
+    // Apply the coupon
+    await couponService.applyCouponService(
+      result.coupon._id,
+      userId,
+      orderId,
+      result.discountAmount
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: 'Coupon applied successfully',
+      data: {
+        discountAmount: result.discountAmount,
+        finalAmount: result.finalAmount,
+        couponCode: code,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

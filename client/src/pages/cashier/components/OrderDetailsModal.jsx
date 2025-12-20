@@ -217,13 +217,13 @@ export default function OrderDetailsModal({ order, onClose }) {
                           </div>
                         </div>
                       )}
-                      {order.deliveryAddress && (
+                      {order.deliveryAddress?.address && (
                         <div className="flex items-start gap-3">
                           <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-1" />
                           <div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">Delivery Address</div>
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {order.deliveryAddress}
+                              {order.deliveryAddress?.address}
                             </div>
                           </div>
                         </div>

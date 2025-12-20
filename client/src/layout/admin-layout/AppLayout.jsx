@@ -4,7 +4,7 @@ import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
-import AdminScrollToTopButton from "../../components/common/AdminScrollToTopButton";
+
 
 const LayoutContent = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -27,7 +27,7 @@ const LayoutContent = () => {
       </div>
 
       {/* Scroll to Top Button */}
-      <AdminScrollToTopButton />
+
     </div >
   );
 };

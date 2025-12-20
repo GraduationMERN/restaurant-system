@@ -1,7 +1,8 @@
 import orderRepo from "./order.repository.js";
 import Cart from "../cart/Cart.js";
 import mongoose from "mongoose";
-import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
+import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
+import { applyCouponService, validateCouponCodeService } from "../coupon/coupon.service.js";
 import Order from "./orderModel.js";
 import { earningPoints } from "../rewards/reward.service.js";
 const calculateEstimatedReadyTime = (serviceType, itemsCount, baseTime = 15) => {
@@ -34,9 +35,10 @@ class OrderService {
       paymentMethod = "online",
       customerInfo,
       deliveryLocation,
-      customerId, // From controller
-      isGuest, // From controller
-      user // From controller
+      promoCode,
+      customerId,
+      isGuest,
+      user
     } = orderData;
 
     // 1. Load cart
@@ -50,10 +52,35 @@ class OrderService {
     // 3. Calculate totals
     const totals = calculateOrderTotals(items, 0.14, 0, 0);
 
-    // 4. Generate order number
+    let couponDiscount = 0;
+    let appliedCouponCode = null;
+
+    if (promoCode) {
+      try {
+
+        const couponValidation = await validateCouponCodeService(promoCode);
+
+        if (couponValidation.valid) {
+          const coupon = couponValidation.coupon;
+
+          if (coupon.discountValue) {
+            // Calculate discount based on percentage
+            couponDiscount = (totals.subtotal * coupon.discountValue) / 100;
+            appliedCouponCode = coupon.code;
+          }
+        }
+      } catch (err) {
+        console.error("❌ 7. Coupon validation error:", err);
+        // Don't fail order creation if coupon fails
+      }
+    }
+
+    // Calculate final total with discount
+    const finalTotal = totals.subtotal + totals.tax + totals.deliveryFee - couponDiscount;
+
+
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    // 5. Build order object
     const order = {
       cartId: cart._id,
       customerId: customerId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -61,19 +88,26 @@ class OrderService {
       user: isGuest ? null : user,
       serviceType,
       tableNumber: serviceType === "dine-in" ? (tableNumber || "") : null,
-      deliveryAddress: serviceType === "delivery" ? (deliveryLocation?.address || "") : "",
+      deliveryAddress: serviceType === "delivery" && deliveryLocation ? {
+        address: deliveryLocation.address || "",
+        lat: deliveryLocation.lat || undefined,
+        lng: deliveryLocation.lng || undefined,
+        notes: deliveryLocation.notes || ""
+      } : undefined,
       items,
       subtotal: totals.subtotal,
       vat: totals.tax,
       deliveryFee: totals.deliveryFee,
-      discount: totals.discount,
-      totalAmount: totals.totalAmount,
+      discount: couponDiscount,  // ✅ This is the discount amount
+      couponCode: appliedCouponCode,  // ✅ This is the coupon code
+      couponDiscount: couponDiscount,  // ✅ Same as discount
+      totalAmount: finalTotal,  // ✅ Final total after discount
       paymentMethod,
       paymentStatus: "pending",
       status: "pending",
       orderNumber,
       notes: notes || "",
-      estimatedTime: null, // Will be set by cashier
+      estimatedTime: null,
       customerInfo: {
         name: customerInfo?.name || "",
         phone: customerInfo?.phone || "",
@@ -82,10 +116,32 @@ class OrderService {
       isDirectOrder: false
     };
 
-    // 6. Create order
+    // ✅ Save the order first
     const created = await orderRepo.create(order);
 
-    // 7. Delete cart (optional)
+
+    // ✅ AFTER order is created, track coupon usage if a coupon was applied
+    if (appliedCouponCode && !isGuest && user) {
+      try {
+
+        // Find the coupon to get its ID
+        const couponValidation = await validateCouponCodeService(appliedCouponCode);
+        if (couponValidation.valid) {
+          // Record the usage
+          await applyCouponService(
+            couponValidation.coupon._id,
+            user,
+            created._id,
+            couponDiscount
+          );
+        }
+      } catch (err) {
+        console.error("❌ Failed to record coupon usage:", err);
+        // Don't fail the order if coupon tracking fails
+      }
+    }
+
+    // Delete cart
     try {
       await Cart.findByIdAndDelete(cartId);
     } catch (e) {
@@ -133,7 +189,12 @@ class OrderService {
       user: null,
       serviceType,
       tableNumber: serviceType === "dine-in" ? tableNumber : null,
-      deliveryAddress: serviceType === "delivery" ? (customerInfo?.address || "") : "",
+      deliveryAddress: serviceType === "delivery" && deliveryLocation ? {
+        address: deliveryLocation.address || "",
+        lat: deliveryLocation.lat || undefined,
+        lng: deliveryLocation.lng || undefined,
+        notes: deliveryLocation.notes || ""
+      } : undefined,
       subtotal: totals.subtotal,
       vat: totals.tax,
       deliveryFee: totals.deliveryFee,
@@ -159,12 +220,12 @@ class OrderService {
   }
 
   // Get order by ID or order number
-    async getOrder(identifier) {
+  async getOrder(identifier) {
     if (!identifier) return null;
     let order;
     // Check if ObjectId
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-       order = await Order.findById(identifier)
+      order = await Order.findById(identifier)
         .populate('user', 'name email')
         .populate({
           path: 'items.productId',

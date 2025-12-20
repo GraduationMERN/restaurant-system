@@ -5,7 +5,7 @@ import Order from "../order.module/orderModel.js";
 import RewardOrder from "../rewards/rewardOrder.js";
 // Avoid importing server.js here to prevent circular imports.
 // Use `global.io` and `global.notificationService` which are set in `server.js` after initialization.
-import { notificationService , io } from "../../../server.js";
+import { notificationService, io } from "../../../server.js";
 import pushNotificationService from "../notification/pushNotification.service.js";
 import { sendOrderStatusNotifications } from "../../utils/notificationHelper.js";
 import { earningPoints } from "../rewards/reward.service.js";
@@ -29,7 +29,7 @@ function getOrderUserId(req, res) {
     guestId = uuidv4();
     console.log("[ORDER] No guestOrderId found → Generating:", guestId);
     console.log("[ORDER] Current cookies:", req.cookies);
-    
+
     res.cookie("guestOrderId", guestId, {
       httpOnly: false,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -50,7 +50,7 @@ function getOrderUserId(req, res) {
 export const getGuestId = async (req, res) => {
   try {
     const guestId = getOrderUserId(req, res);
-    
+
     res.json({
       success: true,
       guestId: guestId
@@ -66,14 +66,15 @@ export const getGuestId = async (req, res) => {
 // ==============================
 export const createOrderFromCart = async (req, res) => {
   try {
-    const { 
-      cartId, 
+    const {
+      cartId,
       serviceType,
       tableNumber,
       notes,
       paymentMethod = "online", // Default for online orders
       customerInfo,
-      deliveryLocation
+      deliveryLocation,
+      promoCode
     } = req.body;
 
     if (!cartId) {
@@ -92,10 +93,8 @@ export const createOrderFromCart = async (req, res) => {
 
     // Get user info from middleware
     const user = req.user;
-    
     // Generate customerId using the same pattern as cart
     const customerId = getOrderUserId(req, res);
-    
     const orderData = {
       cartId,
       serviceType,
@@ -103,6 +102,8 @@ export const createOrderFromCart = async (req, res) => {
       notes,
       paymentMethod,
       customerInfo,
+      deliveryLocation,
+      promoCode: promoCode,
       // Pass user info based on authentication
       customerId: customerId,
       isGuest: user?.isGuest || false,
@@ -171,8 +172,8 @@ export const createOrderFromCart = async (req, res) => {
       await pushNotificationService.notifyOrderCreated(order.userId, order);
     }
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       data: populatedOrder
     });
   } catch (err) {
@@ -223,11 +224,11 @@ export const createDirectOrder = async (req, res) => {
       if (!item.productId && !item.name) {
         throw new Error("Each item must have either productId or name");
       }
-      
+
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity) || 1;
       const totalPrice = price * quantity;
-      
+
       return {
         productId: item.productId || new mongoose.Types.ObjectId(), // Generate temp ID if not provided
         name: item.name || "Custom Item",
@@ -247,7 +248,7 @@ export const createDirectOrder = async (req, res) => {
 
     // Create guest customer ID for walk-in
     const guestId = `walkin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Generate order number
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
@@ -277,13 +278,13 @@ export const createDirectOrder = async (req, res) => {
     };
 
     const order = await Order.create(orderData);
-    
+
     // Verify order was created with orderNumber
     if (!order.orderNumber) {
       console.error("Order created without orderNumber:", order);
       throw new Error("Failed to generate orderNumber");
     }
-    
+
     // Populate full order details
     const populatedOrder = await Order.findById(order._id)
       .populate('createdBy', 'name email')
@@ -343,15 +344,15 @@ export const getUserOrders = async (req, res) => {
 
     // Admin/Cashier viewing other users
     if (user?.role === "admin" || user?.role === "cashier") {
-      const orders = await Order.find({ 
+      const orders = await Order.find({
         $or: [
           { customerId: userId },
           { user: userId }
         ]
       })
-      .sort({ createdAt: -1 })
-      .populate('user', 'name email')
-      .lean();
+        .sort({ createdAt: -1 })
+        .populate('user', 'name email')
+        .lean();
 
       return res.json({
         success: true,
@@ -470,7 +471,7 @@ export const updateOrderStatus = async (req, res) => {
     // Authorization: Role-based status update restrictions
     const userRole = user?.role;
     console.log("User role:", userRole, "Status:", status);
-    
+
     if (userRole === "cashier") {
       // Cashiers can update to any status except 'preparing' and 'ready'
       if (["preparing", "ready"].includes(status)) {
@@ -498,7 +499,7 @@ export const updateOrderStatus = async (req, res) => {
     if (order) {
       // Update regular order
       order.status = status;
-      
+
       // Update estimated time if provided
       if (estimatedTime) {
         order.estimatedTime = estimatedTime;
@@ -523,7 +524,7 @@ export const updateOrderStatus = async (req, res) => {
       }
 
       isRewardOrder = true;
-      
+
       // Update reward order
       order.status = status;
       await order.save({ validateModifiedOnly: true });
@@ -689,7 +690,7 @@ export const getOrderByStripeSession = async (req, res) => {
 export const getActiveOrders = async (req, res) => {
   try {
     const activeStatuses = ["confirmed", "preparing", "ready"];
-    
+
     const orders = await Order.find({ status: { $in: activeStatuses } })
       .sort({ createdAt: 1 })
       .populate('user', 'name email phone')
@@ -744,7 +745,7 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-    export const updateOwnOrder = async (req, res, next) => {
+export const updateOwnOrder = async (req, res, next) => {
   // implementation to update an order
 };
 
@@ -971,7 +972,7 @@ export const updatePaymentStatus = async (req, res) => {
     if (global.io) {
       // Broadcast to cashier
       global.io.to("cashier").emit("order:payment-updated", populatedOrder);
-      
+
       // Customer gets personalized event
       if (populatedOrder.customerId) {
         global.io.to(`user:${populatedOrder.customerId}`).emit("order:your-payment-updated", {
@@ -981,7 +982,7 @@ export const updatePaymentStatus = async (req, res) => {
           paidAt: populatedOrder.paidAt
         });
       }
-      
+
       // Kitchen gets update
       global.io.to("kitchen").emit("order:payment-updated", populatedOrder);
     }

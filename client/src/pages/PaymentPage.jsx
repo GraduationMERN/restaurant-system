@@ -4,7 +4,6 @@ import socketClient from "../utils/socketRedux";
 import { useToast } from "../hooks/useToast";
 import { useSelector, useDispatch } from "react-redux";
 import { createStripeSession, verifyPaymentStatus, clearPaymentState } from "../redux/slices/paymentSlice";
-import { fetchOrderById } from "../redux/slices/orderSlice";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CreditCard, Store, CheckCircle, AlertCircle } from "lucide-react";
 import api from "../api/axios";
@@ -230,7 +229,7 @@ const PaymentPage = () => {
   const orderItems = displayOrder?.items || products;
   const subtotal = displayOrder?.subtotal || displayOrder?.totalAmount || totalPrice;
   const vat = displayOrder?.vat || 0;
-  const total = subtotal + vat;
+  const total = displayOrder?.totalAmount || subtotal + vat;
 
   // If verifying payment, show loading
   if (isVerifyingPayment) {

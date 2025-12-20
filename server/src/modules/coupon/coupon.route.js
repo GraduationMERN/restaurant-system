@@ -42,4 +42,8 @@ router.post('/coupons/validate',
   couponController.validateCoupon
 );
 
+router.post('/apply', 
+  authMiddleware, 
+  couponController.applyCoupon
+);
 export default router;

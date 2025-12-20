@@ -283,7 +283,7 @@ const DeliveryInfoCard = ({ order }) => (
     <div className="space-y-4">
       <div>
         <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Address</h4>
-        <p className="text-gray-600 dark:text-gray-400">{order.deliveryAddress || "Not specified"}</p>
+        <p className="text-gray-600 dark:text-gray-400">{order.deliveryAddress?.address || "Not specified"}</p>
       </div>
       
       {order.estimatedDelivery && (
@@ -400,7 +400,7 @@ export default function OrderDetailsPage() {
             {/* Delivery & Payment Info - Mobile Layout */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:hidden">
               <PaymentInfoCard order={order} />
-              {order.deliveryAddress && (
+              {order.deliveryAddress?.address && (
                 <DeliveryInfoCard order={order} />
               )}
             </div>
@@ -413,7 +413,7 @@ export default function OrderDetailsPage() {
             {/* Payment & Delivery Info - Desktop Layout */}
             <div className="hidden lg:block space-y-6">
               <PaymentInfoCard order={order} />
-              {order.deliveryAddress && (
+              {order.deliveryAddress?.address && (
                 <DeliveryInfoCard order={order} />
               )}
             </div>
