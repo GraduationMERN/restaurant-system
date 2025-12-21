@@ -38,7 +38,7 @@ const AppHeader = () => {
       {/* Full width container for mobile/tablet, constrained width for desktop */}
       <div className="w-full xl:transition-all xl:duration-300 xl:ease-in-out">
         <div className="flex items-center justify-between w-full px-4 py-3 xl:px-6 xl:py-4">
-          {/* Left - Hamburger only (Logo is in sidebar) */}
+          {/* Left - Hamburger only (Logo is */}
           <div className="flex items-center gap-3">
             {/* Hamburger Icon - Visible only on mobile/tablet */}
             <button
@@ -73,7 +73,7 @@ const AppHeader = () => {
             <button
               onClick={() => i18n.changeLanguage(i18n.language === "ar" ? "en" : "ar")}
               className="relative flex items-center justify-center text-gray-500 transition-colors bg-transparent rounded-full h-11 w-11 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white font-bold"
-              title={i18n.language === "ar" ? "Switch to English" : "التبديل للعربية"}
+              title={t("switch_to_lang")}
             >
               {i18n.language === "ar" ? "En" : "ع"}
             </button>

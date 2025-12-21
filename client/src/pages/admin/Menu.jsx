@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -30,6 +31,7 @@ import AIProductAutoFill from "../../components/admin/AIProductAutoFill";
  */
 
 export default function MenuWithAPI() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const toast = useToast();
 
@@ -289,20 +291,20 @@ export default function MenuWithAPI() {
 
   return (
     <>
-      <PageMeta title="Menu Management" description="Manage menu items" />
-      <PageBreadcrumb pageTitle="Menu Management" />
+      <PageMeta title={t("admin.menu_management_title")} description={t("admin.menu_management_desc")} />
+      <PageBreadcrumb pageTitle={t("admin.menu_management_title")} />
 
       <ComponentCard>
         <div className="flex items-center justify-between">
           {/* Category filter using native select to avoid custom Select mismatch */}
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium mr-2">Filter</label>
+            <label className="text-sm font-medium mr-2">{t("admin.filter")}</label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="border rounded px-2 py-1"
             >
-              <option value="all">All Categories</option>
+              <option value="all">{t("admin.all_categories")}</option>
               {categories.map((c) => (
                 <option key={c._id} value={c._id}>
                   {c.name}
@@ -311,13 +313,13 @@ export default function MenuWithAPI() {
             </select>
           </div>
 
-          <Button onClick={openCreateModal}>+ Add Item</Button>
+          <Button onClick={openCreateModal}>+ {t("admin.add_item")}</Button>
         </div>
       </ComponentCard>
 
       <div className="mt-4">
         {(productsLoading || categoriesLoading) && (
-          <div className="p-3 text-sm text-gray-600">Loading...</div>
+          <div className="p-3 text-sm text-gray-600">{t("loading")}</div>
         )}
         {productsError && (
           <div className="p-3 text-sm text-red-600">Error: {productsError}</div>
@@ -383,7 +385,7 @@ export default function MenuWithAPI() {
       >
         <div className="space-y-6">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            {editingId ? "Edit Item" : "Add Item"}
+            {editingId ? t("admin.edit_item") : t("admin.add_item")}
           </h3>
 
           <AIProductAutoFill
@@ -396,7 +398,7 @@ export default function MenuWithAPI() {
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("name")}</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -405,7 +407,7 @@ export default function MenuWithAPI() {
               />
             </div>
             <div>
-              <Label htmlFor="name_ar">Name (AR)</Label>
+              <Label htmlFor="name_ar">{t("admin.name_ar")}</Label>
               <Input
                 id="name_ar"
                 value={form.name_ar}
@@ -415,7 +417,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="price">Base Price</Label>
+              <Label htmlFor="price">{t("admin.base_price")}</Label>
               <Input
                 id="price"
                 type="number"
@@ -427,7 +429,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div className="md:col-span-2">
-              <Label htmlFor="desc">Description</Label>
+              <Label htmlFor="desc">{t("popup.description")}</Label>
               {/* Controlled TextArea - ensures edit shows desc */}
               <TextArea
                 rows={3}
@@ -437,7 +439,7 @@ export default function MenuWithAPI() {
               />
             </div>
             <div className="md:col-span-2">
-              <Label htmlFor="desc_ar">Description (AR)</Label>
+              <Label htmlFor="desc_ar">{t("admin.desc_ar")}</Label>
               {/* Controlled TextArea - ensures edit shows desc */}
               <TextArea
                 rows={3}
@@ -448,7 +450,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="imgurl">Image URL</Label>
+              <Label htmlFor="imgurl">{t("admin.img_url")}</Label>
               <Input
                 id="imgurl"
                 value={form.imgURL}
@@ -458,7 +460,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="productImage">Or upload image</Label>
+              <Label htmlFor="productImage">{t("admin.or_upload_image")}</Label>
               <input
                 id="productImage"
                 type="file"
@@ -468,20 +470,19 @@ export default function MenuWithAPI() {
                 }
               />
               <div className="text-xs text-gray-500 mt-1">
-                Uploads sent as <code>productImage</code> (backend expects
-                this).
+                {t("admin.upload_hint")}
               </div>
             </div>
 
             <div>
-              <Label>Category</Label>
+              <Label>{t("tabs.category")}</Label>
               {/* Native select to ensure value binding correctness */}
               <select
                 value={form.categoryId || ""}
                 onChange={(e) => updateField("categoryId", e.target.value)}
                 className="border rounded px-2 py-1 w-full"
               >
-                <option value="">Select category</option>
+                <option value="">{t("admin.select_category")}</option>
                 {categories.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name}
@@ -491,7 +492,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="stock">Stock</Label>
+              <Label htmlFor="stock">{t("admin.stock_optional")}</Label>
               <Input
                 id="stock"
                 type="number"
@@ -506,7 +507,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="tags">Tags</Label>
+              <Label htmlFor="tags">{t("admin.tags_label")}</Label>
               <Input
                 id="tags"
                 value={form.tags}
@@ -517,14 +518,14 @@ export default function MenuWithAPI() {
 
             <div>
               <Checkbox
-                label="New"
+                label={t("admin.new")}
                 checked={!!form.isnew}
                 onChange={(v) => updateField("isnew", v)}
               />
             </div>
 
             <div>
-              <Label htmlFor="pp">Product Points</Label>
+              <Label htmlFor="pp">{t("admin.product_points")}</Label>
               <Input
                 id="pp"
                 type="number"
@@ -539,7 +540,7 @@ export default function MenuWithAPI() {
             </div>
 
             <div>
-              <Label htmlFor="ptp">Points To Pay</Label>
+              <Label htmlFor="ptp">{t("admin.points_to_pay")}</Label>
               <Input
                 id="ptp"
                 type="number"
@@ -558,10 +559,10 @@ export default function MenuWithAPI() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-gray-800 dark:text-white/90">
-                Options
+                {t("admin.choices")}
               </h4>
               <Button variant="outline" onClick={addOption}>
-                + Add Option
+                + {t("admin.add_option")}
               </Button>
             </div>
 
@@ -572,7 +573,7 @@ export default function MenuWithAPI() {
               >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
                   <div>
-                    <Label>Name</Label>
+                    <Label>{t("name")}</Label>
                     <Input
                       value={opt.name}
                       onChange={(e) =>
@@ -582,7 +583,7 @@ export default function MenuWithAPI() {
                     />
                   </div>
                   <div>
-                    <Label>Name (Arabic)</Label>
+                    <Label>{t("admin.name_ar")}</Label>
                     <Input
                       value={opt.name_ar}
                       onChange={(e) =>
@@ -593,14 +594,14 @@ export default function MenuWithAPI() {
                   </div>
                   <div>
                     <Checkbox
-                      label="Required"
+                      label={t("required")}
                       checked={!!opt.required}
                       onChange={(v) => updateOption(idx, { required: v })}
                     />
                   </div>
                   <div className="md:text-right">
                     <Button variant="outline" onClick={() => removeOption(idx)}>
-                      Remove
+                      {t("remove")}
                     </Button>
                   </div>
                 </div>
@@ -608,10 +609,10 @@ export default function MenuWithAPI() {
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Choices
+                      {t("admin.choices")}
                     </span>
                     <Button variant="outline" onClick={() => addChoice(idx)}>
-                      + Add Choice
+                      + {t("admin.add_choice")}
                     </Button>
                   </div>
 
@@ -637,7 +638,7 @@ export default function MenuWithAPI() {
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder="Price Delta"
+                        placeholder={t("admin.price_delta")}
                         value={String(ch.priceDelta ?? 0)}
                         onChange={(e) =>
                           updateChoice(idx, j, {
@@ -648,7 +649,7 @@ export default function MenuWithAPI() {
                       <div className="flex items-center gap-3">
                         <Input
                           type="number"
-                          placeholder="Stock (optional)"
+                          placeholder={t("admin.stock_optional")}
                           value={ch.stock ?? ""}
                           onChange={(e) =>
                             updateChoice(idx, j, {
@@ -663,7 +664,7 @@ export default function MenuWithAPI() {
                           variant="outline"
                           onClick={() => removeChoice(idx, j)}
                         >
-                          Delete
+                          {t("delete")}
                         </Button>
                       </div>
                     </div>
@@ -679,14 +680,14 @@ export default function MenuWithAPI() {
               onClick={() => setIsModalOpen(false)}
               disabled={saving}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleSave}
               disabled={!isFormValid()}
               loading={saving}
             >
-              Save Item
+              {t("admin.save_item")}
             </Button>
           </div>
         </div>

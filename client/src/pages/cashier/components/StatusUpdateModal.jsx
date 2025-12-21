@@ -1,12 +1,13 @@
 // StatusUpdateModal.jsx - Update order status
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  { value: "confirmed", label: "Confirmed", color: "bg-blue-100 text-blue-800" },
-  { value: "completed", label: "Completed", color: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
+const getStatusOptions = (t) => [
+  { value: "pending", label: t("admin.pending"), color: "bg-yellow-100 text-yellow-800" },
+  { value: "confirmed", label: t("admin.confirmed"), color: "bg-blue-100 text-blue-800" },
+  { value: "completed", label: t("admin.completed"), color: "bg-emerald-100 text-emerald-800" },
+  { value: "cancelled", label: t("admin.cancelled"), color: "bg-red-100 text-red-800" },
 ];
 
 export default function StatusUpdateModal({
@@ -15,6 +16,8 @@ export default function StatusUpdateModal({
   onUpdate,
   loading = false,
 }) {
+  const { t } = useTranslation();
+  const STATUS_OPTIONS = getStatusOptions(t);
   const [selectedStatus, setSelectedStatus] = useState(order?.status || "pending");
 
   const handleUpdate = () => {
@@ -30,7 +33,7 @@ export default function StatusUpdateModal({
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700  text-white p-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Update Order Status</h2>
+          <h2 className="text-xl font-bold">{t("update_status")}</h2>
           <button onClick={onClose} className="hover:bg-blue-800 p-2 rounded-lg transition-colors">
             <X className="w-6 h-6" />
           </button>
@@ -40,17 +43,17 @@ export default function StatusUpdateModal({
         <div className="p-6">
           {/* Current Order Info */}
           <div className="bg-slate-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-            <div className="text-sm text-slate-600 dark:text-white mb-1">Order ID</div>
+            <div className="text-sm text-slate-600 dark:text-white mb-1">{t("order_id")}</div>
             <div className="font-bold text-slate-900 dark:text-gray-400">
               #{order._id?.slice(-6).toUpperCase() || order._id?.toUpperCase()}
             </div>
-            <div className="text-sm text-slate-600 dark:text-white mt-3 mb-1">Current Status</div>
-            <div className="text-sm font-bold text-slate-900 capitalize dark:text-gray-400">{order.status}</div>
+            <div className="text-sm text-slate-600 dark:text-white mt-3 mb-1">{t("current_status")}</div>
+            <div className="text-sm font-bold text-slate-900 capitalize dark:text-gray-400">{t("admin." + order.status)}</div>
           </div>
 
           {/* Status Selection */}
           <div className="mb-6">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-3">Select New Status</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white mb-3">{t("select_new_status")}</h3>
             <div className="grid grid-cols-2 gap-3">
               {STATUS_OPTIONS.map((status) => (
                 <button
@@ -70,9 +73,9 @@ export default function StatusUpdateModal({
 
           {/* Customer Info */}
           <div className="bg-blue-50  rounded-lg p-4 mb-6 border border-blue-200 dark:bg-gray-900 dark:border-blue-800">
-            <div className="text-xs text-blue-600 font-bold mb-2 dark:text-white">Customer</div>
+            <div className="text-xs text-blue-600 font-bold mb-2 dark:text-white">{t("customer")}</div>
             <div className="font-bold text-slate-900 dark:text-gray-400">
-              {order.customerInfo?.name || order.customerName || "Walk-In Customer"}
+              {order.customerInfo?.name || order.customerName || t("walk_in_customer")}
             </div>
           </div>
         </div>
@@ -84,14 +87,14 @@ export default function StatusUpdateModal({
             className="flex-1 bg-slate-300  hover:bg-slate-400 text-slate-900 font-bold py-2 px-4 rounded-lg transition-colors"
             disabled={loading}
           >
-            Cancel
+            {t("admin.cancel")}
           </button>
           <button
             onClick={handleUpdate}
             disabled={loading || selectedStatus === order?.status}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-2 px-4 rounded-lg transition-colors"
           >
-            {loading ? "Updating..." : "Update Status"}
+            {loading ? t("updating") : t("update_status")}
           </button>
         </div>
       </div>

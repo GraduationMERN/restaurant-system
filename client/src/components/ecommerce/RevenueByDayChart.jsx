@@ -1,8 +1,10 @@
 import Chart from "react-apexcharts";
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import { useTranslation } from "react-i18next";
 
 export default function RevenueByDayChart() {
+  const { t } = useTranslation();
   const [isDark, setIsDark] = useState(false);
   const [viewMode, setViewMode] = useState("day"); // "day" or "month"
   const [dayData, setDayData] = useState([]);
@@ -61,8 +63,11 @@ export default function RevenueByDayChart() {
     : monthData;
 
   const categories = viewMode === "day"
-    ? chartData.map(d => d.day)
-    : chartData.map(d => monthNames[d.month - 1] || d.month);
+    ? chartData.map(d => t(`admin.days.${d.day}`) || d.day)
+    : chartData.map(d => {
+        const mName = monthNames[d.month - 1];
+        return t(`admin.months.${mName}`) || mName || d.month;
+      });
 
   const values = chartData.map(d => d.revenue || 0);
 
@@ -103,18 +108,19 @@ export default function RevenueByDayChart() {
       xaxis: { lines: { show: false } },
     },
     tooltip: {
+      enabled: true,
       theme: isDark ? 'dark' : 'light',
       y: { formatter: (val) => `$${val?.toFixed(2) || 0}` }
     }
   };
 
-  const series = [{ name: "Revenue", data: values }];
+  const series = [{ name: t("admin.revenue_by_day"), data: values }];
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-gray-900/50 sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          {viewMode === "day" ? "Revenue by Day" : "Monthly Revenue"}
+          {viewMode === "day" ? t("admin.revenue_by_day") : t("admin.monthly_revenue")}
         </h3>
         <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <button
@@ -125,7 +131,7 @@ export default function RevenueByDayChart() {
                 : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             }`}
           >
-            By Day
+            {t("admin.by_day")}
           </button>
           <button
             onClick={() => setViewMode("month")}
@@ -135,7 +141,7 @@ export default function RevenueByDayChart() {
                 : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             }`}
           >
-            Monthly
+            {t("admin.monthly")}
           </button>
         </div>
       </div>

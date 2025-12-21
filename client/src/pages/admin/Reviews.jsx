@@ -7,7 +7,10 @@ import api from "../../api/axios";
 import io from "socket.io-client";
 import { format } from "timeago.js";
 
+import { useTranslation } from "react-i18next";
+
 export default function Reviews() {
+  const { t } = useTranslation();
   // UI state
   const [filter, setFilter] = useState("newest"); // default: show most recent
   const [reviews, setReviews] = useState([]);
@@ -221,26 +224,26 @@ export default function Reviews() {
 
   return (
     <>
-      <PageMeta title="Reviews & Feedback" />
-      <PageBreadcrumb pageTitle="Reviews & Feedback" />
+      <PageMeta title={t("admin.reviews_title")} />
+      <PageBreadcrumb pageTitle={t("admin.reviews_title")} />
 
       <ComponentCard>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Select
               options={[
-                { value: "all", label: "All Reviews" },
-                { value: "positive", label: "Positive (4★+)" },
-                { value: "negative", label: "Negative (≤2★)" },
-                { value: "newest", label: "Most Recent" },
-                { value: "oldest", label: "Oldest" },
+                { value: "all", label: t("admin.all_reviews") },
+                { value: "positive", label: t("admin.positive_reviews") },
+                { value: "negative", label: t("admin.negative_reviews") },
+                { value: "newest", label: t("admin.most_recent") },
+                { value: "oldest", label: t("admin.oldest") },
               ]}
               defaultValue="newest"
               onChange={setFilter}
               className="w-44"
             />
             <span className="ms-2 text-sm text-gray-500 dark:text-gray-400">
-              Average Rating: {avg}/5
+              {t("admin.avg_rating", { avg })}
             </span>
           </div>
 
@@ -255,10 +258,10 @@ export default function Reviews() {
                   : "text-gray-700 border-gray-300 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-800"
               }`}
             >
-              Previous
+              {t("admin.previous")}
             </button>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Page {currentPage} of {totalPages}
+              {t("admin.page_info", { current: currentPage, total: totalPages })}
             </span>
             <button
               onClick={handleNextPage}
@@ -269,7 +272,7 @@ export default function Reviews() {
                   : "text-gray-700 border-gray-300 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-800"
               }`}
             >
-              Next
+              {t("admin.next")}
             </button>
           </div>
         </div>
@@ -278,7 +281,7 @@ export default function Reviews() {
       <div className="space-y-4">
         {paginated.length === 0 && !loading && (
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            No reviews found for this page.
+            {t("admin.no_reviews_page")}
           </p>
         )}
 

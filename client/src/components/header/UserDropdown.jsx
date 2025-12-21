@@ -7,7 +7,10 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { Link } from "react-router";
 
+import { useTranslation } from "react-i18next";
+
 export default function UserDropdown() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useSelector((s) => s.auth || {});
   const { profile } = useSelector((s) => s.userProfile || {});
@@ -110,7 +113,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Edit profile
+               {t("nav.profile")}
             </DropdownItem>
           </li>
           <li>
@@ -135,7 +138,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Account settings
+              {t("nav.settings")}
             </DropdownItem>
           </li>
         </ul>
@@ -158,7 +161,7 @@ export default function UserDropdown() {
               fill=""
             />
           </svg>
-          Sign out
+          {t("nav.logout")}
         </button>
       </Dropdown>
     </div>

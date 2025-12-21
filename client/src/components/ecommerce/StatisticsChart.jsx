@@ -1,8 +1,10 @@
 import Chart from "react-apexcharts";
 import { useEffect, useState, useMemo } from "react";
 import api from "../../api/axios";
+import { useTranslation } from "react-i18next";
 
 export default function StatisticsChart({ title = "Sales Trend" }) {
+  const { t } = useTranslation();
   const [isDark, setIsDark] = useState(false);
   const [days, setDays] = useState(7);
   const [categories, setCategories] = useState([]);
@@ -118,11 +120,11 @@ export default function StatisticsChart({ title = "Sales Trend" }) {
   const seriesKey = series.length && series[0]?.data ? series[0].data.join(',') : 'default';
 
   const dayOptions = [
-    { value: 7, label: "7 Days" },
-    { value: 14, label: "14 Days" },
-    { value: 30, label: "30 Days" },
-    { value: 60, label: "60 Days" },
-    { value: 90, label: "90 Days" },
+    { value: 7, label: t("admin.x_days", { days: 7 }) },
+    { value: 14, label: t("admin.x_days", { days: 14 }) },
+    { value: 30, label: t("admin.x_days", { days: 30 }) },
+    { value: 60, label: t("admin.x_days", { days: 60 }) },
+    { value: 90, label: t("admin.x_days", { days: 90 }) },
   ];
 
   return (
@@ -145,7 +147,7 @@ export default function StatisticsChart({ title = "Sales Trend" }) {
           <span className="text-3xl font-bold text-gray-900 dark:text-white">
             ${totalSales.toLocaleString()}
           </span>
-          <span className="text-sm text-green-500 font-medium">Last {days} days</span>
+          <span className="text-sm text-green-500 font-medium">{t("admin.last_x_days", {days})}</span>
         </div>
       </div>
 

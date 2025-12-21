@@ -11,8 +11,10 @@ import OrderCard from "./OrderCard";
 import OrderDetailsModal from "./OrderDetailsModal";
 import StatusUpdateModal from "./StatusUpdateModal";
 import PaymentUpdateModal from "./PaymentUpdateModal";
+import { useTranslation } from "react-i18next";
 
 export default function OrdersTab() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { user } = useSelector((state) => state.auth);
   const [orders, setOrders] = useState([]);
@@ -111,7 +113,7 @@ export default function OrdersTab() {
       console.log("✅ [CASHIER] New order received via socket:", order?.orderNumber, order?._id);
       setOrders((prevOrders) => [order, ...prevOrders]);
       toast.showToast({
-        message: `📋 New order: #${order.orderNumber} from ${order.customerInfo?.name || "Guest"}`,
+        message: `📋 ${t("new_order")}: #${order.orderNumber} ${t("from")} ${order.customerInfo?.name || t("guest")}`,
         type: "success",
         duration: 3000,
       });
@@ -143,7 +145,7 @@ export default function OrdersTab() {
       setOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast.showToast({message:"Failed to load orders"});
+      toast.showToast({message: t("admin.failed_load_orders")});
     } finally {
       setLoading(false);
     }
@@ -187,11 +189,11 @@ export default function OrdersTab() {
 
       const updatedOrder = response.data.data || response.data;
       setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
-      toast.showToast({message:"Order status updated"});
+      toast.showToast({message: t("admin.order_status_updated")});
       setStatusUpdateOrder(null);
     } catch (error) {
 
-      toast.showToast({message:"Failed to update order status"});
+      toast.showToast({message: t("admin.failed_update_status")});
     } finally {
       setUpdatingStatus(false);
     }
@@ -206,18 +208,18 @@ export default function OrdersTab() {
 
       const updatedOrder = response.data.data || response.data;
       setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
-      toast.showToast({message:"Payment status updated"});
+      toast.showToast({message: t("payment_status_updated")});
       setPaymentUpdateOrder(null);
     } catch (error) {
       console.error("Error updating payment:", error);
-      toast.showToast({message:"Failed to payment status"});
+      toast.showToast({message: t("failed_update_payment")});
     } finally {
       setUpdatingPayment(false);
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) {
+    if (!window.confirm(t("admin.delete_confirm"))) {
       return;
     }
 
@@ -225,7 +227,7 @@ export default function OrdersTab() {
       setDeletingId(orderId);
       await api.delete(`api/orders/${orderId}`);
       setOrders(orders.filter((o) => o._id !== orderId));
-      toast.showToast({message:"Order deleted"});
+      toast.showToast({message: t("admin.order_deleted")});
     } catch (error) {
       console.error("Error deleting order:", error);
       toast.showToast({message:"Failed to delete order"});
@@ -239,7 +241,7 @@ export default function OrdersTab() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-amber-600 animate-spin" />
-          <p className="text-slate-600 font-medium">Loading orders...</p>
+          <p className="text-slate-600 font-medium">{t("loading_orders")}</p>
         </div>
       </div>
     );
@@ -254,7 +256,7 @@ export default function OrdersTab() {
       {/* Orders Count */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-900">
-          <span className="font-bold">{filteredOrders.length}</span> order(s) found
+          <span className="font-bold">{filteredOrders.length}</span> {t("orders_found")}
         </p>
       </div>
 
@@ -275,11 +277,11 @@ export default function OrdersTab() {
       ) : (
         <div className="bg-slate-50 rounded-lg border-2 border-dashed border-slate-300 p-12 text-center">
           <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-slate-900 mb-2">No Orders Found</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">{t("no_orders_found")}</h3>
           <p className="text-slate-600">
             {activeFilter !== "all"
-              ? `There are no ${activeFilter} orders`
-              : "There are no orders yet"}
+              ? `${t("no")} ${t("admin." + activeFilter)} ${t("orders_lower")}`
+              : t("no_orders_yet")}
           </p>
         </div>
       )}

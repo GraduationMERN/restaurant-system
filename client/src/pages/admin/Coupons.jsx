@@ -5,8 +5,10 @@ import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
 import api from "../../api/axios";
+import { useTranslation } from "react-i18next";
 
 export default function Coupons() {
+  const { t } = useTranslation();
   const toast = useToast();
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,13 +118,13 @@ export default function Coupons() {
 
   return (
     <>
-      <PageMeta title="Coupons | Admin" description="Manage restaurant coupons" />
-      <PageBreadcrumb pageTitle="Coupons" />
+      <PageMeta title={t("admin.coupons_title")} description={t("admin.coupons_desc")} />
+      <PageBreadcrumb pageTitle={t("admin.coupons_title")} />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Coupon Management
+            {t("admin.coupon_management")}
           </h3>
           <Button 
             variant="primary" 
@@ -130,29 +132,29 @@ export default function Coupons() {
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add Coupon
+            {t("admin.add_coupon")}
           </Button>
         </div>
 
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-400">Loading coupons...</p>
+            <p className="text-gray-600 dark:text-gray-400">{t("loading")}</p>
           </div>
         ) : coupons.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-400">No coupons yet. Create one!</p>
+            <p className="text-gray-600 dark:text-gray-400">{t("admin.no_coupons")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Code</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Discount</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Max Uses</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Used</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Expiry</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.code")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.discount")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.max_uses")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.used")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.expiry")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -193,7 +195,7 @@ export default function Coupons() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingId ? "Edit Coupon" : "Add Coupon"}
+                {editingId ? t("admin.edit_item") : t("admin.add_coupon")}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -206,7 +208,7 @@ export default function Coupons() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Coupon Code
+                  {t("admin.coupon_code")}
                 </label>
                 <input
                   type="text"
@@ -219,7 +221,7 @@ export default function Coupons() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Discount Percentage (%)
+                  {t("admin.discount_percentage")}
                 </label>
                 <input
                   type="number"
@@ -233,7 +235,7 @@ export default function Coupons() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Max Uses
+                  {t("admin.max_uses")}
                 </label>
                 <input
                   type="number"
@@ -246,7 +248,7 @@ export default function Coupons() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Expiry Date (Optional)
+                  {t("admin.expiry_date_optional")}
                 </label>
                 <input
                   type="date"
@@ -264,7 +266,7 @@ export default function Coupons() {
                 disabled={submitting}
                 className="flex-1"
               >
-                Cancel
+                {t("cancel")}
               </Button>
               <Button 
                 variant="primary" 
@@ -272,7 +274,7 @@ export default function Coupons() {
                 loading={submitting}
                 className="flex-1"
               >
-                {editingId ? "Update" : "Create"}
+                {editingId ? t("update") : t("create")}
               </Button>
             </div>
           </div>

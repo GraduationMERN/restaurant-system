@@ -8,8 +8,10 @@ import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useEffect, useMemo, useState } from "react";
 import api from "../../api/axios";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState({
     sales: { value: 0, changePct: 0 },
     orders: { value: 0, changePct: 0 },
@@ -58,7 +60,7 @@ export default function Dashboard() {
         const res = await api.get(`/api/orders/stats/top-items`, { params: { by: "product" } });
         const data = res.data?.data || [];
         if (data.length > 0) {
-          setTopLabels(data.map((x) => x.label || x.name || "Unknown"));
+          setTopLabels(data.map((x) => x.label || x.name || t("admin.unknown")));
           setTopSeries(data.map((x) => x.quantity || 0));
         }
       } catch (e) {
@@ -72,8 +74,8 @@ export default function Dashboard() {
         const data = res.data?.data || [];
         const mapped = data.map((o) => ({
           id: o.orderNumber || (o._id || "").toString().slice(-8),
-          customer: o.customerInfo?.name || o.userId?.name || "Guest",
-          itemsCount: `${(o.items || []).reduce((s, it) => s + (it.quantity || 0), 0)} items`,
+          customer: o.customerInfo?.name || o.userId?.name || t("admin.guest"),
+          itemsCount: t("admin.items_count", { count: (o.items || []).reduce((s, it) => s + (it.quantity || 0), 0) }),
           total: `$${Number(o.totalAmount || 0).toFixed(2)}`,
           status: (o.status || "").replace(/\b\w/g, (c) => c.toUpperCase()),
           time: new Date(o.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -104,10 +106,10 @@ export default function Dashboard() {
   return (
     <>
       <PageMeta
-        title="Dashboard"
-        description="Restaurant admin dashboard"
+        title={t("admin.dashboard_title")}
+        description={t("admin.dashboard_desc")}
       />
-      <PageBreadcrumb pageTitle="Dashboard" />
+      <PageBreadcrumb pageTitle={t("admin.dashboard_title")} />
       
       <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
@@ -121,7 +123,7 @@ export default function Dashboard() {
           {/* Row 1: Sales Trend - Full Width */}
           <div className="flex justify-center">
             <div className="w-full max-w-7xl">
-              <StatisticsChart title="Sales Trend" />
+              <StatisticsChart title={t("admin.sales_trend")} />
             </div>
           </div>
 
@@ -130,7 +132,7 @@ export default function Dashboard() {
             <div className="w-full max-w-7xl">
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <MonthlySalesChart 
-                  title="Top Selling Items" 
+                  title={t("admin.top_selling")} 
                   labels={topItemsAgg.labels} 
                   series={topItemsAgg.values} 
                 />
@@ -150,7 +152,7 @@ export default function Dashboard() {
           <div className="flex justify-center">
             <div className="w-full max-w-7xl">
               <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900/50 sm:p-5 lg:p-6">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Recent Orders</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("admin.recent_orders")}</h3>
                 <RecentOrders orders={recentOrders} />
               </div>
             </div>

@@ -5,6 +5,7 @@ import Select from "../../components/form/Select";
 import Button from "../../components/ui/button/Button";
 import DatePicker from "../../components/form/date-picker";
 import { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal } from "../../components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllOrders, updateOrderStatus, deleteOrder, clearOrderMessages, upsertOrder } from "../../redux/slices/orderSlice";
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 export default function AdminOrders() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { isAdmin } = useRole();
   
@@ -163,15 +165,17 @@ export default function AdminOrders() {
   if (!isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-error-500">Access Denied: Admin only</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-error-500">{t("admin.access_denied")}</p>
+      </div>
       </div>
     );
   }
 
   return (
     <>
-      <PageMeta title="Orders Management" description="Manage all customer orders" />
-      <PageBreadcrumb pageTitle="Orders Management" />
+      <PageMeta title={t("admin.orders_management")} description={t("admin.orders_desc")} />
+      <PageBreadcrumb pageTitle={t("admin.orders_management")} />
 
       {/* Messages */}
       {error && (
@@ -198,7 +202,7 @@ export default function AdminOrders() {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Orders Management
+                {t("admin.orders_management")}
               </h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 {filtered.length} order{filtered.length !== 1 ? "s" : ""}
@@ -210,7 +214,7 @@ export default function AdminOrders() {
               size="sm"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Refresh"}
+              {loading ? t("loading") : t("admin.refresh")}
             </Button>
           </div>
         </ComponentCard>
@@ -223,12 +227,12 @@ export default function AdminOrders() {
                 <Filter className="h-4 w-4 text-gray-500" />
                 <Select
                   options={[
-                    { value: "all", label: "All Orders" },
-                    { value: "pending", label: "Pending" },
-                    { value: "preparing", label: "Preparing" },
-                    { value: "ready", label: "Ready" },
-                    { value: "completed", label: "Completed" },
-                    { value: "canceled", label: "Canceled" },
+                    { value: "all", label: t("admin.filter") + ": " + t("all_items") },
+                    { value: "pending", label: t("pending") },
+                    { value: "preparing", label: t("order_preparing") }, 
+                    { value: "ready", label: t("ready") },
+                    { value: "completed", label: t("completed") },
+                    { value: "canceled", label: t("cancelled") },
                   ]}
                   defaultValue="all"
                   onChange={(val) => setStatusFilter(val || "all")}
@@ -242,7 +246,7 @@ export default function AdminOrders() {
                 />
               </div>
               <Button onClick={exportCSV} disabled={loading} variant="outline" size="sm">
-                📥 Export CSV
+                📥 {t("admin.export_csv")}
               </Button>
             </div>
           </div>
@@ -253,7 +257,7 @@ export default function AdminOrders() {
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading orders...</p>
+              <p className="text-gray-500">{t("admin.loading_orders")}</p>
             </div>
           </div>
         ) : filtered.length === 0 ? (
@@ -261,7 +265,7 @@ export default function AdminOrders() {
             <div className="h-16 w-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
               <Package className="h-8 w-8 text-gray-400" />
             </div>
-            <p className="text-gray-500">No orders found</p>
+            <p className="text-gray-500">{t("admin.no_orders_found")}</p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -283,7 +287,7 @@ export default function AdminOrders() {
                 {/* Order Info */}
                 <div className="space-y-3 flex-1">
                   <div>
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">ORDER ID</p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("admin.order_id")}</p>
                     <p className="font-mono font-bold text-gray-900 dark:text-white">
                       {order._id?.substring(0, 8).toUpperCase()}
                     </p>
@@ -291,22 +295,22 @@ export default function AdminOrders() {
 
                   {order.customerName && (
                     <div>
-                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400">CUSTOMER</p>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("admin.customer_upper")}</p>
                       <p className="text-sm text-gray-900 dark:text-white">{order.customerName}</p>
                     </div>
                   )}
 
                   {/* Items Count */}
                   <div>
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">ITEMS</p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("admin.items_upper")}</p>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? "s" : ""}
+                      {t("admin.items_count", { count: order.items?.length || 0 })}
                     </p>
                   </div>
 
                   {/* Total Amount */}
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">TOTAL</p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("admin.total_upper")}</p>
                     <p className="text-lg font-bold text-gray-900 dark:text-white">
                       ${(order.totalAmount || 0).toFixed(2)}
                     </p>
@@ -331,7 +335,7 @@ export default function AdminOrders() {
                     onClick={() => setViewOrder(order)}
                     className="w-full px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800 transition-colors"
                   >
-                    View Details
+                    {t("admin.view_details")}
                   </button>
 
                   {(order.status === "completed" || order.status === "canceled") && (
@@ -339,7 +343,7 @@ export default function AdminOrders() {
                       onClick={() => setDeleteConfirm(order)}
                       className="w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded border border-red-200 dark:border-red-800 transition-colors"
                     >
-                      Delete
+                      {t("delete")}
                     </button>
                   )}
                 </div>
@@ -354,10 +358,10 @@ export default function AdminOrders() {
         {deleteConfirm && (
           <div className="text-center">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Delete Order?
+              {t("admin.delete_order_confirm_title")}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete this order? This action cannot be undone.
+              {t("admin.delete_order_confirm_msg")}
             </p>
             <div className="flex gap-3">
               <button
@@ -365,14 +369,14 @@ export default function AdminOrders() {
                 disabled={deleting}
                 className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 onClick={() => handleDeleteOrder(deleteConfirm._id)}
                 disabled={deleting}
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
               >
-                {deleting ? "Deleting..." : "Delete"}
+                {deleting ? t("admin.deleting") : t("delete")}
               </button>
             </div>
           </div>
@@ -384,36 +388,36 @@ export default function AdminOrders() {
         {viewOrder && (
           <div className="dark:text-white">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-              Order Details
+              {t("admin.order_details")}
             </h3>
 
             <div className="space-y-4">
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Order ID</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">{t("order_id")}</p>
                   <p className="font-mono font-bold text-gray-900 dark:text-white">{viewOrder._id}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Status</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">{t("order_status")}</p>
                   <p className="capitalize font-medium text-gray-900 dark:text-white">{viewOrder.status}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Total</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">{t("total")}</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">${(viewOrder.totalAmount || 0).toFixed(2)}</p>
                 </div>
                 {viewOrder.customerName && (
                   <div>
-                    <p className="font-medium text-gray-600 dark:text-gray-400">Customer</p>
+                    <p className="font-medium text-gray-600 dark:text-gray-400">{t("customer_upper")}</p>
                     <p className="text-gray-900 dark:text-white">{viewOrder.customerName}</p>
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Order Date</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">{t("order_date")}</p>
                   <p className="text-gray-900 dark:text-white">{new Date(viewOrder.createdAt).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-600 dark:text-gray-400">Items Count</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400">{t("admin.items_upper")}</p>
                   <p className="text-gray-900 dark:text-white">{viewOrder.items?.length || 0}</p>
                 </div>
               </div>
@@ -421,7 +425,7 @@ export default function AdminOrders() {
               {/* Items List */}
               {viewOrder.items && viewOrder.items.length > 0 && (
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="font-medium text-gray-600 dark:text-gray-400 mb-3">Items</p>
+                  <p className="font-medium text-gray-600 dark:text-gray-400 mb-3">{t("items")}</p>
                   <div className="space-y-2">
                     {viewOrder.items.map((item, idx) => (
                       <div
@@ -430,7 +434,7 @@ export default function AdminOrders() {
                       >
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white">{item.name || "Item"}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Qty: {item.quantity}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{t("admin.qty")}: {item.quantity}</p>
                         </div>
                         <p className="font-medium text-gray-900 dark:text-white">
                           ${(item.price * item.quantity).toFixed(2)}
@@ -466,7 +470,7 @@ export default function AdminOrders() {
                     }}
                     className="w-full px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded transition-colors"
                   >
-                    Delete Order
+                    {t("delete")}
                   </button>
                 )}
 
@@ -474,7 +478,7 @@ export default function AdminOrders() {
                   onClick={() => setViewOrder(null)}
                   className="w-full px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
                 >
-                  Close
+                  {t("close")}
                 </button>
               </div>
             </div>

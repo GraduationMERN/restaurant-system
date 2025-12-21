@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { uploadUserAvatar } from "../../redux/slices/userProfileSlice";
+import { useTranslation } from "react-i18next";
 
 export default function UserMetaCard() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { profile } = useSelector((state) => state.userProfile);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -40,7 +42,7 @@ export default function UserMetaCard() {
             <img src={displayAvatar} alt="user" className="w-full h-full object-cover" loading="lazy" />
           </div>
           <label className="hidden xl:block cursor-pointer text-xs px-3 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-            {uploading ? "Uploading..." : "Change Photo"}
+            {uploading ? t("uploading") : t("change_photo")}
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </label>
           <div className="order-3 xl:order-2">

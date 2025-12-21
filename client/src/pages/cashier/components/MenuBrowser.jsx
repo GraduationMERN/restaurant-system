@@ -3,8 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Plus, Minus, Search, Loader2 } from "lucide-react";
 import api from "../../../api/axios";
 import { useToast } from "../../../hooks/useToast";
+import { useTranslation } from "react-i18next";
 
 export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove, onQuantityChange }) {
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,7 +75,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
         <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
         <input
           type="text"
-          placeholder="Search menu items..."
+          placeholder={t("search_menu_items")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
@@ -92,7 +94,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >
-            {cat === "all" ? "All Items" : cat}
+            {cat === "all" ? t("all_items") : cat}
           </button>
         ))}
       </div>
@@ -123,7 +125,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
 
                   <div className="flex justify-between items-center mb-3">
                     <span className="font-bold text-amber-600">
-                      ${(product.basePrice || product.price)?.toFixed(2) || "0.00"}
+                      {t("currency_symbol")}{(product.basePrice || product.price)?.toFixed(2) || "0.00"}
                     </span>
                     {product.category && (
                       <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
@@ -147,7 +149,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
                       className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Add
+                      {t("add")}
                     </button>
                   ) : (
                     <div className="flex gap-2 items-center">
@@ -180,7 +182,7 @@ export default function MenuBrowser({ selectedItems, onItemSelect, onItemRemove,
           })
         ) : (
           <div className="col-span-full text-center py-8 text-slate-500">
-            No products found
+            {t("no_products_found")}
           </div>
         )}
       </div>

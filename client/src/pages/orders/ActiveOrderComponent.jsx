@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { cancelOrder } from "../../redux/slices/ordersSlice";
 import { useToast } from "../../hooks/useToast";
+import { useTranslation } from "react-i18next";
 import {
   Clock,
   MapPin,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function ActiveOrderComponent({ order }) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
@@ -62,7 +64,7 @@ export default function ActiveOrderComponent({ order }) {
   }, [order?.estimatedReadyTime]);
 
   const formatCountdown = (s) =>
-    s <= 0 ? "Ready Now!" : `${Math.floor(s / 60)}m ${s % 60}s`;
+    s <= 0 ? t("orders.status_steps.ready") + "!" : `${Math.floor(s / 60)}m ${s % 60}s`;
 
   const handleCancel = async () => {
     if (!order?._id) return;
@@ -70,10 +72,10 @@ export default function ActiveOrderComponent({ order }) {
     try {
       setCanceling(true);
       await dispatch(cancelOrder(order._id)).unwrap();
-      toast.showToast({ message: "Order cancelled", type: "success" });
+      toast.showToast({ message: t("orders.toast.cancel_success"), type: "success" });
       setShowCancelConfirm(false);
     } catch (err) {
-      toast.showToast({ message: err || "Failed to cancel", type: "error" });
+      toast.showToast({ message: err || t("orders.toast.cancel_fail"), type: "error" });
     } finally {
       setCanceling(false);
     }
@@ -88,7 +90,7 @@ export default function ActiveOrderComponent({ order }) {
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm opacity-90">Order Number</p>
+            <p className="text-sm opacity-90">{t("orders.order_details.order_number")}</p>
             <h2 className="text-3xl font-bold">{order.orderNumber}</h2>
           </div>
 
@@ -97,8 +99,8 @@ export default function ActiveOrderComponent({ order }) {
               order.status === "ready" ? "animate-pulse" : ""
             }`}
           >
-            {statusIcons[order.status]}
-            <span className="font-semibold capitalize">{order.status}</span>
+            {statusIcons[order.status.toLowerCase()] || statusIcons.pending}
+            <span className="font-semibold capitalize">{t(`orders.status_steps.${order.status.toLowerCase()}`) || order.status}</span>
           </div>
         </div>
 
@@ -117,7 +119,7 @@ export default function ActiveOrderComponent({ order }) {
         {/* ETA */}
         {order.estimatedReadyTime && (
           <div className="mb-6 p-4 bg-primary/10 rounded-xl border border-primary/20">
-            <p className="text-sm text-primary mb-1">Estimated Ready Time</p>
+            <p className="text-sm text-primary mb-1">{t("orders.order_details.estimated_ready_time")}</p>
             <p className="text-2xl font-bold text-primary">
               {formatCountdown(countdownSeconds)}
             </p>
@@ -130,11 +132,11 @@ export default function ActiveOrderComponent({ order }) {
           {/* Customer Info */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" /> Customer
+              <MessageCircle className="w-4 h-4" /> {t("orders.order_details.customer")}
             </h3>
 
             <div className="space-y-2">
-              <p className="font-medium">{order.customerInfo?.name || "Guest"}</p>
+              <p className="font-medium">{order.customerInfo?.name || t("orders.order_details.guest")}</p>
 
               {order.customerInfo?.phone && (
                 <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -153,7 +155,7 @@ export default function ActiveOrderComponent({ order }) {
           {/* Service */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Service Details
+              <MapPin className="w-4 h-4" /> {t("orders.order_details.service_details")}
             </h3>
 
             <div className="space-y-2">
@@ -161,7 +163,7 @@ export default function ActiveOrderComponent({ order }) {
 
               {order.serviceType === "dine-in" && order.tableNumber && (
                 <p className="text-gray-600 dark:text-gray-400">
-                  Table #{order.tableNumber}
+                  {t("orders.order_details.table_prefix")}{order.tableNumber}
                 </p>
               )}
 
@@ -176,7 +178,7 @@ export default function ActiveOrderComponent({ order }) {
 
         {/* Items */}
         <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold mb-3">Items ({order.items?.length})</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("orders.order_details.items")} ({order.items?.length})</h3>
 
           <div className="space-y-2">
             {order.items?.map((item, idx) => (
@@ -197,26 +199,26 @@ export default function ActiveOrderComponent({ order }) {
         {/* Payment */}
         <div className="mb-6 space-y-2">
           <div className="flex justify-between text-gray-600">
-            <span>Subtotal</span>
+            <span>{t("orders.order_details.subtotal")}</span>
             <span>EGP {order.subtotal?.toFixed(2)}</span>
           </div>
 
           {order.vat > 0 && (
             <div className="flex justify-between text-gray-600">
-              <span>VAT (15%)</span>
+              <span>{t("orders.order_details.vat")}</span>
               <span>EGP {order.vat?.toFixed(2)}</span>
             </div>
           )}
 
           <div className="flex justify-between text-lg font-bold pt-2 border-t">
-            <span>Total</span>
+            <span>{t("orders.order_details.total")}</span>
             <span>EGP {order.totalAmount?.toFixed(2)}</span>
           </div>
 
           {/* Payment status badge */}
           <div className="mt-4 pt-4 border-t">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Payment Status</span>
+              <span className="text-sm text-gray-600">{t("orders.order_details.payment_status")}</span>
 
               <span
                 className={`text-sm font-semibold capitalize px-3 py-1 rounded-full border ${
@@ -241,13 +243,13 @@ export default function ActiveOrderComponent({ order }) {
               className="py-3 px-4 border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-semibold rounded-xl transition flex items-center gap-2"
             >
               <XCircle className="w-5 h-5" />
-              Cancel
+              {t("orders.action.cancel")}
             </button>
           )}
           
           {order.status !== "pending" && (
             <div className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl text-center font-semibold">
-              ✓ Cannot cancel - Order already {order.status}
+              ✓ {t("orders.error.cannot_cancel", { status: order.status })}
             </div>
           )}
         </div>
@@ -260,11 +262,11 @@ export default function ActiveOrderComponent({ order }) {
             <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
 
             <h3 className="text-lg font-bold mb-2">
-              Cancel Order?
+              {t("orders.modal.cancel_title")}
             </h3>
 
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to cancel order {order.orderNumber}?
+              {t("orders.modal.cancel_confirm", { orderNumber: order.orderNumber })}
             </p>
 
             <div className="flex gap-3">
@@ -273,7 +275,7 @@ export default function ActiveOrderComponent({ order }) {
                 disabled={canceling}
                 className="flex-1 py-2 border rounded-xl font-semibold hover:bg-gray-50"
               >
-                Keep Order
+                {t("orders.modal.keep_order")}
               </button>
 
               <button
@@ -281,7 +283,7 @@ export default function ActiveOrderComponent({ order }) {
                 disabled={canceling}
                 className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl"
               >
-                {canceling ? "Canceling..." : "Yes, Cancel"}
+                {canceling ? t("orders.modal.canceling") : t("orders.modal.yes_cancel")}
               </button>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { registerUser } from "../../redux/slices/authSlice";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
 import { Plus, X, User, Mail, Phone, Shield, ChevronDown, Loader2, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const validateField = (name, value) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,6 +50,7 @@ const roleColors = {
 };
 
 export default function Users() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { users, loading, updating, deleting } = useSelector((state) => state.users);
   const toast = useToast();
@@ -93,10 +95,10 @@ export default function Users() {
     setSubmitting(true);
     try {
       await dispatch(registerUser(formData));
-      toast.showToast({ message: "User created successfully", type: "success" });
+      toast.showToast({ message: t("admin.user_created"), type: "success" });
       dispatch(fetchUsers());
     } catch (err) {
-      toast.showToast({ message: "Failed to create user", type: "error" });
+      toast.showToast({ message: t("admin.user_create_fail"), type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -139,10 +141,10 @@ export default function Users() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            Staff Management
+            {t("admin.users_title")}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Manage your team members and their roles
+            {t("admin.users_desc")}
           </p>
         </div>
         <button
@@ -150,7 +152,7 @@ export default function Users() {
           className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/25"
         >
           {showForm ? <X size={18} /> : <Plus size={18} />}
-          {showForm ? "Cancel" : "Add Staff"}
+          {showForm ? t("admin.cancel") : t("admin.add_staff")}
         </button>
       </div>
 
@@ -158,14 +160,14 @@ export default function Users() {
       {showForm && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm animate-fadeIn">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Add New Staff Member
+            {t("admin.add_new_staff")}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Name
+                  {t("name")}
                 </label>
                 <input
                   type="text"
@@ -183,7 +185,7 @@ export default function Users() {
               {/* Phone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Phone Number
+                  {t("phone_number")}
                 </label>
                 <input
                   type="text"
@@ -201,7 +203,7 @@ export default function Users() {
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
+                  {t("email")}
                 </label>
                 <input
                   type="email"
@@ -219,7 +221,7 @@ export default function Users() {
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Password
+                  {t("password")}
                 </label>
                 <input
                   type="password"
@@ -237,7 +239,7 @@ export default function Users() {
               {/* Role */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Role
+                  {t("admin.role")}
                 </label>
                 <select
                   name="role"
@@ -245,16 +247,16 @@ export default function Users() {
                   onChange={handleChange}
                   className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                 >
-                  <option value="kitchen">Kitchen</option>
-                  <option value="cashier">Cashier</option>
-                  <option value="admin">Admin</option>
+                  <option value="kitchen">{t("admin.role_kitchen")}</option>
+                  <option value="cashier">{t("admin.role_cashier")}</option>
+                  <option value="admin">{t("admin.role_admin")}</option>
                 </select>
               </div>
             </div>
 
             <div className="flex justify-end pt-2">
               <Button type="submit" loading={submitting}>
-                Create Staff Member
+                {t("admin.create_staff")}
               </Button>
             </div>
           </form>
@@ -266,7 +268,7 @@ export default function Users() {
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center gap-3 text-gray-500">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Loading users...</span>
+            <span>{t("loading")}</span>
           </div>
         </div>
       )}
@@ -304,7 +306,7 @@ export default function Users() {
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Role:</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{t("role")}:</span>
                     <div className="relative">
                       <select
                         value={user.role}
@@ -312,10 +314,10 @@ export default function Users() {
                         disabled={updating === (user._id || user.id)}
                         className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
                       >
-                        <option value="customer">Customer</option>
-                        <option value="kitchen">Kitchen</option>
-                        <option value="cashier">Cashier</option>
-                        <option value="admin">Admin</option>
+                        <option value="customer">{t("admin.role_customer")}</option>
+                        <option value="kitchen">{t("admin.role_kitchen")}</option>
+                        <option value="cashier">{t("admin.role_cashier")}</option>
+                        <option value="admin">{t("admin.role_admin")}</option>
                       </select>
                       {updating === (user._id || user.id) ? (
                         <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
@@ -347,19 +349,19 @@ export default function Users() {
               <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    User
+                    {t("user")}
                   </th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Phone
+                    {t("phone")}
                   </th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Email
+                    {t("email")}
                   </th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Role
+                    {t("role")}
                   </th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Actions
+                    {t("actions")}
                   </th>
                 </tr>
               </thead>
@@ -398,10 +400,10 @@ export default function Users() {
                           disabled={updating === (user._id || user.id)}
                           className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-sm font-medium cursor-pointer border-0 focus:ring-2 focus:ring-primary/20 ${roleColors[user.role] || roleColors.customer}`}
                         >
-                          <option value="customer">Customer</option>
-                          <option value="kitchen">Kitchen</option>
-                          <option value="cashier">Cashier</option>
-                          <option value="admin">Admin</option>
+                          <option value="customer">{t("admin.role_customer")}</option>
+                          <option value="kitchen">{t("admin.role_kitchen")}</option>
+                          <option value="cashier">{t("admin.role_cashier")}</option>
+                          <option value="admin">{t("admin.role_admin")}</option>
                         </select>
                         {updating === (user._id || user.id) ? (
                           <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin" />
@@ -437,10 +439,10 @@ export default function Users() {
                 <User className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
-                No staff members yet
+                {t("admin.no_staff")}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Click "Add Staff" to create your first team member.
+                {t("admin.no_staff_desc")}
               </p>
             </div>
           )}

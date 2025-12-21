@@ -92,10 +92,10 @@ export default function ReviewModal({ isOpen, close }) {
             </div>
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                {t("write_review")}
+                {t("reviews.write_review_btn")}
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                Share your dining experience
+                {t("reviews.share_experience_cta")}
               </p>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function ReviewModal({ isOpen, close }) {
           {/* Rating Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
-              How would you rate your experience?
+              {t("reviews.modal.how_would_you_rate")}
             </label>
             <div className="flex gap-0.5 sm:gap-1 mb-1">
               {[1, 2, 3, 4, 5].map((num) => (
@@ -130,19 +130,19 @@ export default function ReviewModal({ isOpen, close }) {
               ))}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              {rating > 0 ? `${rating} out of 5 stars` : "Select a rating"}
+              {rating > 0 ? `${rating} / 5` : t("reviews.modal.select_rating")}
             </p>
           </div>
 
           {/* Comment Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
-              {t("comment")}
+              {t("reviews.tell_us_about_meal")}
             </label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={t("share_experience") || "Tell us about your experience..."}
+              placeholder={t("reviews.modal.share_feedback_placeholder")}
               className="w-full h-18 sm:h-20 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl p-3 sm:p-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none transition-all duration-200 text-sm sm:text-base"
               rows="3"
             />
@@ -153,10 +153,10 @@ export default function ReviewModal({ isOpen, close }) {
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1 sm:gap-2">
                 <Image size={16} className="sm:size-[18px]" />
-                {t("upload_photos")}
+                {t("reviews.modal.upload_photos")}
               </label>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {images.length}/4 images
+                {images.length}/4
               </span>
             </div>
             
@@ -189,10 +189,10 @@ export default function ReviewModal({ isOpen, close }) {
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("choose_your_photos") || "Upload photos"}
+                    {t("reviews.modal.choose_photos")}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    JPEG, PNG up to 5MB each
+                    {t("reviews.modal.max_images")}
                   </p>
                 </div>
               </div>
@@ -214,10 +214,10 @@ export default function ReviewModal({ isOpen, close }) {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t("post_anonymously")}
+                  {t("reviews.modal.post_anonymously")}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Your name won't be shown publicly
+                  {t("reviews.modal.your_name_hidden")}
                 </p>
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function ReviewModal({ isOpen, close }) {
           {/* Privacy Note */}
           <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
             <Shield size={12} className="sm:size-[14px] flex-shrink-0 mt-0.5" />
-            <p>Your review will be publicly visible. By submitting, you agree to our review guidelines.</p>
+            <p>{t("reviews.modal.public_review_notice")}</p>
           </div>
         </div>
 
@@ -260,7 +260,7 @@ export default function ReviewModal({ isOpen, close }) {
               onClick={handleClose}
               className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 text-sm sm:text-base"
             >
-              Cancel
+              {t("reviews.modal.cancel")}
             </button>
             <button
               onClick={handleSubmit}
@@ -272,7 +272,7 @@ export default function ReviewModal({ isOpen, close }) {
               }`}
             >
               <Send size={16} className="sm:size-[18px]" />
-              {t("submit")}
+              {t("reviews.modal.submit")}
             </button>
           </div>
         </div>

@@ -7,15 +7,17 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../compon
 import Select from "../../components/form/Select";
 import io from "socket.io-client";
 import api from "../../api/axios";
+import { useTranslation } from "react-i18next";
 
 const STATUS_OPTIONS = [
-  { value: "Preparing", label: "Preparing" },
+  { value: "Preparing", label: "Preparing" }, // You might want to translate these labels too if they are user-facing strings in the Select, but values usually stay english for logic. If Select uses label for display, translate label.
   { value: "Confirmed", label: "Confirmed" },
   { value: "Ready", label: "Ready" },
   { value: "Completed", label: "Completed" },
 ];
 
 export default function RewardOrders() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
    const socketRef = useRef(null);
   const { items = [], loading ,pagination } = useSelector((state) => state.rewardOrders);
@@ -114,8 +116,8 @@ export default function RewardOrders() {
 
   return (
     <div>
-      <PageMeta title="Reward Orders" description="Manage reward redemptions" />
-      <PageBreadcrumb pageTitle="Reward Orders" />
+      <PageMeta title={t("admin.reward_orders_title")} description={t("admin.reward_orders_desc")} />
+      <PageBreadcrumb pageTitle={t("admin.reward_orders_title")} />
 
       <div className="space-y-6">
 
@@ -125,13 +127,13 @@ export default function RewardOrders() {
             <Table>
               <TableHeader className="border-gray-100 dark:border-gray-800  dark:text-white/60 border-y">
                 <TableRow>
-                  <TableCell isHeader>ORDER ID</TableCell>
-                  <TableCell isHeader>CUSTOMER</TableCell>
-                  <TableCell isHeader>REWARD</TableCell>
-                  <TableCell isHeader>POINTS USED</TableCell>
-                  <TableCell isHeader>STATUS</TableCell>
-                  <TableCell isHeader>TIME</TableCell>
-                  <TableCell isHeader className="text-end p-5">ACTIONS</TableCell>
+                  <TableCell isHeader>{t("admin.order_id")}</TableCell>
+                  <TableCell isHeader>{t("admin.customer")}</TableCell>
+                  <TableCell isHeader>{t("admin.reward")}</TableCell>
+                  <TableCell isHeader>{t("admin.points_used")}</TableCell>
+                  <TableCell isHeader>{t("admin.status")}</TableCell>
+                  <TableCell isHeader>{t("admin.time")}</TableCell>
+                  <TableCell isHeader className="text-end p-5">{t("actions")}</TableCell>
                 </TableRow>
               </TableHeader>
 
@@ -177,10 +179,10 @@ export default function RewardOrders() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-4">
                           <button onClick={() => setViewOrder(row)} className="text-brand-500">
-                            View
+                            {t("view")}
                           </button>
                           <button onClick={() => deleteOrder(row._id)} className="text-error-500">
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       </TableCell>
@@ -215,21 +217,21 @@ export default function RewardOrders() {
               ✕
             </button>
 
-            <h3 className="text-lg font-semibold mb-4">Order Details</h3>
+            <h3 className="text-lg font-semibold mb-4">{t("admin.order_details")}</h3>
 
             <div className="space-y-2 text-sm">
               <p><strong>ID:</strong> {viewOrder._id}</p>
               <p><strong>Customer:</strong> {viewOrder.userId?.name}</p>
               <p>
-                <strong>Reward:</strong>{" "}
+                <strong>{t("admin.reward")}:</strong>{" "}
                 {viewOrder.rewardId?.name ??
                   viewOrder.rewardId?.productId?.name ??
                   "N/A"}
               </p>
-              <p><strong>Points Used:</strong> {viewOrder.pointsUsed}</p>
-              <p><strong>Status:</strong> {viewOrder.status}</p>
-              <p><strong>Redeemed At:</strong> {formatDate(viewOrder.redeemedAt)}</p>
-              <p><strong>Created At:</strong> {formatDate(viewOrder.createdAt)}</p>
+              <p><strong>{t("admin.points_used")}:</strong> {viewOrder.pointsUsed}</p>
+              <p><strong>{t("admin.status")}:</strong> {viewOrder.status}</p>
+              <p><strong>{t("admin.redeemed_at")}:</strong> {formatDate(viewOrder.redeemedAt)}</p>
+              <p><strong>{t("admin.created_at")}:</strong> {formatDate(viewOrder.createdAt)}</p>
             </div>
           </div>
         </div>
@@ -247,7 +249,7 @@ export default function RewardOrders() {
             disabled={currentPage === 1}
             className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Previous
+            {t("previous")}
           </button>
           
           {/* Page Numbers */}
@@ -272,7 +274,7 @@ export default function RewardOrders() {
             disabled={currentPage === pagination.totalPages}
             className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Next
+            {t("next")}
           </button>
         </div>
       </div>

@@ -4,8 +4,10 @@ import { ShoppingCart, Loader2, DollarSign, User, X } from "lucide-react";
 import MenuBrowser from "./MenuBrowser";
 import api from "../../../api/axios";
 import { useToast } from "../../../hooks/useToast";
+import { useTranslation } from "react-i18next";
 
 export default function DirectOrderForm({ onOrderCreated, onCancel }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const [step, setStep] = useState(1); // 1: Menu, 2: Customer & Payment
   const [selectedItems, setSelectedItems] = useState([]);
@@ -55,12 +57,12 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
     }
 
     if (!walkIn && !customerName.trim()) {
-      toast.showToast({ message: "Enter customer name or mark as Walk-In", type: "error" });
+      toast.showToast({ message: t("enter_customer_name"), type: "error" });
       return;
     }
 
     if (serviceType === "dine-in" && !tableNumber.trim()) {
-      toast.showToast({ message: "Enter table number for dine-in orders", type: "error" });
+      toast.showToast({ message: t("enter_table_number"), type: "error" });
       return;
     }
 
@@ -78,7 +80,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
         serviceType: serviceType,
         tableNumber: serviceType === "dine-in" ? tableNumber : undefined,
         customerInfo: {
-          name: walkIn ? "Walk-In Customer" : customerName,
+          name: walkIn ? t("walk_in_customer") : customerName,
           phone: customerPhone || "",
           email: ""
         },
@@ -89,7 +91,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
       const response = await api.post("api/orders/direct", orderData);
       
       if (response.data) {
-        toast.showToast({ message: `✅ Order created successfully!`, type: "success" });
+        toast.showToast({ message: `✅ ${t("order_create_success")}`, type: "success" });
         onOrderCreated(response.data);
         // Reset form
         setSelectedItems([]);
@@ -103,7 +105,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
         setStep(1);
       }
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message || "Failed to create order";
+      const errorMsg = error?.response?.data?.message || error?.message || t("failed_create_order");
       toast.showToast({ message: errorMsg, type: "error" });
     } finally {
       setLoading(false);
@@ -114,12 +116,12 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 flex justify-between items-center">
+        <div className="sticky top-0 bg-linear-to-r from-green-600 to-emerald-600 text-white p-6 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <ShoppingCart className="w-6 h-6" />
             <div>
-              <h2 className="text-2xl font-bold">Create Direct Order</h2>
-              <p className="text-green-100 text-sm">Step {step} of 2</p>
+              <h2 className="text-2xl font-bold">{t("create_direct_order")}</h2>
+              <p className="text-green-100 text-sm">{t("step_x_of_y", { current: step, total: 2 })}</p>
             </div>
           </div>
           <button
@@ -145,7 +147,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
             <div>
               <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-green-600" />
-                Select Items
+                {t("select_items")}
               </h3>
               <MenuBrowser
                 selectedItems={selectedItems}
@@ -157,29 +159,29 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               {/* Selected Items Summary */}
               {selectedItems.length > 0 && (
                 <div className="mt-6 bg-green-50 rounded-lg p-4 border border-green-200">
-                  <h4 className="font-bold text-slate-900 mb-3">Selected Items ({selectedItems.length})</h4>
+                  <h4 className="font-bold text-slate-900 mb-3">{t("selected_items")} ({selectedItems.length})</h4>
                   <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
                     {selectedItems.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm bg-white p-2 rounded">
                         <span>{item.name} x{item.quantity}</span>
                         <span className="font-bold text-amber-600">
-                          ${item.totalPrice?.toFixed(2) || (item.price * item.quantity).toFixed(2)}
+                          {t("currency_symbol")}{item.totalPrice?.toFixed(2) || (item.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     ))}
                   </div>
                   <div className="border-t border-green-300 pt-3">
                     <div className="flex justify-between mb-2">
-                      <span className="text-slate-700">Subtotal:</span>
-                      <span className="font-bold">${subtotal.toFixed(2)}</span>
+                      <span className="text-slate-700">{t("subtotal")}:</span>
+                      <span className="font-bold">{t("currency_symbol")}{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between mb-3">
-                      <span className="text-slate-700">Tax (10%):</span>
-                      <span className="font-bold">${tax.toFixed(2)}</span>
+                      <span className="text-slate-700">{t("tax")} (10%):</span>
+                      <span className="font-bold">{t("currency_symbol")}{tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold text-amber-600">
-                      <span>Total:</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{t("total")}:</span>
+                      <span>{t("currency_symbol")}{total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -189,7 +191,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
             <div className="space-y-6">
               {/* Service Type Selection */}
               <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Service Type</h3>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">{t("service_type")}</h3>
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <button
                     onClick={() => {
@@ -202,7 +204,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                         : "bg-white text-slate-700 border-slate-300 hover:border-green-600"
                     }`}
                   >
-                    📦 Takeaway
+                    📦 {t("service_type_takeaway")}
                   </button>
                   <button
                     onClick={() => setServiceType("dine-in")}
@@ -212,7 +214,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                         : "bg-white text-slate-700 border-slate-300 hover:border-green-600"
                     }`}
                   >
-                    🍽️ Dine-In
+                    🍽️ {t("service_type_dine_in")}
                   </button>
                 </div>
 
@@ -220,7 +222,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                 {serviceType === "dine-in" && (
                   <input
                     type="text"
-                    placeholder="Table Number"
+                    placeholder={t("table_number")}
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 mb-6"
@@ -231,7 +233,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-blue-600" />
-                  Customer Information
+                  {t("customer_information")}
                 </h3>
 
                 <div className="space-y-4">
@@ -243,14 +245,14 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                       onChange={(e) => setWalkIn(e.target.checked)}
                       className="w-5 h-5 text-blue-600 rounded cursor-pointer"
                     />
-                    <span className="font-bold text-slate-900">Walk-In Customer (no name required)</span>
+                    <span className="font-bold text-slate-900">{t("walk_in_customer_desc")}</span>
                   </label>
 
                   {/* Customer Name */}
                   {!walkIn && (
                     <input
                       type="text"
-                      placeholder="Customer Name"
+                      placeholder={t("customer_name")}
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -260,7 +262,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
                   {/* Phone */}
                   <input
                     type="tel"
-                    placeholder="Customer Phone (optional)"
+                    placeholder={t("customer_phone_optional")}
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -272,51 +274,51 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-purple-600" />
-                  Payment Information
+                  {t("payment_information")}
                 </h3>
 
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   {/* Payment Method */}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">
-                      Payment Method
+                      {t("payment_method")}
                     </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                     >
-                      <option value="cash">💵 Cash</option>
-                      <option value="card">💳 Card</option>
-                      <option value="online">🌐 Online Payment</option>
+                      <option value="cash">💵 {t("payment_cash")}</option>
+                      <option value="card">💳 {t("payment_card")}</option>
+                      <option value="online">🌐 {t("payment_online")}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700 font-medium">
-                  ✅ Direct orders are marked as paid immediately
+                  {t("direct_order_paid_note")}
                 </div>
               </div>
 
               {/* Order Summary */}
               <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                <h4 className="font-bold text-slate-900 mb-3">Order Summary</h4>
+                <h4 className="font-bold text-slate-900 mb-3">{t("order_summary")}</h4>
                 <div className="space-y-2 text-sm mb-3">
                   <div className="flex justify-between">
-                    <span className="text-slate-700">Items:</span>
+                    <span className="text-slate-700">{t("items")}:</span>
                     <span className="font-bold">{selectedItems.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-700">Subtotal:</span>
-                    <span className="font-bold">${subtotal.toFixed(2)}</span>
+                    <span className="text-slate-700">{t("subtotal")}:</span>
+                    <span className="font-bold">{t("currency_symbol")}{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-700">Tax:</span>
-                    <span className="font-bold">${tax.toFixed(2)}</span>
+                    <span className="text-slate-700">{t("tax")}:</span>
+                    <span className="font-bold">{t("currency_symbol")}{tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-amber-600 border-t border-amber-300 pt-2">
-                    <span>Total:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{t("total")}:</span>
+                    <span>{t("currency_symbol")}{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -332,7 +334,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               disabled={loading}
               className="flex-1 bg-slate-300 hover:bg-slate-400 text-slate-900 font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
             >
-              Back
+              {t("back")}
             </button>
           )}
 
@@ -342,7 +344,7 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               disabled={selectedItems.length === 0 || loading}
               className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
-              Continue to Payment
+              {t("continue_to_payment")}
             </button>
           ) : (
             <button
@@ -353,12 +355,12 @@ export default function DirectOrderForm({ onOrderCreated, onCancel }) {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating Order...
+                  {t("creating_order")}
                 </>
               ) : (
                 <>
                   <ShoppingCart className="w-4 h-4" />
-                  Create Order
+                  {t("create_order")}
                 </>
               )}
             </button>

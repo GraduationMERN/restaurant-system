@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import PageMeta from "../components/common/PageMeta";
 import { useSettings } from "../context/SettingContext";
 import api from "../api/axios";
@@ -30,6 +31,7 @@ export default function Support() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(null);
   const { settings } = useSettings();
+  const { t } = useTranslation();
   const [openFaq, setOpenFaq] = useState(null);
   const [activePolicy, setActivePolicy] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -44,13 +46,13 @@ export default function Support() {
     try {
       const res = await api.post("api/support", { name, email, subject, type, message });
       if (res?.data?.success) {
-        setStatus({ ok: true, msg: "Submitted successfully! We'll get back to you soon." });
+        setStatus({ ok: true, msg: t("support.contact.success") });
         setName(""); setEmail(""); setSubject(""); setType("feedback"); setMessage("");
       } else {
-        setStatus({ ok: false, msg: res?.data?.message || "Submission failed" });
+        setStatus({ ok: false, msg: res?.data?.message || t("support.contact.fail") });
       }
     } catch (err) {
-      setStatus({ ok: false, msg: "Failed to submit. Please try again." });
+      setStatus({ ok: false, msg: t("support.contact.error") });
       console.error("Support submit error", err);
     }
   };
@@ -93,7 +95,7 @@ export default function Support() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
-      <PageMeta title="Support" description="Get help and support" />
+      <PageMeta title={t("support.page_title")} description={t("support.page_desc")} />
 
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -117,13 +119,13 @@ export default function Support() {
         <div className={`text-center mb-12 transition-all duration-1000 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary mb-6">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">We're here to help</span>
+            <span className="text-sm font-medium">{t("support.hero_tagline")}</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent mb-4">
-            Support Center
+            {t("support.hero_title")}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Find answers to common questions or reach out to our team for personalized assistance.
+            {t("support.hero_desc")}
           </p>
         </div>
 
@@ -138,19 +140,19 @@ export default function Support() {
             <div className="relative grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  {settings?.about?.title || "About Us"}
+                  {settings?.about?.title || t("support.about.title")}
                 </h2>
                 <p className="text-white/90 text-lg leading-relaxed whitespace-pre-line">
-                  {settings?.about?.content || "We are a restaurant dedicated to great food and exceptional service. Our passion is creating memorable dining experiences for every guest."}
+                  {settings?.about?.content || t("support.about.description")}
                 </p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: Heart, label: "Made with Love", value: 100, suffix: "%" },
-                  { icon: Users, label: "Happy Customers", value: 10, suffix: "K+" },
-                  { icon: Clock, label: "Years Experience", value: 5, suffix: "+" },
-                  { icon: CheckCircle, label: "Quality Rating", value: 4.9, suffix: "★", decimals: 1 },
+                  { icon: Heart, label: t("support.about.stats.made_with_love"), value: 100, suffix: "%" },
+                  { icon: Users, label: t("support.about.stats.happy_customers"), value: 10, suffix: "K+" },
+                  { icon: Clock, label: t("support.about.stats.years_experience"), value: 5, suffix: "+" },
+                  { icon: CheckCircle, label: t("support.about.stats.quality_rating"), value: 4.9, suffix: "★", decimals: 1 },
                 ].map((stat, idx) => (
                   <div key={idx} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center hover:bg-white/20 transition-all duration-300">
                     <stat.icon className="w-6 h-6 mx-auto mb-2 text-white/80" />
@@ -174,9 +176,9 @@ export default function Support() {
         <div className={`mb-12 transition-all duration-700 delay-200 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Frequently Asked Questions
+              {t("support.faq.title")}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">Quick answers to common questions</p>
+            <p className="text-gray-600 dark:text-gray-400">{t("support.faq.subtitle")}</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4 items-start">
@@ -213,7 +215,7 @@ export default function Support() {
             {(!settings?.faqs || settings.faqs.length === 0) && (
               <div className="col-span-2 text-center py-12 text-gray-500 dark:text-gray-400">
                 <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No FAQs available at the moment.</p>
+                <p>{t("support.faq.no_faqs")}</p>
               </div>
             )}
           </div>
@@ -225,8 +227,8 @@ export default function Support() {
             {/* Policy Tabs */}
             <div className="flex">
               {[
-                { id: "terms", label: "Terms of Service", icon: FileText },
-                { id: "privacy", label: "Privacy Policy", icon: Shield },
+                { id: "terms", label: t("support.policies.terms"), icon: FileText },
+                { id: "privacy", label: t("support.policies.privacy"), icon: Shield },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -249,8 +251,8 @@ export default function Support() {
               <div className="p-6 max-h-[350px] overflow-y-auto">
                 <div className="text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed text-sm">
                   {activePolicy === "terms" 
-                    ? (settings?.policies?.terms || "Terms of service content will appear here.")
-                    : (settings?.policies?.privacy || "Privacy policy content will appear here.")
+                    ? (settings?.policies?.terms || t("support.policies.terms_placeholder"))
+                    : (settings?.policies?.privacy || t("support.policies.privacy_placeholder"))
                   }
                 </div>
               </div>
@@ -269,28 +271,28 @@ export default function Support() {
                   <MessageCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Get in Touch</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">We'd love to hear from you</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("support.contact.title")}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t("support.contact.subtitle")}</p>
                 </div>
               </div>
 
               <form onSubmit={submit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Name</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("support.contact.form.name_label")}</label>
                     <input
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300"
-                      placeholder="John Doe"
+                      placeholder={t("support.contact.form.name_placeholder")}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("support.contact.form.email_label")}</label>
                     <input
                       type="email"
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300"
-                      placeholder="john@example.com"
+                      placeholder={t("support.contact.form.email_placeholder")}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
@@ -299,34 +301,34 @@ export default function Support() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("support.contact.form.subject_label")}</label>
                     <input
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300"
-                      placeholder="How can we help?"
+                      placeholder={t("support.contact.form.subject_placeholder")}
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("support.contact.form.category_label")}</label>
                     <select
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300"
                       value={type}
                       onChange={(e) => setType(e.target.value)}
                     >
-                      <option value="feedback">💬 Feedback</option>
-                      <option value="complaint">⚠️ Complaint</option>
-                      <option value="other">📝 Other</option>
+                      <option value="feedback">💬 {t("support.contact.categories.feedback")}</option>
+                      <option value="complaint">⚠️ {t("support.contact.categories.complaint")}</option>
+                      <option value="other">📝 {t("support.contact.categories.other")}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("support.contact.form.message_label")}</label>
                   <textarea
                     rows={5}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-300 resize-none"
-                    placeholder="Tell us more about your inquiry..."
+                    placeholder={t("support.contact.form.message_placeholder")}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
@@ -338,7 +340,7 @@ export default function Support() {
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
                   >
                     <Send className="w-4 h-4" />
-                    Send Message
+                    {t("support.contact.send")}
                   </button>
                   {status && (
                     <span className={`text-sm font-medium ${status.ok ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
@@ -353,14 +355,14 @@ export default function Support() {
           {/* Contact Info Sidebar */}
           <div className="lg:col-span-2">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-6 md:p-8 text-white h-full">
-              <h3 className="text-xl font-bold mb-6">Contact Information</h3>
+              <h3 className="text-xl font-bold mb-6">{t("support.contact.info_title")}</h3>
               
               <div className="space-y-6">
                 {[
-                  { icon: Mail, label: "Email Us", value: settings?.email || "support@restaurant.com", href: `mailto:${settings?.email || "support@restaurant.com"}` },
-                  { icon: Phone, label: "Call Us", value: settings?.phone || "+1 234 567 890", href: `tel:${settings?.phone || "+1234567890"}` },
-                  { icon: MapPin, label: "Visit Us", value: settings?.address || "123 Restaurant Street", href: null },
-                  { icon: Clock, label: "Working Hours", value: "Mon-Sun: 10AM - 11PM", href: null },
+                  { icon: Mail, label: t("support.contact.methods.email"), value: settings?.email || "support@restaurant.com", href: `mailto:${settings?.email || "support@restaurant.com"}` },
+                  { icon: Phone, label: t("support.contact.methods.phone"), value: settings?.phone || "+1 234 567 890", href: `tel:${settings?.phone || "+1234567890"}` },
+                  { icon: MapPin, label: t("support.contact.methods.visit"), value: settings?.address || "123 Restaurant Street", href: null },
+                  { icon: Clock, label: t("support.contact.methods.hours"), value: "Mon-Sun: 10AM - 11PM", href: null },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start gap-4 group">
                     <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-colors duration-300">
@@ -381,7 +383,7 @@ export default function Support() {
               </div>
 
               <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-white/60 text-sm mb-4">Follow us on social media</p>
+                <p className="text-white/60 text-sm mb-4">{t("support.social_title")}</p>
                 <div className="flex gap-3">
                   <a
                     href="#"

@@ -1,5 +1,6 @@
 import { useModal } from "../../hooks/useModal";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
@@ -9,6 +10,7 @@ import { useToast } from "../../hooks/useToast";
 import { updateUserProfile } from "../../redux/slices/userProfileSlice";
 
 export default function UserInfoCard() {
+  const { t } = useTranslation();
   const { isOpen, openModal, closeModal } = useModal();
   const dispatch = useDispatch();
   const { profile } = useSelector((state) => state.userProfile);
@@ -43,9 +45,11 @@ export default function UserInfoCard() {
       
       await dispatch(updateUserProfile(payload)).unwrap();
       closeModal();
-      toast.showToast({ message: "Changes saved", type: "success" });
+      await dispatch(updateUserProfile(payload)).unwrap();
+      closeModal();
+      toast.showToast({ message: t("admin.settings_saved"), type: "success" });
     } catch (err) {
-      toast.showToast({ message: err || "Failed to save changes", type: "error" });
+      toast.showToast({ message: t("admin.settings_save_fail"), type: "error" });
     } finally {
       setSaving(false);
     }
@@ -56,13 +60,13 @@ export default function UserInfoCard() {
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-            Personal Information
+            {t("personal_info")}
           </h4>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                First Name
+                {t("first_name")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {profile?.firstName || "-"}
@@ -71,7 +75,7 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Last Name
+                {t("last_name")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {profile?.lastName || "-"}
@@ -80,7 +84,7 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Email address
+                {t("admin.support_email")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {profile?.email || "-"}
@@ -89,7 +93,7 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Phone
+                {t("admin.phone")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {profile?.phone || "-"}
@@ -98,7 +102,7 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Bio
+                {t("bio")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {profile?.bio || "-"}
@@ -134,10 +138,10 @@ export default function UserInfoCard() {
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Edit Personal Information
+              {t("edit") + " " + t("personal_info")}
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Update your details to keep your profile up-to-date.
+              {t("update_profile_desc")}
             </p>
           </div>
           <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
@@ -145,32 +149,32 @@ export default function UserInfoCard() {
 
               <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Personal Information
+                  {t("personal_info")}
                 </h5>
 
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>First Name</Label>
+                    <Label>{t("first_name")}</Label>
                     <Input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Last Name</Label>
+                    <Label>{t("last_name")}</Label>
                     <Input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Email Address</Label>
+                    <Label>{t("admin.support_email")}</Label>
                     <Input type="text" value={profile?.email || ""} readOnly />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
+                    <Label>{t("admin.phone")}</Label>
                     <Input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
 
                   <div className="col-span-2">
-                    <Label>Bio</Label>
+                    <Label>{t("bio")}</Label>
                     <Input type="text" value={bio} onChange={(e) => setBio(e.target.value)} />
                   </div>
                 </div>
@@ -178,10 +182,10 @@ export default function UserInfoCard() {
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
-                Close
+                {t("admin.cancel")}
               </Button>
               <Button size="sm" type="submit" loading={saving}>
-                Save Changes
+                {t("admin.save_changes")}
               </Button>
             </div>
           </form>

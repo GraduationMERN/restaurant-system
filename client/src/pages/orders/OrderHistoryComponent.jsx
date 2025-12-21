@@ -2,16 +2,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, ShoppingBag, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function OrderHistoryComponent({ orders }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   if (!orders || orders.length === 0) return null;
 
   // Format Date
   const formatDate = (date) =>
-    new Date(date).toLocaleDateString("en-US", {
+    new Date(date).toLocaleDateString(t("locale") || "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -48,8 +50,8 @@ export default function OrderHistoryComponent({ orders }) {
         <div className="flex items-center gap-3">
           <ShoppingBag className="w-6 h-6" />
           <div>
-            <h2 className="text-2xl font-bold">Order History</h2>
-            <p className="text-sm opacity-90">{orders.length} order(s)</p>
+            <h2 className="text-2xl font-bold">{t("orders.history.title")}</h2>
+            <p className="text-sm opacity-90">{orders.length} {t("orders.history.count_suffix")}</p>
           </div>
         </div>
       </div>
@@ -77,7 +79,7 @@ export default function OrderHistoryComponent({ orders }) {
                     <span
                       className={`text-xs font-semibold capitalize px-3 py-1 rounded-full border ${statusClass}`}
                     >
-                      {order.status}
+                      {t(`orders.status_steps.${order.status}`) || order.status}
                     </span>
                   </div>
 
@@ -91,7 +93,7 @@ export default function OrderHistoryComponent({ orders }) {
                     <div className="flex items-center gap-1 capitalize">
                       <MapPin className="w-4 h-4" />
                       {order.serviceType === "dine-in"
-                        ? "Dine In"
+                        ? t("orders.history.dine_in")
                         : order.serviceType}
                     </div>
                   </div>
@@ -123,7 +125,7 @@ export default function OrderHistoryComponent({ orders }) {
                   {/* Items */}
                   <div>
                     <p className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      Items:
+                      {t("orders.history.items_label")}
                     </p>
                     <div className="space-y-1">
                       {order.items?.map((item, i) => (
@@ -150,7 +152,7 @@ export default function OrderHistoryComponent({ orders }) {
                   {order.customerInfo?.name && (
                     <div>
                       <p className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-1">
-                        Customer:
+                        {t("orders.history.customer_label")}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {order.customerInfo.name}
@@ -164,7 +166,7 @@ export default function OrderHistoryComponent({ orders }) {
                   {order.notes && (
                     <div>
                       <p className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-1">
-                        Notes:
+                        {t("orders.history.notes_label")}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {order.notes}
@@ -182,7 +184,7 @@ export default function OrderHistoryComponent({ orders }) {
                   }
                   className="flex items-center gap-2 text-primary font-semibold text-sm hover:text-primary/90 transition-colors"
                 >
-                  {isExpanded ? "Hide" : "Show"} Details
+                  {isExpanded ? t("orders.history.hide_details") : t("orders.history.show_details")}
                   <ChevronRight
                     className={`w-4 h-4 transition-transform ${
                       isExpanded ? "rotate-90" : ""
@@ -194,7 +196,7 @@ export default function OrderHistoryComponent({ orders }) {
                   onClick={() => navigate(`/orders/${order._id}`)}
                   className="ml-auto px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors text-sm"
                 >
-                  View Order
+                  {t("orders.history.view_order")}
                 </button>
               </div>
             </div>

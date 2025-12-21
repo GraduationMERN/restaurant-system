@@ -1,5 +1,6 @@
 // OrdersPage.jsx - Main Orders Page
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -26,6 +27,7 @@ export default function OrdersPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const {
     activeOrder,
@@ -133,14 +135,14 @@ export default function OrdersPage() {
         ]);
 
         toast.showToast({
-          message: "Orders refreshed",
+          message: t("orders.refresh_success"),
           type: "success",
           duration: 1500,
         });
       }
     } catch (err) {
       toast.showToast({
-        message: "Failed to refresh orders",
+        message: t("orders.refresh_error"),
         type: "error",
       });
     } finally {
@@ -200,9 +202,9 @@ export default function OrdersPage() {
 
   // Determine status display - 3 step progression
   const statusSteps = [
-    { label: 'Confirmed', completed: displayActiveOrder?.status === 'Confirmed' || displayActiveOrder?.status === 'Preparing' || displayActiveOrder?.status === 'Ready' },
-    { label: 'Preparing', completed: displayActiveOrder?.status === 'Preparing' || displayActiveOrder?.status === 'Ready' },
-    { label: 'Ready', completed: displayActiveOrder?.status === 'Ready' }
+    { label: t('orders.status_steps.confirmed'), completed: displayActiveOrder?.status === 'Confirmed' || displayActiveOrder?.status === 'Preparing' || displayActiveOrder?.status === 'Ready' },
+    { label: t('orders.status_steps.preparing'), completed: displayActiveOrder?.status === 'Preparing' || displayActiveOrder?.status === 'Ready' },
+    { label: t('orders.status_steps.ready'), completed: displayActiveOrder?.status === 'Ready' }
   ];
 
   // Format time as MM:SS
@@ -229,8 +231,8 @@ export default function OrdersPage() {
   return (
     <>
       <PageMeta
-        title="My Orders"
-        description="Track your restaurant orders in real-time"
+        title={t("orders.page_title")}
+        description={t("orders.page_desc")}
       />
 
       <div className="min-h-screen  bg-gray-50 dark:bg-gray-900 py-6 sm:py-12">
@@ -238,7 +240,7 @@ export default function OrdersPage() {
           {/* HEADER */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-              My Orders
+              {t("orders.page_title")}
             </h1>
 
             {isLoggedIn && (
@@ -254,7 +256,7 @@ export default function OrdersPage() {
                   `}
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  View History
+                  {t("orders.view_history")}
                 </button>
                 <button
                   onClick={handleRefresh}
@@ -271,7 +273,7 @@ export default function OrdersPage() {
                       refreshing ? "animate-spin" : ""
                     }`}
                   />
-                  Refresh
+                  {t("orders.refresh")}
                 </button>
               </div>
             )}
@@ -283,7 +285,7 @@ export default function OrdersPage() {
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Loading your orders...
+                  {t("orders.loading")}
                 </p>
               </div>
             </div>
@@ -301,10 +303,10 @@ export default function OrdersPage() {
                         <RefreshCw className="w-8 h-8 text-primary" />
                       </div>
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        Order in Progress
+                        {t("orders.order_in_progress")}
                       </h2>
                       <p className="text-gray-600 dark:text-gray-400">
-                        Track your order status below
+                        {t("orders.track_status_subtitle")}
                       </p>
                     </div>
 
@@ -320,14 +322,14 @@ export default function OrdersPage() {
                         className="flex-1 px-4 py-3 border-2 border-primary text-primary rounded-xl font-semibold hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
                       >
                         <Phone className="w-5 h-5" />
-                        Call the restaurant
+                        {t("orders.call_restaurant")}
                       </button>
                       <button 
                         onClick={() => setShowReviewModal(true)}
                         className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
                       >
                         <Star className="w-5 h-5" />
-                        Rate your experience
+                        {t("orders.rate_experience")}
                       </button>
                     </div>
                   </div>
@@ -347,10 +349,10 @@ export default function OrdersPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
             {/* Title */}
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Rate Your Experience
+              {t("orders.rate_experience_modal_title")}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              How was your order?
+              {t("orders.how_was_your_order")}
             </p>
 
             {/* Star Rating */}
@@ -372,7 +374,7 @@ export default function OrdersPage() {
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Share your feedback (optional)..."
+              placeholder={t("orders.share_feedback_placeholder")}
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mb-6 focus:outline-none focus:ring-2 focus:ring-primary"
               rows="4"
             />
@@ -383,7 +385,7 @@ export default function OrdersPage() {
                 onClick={handleSubmitReview}
                 className="w-full bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
               >
-                Submit Review
+                {t("orders.submit_review")}
               </button>
               <button
                 onClick={() => {
@@ -393,7 +395,7 @@ export default function OrdersPage() {
                 }}
                 className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl transition-colors"
               >
-                Cancel
+                {t("orders.cancel")}
               </button>
             </div>
           </div>
@@ -415,7 +417,7 @@ export default function OrdersPage() {
               {/* Header with Close Button */}
               <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between rounded-t-3xl">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Order History
+                  {t("orders.history_modal_title")}
                 </h2>
                 <button
                   onClick={() => setShowHistoryModal(false)}
@@ -435,7 +437,7 @@ export default function OrdersPage() {
                 ) : (
                   <div className="text-center py-12">
                     <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">No order history yet</p>
+                    <p className="text-gray-600 dark:text-gray-400">{t("orders.no_history")}</p>
                   </div>
                 )}
               </div>

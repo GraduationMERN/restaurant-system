@@ -1,7 +1,9 @@
 import Chart from "react-apexcharts";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function PeakHoursChart({ data = [] }) {
+  const { t } = useTranslation();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -64,16 +66,17 @@ export default function PeakHoursChart({ data = [] }) {
       xaxis: { lines: { show: false } },
     },
     tooltip: {
+      enabled: true,
       theme: isDark ? 'dark' : 'light',
-      y: { formatter: (val) => `${val} orders` }
+      y: { formatter: (val) => `${val} ${t("admin.orders") || "orders"}` }
     }
   };
 
-  const series = [{ name: "Orders", data: chartData.map(d => d.count) }];
+  const series = [{ name: t("admin.orders") || "Orders", data: chartData.map(d => d.count) }];
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-gray-900/50 sm:px-6 sm:pt-6">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">Peak Hours</h3>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">{t("peak_hours")}</h3>
       <div className="overflow-x-auto custom-scrollbar">
         <div className="min-w-[500px]">
           <Chart key={isDark ? 'dark' : 'light'} options={options} series={series} type="bar" height={250} />

@@ -1,28 +1,32 @@
 import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon, DollarLineIcon, ShootingStarIcon } from "../../icons/admin-icons";
 import Badge from "../ui/badge/Badge";
 
+import { useTranslation } from "react-i18next";
+
 export default function EcommerceMetrics({ metrics }) {
+  const { t } = useTranslation();
+  
   const cards = [
     {
-      label: "Today's Sales",
+      label: t("admin.todays_sales"),
       value: `$${(metrics?.sales?.value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
       change: metrics?.sales?.changePct || 0,
       icon: DollarLineIcon,
     },
     {
-      label: "Orders",
+      label: t("admin.orders"),
       value: `${metrics?.orders?.value || 0}`,
       change: metrics?.orders?.changePct || 0,
       icon: BoxIconLine,
     },
     {
-      label: "Customers",
+      label: t("admin.customers"),
       value: `${metrics?.customers?.value || 0}`,
       change: metrics?.customers?.changePct || 0,
       icon: GroupIcon,
     },
     {
-      label: "Avg. Rating",
+      label: t("admin.avg_rating"),
       value: `${(metrics?.rating?.value || 0).toFixed(1)}`,
       change: metrics?.rating?.changePct || 0,
       icon: ShootingStarIcon,

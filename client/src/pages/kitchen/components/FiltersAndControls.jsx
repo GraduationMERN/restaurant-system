@@ -1,8 +1,10 @@
 import React from 'react';
 import ComponentCard from '../../../components/common/ComponentCard';
 import { SortAsc } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const FiltersAndControls = ({ filterStatus, setFilterStatus, sortBy, setSortBy }) => {
+  const { t } = useTranslation();
   return (
     <ComponentCard>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -17,7 +19,7 @@ const FiltersAndControls = ({ filterStatus, setFilterStatus, sortBy, setSortBy }
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
               }`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {t("admin." + status)}
             </button>
           ))}
         </div>
@@ -29,12 +31,12 @@ const FiltersAndControls = ({ filterStatus, setFilterStatus, sortBy, setSortBy }
               onChange={(e) => setSortBy(e.target.value)}
               className="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-800 text-sm"
             >
-              <option value="createdAt">Oldest First</option>
-              <option value="-createdAt">Newest First</option>
-              <option value="estimatedTime">Shortest Time</option>
-              <option value="-estimatedTime">Longest Time</option>
-              <option value="itemsCount">Fewest Items</option>
-              <option value="-itemsCount">Most Items</option>
+              <option value="createdAt">{t("oldest_first")}</option>
+              <option value="-createdAt">{t("newest_first")}</option>
+              <option value="estimatedTime">{t("shortest_time")}</option>
+              <option value="-estimatedTime">{t("longest_time")}</option>
+              <option value="itemsCount">{t("fewest_items")}</option>
+              <option value="-itemsCount">{t("most_items")}</option>
             </select>
           </div>
         </div>

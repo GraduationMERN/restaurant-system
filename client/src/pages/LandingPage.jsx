@@ -126,7 +126,7 @@ export default function LandingPage() {
     },
     {
       image: "https://plus.unsplash.com/premium_photo-1682310144714-cb77b1e6d64a?w=600&h=600&fit=crop",
-      title: t("reviews"),
+      title: t("nav.reviews"),
       description: t("explore_reviews"),
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900",

@@ -446,26 +446,6 @@
 
 //   const handlePrevAd = () => {
 //     setCurrentAdIndex((prev) => (prev - 1 + promotionalAds.length) % promotionalAds.length);
-//   };
-
-//   if (!reviews || reviews.length === 0) {
-//     return (
-//       <div className="text-center py-12">
-//         <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-//           <Quote className="w-10 h-10 text-gray-400 dark:text-gray-500" />
-//         </div>
-//         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-//           {t("no_reviews")}
-//         </h3>
-//         <p className="text-gray-600 dark:text-gray-400">
-//           Be the first to share your experience
-//         </p>
-//       </div>
-//     );
-//   }
-
-//   const getInitials = (name) => {
-//     if (!name) return t("anonymous").slice(0, 2).toUpperCase();
 //     const parts = name.split(" ");
 //     return parts.length === 1
 //       ? parts[0][0].toUpperCase()
@@ -970,23 +950,23 @@ export default function ReviewsGrid({ reviews }) {
   const promotionalAds = [
     {
       id: 1,
-      title: "Weekend Special",
-      subtitle: "Family Feast Deal",
-      description: "Enjoy our exclusive weekend family bundle with 30% off all appetizers and desserts.",
+      title: t("reviews.promotions.weekend_special"),
+      subtitle: t("reviews.promotions.family_feast"),
+      description: t("reviews.promotions.family_feast_desc"),
       image: "https://plus.unsplash.com/premium_photo-1723662076067-5aa5881e69c0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8ZmFtaWx5JTIwZmVhc3QlMjBkYXl8ZW58MHx8MHx8fDA%3D",
-      ctaText: "Book Now",
-      badge: "30% OFF",
+      ctaText: t("reviews.promotions.book_now"),
+      badge: "30% OFF", 
       badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500",
       icon: Tag,
       expiresIn: "48:00:00"
     },
     {
       id: 2,
-      title: "New Menu Launch",
-      subtitle: "Seasonal Specials",
-      description: "Experience our chef's new seasonal creations featuring fresh ingredients.",
+      title: t("reviews.promotions.new_menu_launch"),
+      subtitle: t("reviews.promotions.seasonal_specials"),
+      description: t("reviews.promotions.seasonal_desc"),
       image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop",
-      ctaText: "View Menu",
+      ctaText: t("reviews.promotions.view_menu"),
       badge: "NEW",
       badgeColor: "bg-gradient-to-r from-blue-500 to-cyan-500",
       icon: Clock,

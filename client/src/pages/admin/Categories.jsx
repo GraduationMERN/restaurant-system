@@ -103,14 +103,14 @@ export default function Categories() {
 
   return (
     <>
-      <PageMeta title="Categories" description="Manage categories" />
-      <PageBreadcrumb pageTitle="Categories" />
+      <PageMeta title={t("admin.categories_title")} description={t("admin.manage_categories")} />
+      <PageBreadcrumb pageTitle={t("admin.categories_title")} />
 
       <ComponentCard>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold">Categories</h3>
+          <h3 className="text-lg font-semibold">{t("admin.categories_title")}</h3>
           <Button onClick={openCreate} className="w-full sm:w-auto">
-            + Add Category
+            + {t("admin.add_category")}
           </Button>
         </div>
       </ComponentCard>
@@ -119,7 +119,7 @@ export default function Categories() {
       <div
         className=" mt-4 grid  grid-cols-1  sm:grid-cols-2 gap-4"
       >
-        {loading && <div className="p-3">Loading...</div>}
+        {loading && <div className="p-3">{t("loading")}</div>}
 
         {!loading &&
           categories.map((c) => (
@@ -152,13 +152,13 @@ export default function Categories() {
                   className="text-brand-500 hover:text-brand-600 text-sm font-medium px-2 py-1"
                   onClick={() => openEdit(c)}
                 >
-                  Edit
+                  {t("edit")}
                 </button>
                 <button
                   className="text-error-500 hover:text-error-600 text-sm font-medium px-2 py-1"
                   onClick={() => handleDelete(c._id)}
                 >
-                  Delete
+                  {t("delete")}
                 </button>
               </div>
             </div>
@@ -173,12 +173,12 @@ export default function Categories() {
       >
         <div className="space-y-4">
           <h4 className="font-semibold text-lg">
-            {editing ? "Edit Category" : "Add Category"}
+            {editing ? t("admin.edit_category") : t("admin.add_category")}
           </h4>
 
           {/* Name Field */}
           <div className="space-y-1">
-            <Label>Name (EN)</Label>
+            <Label>{t("admin.name_en")}</Label>
             <Input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -186,7 +186,7 @@ export default function Categories() {
           </div>
 
           <div className="space-y-1">
-            <Label>Name (AR)</Label>
+            <Label>{t("admin.name_ar")}</Label>
             <Input
               className="text-right"
               value={form.name_ar}
@@ -198,7 +198,7 @@ export default function Categories() {
 
           {/* Image Field */}
           <div className="space-y-1">
-            <Label>Image</Label>
+            <Label>{t("admin.image")}</Label>
             <input
               type="file"
               accept="image/*"
@@ -219,10 +219,10 @@ export default function Categories() {
               onClick={() => setIsOpen(false)}
               disabled={saving}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button onClick={handleSave} disabled={!form.name || !form.name_ar} loading={saving}>
-              Save
+              {t("save")}
             </Button>
           </div>
         </div>

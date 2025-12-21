@@ -25,21 +25,21 @@ export default function ReviewsPage() {
 
   const handleOpenReviewModal = async () => {
     if (!user?.id) {
-      return warning("You must be logged in to write a review.");
+      return warning(t("review_login_warning"));
     }
 
     try {
       const res = await api.get("api/auth/me");
 
       if (res.data.orderCount < 1) {
-        return warning("You must complete at least one order before reviewing.");
+        return warning(t("review_order_warning"));
       }
 
-      success("Great! You can now leave a review.");
+      success(t("review_permission_success"));
       openModal();
     } catch (err) {
       console.error(err);
-      error("Unable to verify review permissions.");
+      error(t("review_permission_error"));
     }
   };
 
@@ -63,26 +63,26 @@ export default function ReviewsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-amber-500" />
                   <span className="text-xs sm:text-sm text-amber-600 dark:text-amber-400 font-medium">
-                    Share Your Experience
+                    {t("reviews.share_experience_cta")}
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  Tell Us About Your Meal
+                  {t("reviews.tell_us_about_meal")}
                 </h2>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-2xl">
-                  Your feedback helps us improve and tells others about your dining experience. 
-                  Every review contributes to our community.
+                  {t("reviews.feedback_helps_others")}
                 </p>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                   <button
                     onClick={handleOpenReviewModal}
                     className="bg-gradient-to-r from-gray-900 to-black dark:from-amber-600 dark:to-orange-600 text-white font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 text-sm sm:text-base w-full sm:w-auto text-center"
                   >
-                    Write a Review
+                    {t("reviews.write_review_btn")}
                   </button>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
-                    <span>Share your honest feedback</span>
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
+                    <span>{t("reviews.authentic_feedback_badge")}</span>
                   </div>
                 </div>
               </div>
@@ -104,14 +104,14 @@ export default function ReviewsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-3 sm:gap-0">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-                Recent Reviews
+                {t("reviews.recent_reviews_title")}
               </h2>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Latest feedback from our guests
+                {t("reviews.latest_feedback_subtitle")}
               </p>
             </div>
             <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
-              Showing {totalReviews} review{totalReviews !== 1 ? 's' : ''}
+              {t("reviews.total_reviews")}: {totalReviews}
             </div>
           </div>
 
@@ -165,7 +165,7 @@ export default function ReviewsPage() {
                             Limited seats available.
                           </p>
                           <button className="bg-white text-gray-900 font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-all duration-300 flex items-center gap-1.5 sm:gap-2 group text-sm sm:text-base w-full sm:w-auto">
-                            Learn More
+                            {t("reviews.view_details")}
                             <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                           </button>
                         </div>
@@ -185,16 +185,16 @@ export default function ReviewsPage() {
               <MessageSquare className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-              No Reviews Yet
+              {t("reviews.no_reviews_title")}
             </h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-md mx-auto">
-              Be the first to share your dining experience and help others discover our restaurant.
+              {t("reviews.be_first_review")}
             </p>
             <button
               onClick={handleOpenReviewModal}
               className="bg-gradient-to-r from-gray-900 to-black dark:from-amber-600 dark:to-orange-600 text-white font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
             >
-              Write First Review
+              {t("reviews.write_first_review")}
             </button>
           </div>
         )}
@@ -203,10 +203,10 @@ export default function ReviewsPage() {
         <div className="mt-8 sm:mt-12 md:mt-16">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-              Verified Reviews
+              {t("reviews.verified_reviews")}
             </h2>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              All reviews are from customers who have dined with us
+              {t("reviews.all_reviews_verified")}
             </p>
           </div>
           
@@ -216,10 +216,10 @@ export default function ReviewsPage() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 dark:bg-green-900/20 rounded-lg sm:rounded-xl flex items-center justify-center">
                   <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">Authentic Feedback</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("reviews.authentic_feedback_badge")}</h3>
               </div>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Every review is verified from actual dining experiences. We value honest feedback to continuously improve our service.
+                {t("reviews.all_reviews_verified")}
               </p>
             </div>
             
@@ -228,10 +228,10 @@ export default function ReviewsPage() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg sm:rounded-xl flex items-center justify-center">
                   <Star className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">Community Driven</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("reviews.community_driven")}</h3>
               </div>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Your reviews help other guests make informed decisions and guide us in creating better dining experiences.
+                {t("reviews.feedback_helps_others")}
               </p>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function ReviewsPage() {
                 <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-amber-500" />
                 <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{averageRating}</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Average Rating</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.average_rating")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -253,7 +253,7 @@ export default function ReviewsPage() {
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                 <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalReviews}</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Reviews</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.total_reviews")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -263,7 +263,7 @@ export default function ReviewsPage() {
                   {reviews.filter(r => r.rating >= 4).length}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Positive Reviews</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.positive_reviews")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -273,7 +273,7 @@ export default function ReviewsPage() {
                   {reviews.length > 0 ? Math.round((reviews.filter(r => r.rating >= 4).length / reviews.length) * 100) : 0}%
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Satisfaction Rate</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.satisfaction_rate")}</p>
             </div>
           </div>
         </div>

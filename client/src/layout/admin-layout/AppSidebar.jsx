@@ -7,29 +7,32 @@ import { ChevronDownIcon, GridIcon, HorizontaLDots, UserCircleIcon, BoxIconLine,
 import { useSidebar } from "../../context/SidebarContext";
 import { useSettings } from "../../context/SettingContext";
 
-const navItems = [
-  { icon: <GridIcon />, name: "Dashboard", path: "/admin/dashboard" },
-  { icon: <BoxIconLine />, name: "Orders", path: "/admin/orders" },
-  { icon: <TaskIcon />, name: "Menu Management", path: "/admin/menu" },
-  { icon: <TaskIcon />, name: "Categories", path: "/admin/categories" },
-  { icon: <ShootingStarIcon />, name: "Reviews", path: "/admin/reviews" },
-  { icon: <DollarLineIcon />, name: "Rewards", path: "/admin/rewards" },
-  { icon: <DollarLineIcon />, name: "Reward Orders", path: "/admin/reward-orders" },
-  { icon: <DollarLineIcon />, name: "Coupons", path: "/admin/coupons" },
-  { icon: <UserCircleIcon />, name: "Users", path: "/admin/users" },
-  { icon: <BoxIconLine />, name: "Kitchen", path: "/kitchen" },
-  { icon: <GroupIcon />, name: "Cashier", path: "/cashier" },
-  { icon: <SettingsGearIcon />, name: "Settings", path: "/admin/settings" },
-];
-
-const othersItems = [];
+import { useMemo } from "react";
+// ... imports
 
 const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const { settings } = useSettings();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
   const location = useLocation();
+
+  const navItems = useMemo(() => [
+    { icon: <GridIcon />, name: t("admin.dashboard"), path: "/admin/dashboard" },
+    { icon: <BoxIconLine />, name: t("admin.orders"), path: "/admin/orders" },
+    { icon: <TaskIcon />, name: t("admin.menu_management"), path: "/admin/menu" },
+    { icon: <TaskIcon />, name: t("admin.categories"), path: "/admin/categories" },
+    { icon: <ShootingStarIcon />, name: t("admin.reviews"), path: "/admin/reviews" },
+    { icon: <DollarLineIcon />, name: t("admin.rewards"), path: "/admin/rewards" },
+    { icon: <DollarLineIcon />, name: t("admin.reward_orders"), path: "/admin/reward-orders" },
+    { icon: <DollarLineIcon />, name: t("admin.coupons"), path: "/admin/coupons" },
+    { icon: <UserCircleIcon />, name: t("admin.users"), path: "/admin/users" },
+    { icon: <BoxIconLine />, name: t("admin.kitchen"), path: "/kitchen" },
+    { icon: <GroupIcon />, name: t("admin.cashier"), path: "/cashier" },
+    { icon: <SettingsGearIcon />, name: t("admin.settings"), path: "/admin/settings" },
+  ], [t]);
+
+  const othersItems = useMemo(() => [], []);
 
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [subMenuHeight, setSubMenuHeight] = useState({});
@@ -186,7 +189,7 @@ const AppSidebar = () => {
                                 : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
                             }`}
                           >
-                            new
+                            {t("admin.new")}
                           </span>
                         )}
                         {subItem.pro && (
@@ -197,7 +200,7 @@ const AppSidebar = () => {
                                 : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
                             }`}
                           >
-                            pro
+                            {t("admin.pro")}
                           </span>
                         )}
                       </span>
@@ -252,7 +255,7 @@ const AppSidebar = () => {
                 <span className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
                   {settings.restaurantName || "Restaurant"}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Admin Panel</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t("admin.panel")}</span>
               </div>
             </>
           ) : (
@@ -271,7 +274,7 @@ const AppSidebar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-primary hover:text-white text-gray-600 dark:text-gray-400 transition-all duration-200 group"
-            title="Open Site"
+            title={t("admin.open_site")}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -300,7 +303,7 @@ const AppSidebar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-primary hover:text-white text-gray-600 dark:text-gray-400 transition-all duration-200"
-            title="Open Site"
+            title={t("admin.open_site")}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -319,7 +322,7 @@ const AppSidebar = () => {
               }`}
             >
               {isExpanded || isHovered || isMobileOpen ? (
-                "Menu"
+                t("admin.menu_label")
               ) : (
                 <div className="flex justify-center">
                   <HorizontaLDots className="w-5 h-5" />
@@ -337,7 +340,7 @@ const AppSidebar = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  t("admin.others_label")
                 ) : (
                   <div className="flex justify-center">
                     <HorizontaLDots className="w-5 h-5" />

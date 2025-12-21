@@ -11,7 +11,10 @@ import { useToast } from "../../hooks/useToast";
 import { useSettings } from "../../context/SettingContext";
 import api from "../../api/axios";
 
+import { useTranslation } from "react-i18next";
+
 export default function Settings() {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const toast = useToast();
   const [restaurantName, setRestaurantName] = useState(settings.restaurantName);
@@ -133,13 +136,13 @@ export default function Settings() {
       const res = await api.put("/api/restaurant", payload);
 
       updateSettings(res.data);
-      toast.showToast({ message: "Settings saved", type: "success" });
+      toast.showToast({ message: t("admin.settings_saved"), type: "success" });
       
       // Clear the file state after successful save
       setLogoFile(null);
       setMenuImageFile(null);
     } catch (error) {
-      toast.showToast({ message: "Failed to save settings", type: "error" });
+      toast.showToast({ message: t("admin.settings_save_fail"), type: "error" });
     } finally {
       setSaving(false);
     }
@@ -199,10 +202,10 @@ export default function Settings() {
   return (
     <>
       <PageMeta
-        title="Settings | Restaurant Admin"
-        description="Manage restaurant branding, language and notifications"
+        title={t("admin.settings_title")}
+        description={t("admin.settings_desc")}
       />
-      <PageBreadcrumb pageTitle="Settings" />
+      <PageBreadcrumb pageTitle={t("admin.settings_title")} />
 
       {/* Main Grid - 2 Columns */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -218,26 +221,26 @@ export default function Settings() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                Restaurant Information
+                {t("admin.restaurant_info")}
               </h3>
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
               <div className="lg:col-span-1">
-                <Label>Restaurant Name</Label>
+                <Label>{t("restaurant_name")}</Label>
                 <Input
                   value={restaurantName}
                   onChange={(e) => setRestaurantName(e.target.value)}
                 />
               </div>
               <div className="lg:col-span-1">
-                <Label>Phone</Label>
+                <Label>{t("phone")}</Label>
                 <Input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
               <div className="lg:col-span-2">
-                <Label>Description</Label>
+                <Label>{t("popup.description")}</Label>
                 <TextArea
                   rows={3}
                   value={description}
@@ -245,7 +248,7 @@ export default function Settings() {
                 />
               </div>
               <div className="lg:col-span-2">
-                <Label>Address</Label>
+                <Label>{t("address")}</Label>
                 <Input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -262,15 +265,15 @@ export default function Settings() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Policies</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("admin.policies")}</h3>
             </div>
             <div className="space-y-5">
               <div>
-                <Label>Terms of Service</Label>
+                <Label>{t("admin.terms_of_service")}</Label>
                 <TextArea rows={11} value={terms} onChange={setTerms} />
               </div>
               <div>
-                <Label>Privacy Policy</Label>
+                <Label>{t("admin.privacy_policy")}</Label>
                 <TextArea rows={11} value={privacy} onChange={setPrivacy} />
               </div>
             </div>
@@ -288,25 +291,25 @@ export default function Settings() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                About & Support
+                {t("admin.about_support")}
               </h3>
             </div>
             <div className="space-y-5">
               <div>
-                <Label>About Title</Label>
+                <Label>{t("admin.about_title_label")}</Label>
                 <Input value={aboutTitle} onChange={(e)=>setAboutTitle(e.target.value)} />
               </div>
               <div>
-                <Label>About Content</Label>
+                <Label>{t("admin.about_content_label")}</Label>
                 <TextArea rows={4} value={aboutContent} onChange={setAboutContent} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <Label>Support Email</Label>
+                  <Label>{t("admin.support_email")}</Label>
                   <Input value={supportEmail} onChange={(e)=>setSupportEmail(e.target.value)} />
                 </div>
                 <div>
-                  <Label>Support Phone</Label>
+                  <Label>{t("admin.support_phone")}</Label>
                   <Input value={supportPhone} onChange={(e)=>setSupportPhone(e.target.value)} />
                 </div>
               </div>
@@ -322,25 +325,25 @@ export default function Settings() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                Branding
+                {t("admin.branding")}
               </h3>
             </div>
             <div className="space-y-5">
               {/* Colors Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <ColorPicker
-                  label="Primary Color"
+                  label={t("admin.primary_color")}
                   value={primaryColor}
                   onChange={setPrimaryColor}
                 />
                 <div>
                   <ColorPicker
-                    label="Reward Color"
+                    label={t("admin.reward_color")}
                     value={secondaryColor}
                     onChange={setSecondaryColor}
                   />
                   <div className="mt-2 flex items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Recommended:</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{t("admin.recommended")}:</span>
                     <button
                       type="button"
                       onClick={() => setSecondaryColor("#F56E00")}
@@ -358,7 +361,7 @@ export default function Settings() {
 
               {/* Logo Upload */}
               <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                <Label>Logo</Label>
+                <Label>{t("admin.logo")}</Label>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="h-14 w-14 overflow-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     {logoPreview ? (
@@ -376,7 +379,7 @@ export default function Settings() {
                     onClick={triggerLogoUpload}
                     className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
                   >
-                    {logoPreview ? "Change Logo" : "Upload Logo"}
+                    {logoPreview ? t("admin.change_logo") : t("admin.upload_logo")}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -398,7 +401,7 @@ export default function Settings() {
 
               {/* Menu Image Upload/Generate */}
               <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                <Label>Menu Image (for Chatbot)</Label>
+                <Label>{t("admin.menu_image_chatbot")}</Label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                   Upload your own image or generate one from your menu products
                 </p>
@@ -447,7 +450,7 @@ export default function Settings() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
-                            Generate Image
+                            {t("admin.generate_image")}
                           </>
                         )}
                       </button>
@@ -459,7 +462,7 @@ export default function Settings() {
                       onClick={() => menuImageInputRef.current?.click()}
                       className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
                     >
-                      {menuImagePreview ? "Change Image" : "Upload Image"}
+                      {menuImagePreview ? t("admin.change_image") : t("admin.upload_image")}
                     </button>
                   </div>
                   
@@ -514,12 +517,12 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <Checkbox label="New Order Alerts" checked={notifyNewOrder} onChange={setNotifyNewOrder} />
-                <Checkbox label="Review Notifications" checked={notifyReview} onChange={setNotifyReview} />
+                <Checkbox label={t("admin.new_order_alerts")} checked={notifyNewOrder} onChange={setNotifyNewOrder} />
+                <Checkbox label={t("admin.review_notifications")} checked={notifyReview} onChange={setNotifyReview} />
               </div>
               <div className="space-y-3">
-                <Checkbox label="Daily Sales Reports" checked={notifyDailySales} onChange={setNotifyDailySales} />
-                <Checkbox label="Low Stock Alerts" checked={notifyLowStock} onChange={setNotifyLowStock} />
+                <Checkbox label={t("admin.daily_sales_reports")} checked={notifyDailySales} onChange={setNotifyDailySales} />
+                <Checkbox label={t("admin.low_stock_alerts")} checked={notifyLowStock} onChange={setNotifyLowStock} />
               </div>
             </div>
           </div>
@@ -535,10 +538,10 @@ export default function Settings() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">FAQs</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("admin.faqs")}</h3>
           </div>
           <Button size="sm" onClick={()=> setFaqs([...faqs, { question: "", answer: "" }])}>
-            + Add FAQ
+            + {t("admin.add_faq")}
           </Button>
         </div>
         
@@ -547,7 +550,7 @@ export default function Settings() {
             <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p>No FAQs added yet. Click "Add FAQ" to create one.</p>
+            <p>{t("admin.no_faqs")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -555,16 +558,16 @@ export default function Settings() {
               <div key={idx} className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <Label>Question {idx + 1}</Label>
+                    <Label>{t("admin.question")} {idx + 1}</Label>
                     <Input value={faq.question} onChange={(e)=>{
                       const next=[...faqs]; next[idx]={...next[idx], question:e.target.value}; setFaqs(next);
-                    }} placeholder="Enter the question..." />
+                    }} placeholder={t("admin.question") + "..."} />
                   </div>
                   <div>
-                    <Label>Answer</Label>
+                    <Label>{t("admin.answer")}</Label>
                     <Input value={faq.answer} onChange={(e)=>{
                       const next=[...faqs]; next[idx]={...next[idx], answer:e.target.value}; setFaqs(next);
-                    }} placeholder="Enter the answer..." />
+                    }} placeholder={t("admin.answer") + "..."} />
                   </div>
                 </div>
                 <div className="mt-3 flex justify-end">
@@ -573,7 +576,7 @@ export default function Settings() {
                     onClick={()=>{ const next=[...faqs]; next.splice(idx,1); setFaqs(next); }}
                     className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                   >
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
               </div>
@@ -584,9 +587,9 @@ export default function Settings() {
 
       {/* Save Actions */}
       <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-        <Button variant="outline" disabled={saving}>Cancel</Button>
+        <Button variant="outline" disabled={saving}>{t("cancel")}</Button>
         <Button variant="primary" onClick={handleSave} loading={saving}>
-          Save Changes
+          {t("admin.save_changes")}
         </Button>
       </div>
     </>

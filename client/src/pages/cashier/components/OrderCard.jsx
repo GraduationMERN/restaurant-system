@@ -9,6 +9,7 @@ import {
   Trash2,
   Edit2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const STATUS_COLORS = {
   pending: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", badge: "bg-yellow-100" },
@@ -28,6 +29,7 @@ const PAYMENT_STATUS_COLORS = {
 };
 
 export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdatePayment, onDelete,}) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
@@ -41,7 +43,7 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
   const prepTime = Math.floor((now - createdTime) / 1000 / 60); // minutes
 
   // Get customer name
-  const customerName = order.user?.name || order.customerInfo?.name || "Walk-In Customer";
+  const customerName = order.user?.name || order.customerInfo?.name || t("walk_in_customer");
 
   // Get order number
   const orderNumber = isRewardOrder 
@@ -57,16 +59,16 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
-            {isRewardOrder ? `Reward ${orderNumber}` : `Order #${orderNumber}`}
+            {isRewardOrder ? `${t("reward")} ${orderNumber}` : `${t("order")} #${orderNumber}`}
           </h3>
           <span
             className={`px-3 py-1 rounded-full text-sm font-bold ${colors.badge} ${colors.text} uppercase`}
           >
-            {order.status}
+            {t("admin." + order.status)}
           </span>
           {isRewardOrder && (
             <span className="px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-700 uppercase">
-              Reward
+              {t("reward")}
             </span>
           )}
         </div>
@@ -81,23 +83,23 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
         <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            <span>{prepTime} min ago</span>
+            <span>{prepTime} {t("min_ago")}</span>
           </div>
           {isRewardOrder ? (
             <div className="flex items-center gap-1">
               <ChefHat className="w-4 h-4" />
-              <span>1 item</span>
+              <span>1 {t("item")}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1">
               <ChefHat className="w-4 h-4" />
-              <span>{order.items?.length || 0} items</span>
+              <span>{order.items?.length || 0} {t("items")}</span>
             </div>
           )}
           <div className="flex items-center gap-1">
             <DollarSign className="w-4 h-4" />
             <span className="font-bold text-amber-600">
-              {isRewardOrder ? `${order.pointsUsed} pts` : `$${(order.totalAmount || order.total || 0).toFixed(2)}`}
+              {isRewardOrder ? `${order.pointsUsed} ${t("pts")}` : `${t("currency_symbol")}${(order.totalAmount || order.total || 0).toFixed(2)}`}
             </span>
           </div>
         </div>
@@ -108,14 +110,14 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
         <button
           onClick={() => onUpdateStatus(order)}
           className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
-          title="Update Status"
+          title={t("update_status")}
         >
           <Edit2 className="w-4 h-4" />
         </button>
         <button
           onClick={() => onDelete(order._id)}
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
-          title="Delete Order"
+          title={t("delete_order")}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -136,14 +138,14 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
         {isRewardOrder ? (
           /* Reward Order Details */
           <div>
-            <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
+            <h4 className="font-bold text-slate-900 mb-2 text-sm">{t("items")}</h4>
             <ul className="space-y-2">
               <li className="flex justify-between items-center text-sm text-slate-700 bg-purple-50 p-2 rounded-lg shadow-sm">
                 <span>
-                  {order.reward?.productId?.name || 'Reward Item'} x 1
+                  {order.reward?.productId?.name || t("reward_item")} x 1
                 </span>
                 <span className="font-bold text-purple-700">
-                  {order.pointsUsed} pts
+                  {order.pointsUsed} {t("pts")}
                 </span>
               </li>
             </ul>
@@ -153,7 +155,7 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
           <>
             {/* Items List */}
             <div>
-              <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
+              <h4 className="font-bold text-slate-900 mb-2 text-sm">{t("items")}</h4>
               <ul className="space-y-2">
                 {order.items?.map((item, idx) => (
                   <li
@@ -164,7 +166,7 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
                       {item.name || item.productId?.name} x {item.quantity}
                     </span>
                     <span className="font-bold">
-                      ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
+                      {t("currency_symbol")}{(item.totalPrice || item.price * item.quantity).toFixed(2)}
                     </span>
                   </li>
                 ))}
@@ -173,12 +175,12 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
 
             {/* Payment Status */}
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="text-sm font-bold text-slate-700">Payment:</span>
+              <span className="text-sm font-bold text-slate-700">{t("payment")}:</span>
               <div className="flex gap-2 flex-wrap">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
                 >
-                  {order.paymentStatus || "pending"}
+                  {t("admin." + (order.paymentStatus || "pending"))}
                 </span>
                 {order.paymentMethod && (
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-800">
@@ -198,13 +200,13 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
               onClick={() => onViewDetails(order)}
               className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
             >
-              Full Details
+              {t("full_details")}
             </button>
             <button
               onClick={() => onUpdatePayment(order)}
               className="flex-1 bg-[#7B4019] hover:bg-[#593114] text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
             >
-              Payment
+              {t("payment")}
             </button>
           </div>
           )}

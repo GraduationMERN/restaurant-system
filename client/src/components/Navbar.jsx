@@ -48,11 +48,11 @@ export default function Navbar() {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: t("dashboard"), icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("nav.dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: t("kitchen"), icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("nav.kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: t("cashier"), icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("nav.cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
     }
@@ -93,7 +93,7 @@ export default function Navbar() {
         className={`flex flex-col items-center transition-colors ${isActive("/") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Home size={20} />
-        <span className="text-xs">{t("home")}</span>
+        <span className="text-xs">{t("nav.home")}</span>
       </Link>
 
       {/* Menu */}
@@ -102,7 +102,7 @@ export default function Navbar() {
         className={`flex flex-col items-center transition-colors ${isActive("/menu") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Utensils size={20} />
-        <span className="text-xs">{t("menu")}</span>
+        <span className="text-xs">{t("nav.menu")}</span>
       </Link>
    
       {/* Orders */}
@@ -111,7 +111,7 @@ export default function Navbar() {
         className={`flex flex-col items-center transition-colors ${isActive("/orders") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
       >
         <Clock4 size={20} />
-        <span className="text-xs">{t("orders")}</span>
+        <span className="text-xs">{t("nav.orders")}</span>
       </Link>
 
       {/* Reviews */}
@@ -129,7 +129,7 @@ export default function Navbar() {
         className={` group flex flex-col items-center transition-colors ${isActive("/rewards") ? "text-secondary" : "text-secondary/70 hover:text-secondary"}`}
       >
         <Gift size={20} />
-        <span className="text-xs">{t("rewards")}</span>
+        <span className="text-xs">{t("nav.rewards")}</span>
       </Link>
 
       {/* Support */}
@@ -150,7 +150,7 @@ export default function Navbar() {
           className={`flex flex-col items-center transition-colors ${isActive("/login") ? "text-primary" : "text-gray-600 dark:text-gray-400 hover:text-primary"}`}
         >
           <User size={20} />
-          <span className="text-xs">{t("login")}</span>
+          <span className="text-xs">{t("nav.login")}</span>
         </Link>
       ) : (
         <div className="relative" ref={dropdownRef}>
@@ -167,7 +167,7 @@ export default function Navbar() {
             ) : (
               <User size={20} className="text-gray-600 dark:text-gray-400" />
             )}
-            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">{t("me")}</span>
+            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">{t("nav.me")}</span>
           </button>
 
           {/* Dropdown Menu - appears above the button */}
@@ -179,7 +179,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <User size={16} />
-                {t("profile")}
+                {t("nav.profile")}
               </Link>
               {roleLink && (
                 <a
@@ -199,7 +199,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
               >
                 <LogOut size={16} />
-                {t("logout")}
+                {t("nav.logout")}
               </button>
             </div>
           )}

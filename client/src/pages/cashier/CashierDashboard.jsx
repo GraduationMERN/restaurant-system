@@ -11,9 +11,11 @@ import api from "../../api/axios";
 import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
 import StaffNavbar from "../../components/StaffNavbar";
+import { useTranslation } from "react-i18next";
 
 
 export default function CashierDashboard() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { isCashier, isAdmin } = useRole();
   const [activeTab, setActiveTab] = useState("orders");
@@ -72,8 +74,8 @@ export default function CashierDashboard() {
 
   return (
     <>
-      <PageMeta title="Cashier Dashboard" description="Manage orders and payments" />
-      {isAdmin && <PageBreadcrumb pageTitle="Cashier Dashboard" />}
+      <PageMeta title={t("admin.cashier_dashboard")} description={t("admin.cashier_desc")} />
+      {isAdmin && <PageBreadcrumb pageTitle={t("admin.cashier_dashboard")} />}
       {isCashier && <StaffNavbar />}  
       <div className="space-y-6">
         {/* Header with Stats Summary */}
@@ -82,10 +84,10 @@ export default function CashierDashboard() {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
-                Cashier Dashboard
+                {t("admin.cashier_dashboard")}
               </h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Manage orders and process payments
+                {t("admin.cashier_desc")}
               </p>
             </div>
             <Button 
@@ -94,7 +96,7 @@ export default function CashierDashboard() {
               size="sm"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Refresh"}
+              {loading ? t("loading") : t("admin.refresh")}
             </Button>
           </div>
         </ComponentCard>
@@ -104,7 +106,7 @@ export default function CashierDashboard() {
           <ComponentCard className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-900/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 dark:text-blue-400">Total Orders</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">{t("admin.total_orders")}</p>
                 <p className="text-2xl font-bold text-blue-800 dark:text-blue-300">{stats.totalOrders}</p>
               </div>
               <ShoppingCart className="h-8 w-8 text-blue-500 dark:text-blue-400 opacity-50" />
@@ -114,7 +116,7 @@ export default function CashierDashboard() {
           <ComponentCard className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-900/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-600 dark:text-green-400">Total Revenue</p>
+                <p className="text-sm text-green-600 dark:text-green-400">{t("admin.total_revenue")}</p>
                 <p className="text-2xl font-bold text-green-800 dark:text-green-300">
                   ${stats.totalRevenue.toFixed(2)}
                 </p>
@@ -126,7 +128,7 @@ export default function CashierDashboard() {
           <ComponentCard className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/10 dark:to-orange-900/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-600 dark:text-orange-400">Active Orders</p>
+                <p className="text-sm text-orange-600 dark:text-orange-400">{t("active_orders")}</p>
                 <p className="text-2xl font-bold text-orange-800 dark:text-orange-300">{stats.activeOrders}</p>
               </div>
               <Clock className="h-8 w-8 text-orange-500 dark:text-orange-400 opacity-50" />
@@ -136,7 +138,7 @@ export default function CashierDashboard() {
           <ComponentCard className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-900/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-red-600 dark:text-red-400">Pending Payments</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{t("admin.pending_payments")}</p>
                 <p className="text-2xl font-bold text-red-800 dark:text-red-300">{stats.pendingPayments}</p>
               </div>
               <CreditCard className="h-8 w-8 text-red-500 dark:text-red-400 opacity-50" />
@@ -155,7 +157,7 @@ export default function CashierDashboard() {
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
-              📋 Manage Orders
+              📋 {t("admin.manage_orders")}
             </button>
             <button
               onClick={() => setActiveTab("direct")}
@@ -165,7 +167,7 @@ export default function CashierDashboard() {
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
-              ➕ Create Direct Order
+              ➕ {t("admin.create_direct_order")}
             </button>
           </div>
 

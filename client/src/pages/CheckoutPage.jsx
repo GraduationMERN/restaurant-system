@@ -1,5 +1,6 @@
 // src/pages/CheckoutPage.jsx
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +24,7 @@ L.Icon.Default.mergeOptions({
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { products, totalPrice, loading, _id: cartId } = useSelector(
     (state) => state.cart
   );
@@ -103,11 +105,11 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setDeliveryLocation({
-          lat: latitude,
-          lng: longitude,
-          address: "Current Location",
-        });
+          setDeliveryLocation({
+            lat: latitude,
+            lng: longitude,
+            address: t("checkout.current_location"),
+          });
         setLocationError(null);
         setLocationLoading(false);
       },
@@ -123,7 +125,7 @@ export default function CheckoutPage() {
     if (mapSelectedPos) {
       setDeliveryLocation({
         ...mapSelectedPos,
-        address: "Picked on map",
+        address: t("checkout.picked_on_map"),
       });
       setShowMapPicker(false);
     } else {
@@ -327,7 +329,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading cart...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t("loading")}...</p>
         </div>
       </div>
     );
@@ -343,7 +345,7 @@ export default function CheckoutPage() {
             className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary/90 transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back
+            {t("checkout.back")}
           </button>
         </div>
       </div>
@@ -361,9 +363,9 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 space-y-6 pl-0 lg:pl-5">
             {/* Header Section */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">My Order</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("checkout.my_order")}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Confirm your order so we can prep it.
+                {t("checkout.confirm_order_desc")}
               </p>
             </div>
 
@@ -420,7 +422,7 @@ export default function CheckoutPage() {
                             onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
                             className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                           >
-                            <option value="" className="bg-white dark:bg-gray-700">Select {opt.name}</option>
+                            <option value="" className="bg-white dark:bg-gray-700">{t("checkout.select_opt", { name: opt.name })}</option>
                             {opt.choices.map((choice) => (
                               <option
                                 key={choice._id}
@@ -442,7 +444,7 @@ export default function CheckoutPage() {
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4 mr-1.5" />
-                        Delete
+                        {t("checkout.delete")}
                       </button>
                     </div>
                   </div>
@@ -453,12 +455,12 @@ export default function CheckoutPage() {
                 <div className="h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Gift className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400">Your cart is empty</p>
+                <p className="text-gray-500 dark:text-gray-400">{t("checkout.cart_empty")}</p>
                 <button
                   onClick={() => navigate('/')}
                   className="mt-4 text-primary dark:text-primary/90 hover:text-primary/110 dark:hover:text-primary/90 font-medium"
                 >
-                  Browse our menu
+                  {t("checkout.browse_menu")}
                 </button>
               </div>
             )}
@@ -476,7 +478,7 @@ export default function CheckoutPage() {
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border-2 border-dashed border-primary/90 dark:border-primary/110 text-primary dark:text-primary/90 rounded-2xl py-4 hover:bg-white dark:hover:bg-primary-900/10 transition-all duration-300"
             >
               <Plus className="w-5 h-5" />
-              Add other items
+              {t("checkout.add_items")}
             </button>
 
             {/* Points Modal - Always Visible */}
@@ -496,9 +498,9 @@ export default function CheckoutPage() {
                     onChange={(e) => setServiceType(e.target.value)}
                     className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
                   >
-                    <option value="pickup" className="bg-white dark:bg-gray-700">Pick up</option>
-                    <option value="dine-in" className="bg-white dark:bg-gray-700">Dine-in</option>
-                    <option value="delivery" className="bg-white dark:bg-gray-700">Delivery</option>
+                    <option value="pickup" className="bg-white dark:bg-gray-700">{t("checkout.pickup")}</option>
+                    <option value="dine-in" className="bg-white dark:bg-gray-700">{t("checkout.dine_in")}</option>
+                    <option value="delivery" className="bg-white dark:bg-gray-700">{t("checkout.delivery")}</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 </div>
@@ -509,7 +511,7 @@ export default function CheckoutPage() {
                 <div className="mb-6">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
                     <MapPin className="w-4 h-4 mr-2" />
-                    Delivery Location
+                    {t("checkout.delivery_location")}
                   </h4>
 
                   {locationError && (
@@ -525,7 +527,7 @@ export default function CheckoutPage() {
                           <MapPin className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
-                              Location Saved
+                              {t("checkout.location_saved")}
                             </p>
                             <p className="text-sm text-green-700 dark:text-green-400 break-words">
                               {deliveryLocation.address}
@@ -540,19 +542,19 @@ export default function CheckoutPage() {
                           <input
                             value={contactName}
                             onChange={(e) => setContactName(e.target.value)}
-                            placeholder="Full name"
+                            placeholder={t("checkout.full_name")}
                             className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                           <input
                             value={contactPhone}
                             onChange={(e) => setContactPhone(e.target.value)}
-                            placeholder="Phone number"
+                            placeholder={t("checkout.phone_number")}
                             className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                           <textarea
                             value={contactAddress}
                             onChange={(e) => setContactAddress(e.target.value)}
-                            placeholder="Address details"
+                            placeholder={t("checkout.address_details")}
                             className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           />
                         </div>
@@ -565,13 +567,13 @@ export default function CheckoutPage() {
                             }}
                             className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
                           >
-                            ✏️ Change Location
+                            ✏️ {t("checkout.change_location")}
                           </button>
                           <button
                             onClick={() => setShowMapPicker(true)}
                             className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium"
                           >
-                            📍 Pick on map
+                            📍 {t("checkout.pick_on_map")}
                           </button>
                         </div>
                       </div>
@@ -589,12 +591,12 @@ export default function CheckoutPage() {
                             {locationLoading ? (
                               <>
                                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                Getting location...
+                                {t("checkout.getting_location")}
                               </>
                             ) : (
                               <>
                                 <MapPin className="w-5 h-5" />
-                                Share My Location
+                                {t("checkout.share_location")}
                               </>
                             )}
                           </button>
@@ -606,7 +608,7 @@ export default function CheckoutPage() {
            text-white
            transition-all"
                           >
-                            Pick on map
+                            {t("checkout.pick_on_map")}
                           </button>
                         </div>
                       </div>
@@ -620,12 +622,12 @@ export default function CheckoutPage() {
               {/* Table Number for Dine-in */}
               {serviceType === "dine-in" && (
                 <div className="mb-6">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Table Number</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">{t("checkout.table_number")}</h3>
                   <input
                     type="text"
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
-                    placeholder="Enter table number"
+                    placeholder={t("checkout.enter_table_number")}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                   />
                 </div>
@@ -635,12 +637,12 @@ export default function CheckoutPage() {
               <div className="mb-6">
                 <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  Special Instructions
+                  {t("checkout.special_instructions")}
                 </h3>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any special requests? (e.g., extra sauce, no onions)"
+                  placeholder={t("checkout.special_instructions_placeholder")}
                   rows={3}
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none transition-colors"
                 />
@@ -650,7 +652,7 @@ export default function CheckoutPage() {
               <div className="mb-6">
                 <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
                   <Gift className="w-4 h-4 mr-2" />
-                  Coupon / Promo Code
+                  {t("checkout.coupon_code")}
                 </h3>
 
                 {coupon ? (
@@ -659,7 +661,7 @@ export default function CheckoutPage() {
                       <div>
                         <p className="font-semibold text-green-900 dark:text-green-200">{coupon.code}</p>
                         <p className="text-sm text-green-700 dark:text-green-300">
-                          {coupon.discountPercentage}% discount applied
+                          {t("checkout.discount_applied")}
                         </p>
                       </div>
                       <button
@@ -678,7 +680,7 @@ export default function CheckoutPage() {
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && applyCoupon()}
-                      placeholder="Enter coupon code"
+                      placeholder={t("checkout.enter_coupon_placeholder")}
                       className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                     />
                     <button
@@ -687,7 +689,7 @@ export default function CheckoutPage() {
                       disabled={couponLoading}
                       className="px-4 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {couponLoading ? "Checking..." : "Apply"}
+                      {couponLoading ? t("checkout.checking") : t("checkout.apply")}
                     </button>
                   </div>
                 )}
@@ -700,21 +702,21 @@ export default function CheckoutPage() {
               {/* Price Breakdown */}
               <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t("checkout.subtotal")}</span>
                   <span className="font-medium text-gray-900 dark:text-white">EGP {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">VAT</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t("checkout.vat")}</span>
                   <span className="font-medium text-gray-900 dark:text-white">EGP {vat.toFixed(2)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-green-600 dark:text-green-400">Discount ({coupon?.discountPercentage}%)</span>
+                    <span className="text-green-600 dark:text-green-400">{t("checkout.discount_with_pct", { pct: coupon?.discountPercentage })}</span>
                     <span className="font-medium text-green-600 dark:text-green-400">-EGP {discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{t("checkout.total")}</span>
                   <span className="text-xl font-bold text-primary dark:text-primary/90">EGP {total.toFixed(2)}</span>
                 </div>
               </div>
@@ -731,9 +733,9 @@ export default function CheckoutPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating Order...
+                    {t("checkout.creating_order")}
                   </span>
-                ) : "Confirm Order"}
+                ) : t("checkout.confirm_order")}
               </button>
             </div>
           </div>
@@ -745,17 +747,17 @@ export default function CheckoutPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold">Pick  location</h3>
+              <h3 className="font-semibold">{t("checkout.map_picker_title")}</h3>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowMapPicker(false)} className="text-sm text-gray-500">Cancel</button>
+                <button onClick={() => setShowMapPicker(false)} className="text-sm text-gray-500">{t("checkout.cancel")}</button>
               </div>
             </div>
             <div style={{ height: 400 }}>
               <div id="map" style={{ height: "100%", width: "100%" }} />
             </div>
             <div className="p-4 flex gap-3 justify-end border-t dark:border-gray-700">
-              <button onClick={() => setShowMapPicker(false)} className="px-4 py-2 rounded-lg border">Close</button>
-              <button onClick={saveMapLocation} className="px-4 py-2 rounded-lg bg-primary text-white">Confirm location</button>
+              <button onClick={() => setShowMapPicker(false)} className="px-4 py-2 rounded-lg border">{t("checkout.close")}</button>
+              <button onClick={saveMapLocation} className="px-4 py-2 rounded-lg bg-primary text-white">{t("checkout.confirm_location")}</button>
             </div>
           </div>
         </div>
