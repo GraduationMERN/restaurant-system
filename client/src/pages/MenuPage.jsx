@@ -202,7 +202,7 @@ function MenuPage() {
           {t("Hello")}, <span className="text-primary font-bold">{user ? user.name.split(" ")[0] : t("Guest")}</span>
         </p>
         {/* CART */}
-        <div className="absolute right-6 top-3">
+  <div className="absolute ltr:right-6 rtl:left-6 top-3">
           <button
             onClick={() => navigate("/checkout")}
             className="relative bg-white dark:bg-gray-900 text-primary px-3 py-2 rounded-full shadow-lg flex items-center gap-2"
