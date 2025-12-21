@@ -764,11 +764,7 @@
          "your_name_hidden": "لن يظهر اسمك للعامة"
     }
   },
-  "orders": {
-    "page_title": "طلباتي",
-    "page_desc": "تتبع طلباتك في الوقت الفعلي",
-    "view_history": "سجل الطلبات",
-    "refresh": "تحديث",
+
   "checkout": {
     "my_order": "طلبي",
     "confirm_order_desc": "أكد طلبك لنبدأ في تحضيره.",
@@ -811,8 +807,37 @@
     "full_name": "الاسم الكامل",
     "phone_number": "رقم الهاتف",
     "address_details": "تفاصيل العنوان"
-  }
-},
+  },
+  "payment": {
+    "page_title": "الدفع",
+    "total_bill": "إجمالي الفاتورة",
+    "subtotal": "المجموع الفرعي",
+    "vat": "ضريبة القيمة المضافة",
+    "total": "الإجمالي",
+    "branch": "الفرع",
+    "from_branch": "من فرع",
+    "payment_methods": "طرق الدفع",
+    "online": "دفع إلكتروني",
+    "online_desc": "دفع آمن عبر الإنترنت",
+    "instore": "في المتجر",
+    "instore_desc": "الدفع عند الاستلام/الكاشير",
+    "pay_online": "دفع أونلاين",
+    "pay_at_cashier": "الدفع عند الكاشير",
+    "processing": "جاري المعالجة...",
+    "already_paid": "تم الدفع مسبقاً",
+    "notify_ready": "سنقوم بإشعارك عند جاهزية طلبك.",
+    "kindly_pay": "يرجى الدفع عند الكاشير.",
+    "track_order": "تتبع طلبي",
+    "order_items_count": "عناصر الطلب ({{count}})",
+    "modal_title": "الدفع عند الكاشير",
+    "modal_desc": "يرجى التوجه إلى الكاشير لتأكيد طلبك وإتمام عملية الدفع. سيتم تحضير طلبك بمجرد تأكيد الدفع.",
+    "yes_pay_cashier": "سأدفع عند الكاشير",
+    "cancel": "إلغاء",
+    "back": "رجوع",
+    "verified_success": "تم الدفع بنجاح! تفضل بتأكيد الطلب.",
+    "verified_failed": "فشلت عملية الدفع. يرجى المحاولة مرة أخرى.",
+    "verifying": "جاري التحقق من حالة الدفع..."
+  },
   "support": {
      "page_title": "مركز الدعم",
      "page_desc": "نحن هنا لمساعدتك",
@@ -899,6 +924,17 @@
       "ready": "جاهز للاستلام",
       "completed": "مكتمل",
       "cancelled": "ملغي"
+    },
+    "history": {
+      "title": "سجل الطلبات",
+      "count_suffix": "طلب",
+      "dine_in": "تناول في المطعم",
+      "show_details": "عرض التفاصيل",
+      "hide_details": "إخفاء التفاصيل",
+      "view_order": "عاين الطلب",
+      "items_label": "الأصناف:",
+      "customer_label": "العميل:",
+      "notes_label": "ملاحظات:"
     },
     "order_details": {
       "order_number": "رقم الطلب",
