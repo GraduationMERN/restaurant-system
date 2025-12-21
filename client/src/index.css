@@ -474,4 +474,133 @@ body.custom-scrollbar-page::-webkit-scrollbar-track {
   box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
+/* ===== RTL (Right-to-Left) SUPPORT ===== */
 
+/* Base RTL direction */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Arabic Font */
+html[dir="rtl"] body {
+  font-family: 'Tajawal', 'Cairo', 'Segoe UI', sans-serif;
+}
+
+/* RTL Desktop Sidebar - Move to right side */
+html[dir="rtl"] aside.fixed {
+  left: auto !important;
+  right: 0 !important;
+}
+
+/* RTL Layout spacing adjustment - padding on right instead of left */
+html[dir="rtl"] .md\:pl-18 {
+  padding-left: 0 !important;
+  padding-right: 4.5rem !important;
+}
+
+html[dir="rtl"] .md\:pl-0 {
+  padding-left: 0 !important;
+}
+
+/* Flex direction reversal for RTL (nav items, etc) */
+html[dir="rtl"] .flex-row-reverse {
+  flex-direction: row;
+}
+
+/* Icon flip for directional icons (arrows, chevrons) */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Dropdown positioning adjustments for RTL */
+html[dir="rtl"] .dropdown-right {
+  left: 0 !important;
+  right: auto !important;
+}
+
+html[dir="rtl"] .dropdown-left {
+  right: 0 !important;
+  left: auto !important;
+}
+
+/* Text alignment overrides */
+html[dir="rtl"] .text-left {
+  text-align: right !important;
+}
+
+html[dir="rtl"] .text-right {
+  text-align: left !important;
+}
+
+/* Margin/Padding RTL adjustments */
+html[dir="rtl"] .ml-1 { margin-left: 0; margin-right: 0.25rem; }
+html[dir="rtl"] .mr-1 { margin-right: 0; margin-left: 0.25rem; }
+html[dir="rtl"] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+html[dir="rtl"] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+html[dir="rtl"] .ml-3 { margin-left: 0; margin-right: 0.75rem; }
+html[dir="rtl"] .mr-3 { margin-right: 0; margin-left: 0.75rem; }
+html[dir="rtl"] .ml-4 { margin-left: 0; margin-right: 1rem; }
+html[dir="rtl"] .mr-4 { margin-right: 0; margin-left: 1rem; }
+html[dir="rtl"] .ml-6 { margin-left: 0; margin-right: 1.5rem; }
+html[dir="rtl"] .mr-6 { margin-right: 0; margin-left: 1.5rem; }
+
+html[dir="rtl"] .pl-2 { padding-left: 0; padding-right: 0.5rem; }
+html[dir="rtl"] .pr-2 { padding-right: 0; padding-left: 0.5rem; }
+html[dir="rtl"] .pl-3 { padding-left: 0; padding-right: 0.75rem; }
+html[dir="rtl"] .pr-3 { padding-right: 0; padding-left: 0.75rem; }
+html[dir="rtl"] .pl-4 { padding-left: 0; padding-right: 1rem; }
+html[dir="rtl"] .pr-4 { padding-right: 0; padding-left: 1rem; }
+
+/* Border radius RTL */
+html[dir="rtl"] .rounded-l-lg { border-radius: 0 0.5rem 0.5rem 0; }
+html[dir="rtl"] .rounded-r-lg { border-radius: 0.5rem 0 0 0.5rem; }
+
+/* Gap adjustments - ensure flex gap works correctly */
+html[dir="rtl"] .gap-2 { gap: 0.5rem; }
+html[dir="rtl"] .gap-3 { gap: 0.75rem; }
+html[dir="rtl"] .gap-4 { gap: 1rem; }
+
+/* Form input RTL */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+/* Button icon spacing RTL */
+html[dir="rtl"] .btn-icon-left {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+html[dir="rtl"] .btn-icon-right {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+/* Mobile bottom nav - keep centered */
+html[dir="rtl"] .fixed.bottom-0 {
+  direction: rtl;
+}
+
+/* Cards and containers */
+html[dir="rtl"] .card-content {
+  text-align: right;
+}
+
+/* List items */
+html[dir="rtl"] ul,
+html[dir="rtl"] ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+/* Transitions - ensure smooth RTL switching */
+html {
+  transition: direction 0s;
+}
+
+body {
+  transition: all 0.3s ease;
+}

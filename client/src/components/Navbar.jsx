@@ -48,11 +48,11 @@ export default function Navbar() {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
     }
@@ -167,7 +167,7 @@ export default function Navbar() {
             ) : (
               <User size={20} className="text-gray-600 dark:text-gray-400" />
             )}
-            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Me</span>
+            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">{t("me")}</span>
           </button>
 
           {/* Dropdown Menu - appears above the button */}
@@ -179,7 +179,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <User size={16} />
-                Profile
+                {t("profile")}
               </Link>
               {roleLink && (
                 <a
@@ -199,7 +199,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
               >
                 <LogOut size={16} />
-                Logout
+                {t("logout")}
               </button>
             </div>
           )}
