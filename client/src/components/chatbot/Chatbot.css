@@ -1316,8 +1316,7 @@ html[dir="rtl"] .input-icons {
 
 /* Adjust menu dropdown */
 html[dir="rtl"] .menu-dropdown {
-  left: 0;
-  right: auto;
+  right: 0px;
 }
 
 html[dir="rtl"] .menu-dropdown button {
