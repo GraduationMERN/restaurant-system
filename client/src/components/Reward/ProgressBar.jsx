@@ -92,7 +92,7 @@ export default function ProgressBar({ Reward }) {
                 </div>
             )}
             {/* Base line */}
-            <div className="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden relative">
+            <div className="w-full bg-gray-200/90 rounded-full h-2 md:h-3 overflow-hidden relative">
                 <div
                     ref={progressBarRef}
                     className="bg-gradient-to-r from-secondary/50 via-secondary to-secondary h-full rounded-full relative"
@@ -116,12 +116,12 @@ export default function ProgressBar({ Reward }) {
                         >
                             <div className="relative">
                                 <TbGiftFilled
-                                    className={`gift-icon relative -top-7 w-9 h-9 font-bold transition-all duration-500 ${
-                                        isAchieved ? "text-secondary brightness-120 drop-shadow-lg" : "text-secondary/80"
+                                    className={`gift-icon  relative font-bold transition-all duration-500  w-6 h-6 md:-top-6 md:w-7 md:h-7 ${
+                                        isAchieved ? "text-secondary brightness-120 drop-shadow-lg -top-5 " : " -top-4 text-secondary/90"
                                     }`}
                                 />
                                 {isAchieved && (
-                                    <div className="ping-effect absolute -top-8 -left-8 w-24 h-24 bg-secondary/20 rounded-full"></div>
+                                    <div className="ping-effect absolute h-8 w-8 -top-8 bg-secondary/20 rounded-full"></div>
                                 )}
                             </div>
                             <span className={`milestone-text text-xs -mt-3 transition-all duration-500 ${
