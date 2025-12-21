@@ -47,27 +47,35 @@ export const resetChatSession = createAsyncThunk(
   }
 );
 
-// --- Suggestions Configuration ---
+// --- Suggestions Configuration (English Only) ---
 const initialSuggestions = {
   initial: [
-    { text: "📋 Show Menu", query: "Show me the menu" },
-    { text: "🍔 Burgers", query: "I want to see burgers" },
-    { text: "🍕 Pizza", query: "Show me pizza options" },
+    { text: "📋 View Menu", query: "Show me the menu" },
+    { text: "🍔 Order Food", query: "I want to order food" },
     { text: "🛒 My Cart", query: "What's in my cart?" },
+    { text: "❓ Help", query: "How do I order?" },
   ],
   ordering: [
-    { text: "➕ Add More", query: "I want to add more items" },
+    { text: "➕ Add More", query: "I want something else" },
     { text: "🛒 View Cart", query: "Show my cart" },
-    { text: "✅ Checkout", query: "I'm done, checkout please" },
+    { text: "✅ Done", query: "I'm done" },
   ],
   checkout: [
-    { text: "🏠 Delivery", query: "Delivery please" },
-    { text: "🏪 Pickup", query: "I'll pick it up" },
-    { text: "🪑 Dine-in", query: "I'll eat here" },
+    { text: "🏠 Delivery", query: "Delivery" },
+    { text: "🏪 Pickup", query: "Pickup" },
+    { text: "🪑 Dine-in", query: "Dine-in" },
+  ],
+  coupon: [
+    { text: "✅ No Coupon", query: "No, I don't have a coupon" },
+    { text: "🎫 I Have a Coupon", query: "I have a coupon" },
   ],
   payment: [
-    { text: "💳 Pay Online", query: "I'll pay online" },
-    { text: "💵 Pay at Store", query: "I'll pay at the store" },
+    { text: "💳 Pay Online", query: "Pay online" },
+    { text: "💵 Pay at Counter", query: "Pay at counter" },
+  ],
+  completed: [
+    { text: "🆕 New Order", query: "I want to order again" },
+    { text: "📞 Contact Support", query: "I need help" },
   ],
 };
 
@@ -83,11 +91,14 @@ const getSuggestionsForState = (state) => {
     case "service_type":
     case "delivery_info":
     case "table_info":
+      return initialSuggestions.checkout;
     case "coupon":
     case "order_summary":
-      return initialSuggestions.checkout;
+      return initialSuggestions.coupon;
     case "payment":
       return initialSuggestions.payment;
+    case "completed":
+      return initialSuggestions.completed;
     default:
       return initialSuggestions.initial;
   }
@@ -139,7 +150,7 @@ const chatbotSlice = createSlice({
         state.messages = [
           {
             type: "bot",
-            content: `Welcome! 👋 I'm ${restaurantName}'s assistant. How can I help you today? You can browse our menu, place an order, or ask any questions!`,
+            content: `Welcome to **${restaurantName}**! 👋\n\n🍽️ What would you like to order today?`,
             time: new Date().toISOString(),
           },
         ];
@@ -237,16 +248,11 @@ const chatbotSlice = createSlice({
 
       // Reset Session
       .addCase(resetChatSession.fulfilled, (state) => {
-        state.messages = [
-          {
-            type: "bot",
-            content: "Conversation cleared. How can I help you?",
-            time: new Date().toISOString(),
-          },
-        ];
+        state.messages = [];
         state.suggestions = initialSuggestions.initial;
         state.sessionId = null;
         state.conversationState = "greeting";
+        state.isLoaded = false; // This will trigger welcome message when chat is active
       });
   },
 });
