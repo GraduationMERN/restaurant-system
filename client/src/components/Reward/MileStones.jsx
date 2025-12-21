@@ -4,9 +4,7 @@ import ProgressBar from './ProgressBar';
 export default function MileStones({userName, userPoints, handleViewRedemptions}) {
   return (
      <div className="fixed z-10 top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
-            <h1 className="text-3xl font-bold"> {t('Rewards')}</h1>
-
-            <div className="bg-gradient-to-br dark:from-secondary/60 dark:to-secondary/40 dark:bg-black/20 px-6 py-10 rounded-2xl backdrop-blur-md">
+            <div className="dark:bg-black/30 px-6 py-6 rounded-2xl backdrop-blur-md">
               
               <div className="flex justify-between items-center mb-2">
                 <span className="text-lg font-semibold">{t("Hello")}, <span className='text-secondary'>{userName}</span></span>

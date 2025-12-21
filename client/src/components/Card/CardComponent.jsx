@@ -26,8 +26,8 @@ export default function CardComponent({
           : "opacity-70"
       }
         group cursor-pointer rounded-xl shadow-md md:hover:translate-y-2 md:relative
-          bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 flex sm:flex sm:flex-col
-         ${isReward ? "sm:justify-between hover:shadow-secondary/20  h-20 sm:h-50" : "hover:shadow-primary/20 h-32 lg:h-80"} 
+          bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 flex 
+         ${isReward ? "sm:justify-between hover:shadow-secondary/20  h-20 sm:h-50 sm:flex sm:flex-col" : "lg:flex lg:flex-col hover:shadow-primary/20 h-32 lg:h-80"} 
          hover:shadow-lg  transition-all duration-300 overflow-hidden transform hover:scale-105`}
     >
       
@@ -92,7 +92,7 @@ export default function CardComponent({
               {/* {product?.name || "Product"} */}
               {lang==='ar'?(product.name_ar||product.name):product.name}
             </div>
-            <span className="text-xs hidden lg:block text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
+            <span className="text-xs hidden sm:block text-[#888] leading-snug break-words line-clamp-2 sm:line-clamp-2">
               {/* {product.desc} */}
               {lang==='ar'?(product.desc_ar||product.desc):product.desc}
             </span>
