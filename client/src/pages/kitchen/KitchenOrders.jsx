@@ -15,6 +15,7 @@ import {
 import { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
 import socketClient from "../../utils/socketRedux";
 import { useRole } from "../../hooks/useRole";
+import { useTranslation } from "react-i18next";
 import { useToast } from "../../hooks/useToast";
 import StaffNavbar from "../../components/StaffNavbar";
 
@@ -30,6 +31,7 @@ import {
 } from "./components";
 
 export default function KitchenOrders() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { isKitchen, isAdmin } = useRole();
   const toast = useToast();
@@ -67,7 +69,7 @@ export default function KitchenOrders() {
         joinSocketRooms(socket, authUser);
         socket.on("order:new:online", (order) => {
           toast.showToast({
-            message: `New online order: ${order.orderNumber}`,
+            message: `${t("new_online_order")}: ${order.orderNumber}`,
             type: "info",
             duration: 3000
           });
@@ -75,7 +77,7 @@ export default function KitchenOrders() {
 
         socket.on("order:new:instore", (order) => {
           toast.showToast({
-            message: `New in-store order: ${order.orderNumber}`,
+            message: `${t("new_instore_order")}: ${order.orderNumber}`,
             type: "warning",
             duration: 3000
           });
@@ -133,18 +135,18 @@ export default function KitchenOrders() {
     try {
       await dispatch(changeOrderStatus({ orderId, status: newStatus })).unwrap();
       toast.showToast({
-        message: `Order marked as ${newStatus}`,
+        message: `${t("order_marked_as")} ${t("admin." + newStatus)}`,
         type: "success"
       });
       setViewOrder(null);
     } catch (err) {
-      toast.showToast({ message: err.message || "Failed to update status", type: "error" });
+      toast.showToast({ message: err.message || t("admin.failed_update_status"), type: "error" });
     }
   };
 
   const handleUpdateEstimatedTime = async (orderId) => {
     if (!estimatedTimeInput || isNaN(parseInt(estimatedTimeInput))) {
-      toast.showToast({ message: "Please enter a valid time in minutes", type: "error" });
+      toast.showToast({ message: t("enter_valid_time"), type: "error" });
       return;
     }
 
@@ -154,12 +156,12 @@ export default function KitchenOrders() {
         estimatedTime: parseInt(estimatedTimeInput) 
       })).unwrap();
       toast.showToast({ 
-        message: `Estimated time updated to ${estimatedTimeInput} minutes`, 
+        message: `${t("estimated_time_updated")} ${estimatedTimeInput} ${t("minutes")}`, 
         type: "success" 
       });
       setEstimatedTimeInput("");
     } catch (err) {
-      toast.showToast({ message: err.message || "Failed to update estimated time", type: "error" });
+      toast.showToast({ message: err.message || t("failed_update_time"), type: "error" });
     }
   };
 
@@ -221,16 +223,16 @@ export default function KitchenOrders() {
   if (!isKitchen && !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-error-500">Access Denied: Kitchen staff only</p>
+        <p className="text-error-500">{t("access_denied_kitchen")}</p>
       </div>
     );
   }
 
   return (
     <>
-      <PageMeta title="Kitchen Dashboard" description="Prepare and manage orders" />
+      <PageMeta title={t("kitchen_dashboard")} description={t("kitchen_desc")} />
 
-      {isAdmin && <PageBreadcrumb pageTitle="Kitchen Dashboard" />}
+      {isAdmin && <PageBreadcrumb pageTitle={t("kitchen_dashboard")} />}
       {isKitchen && <StaffNavbar />}
 
       {/* New Order Alert */}

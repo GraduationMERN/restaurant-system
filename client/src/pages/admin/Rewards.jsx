@@ -26,8 +26,10 @@ import { getAllRewardOrders } from "../../redux/slices/rewardOrderSlice";
 import { fetchProducts } from "../../redux/slices/ProductSlice";
 import { useToast } from "../../hooks/useToast";
 import { Gift } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Rewards() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [form, setForm] = useState({ isFromProduct: true, productId: "", name: "", points: "", type: "free_product", desc: "", image: null });
@@ -117,9 +119,9 @@ export default function Rewards() {
         await dispatch(addReward(payload));
       }
       setIsOpen(false);
-      toast.showToast({ message: editingIndex !== null ? "Reward updated" : "Reward created", type: "success" });
+      toast.showToast({ message: editingIndex !== null ? t("admin.reward_updated") : t("admin.reward_created"), type: "success" });
     } catch (err) {
-      toast.showToast({ message: "Failed to save reward", type: "error" });
+      toast.showToast({ message: t("admin.reward_save_fail"), type: "error" });
     } finally {
       setSaving(false);
     }
@@ -131,8 +133,8 @@ export default function Rewards() {
 
   return (
     <>
-      <PageMeta title="Rewards" description="Manage reward programs" />
-      <PageBreadcrumb pageTitle="Rewards" />
+      <PageMeta title={t("admin.rewards_title")} description={t("admin.rewards_desc")} />
+      <PageBreadcrumb pageTitle={t("admin.rewards_title")} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 md:p-6">
@@ -141,7 +143,7 @@ export default function Rewards() {
           </div>
           <div className="flex items-end justify-between mt-5">
             <div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total Points Issued</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t("admin.total_points_issued")}</span>
               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{totalPointsIssued.toLocaleString()}</h4>
             </div>
           </div>
@@ -152,7 +154,7 @@ export default function Rewards() {
           </div>
           <div className="flex items-end justify-between mt-5">
             <div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">Active Members</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t("admin.active_members")}</span>
               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{activeMembers.toLocaleString()}</h4>
             </div>
           </div>
@@ -163,7 +165,7 @@ export default function Rewards() {
           </div>
           <div className="flex items-end justify-between mt-5">
             <div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">Rewards Redeemed</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t("admin.rewards_redeemed")}</span>
               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{rewardsRedeemed.toLocaleString()}</h4>
             </div>
           </div>
@@ -171,8 +173,8 @@ export default function Rewards() {
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Reward Programs</h3>
-        <Button onClick={openAdd} startIcon={<PlusIcon className="size-5" />}>Add Reward</Button>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{t("admin.reward_programs")}</h3>
+        <Button onClick={openAdd} startIcon={<PlusIcon className="size-5" />}>{t("admin.add_reward")}</Button>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -197,11 +199,11 @@ export default function Rewards() {
             <div className="mt-2 flex items-center justify-between">
               <button onClick={() => openEdit(idx)} className="inline-flex items-center gap-1 text-brand-500 hover:text-brand-600">
                 <PencilIcon className="size-4" />
-                Edit
+                {t("edit")}
               </button>
               <button onClick={() => deleteProgram(idx)} className="inline-flex items-center gap-1 text-error-500 hover:text-error-600">
                 <TrashBinIcon className="size-4" />
-                Delete
+                {t("delete")}
               </button>
             </div>
           </div>
@@ -210,18 +212,18 @@ export default function Rewards() {
 
       <Modal isOpen={isOpen} onClose={closeModal}>
         <div className="p-6 sm:p-8">
-          <h3 className="font-semibold text-gray-800 dark:text-white/90">{editingIndex !== null ? "Edit Reward" : "Add Reward"}</h3>
+          <h3 className="font-semibold text-gray-800 dark:text-white/90">{editingIndex !== null ? t("admin.edit_reward") : t("admin.add_reward")}</h3>
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Checkbox
-                label="Is this reward from a product?"
+                label={t("admin.is_from_product")}
                 checked={form.isFromProduct}
                 onChange={(checked) => setForm((f) => ({ ...f, isFromProduct: checked }))}
               />
             </div>
             {form.isFromProduct ? (
               <div className="sm:col-span-2">
-                <Label>Select Product</Label>
+                <Label>{t("admin.select_product")}</Label>
                 <Select
                   options={list.map((p) => ({
                     value: p._id,
@@ -234,42 +236,42 @@ export default function Rewards() {
             ) : (
               <>
                 <div className="sm:col-span-2">
-                  <Label>Reward Name</Label>
+                  <Label>{t("admin.reward_name")}</Label>
                   <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label>Reward Image</Label>
+                  <Label>{t("admin.reward_image")}</Label>
                   <Input type="file" accept="image/*" onChange={(e) => setForm((f) => ({ ...f, image: e.target.files[0] }))} />
                 </div>
               </>
             )}
             <div>
-              <Label>Points</Label>
+              <Label>{t("admin.points")}</Label>
               <Input type="number" value={form.points} onChange={(e) => setForm((f) => ({ ...f, points: e.target.value }))} />
             </div>
 
             <div>
-              <Label>Type</Label>
+              <Label>{t("admin.type")}</Label>
               <Select
                 options={[
-                  { value: "free_product", label: "Free Product" },
-                  { value: "discount", label: "Discount" },
-                  { value: "multiplier", label: "Multiplier" },
-                  { value: "coupon", label: "Coupon" },
-                  { value: "generic", label: "Generic" },
+                  { value: "free_product", label: t("admin.free_product") },
+                  { value: "discount", label: t("admin.discount") },
+                  { value: "multiplier", label: t("admin.multiplier") },
+                  { value: "coupon", label: t("admin.coupon") },
+                  { value: "generic", label: t("admin.generic") },
                 ]}
                 defaultValue={form.type}
                 onChange={(val) => setForm((f) => ({ ...f, type: val }))}
               />
             </div>
             <div className="sm:col-span-2">
-              <Label>Description</Label>
+              <Label>{t("admin.description")}</Label>
               <Input value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} />
             </div>
           </div>
           <div className="mt-6 flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={closeModal} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSave} loading={saving}>Save</Button>
+            <Button variant="outline" onClick={closeModal} disabled={saving}>{t("cancel")}</Button>
+            <Button onClick={handleSave} loading={saving}>{t("save")}</Button>
           </div>
         </div>
       </Modal>

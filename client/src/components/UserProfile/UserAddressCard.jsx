@@ -7,8 +7,10 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useToast } from "../../hooks/useToast";
 import { updateUserProfile } from "../../redux/slices/userProfileSlice";
+import { useTranslation } from "react-i18next";
 
 export default function UserAddressCard() {
+  const { t } = useTranslation();
   const { isOpen, openModal, closeModal } = useModal();
   const dispatch = useDispatch();
   const { profile } = useSelector((state) => state.userProfile);
@@ -39,9 +41,11 @@ export default function UserAddressCard() {
       
       await dispatch(updateUserProfile(payload)).unwrap();
       closeModal();
-      toast.showToast({ message: "Changes saved", type: "success" });
+      await dispatch(updateUserProfile(payload)).unwrap();
+      closeModal();
+      toast.showToast({ message: t("admin.settings_saved"), type: "success" });
     } catch (err) {
-      toast.showToast({ message: err || "Failed to save changes", type: "error" });
+      toast.showToast({ message: t("admin.settings_save_fail"), type: "error" });
     } finally {
       setSaving(false);
     }
@@ -53,13 +57,13 @@ export default function UserAddressCard() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-              Address
+              {t("address")}
             </h4>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  Country
+                  {t("country")}
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   {profile?.address?.country || "-"}
@@ -68,7 +72,7 @@ export default function UserAddressCard() {
 
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  City/State
+                  {t("city_state")}
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   {profile?.address?.cityState || "-"}
@@ -77,7 +81,7 @@ export default function UserAddressCard() {
 
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  Postal Code
+                  {t("postal_code")}
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   {profile?.address?.postalCode || "-"}
@@ -86,7 +90,7 @@ export default function UserAddressCard() {
 
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  TAX ID
+                  {t("tax_id")}
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   {profile?.address?.taxId || "-"}
@@ -114,7 +118,7 @@ export default function UserAddressCard() {
                 fill=""
               />
             </svg>
-            Edit
+            {t("edit")}
           </button>
         </div>
       </div>
@@ -122,42 +126,42 @@ export default function UserAddressCard() {
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Edit Address
+              {t("edit") + " " + t("address")}
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Update your details to keep your profile up-to-date.
+              {t("update_profile_desc")}
             </p>
           </div>
           <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
-                  <Label>Country</Label>
+                  <Label>{t("country")}</Label>
                   <Input type="text" value={country} onChange={(e) => setCountry(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label>City/State</Label>
+                  <Label>{t("city_state")}</Label>
                   <Input type="text" value={cityState} onChange={(e) => setCityState(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label>Postal Code</Label>
+                  <Label>{t("postal_code")}</Label>
                   <Input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label>TAX ID</Label>
+                  <Label>{t("tax_id")}</Label>
                   <Input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal} disabled={saving}>
-                Close
+                {t("admin.cancel")}
               </Button>
               <Button size="sm" type="submit" loading={saving}>
-                Save Changes
+                {t("admin.save_changes")}
               </Button>
             </div>
           </form>
