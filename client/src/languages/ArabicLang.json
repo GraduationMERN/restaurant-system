@@ -298,5 +298,26 @@
   
   "page_not_found": "الصفحة غير موجودة",
   "page_not_found_desc": "الصفحة التي تبحث عنها غير موجودة",
-  "go_home": "العودة للرئيسية"
+  "go_home": "العودة للرئيسية",
+  
+  "chatbot_active": "متاح",
+  "chatbot_expand": "توسيع النافذة",
+  "chatbot_collapse": "تصغير النافذة",
+  "chatbot_download": "تحميل المحادثة",
+  "chatbot_new_conversation": "محادثة جديدة",
+  "chatbot_placeholder": "اكتب رسالة...",
+  "search_emoji": "ابحث عن إيموجي...",
+  "search_gif": "ابحث عن GIF...",
+  "chatbot_greeting_hi": "مرحباً، أنا",
+  "chatbot_greeting_help": "يمكنني مساعدتك في اختيار الطعام والطلبات أو التواصل مع الدعم.",
+  "send_image": "إرسال صورة",
+  "add_emoji": "إضافة إيموجي",
+  "add_gif": "إضافة GIF",
+  "voice_message": "رسالة صوتية",
+  "minutes_ago": "د",
+  "hours_ago": "س",
+  
+  "all_rights_reserved": "جميع الحقوق محفوظة",
+  "loading_more": "جاري التحميل...",
+  "no_more_items": "لا توجد عناصر أخرى"
 }

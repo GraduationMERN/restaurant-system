@@ -487,6 +487,30 @@ html[dir="rtl"] body {
   font-family: 'Tajawal', 'Cairo', 'Segoe UI', sans-serif;
 }
 
+/* ===== ADMIN/STAFF DASHBOARDS RTL SUPPORT ===== */
+
+/* RTL Admin Sidebar - Move to right side */
+html[dir="rtl"] aside.fixed {
+  left: auto !important;
+  right: 0 !important;
+}
+
+/* RTL Admin Layout - Content margin switches from left to right */
+html[dir="rtl"] .lg\:ml-\[290px\] {
+  margin-left: 0 !important;
+  margin-right: 290px !important;
+}
+
+html[dir="rtl"] .lg\:ml-\[90px\] {
+  margin-left: 0 !important;
+  margin-right: 90px !important;
+}
+
+/* For any other admin margin-left values */
+html[dir="rtl"] [class*="lg:ml-"] {
+  margin-left: 0 !important;
+}
+
 /* RTL Desktop Sidebar - Move to right side */
 html[dir="rtl"] aside.fixed {
   left: auto !important;
@@ -522,6 +546,19 @@ html[dir="rtl"] .dropdown-right {
 html[dir="rtl"] .dropdown-left {
   right: 0 !important;
   left: auto !important;
+}
+
+/* Fix dropdowns that use absolute right-0 (like UserDropdown in admin) */
+html[dir="rtl"] .absolute.right-0 {
+  right: auto !important;
+  left: 0 !important;
+}
+
+/* Fix dropdowns in sidebar - when sidebar is on right (RTL), dropdown should open to left */
+html[dir="rtl"] aside .absolute.left-0,
+html[dir="rtl"] aside .absolute[class*="left-0"] {
+  left: auto !important;
+  right: 0 !important;
 }
 
 /* Text alignment overrides */

@@ -302,5 +302,26 @@
   
   "page_not_found": "Page Not Found",
   "page_not_found_desc": "The page you are looking for does not exist",
-  "go_home": "Go Home"
+  "go_home": "Go Home",
+  
+  "chatbot_active": "Active",
+  "chatbot_expand": "Expand window",
+  "chatbot_collapse": "Collapse window",
+  "chatbot_download": "Download transcript",
+  "chatbot_new_conversation": "New Conversation",
+  "chatbot_placeholder": "Message...",
+  "search_emoji": "Search emoji...",
+  "search_gif": "Search GIFs...",
+  "chatbot_greeting_hi": "Hi, I'm",
+  "chatbot_greeting_help": "I can help with menu selection, orders, or connect you to support.",
+  "send_image": "Send image",
+  "add_emoji": "Add emoji",
+  "add_gif": "Add GIF",
+  "voice_message": "Voice message",
+  "minutes_ago": "m ago",
+  "hours_ago": "h ago",
+  
+  "all_rights_reserved": "All rights reserved",
+  "loading_more": "Loading more...",
+  "no_more_items": "No more items"
 }

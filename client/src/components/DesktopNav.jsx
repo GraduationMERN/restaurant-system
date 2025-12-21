@@ -287,7 +287,7 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
 
 /* ------------ User Dropdown ------------ */
 function UserDropdown({ isOpen, user, onNavClick }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { profile } = useSelector((state) => state.userProfile || {});
@@ -370,7 +370,7 @@ function UserDropdown({ isOpen, user, onNavClick }) {
 
       {/* Dropdown Menu */}
       {dropdownOpen && (
-        <div className={`absolute ${isOpen ? "left-2 right-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 min-w-[160px]`}>
+        <div className={`absolute ${isOpen ? "inset-x-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 min-w-[160px]`}>
           <Link
             to="/profile"
             onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}

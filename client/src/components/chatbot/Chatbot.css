@@ -1205,3 +1205,87 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* ===== RTL (Right-to-Left) SUPPORT FOR CHATBOT ===== */
+
+/* Move chatbot to left side in RTL */
+html[dir="rtl"] .chatbot-container {
+  right: auto !important;
+  left: 24px !important;
+  align-items: flex-start;
+}
+
+/* Adjust window animation origin */
+html[dir="rtl"] .chatbot-window {
+  transform-origin: bottom left;
+}
+
+/* Adjust greeting bubble position */
+html[dir="rtl"] .greeting-bubble {
+  text-align: right;
+}
+
+/* Adjust header layout */
+html[dir="rtl"] .chatbot-header {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .header-info {
+  text-align: right;
+}
+
+/* Adjust messages */
+html[dir="rtl"] .user-message {
+  align-self: flex-start;
+}
+
+html[dir="rtl"] .bot-message {
+  align-self: flex-end;
+}
+
+html[dir="rtl"] .user-message .message-content-wrapper {
+  align-items: flex-start;
+}
+
+html[dir="rtl"] .bot-message .message-content-wrapper {
+  align-items: flex-end;
+}
+
+/* Adjust suggestions */
+html[dir="rtl"] .suggestion-buttons {
+  justify-content: flex-start;
+}
+
+/* Adjust input area */
+html[dir="rtl"] .input-actions {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .input-icons {
+  flex-direction: row-reverse;
+}
+
+/* Adjust menu dropdown */
+html[dir="rtl"] .menu-dropdown {
+  left: 0;
+  right: auto;
+}
+
+html[dir="rtl"] .menu-dropdown button {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+/* Adjust close button position */
+html[dir="rtl"] .greeting-close {
+  right: auto;
+  left: 4px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  html[dir="rtl"] .chatbot-container {
+    left: 12px;
+    right: auto;
+  }
+}
