@@ -3,9 +3,13 @@ import Navbar from "./Navbar";
 import Chatbot from "./chatbot/Chatbot";
 import StaffChat from "./staffChat/StaffChat";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function Layout({ children }) {
+  const { i18n } = useTranslation();
   const location = useLocation();
+  const isRTL = i18n.language === 'ar';
+  
   const hiddenPaths = [
     "/admin",
     "/login",
@@ -23,9 +27,17 @@ export default function Layout({ children }) {
   const isStaffPath = staffPaths.some(path =>
     location.pathname.startsWith(path)
   );
+  
+  // Dynamic padding based on language direction
+  const layoutPadding = shouldHideUI 
+    ? "md:pl-0 md:pr-0" 
+    : isRTL 
+      ? "md:pr-18 md:pl-0" 
+      : "md:pl-18 md:pr-0";
+  
   return (
 
-    <div className={`lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none ${shouldHideUI ? "md:pl-0" : "md:pl-18"}`}>
+    <div className={`lg:mx-5 min-h-screen pb-10 transition-all dark:bg-gray-900 dark:text-white select-none ${layoutPadding}`}>
 
       {!shouldHideUI && <DesktopNav />}
 
