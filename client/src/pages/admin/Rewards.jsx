@@ -25,6 +25,7 @@ import { getAllRewards, addReward, deleteReward, updateReward } from "../../redu
 import { getAllRewardOrders } from "../../redux/slices/rewardOrderSlice";
 import { fetchProducts } from "../../redux/slices/ProductSlice";
 import { useToast } from "../../hooks/useToast";
+import { Gift } from "lucide-react";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,7 +135,7 @@ export default function Rewards() {
       <PageBreadcrumb pageTitle="Rewards" />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 md:p-6">
           <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
             <ShootingStarIcon className="text-gray-800 size-6 dark:text-white/90" />
           </div>
@@ -145,7 +146,7 @@ export default function Rewards() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 md:p-6">
           <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
             <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
           </div>
@@ -156,7 +157,7 @@ export default function Rewards() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800 md:p-6">
           <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
             <CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />
           </div>
@@ -176,18 +177,24 @@ export default function Rewards() {
 
       <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {rewards.map((p, idx) => (
-          <div key={p.name + idx} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-            <div className="flex items-start justify-between">
-              <span className="text-brand-500">
-                {iconForType(p.type)}
-              </span>
+          <div key={p.name + idx} className="rounded-2xl border h-90 border-gray-200 bg-white p-6 shadow-theme-xs dark:border-gray-700 dark:bg-gray-800">
+            {p.image || p.productId?.imgURL ? (
+               <div className="w-2/3 sm:w-full sm:h-3/4 flex items-center justify-center p-2">
+              <img  className="w-full h-full rounded-xl object-cover shadow-sm"  src={p.image || p.productId?.imgURL} />
+              </div>
+            ) : (
+              <div className="w-2/3 sm:w-full sm:h-3/4 flex items-center justify-center p-2">
+              <Gift className="text-gray-400 text-6xl" />
+            </div>
+            )}
+               <div className="flex items-start justify-between">
               <span className="text-sm text-gray-500 dark:text-gray-400">{p.pointsRequired || p.points} pts</span>
             </div>
             <div className="mt-4">
-              <h4 className="text-gray-800 font-semibold dark:text-white/90">{p.name}</h4>
-              <img src={p.image}></img>
+              <h4 className="text-gray-900 font-semibold dark:text-white/90">{p.productId?.name || p.name}</h4>
+             
             </div>
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-2 flex items-center justify-between">
               <button onClick={() => openEdit(idx)} className="inline-flex items-center gap-1 text-brand-500 hover:text-brand-600">
                 <PencilIcon className="size-4" />
                 Edit

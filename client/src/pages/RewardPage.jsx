@@ -9,6 +9,7 @@ import Redemptions from '../components/Reward/Redemptions';
 import MileStones from '../components/Reward/MileStones';
 import RewardsList from '../components/Reward/RewardsList';
 import NotifyToLogin from '../components/Reward/LoginFirst';
+import PageMeta from '../components/common/PageMeta';
 
 export default function RewardPage() {
 
@@ -82,7 +83,7 @@ export default function RewardPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background decorative circles */}
-
+    <PageMeta title="Rewards" description="Exclusive rewards and offers" />
 
       {/* Content */}
       <div className="relative z-10">

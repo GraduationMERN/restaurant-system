@@ -25,14 +25,14 @@ export default function CardComponent({
           ? "opacity-100"
           : "opacity-70"
       }
-        group cursor-pointer rounded-xl shadow-md lg:hover:translate-y-2 lg:relative
-         h-32 lg:h-80 bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 flex lg:flex lg:flex-col
-         ${isReward ? "lg:justify-between" : ""} 
-         hover:shadow-lg hover:shadow-secondary/20 transition-all duration-300 overflow-hidden transform hover:scale-105`}
+        group cursor-pointer rounded-xl shadow-md md:hover:translate-y-2 md:relative
+          bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 flex sm:flex sm:flex-col
+         ${isReward ? "sm:justify-between hover:shadow-secondary/20  h-20 sm:h-50" : "hover:shadow-primary/20 h-32 lg:h-80"} 
+         hover:shadow-lg  transition-all duration-300 overflow-hidden transform hover:scale-105`}
     >
       
       {isReward ? (
-        <div className="w-1/2 lg:w-full lg:h-1/2 flex items-center justify-center p-2">
+        <div className="w-2/3 sm:w-full sm:h-3/4 flex items-center justify-center p-2">
           {product?.imgURL || item?.image ? (
             <img
               src={product?.imgURL || item?.image}
@@ -55,10 +55,10 @@ export default function CardComponent({
         </div>
       )}
       {isReward ? (
-        <div className="flex  lg:flex-col justify-between w-1/2 lg:w-full lg:relative">
-          <h3 className="flex flex-col mx-2 justify-center font-semibold text-secondary">
+        <div className="flex sm:flex-col justify-between w-1/2 sm:w-full sm:relative">
+          <h3 className="flex flex-col mx-3 justify-center text-sm font-semibold text-secondary">
             <span
-              className={`text-xs md:text-sm font-semibold flex-1 ${
+              className={` font-bold flex-1 ${
                 isReward && canRedeem(item.pointsRequired)
                   ? "text-on-surface"
                   : "text-muted"
@@ -70,7 +70,7 @@ export default function CardComponent({
           </h3>
           <button
             disabled={disabled}
-            className={`lg:block px-4 lg:py-2 lg:absolute lg:right-0 lg:bottom-0 rounded-tl-xl transition duration-200 ${
+            className={`sm:block px-4 sm:py-2 sm:absolute sm:right-0 sm:bottom-0 rounded-tl-xl transition duration-200 ${
               hovered && "bg-secondary/100"
             }  ${
               canRedeem(item.pointsRequired)
