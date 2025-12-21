@@ -7,6 +7,7 @@ import {
   uploadBufferToCloudinary,
   parsePromptOptions
 } from "./menuGenerator.service.js";
+import { translateRestaurantSettings } from "../../utils/translation.service.js";
 
 export async function getRestaurant(req, res) {
   try {
@@ -20,7 +21,16 @@ export async function getRestaurant(req, res) {
 
 export async function updateRestaurant(req, res) {
   try {
-    const updateData = req.body;
+    let updateData = req.body;
+
+    // Auto-translate settings (description, address, about, policies, faqs)
+    try {
+      updateData = await translateRestaurantSettings(updateData);
+      console.log("✅ Settings translated successfully");
+    } catch (translationError) {
+      console.error("⚠️ Translation failed, saving without translation:", translationError.message);
+      // Continue with original data if translation fails
+    }
 
     const restaurant = await Restaurant.findOne();
 
