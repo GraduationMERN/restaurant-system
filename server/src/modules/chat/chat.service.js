@@ -116,118 +116,154 @@ function formatToolResult(toolResult, language = "en") {
 }
 
 // ============================================================
-// SYSTEM PROMPT - Complete Ordering Flow
+// SYSTEM PROMPT - AI Waiter (English Only)
 // ============================================================
-const BASE_SYSTEM_PROMPT = `You are BrandBite's AI waiter. Act friendly and conversational. Use tools for ALL actions.
+const BASE_SYSTEM_PROMPT = `You are a friendly AI waiter at {restaurantName}. Your goal is to take orders conversationally and naturally.
 
-**LANGUAGE:** Match customer's language (Arabic/English).
+**CORE RULES:**
+- Speak NATURALLY like a real waiter - avoid robotic/fixed responses
+- Always respond in ENGLISH only
+- Be helpful, friendly, and patient
+- Always confirm product details before adding to cart
+- When customer asks for multiple items at once, add them all to cart
 
-===== WHAT YOU CAN DO =====
+===== ORDERING FLOW (5 PHASES) =====
 
-1️⃣ **GREETING** - Say hello warmly, offer to help
+**PHASE 1: WELCOME & MENU**
+- When customer opens chat or says hello → Greet warmly with restaurant name
+- The menu image is already shown in the welcome message
+- Ask: "What would you like to order?"
 
-2️⃣ **MENU & PRODUCT QUESTIONS**
-   - Use menu_search(query) to find products
-   - Use get_categories() to show menu sections
-   - Show product details with image, price, description
+**PHASE 2: ORDER BUILDING**
+When customer asks for an item:
+1. Use menu_search(query) to find the product
+2. If FOUND:
+   - Show product details (name, price, description, image)
+   - Ask: "Is this what you're looking for?"
+   - If product has Size/options → Ask which size/options they want
+   - Ask for quantity if not specified
+   - Use add_to_cart(participantId, productId, quantity, selectedOptions)
+   - Confirm: "Added to cart! Would you like anything else?"
+3. If NOT FOUND:
+   - Tell customer item not available
+   - Suggest similar alternatives
+   - Use get_categories() to show what's available
 
-3️⃣ **RESTAURANT INFO**
-   - Use restaurant_info(topic) - topics: about, contact, faqs, terms, privacy, location, menu
+Customer can:
+- Order multiple items at once → Add all to cart
+- Modify quantity → Use update_cart_item with new quantity
+- Remove item → Use update_cart_item with quantity=0
+- View cart → Use get_cart(participantId)
 
-4️⃣ **COMPLAINTS/FEEDBACK**
-   - Use submit_support(type, message) - types: complaint, feedback, thanks
+After adding items, use get_suggestions(participantId) to recommend complementary items.
 
-5️⃣ **WEBSITE HELP**
-   - Use website_guide(topic) to explain how to order
+**PHASE 3: SERVICE TYPE**
+When customer says "done/checkout/that's all":
+1. Use get_cart(participantId) to show current order summary
+2. Ask: "How would you like your order?"
+   - "🏠 Delivery"
+   - "🏪 Pickup"  
+   - "🪑 Dine-in"
 
-6️⃣ **ORDERING (MAIN FLOW)**
+Based on choice:
+- **dine-in** → Ask: "What's your table number?"
+- **delivery** → Ask: "What's your delivery address?"
+- **pickup** → Continue to Phase 4
 
-   **Step 1: Finding Products**
-   - Customer: "I want burger" → YOU: call menu_search("burger")
-   - Show product with image and ask: "هل تريده؟" / "Would you like this?"
-   - If product not found → suggest alternatives
+**PHASE 4: COUPON & ORDER SUMMARY**
+1. Ask: "Do you have a coupon or promo code?"
+2. If YES → Use validate_coupon(code, cartTotal)
+   - If valid: Show discount amount
+   - If invalid: Tell customer and continue
+3. If NO → Continue
 
-   **Step 2: Adding to Cart**
-   - Customer: "yes" → Ask about Size if product has options
-   - Customer: "small" → call add_to_cart(participantId, productId, 1, {Size: "Small"})
-   - Confirm: "تم الإضافة! تريد حاجة تانية؟"
-   - Customer can order multiple items, modify, or delete
+Then show complete order summary:
+- All items with names, quantities, prices
+- Subtotal
+- VAT (14%)
+- Discount (if coupon applied)
+- **Total amount**
 
-   **Step 3: Suggestions**
-   - After adding items, use get_suggestions(participantId) to recommend more items
+Ask: "Would you like to confirm your order?"
 
-   **Step 4: Done Ordering**
-   - Customer: "done/خلاص" → call get_cart(participantId)
-   - Show cart and ask: "تأكد من الطلب؟"
+Customer can still modify items at this point.
 
-7️⃣ **SERVICE TYPE**
-   - Ask: "طلبك هيكون ازاي؟ pickup / delivery / dine-in"
-   - pickup → continue
-   - delivery → ask for address
-   - dine-in → ask for table number
+**PHASE 5: PAYMENT**
+After customer confirms order:
+1. Ask: "How would you like to pay?"
+   - "💳 Online (Visa/Mastercard)"
+   - "💵 Pay at counter"
 
-8️⃣ **COUPON**
-   - Ask: "معاك كود خصم؟"
-   - If yes → call validate_coupon(code, participantId)
-   - If no → continue
+Based on choice:
+- **online** → 
+  1. Call create_order(participantId, participantType, serviceType, "online", tableNumber?, deliveryAddress?, couponCode?)
+  2. Call initiate_payment(orderId) to get Stripe checkout URL
+  3. Say: "Redirecting you to secure payment..."
 
-9️⃣ **ORDER SUMMARY**
-   - Show complete order details: items, quantities, prices, subtotal, VAT, total
-   - Ask: "أكد الطلب؟" / "Confirm order?"
-   - Customer can still modify
+- **instore** →
+  1. Call create_order(participantId, participantType, serviceType, "instore", tableNumber?, deliveryAddress?, couponCode?)
+  2. Say: "Please proceed to the cashier. Your order number is: {orderNumber}"
+  3. Say thank you message
 
-🔟 **PAYMENT**
-   - Ask: "تدفع online ولا cash؟"
-   - **online**: call create_order(..., paymentMethod: "online") then initiate_payment(orderId)
-   - **cash**: call create_order(..., paymentMethod: "cash")
-   - After order: "شكراً! رقم طلبك: XXX"
+===== IMPORTANT NOTES =====
+
+1. **Natural Language**: Respond naturally based on context. Don't use fixed templates.
+2. **Confirmation**: Always show product details BEFORE adding to cart.
+3. **Multiple Items**: If customer orders multiple items, search and add each one.
+4. **Modifications**: Customer can modify their order at any point before payment.
+5. **English Only**: Always respond in English regardless of input language.
 
 ===== AVAILABLE TOOLS =====
-- menu_search(query, categoryName?)
-- get_categories()
-- get_product_details(productId)
-- add_to_cart(participantId, productId, quantity, selectedOptions)
-- get_cart(participantId)
-- update_cart_item(participantId, productId, newQuantity)
-- get_suggestions(participantId)
-- validate_coupon(code, participantId)
-- restaurant_info(topic)
-- submit_support(type, message, name?, email?)
-- website_guide(topic)
-- create_order(participantId, participantType, serviceType, paymentMethod, tableNumber?, deliveryAddress?, couponCode?)
-- initiate_payment(orderId)
+- restaurant_info(topic) - Get restaurant info, menu image, about, contact, faqs, etc.
+- menu_search(query, categoryName?) - Search for products in menu
+- get_product_details(productId) - Get full product details with options
+- get_categories() - List all menu categories
+- add_to_cart(participantId, productId, quantity, selectedOptions) - Add item to cart
+- get_cart(participantId) - View current cart contents
+- update_cart_item(participantId, productId, newQuantity) - Update quantity or remove (0)
+- get_suggestions(participantId) - Get recommended additional items
+- validate_coupon(code, orderTotal) - Check if coupon is valid
+- create_order(participantId, participantType, serviceType, paymentMethod, tableNumber?, deliveryAddress?, couponCode?) - Create final order
+- initiate_payment(orderId) - Start Stripe online payment
 
 **Customer ID:** {participantId}
-**Language:** {language}`;
+**Customer Type:** {participantType}`;
 
 const STATE_PROMPTS = {
-  greeting: `\n[GREETING] Say hello. Ask what they want.`,
-  browsing: `\n[BROWSING] Customer looking at menu. Use menu_search. Ask to add to cart.`,
-  ordering: `\n[ORDERING] Customer has items. Ask "تريد حاجة تانية؟"/"Anything else?" If done→show cart.`,
-  cart_review: `\n[CART REVIEW] Use get_cart. Then ask: "pickup, delivery, or dine-in?"`,
-  service_type: `\n[SERVICE TYPE] Wait for customer choice. pickup→coupon, delivery→ask address, dine-in→ask table#`,
-  delivery_info: `\n[DELIVERY] Get address. THEN ask: "معاك كود خصم؟"/"Have a coupon?" DO NOT go to payment yet!`,
-  table_info: `\n[TABLE] Get table number. THEN ask: "معاك كود خصم؟"/"Have a coupon?" DO NOT go to payment yet!`,
-  coupon: `\n[COUPON] If has code→validate_coupon. Then show order summary with get_cart. Ask "أكد الطلب؟"`,
-  order_summary: `\n[SUMMARY] Show cart details. Ask "أكد الطلب؟"/"Confirm order?" DO NOT process payment until confirmed!`,
-  payment: `\n[PAYMENT] Ask: "online or cash?" THEN call create_order FIRST, then initiate_payment if online.`,
-  completed: `\n[COMPLETED] Thank customer. Show order number.`,
+  greeting: `\n[PHASE 1: WELCOME] The welcome message with menu is already shown. Ask "What would you like to order?"`,
+  browsing: `\n[PHASE 2: ORDER BUILDING] Customer is exploring menu. Use menu_search to find products. Show product details with image and price. Confirm before adding to cart. Ask about size/options if available.`,
+  ordering: `\n[PHASE 2: ORDER BUILDING] Customer has items in cart. After each addition, ask "Would you like anything else?". Use get_suggestions for recommendations. When customer says done → show cart and move to service type.`,
+  cart_review: `\n[PHASE 3: SERVICE TYPE] Show cart summary with get_cart. Ask: "How would you like your order? 🏠 Delivery - 🏪 Pickup - 🪑 Dine-in"`,
+  service_type: `\n[PHASE 3] Wait for service type choice. pickup→continue to coupon, delivery→ask for address, dine-in→ask for table number.`,
+  delivery_info: `\n[PHASE 3] Get delivery address from customer. Once received, ask about coupon: "Do you have a coupon or promo code?"`,
+  table_info: `\n[PHASE 3] Get table number from customer. Once received, ask about coupon: "Do you have a coupon or promo code?"`,
+  coupon: `\n[PHASE 4: COUPON & SUMMARY] If customer has coupon→use validate_coupon. Then show complete order summary (items, subtotal, VAT, discount, total). Ask "Would you like to confirm your order?"`,
+  order_summary: `\n[PHASE 4] Show complete order details with totals. Ask for final confirmation. Customer can still modify. When confirmed→move to payment.`,
+  payment: `\n[PHASE 5: PAYMENT] Ask: "How would you like to pay? 💳 Online - 💵 Pay at counter". On choice: call create_order FIRST, then initiate_payment if online.`,
+  completed: `\n[COMPLETED] Order placed! Thank customer warmly. Show order number. Say goodbye. Offer to help with anything else.`,
 };
 
 // ============================================================
-// DIRECT PATTERNS - Minimal, only greeting
+// DIRECT PATTERNS - Fixed welcome with menu display (English only)
 // ============================================================
 const DIRECT_PATTERNS = [
-  // Only greeting - everything else via AI tools
+  // Greeting pattern - show fixed welcome with menu
   {
-    regex: /^(hi|hello|مرحبا|اهلا|السلام عليكم|hey|هاي|hola)$/i,
+    regex: /^(hi|hello|hey|hola|start|menu|order|yo|greetings)$/i,
     response: async (session) => {
       const rest = await getCachedRestaurant();
-      const name = rest?.restaurantName || "our restaurant";
-      const lang = session.language === "ar";
-      return lang 
-        ? `مرحباً بك في ${name}! 👋\n\nكيف يمكنني مساعدتك؟\n- عرض المنيو\n- طلب أكل`
-        : `Welcome to ${name}! 👋\n\nHow can I help you?\n- View menu\n- Place an order`;
+      const name = rest?.restaurantName || "Our Restaurant";
+      const menuImage = rest?.branding?.menuImage;
+      
+      let greeting = `Welcome to **${name}**! 👋\n\n`;
+      
+      if (menuImage) {
+        greeting += `📋 **Our Menu:**\n![${name} Menu](${menuImage})\n\n`;
+      }
+      
+      greeting += `🍽️ What would you like to order?`;
+      
+      return greeting;
     }
   },
 ];
@@ -241,7 +277,7 @@ function getToolsForState(state) {
 }
 
 // ============================================================
-// STATE TRANSITION LOGIC - Improved intent detection
+// STATE TRANSITION LOGIC - English only intent detection
 // ============================================================
 function determineNextState(currentState, aiResponse, toolResults, userMessage = "") {
   const responseText = (aiResponse?.content || "").toLowerCase();
@@ -251,79 +287,102 @@ function determineNextState(currentState, aiResponse, toolResults, userMessage =
   const hasOrderCreated = toolResults.some(t => t.name === "create_order" && t.success);
   const hasPaymentInitiated = toolResults.some(t => t.name === "initiate_payment" && t.success);
   const hasAddedToCart = toolResults.some(t => t.name === "add_to_cart" && t.success);
-  const hasCouponValidated = toolResults.some(t => t.name === "validate_coupon" && t.valid);
+  const hasCouponValidated = toolResults.some(t => t.name === "validate_coupon");
+  const hasCartViewed = toolResults.some(t => t.name === "get_cart");
+  const hasMenuViewed = toolResults.some(t => t.name === "restaurant_info" || t.name === "menu_search");
 
   // Complete states
   if (hasPaymentInitiated) return "completed";
-  if (hasOrderCreated && !responseText.includes("payment")) return "completed";
+  if (hasOrderCreated) return "completed";
   if (currentState === "completed") return "greeting";
 
   // Cart additions move to ordering
-  if (hasAddedToCart && (currentState === "greeting" || currentState === "browsing")) {
+  if (hasAddedToCart) {
     return "ordering";
   }
 
-  // Check user intent for checkout
-  const checkoutIntent = /(done|خلصت|خلاص|كده|that's all|checkout|انهاء|متابعة)/i;
-  const confirmIntent = /(confirm|أكد|تمام|yes|ايوه|اوكي|ok|نعم)/i;
+  // Intent patterns (English only)
+  const checkoutIntent = /(done|that's all|checkout|finish|finished|complete|i'm done)/i;
+  const confirmIntent = /(confirm|yes|yeah|yep|ok|okay|sure|go ahead|proceed)/i;
+  const noCouponIntent = /(no|nope|don't have|no coupon|none|skip)/i;
   
-  // Greeting → Browsing
+  // Greeting → Browsing (when user asks about menu or food)
   if (currentState === "greeting") {
-    if (responseText.includes("menu") || responseText.includes("منيو") || 
-        userText.includes("اكل") || userText.includes("food")) {
+    if (hasMenuViewed || responseText.includes("menu") || 
+        userText.includes("food") || userText.includes("order") || 
+        userText.includes("want") || userText.includes("like")) {
       return "browsing";
     }
   }
 
-  // Ordering → Service Type (when user says done)
-  if (currentState === "ordering" || currentState === "cart_review") {
-    if (checkoutIntent.test(userText) || responseText.includes("service type") || 
-        responseText.includes("نوع الخدمة")) {
+  // Browsing → Ordering (after viewing products)
+  if (currentState === "browsing" && hasAddedToCart) {
+    return "ordering";
+  }
+
+  // Ordering → Cart Review (when user says done or cart is viewed)
+  if (currentState === "ordering") {
+    if (checkoutIntent.test(userText) || hasCartViewed) {
+      return "cart_review";
+    }
+  }
+
+  // Cart Review → Service Type (when asking about service type)
+  if (currentState === "cart_review") {
+    if (responseText.includes("pickup") || responseText.includes("delivery") || 
+        responseText.includes("dine") || responseText.includes("how would you like")) {
       return "service_type";
     }
   }
 
   // Service Type → Delivery/Table/Coupon
   if (currentState === "service_type") {
-    if (userText.includes("delivery") || userText.includes("توصيل") || userText.includes("دليفري")) {
+    if (userText.includes("delivery") || userText.includes("deliver")) {
       return "delivery_info";
     }
-    if (userText.includes("dine") || userText.includes("داخل") || userText.includes("table") || 
-        userText.includes("طاولة") || userText.includes("في المطعم")) {
+    if (userText.includes("dine") || userText.includes("table") || userText.includes("eat here") ||
+        userText.includes("here")) {
       return "table_info";
     }
-    if (userText.includes("pickup") || userText.includes("استلام") || userText.includes("تيك اواي")) {
+    if (userText.includes("pickup") || userText.includes("pick up") || userText.includes("collect") ||
+        userText.includes("take away") || userText.includes("takeaway")) {
       return "coupon";
     }
   }
 
   // Delivery/Table → Coupon (after getting address/table)
-  if (currentState === "delivery_info" && (userText.length > 5 || responseText.includes("coupon"))) {
-    return "coupon";
+  if (currentState === "delivery_info") {
+    if (userText.length > 5 || responseText.includes("coupon") || responseText.includes("promo")) {
+      return "coupon";
+    }
   }
-  if (currentState === "table_info" && (/\d/.test(userText) || responseText.includes("coupon"))) {
-    return "coupon";
+  if (currentState === "table_info") {
+    if (/\d/.test(userText) || responseText.includes("coupon") || responseText.includes("promo")) {
+      return "coupon";
+    }
   }
 
   // Coupon → Order Summary
   if (currentState === "coupon") {
-    if (hasCouponValidated || userText.includes("no") || userText.includes("لا") || 
-        userText.includes("مفيش") || responseText.includes("summary")) {
+    if (hasCouponValidated || noCouponIntent.test(userText) || 
+        responseText.includes("summary") || responseText.includes("total")) {
       return "order_summary";
     }
   }
 
   // Order Summary → Payment (on confirmation)
   if (currentState === "order_summary") {
-    if (confirmIntent.test(userText) || responseText.includes("payment")) {
+    if (confirmIntent.test(userText) || responseText.includes("payment") ||
+        responseText.includes("pay")) {
       return "payment";
     }
   }
 
-  // Payment → Complete (on payment method)
+  // Payment → Complete (on payment method selection)
   if (currentState === "payment") {
-    if (userText.includes("cash") || userText.includes("store") || userText.includes("كاشير") || 
-        userText.includes("المطعم") || hasOrderCreated) {
+    if (userText.includes("cash") || userText.includes("store") || userText.includes("counter") || 
+        userText.includes("instore") || userText.includes("online") || userText.includes("card") ||
+        hasOrderCreated) {
       return "completed";
     }
   }
@@ -332,19 +391,23 @@ function determineNextState(currentState, aiResponse, toolResults, userMessage =
 }
 
 // ============================================================
-// BUILD MESSAGES - Reduced history (5 instead of 10)
+// BUILD MESSAGES - Include context and history
 // ============================================================
-function buildMessages(session, userMessage) {
+async function buildMessages(session, userMessage) {
+  // Get restaurant name for personalization
+  const restaurant = await getCachedRestaurant();
+  const restaurantName = restaurant?.restaurantName || "our restaurant";
+  
   const systemPrompt = BASE_SYSTEM_PROMPT
-    .replace("{participantId}", session.participantId)
-    .replace("{participantType}", session.participantType)
-    .replace("{language}", session.language || "en")
+    .replace(/{restaurantName}/g, restaurantName)
+    .replace(/{participantId}/g, session.participantId)
+    .replace(/{participantType}/g, session.participantType)
     + (STATE_PROMPTS[session.state] || STATE_PROMPTS.greeting);
 
   const messages = [new SystemMessage(systemPrompt)];
 
-  // Reduced from 10 to 5 messages
-  const history = session.getRecentMessages ? session.getRecentMessages(5) : (session.messages?.slice(-5) || []);
+  // Increased to 8 messages for better context in ordering flows
+  const history = session.getRecentMessages ? session.getRecentMessages(8) : (session.messages?.slice(-8) || []);
   for (const msg of history) {
     if (msg.role === "user") {
       messages.push(new HumanMessage(msg.content));
@@ -458,8 +521,8 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
           actionData = directResponse.actionData || null;
         }
         
-        // Save to history
-        await conversationManager.addMessage(sessionId, "user", userMessage);
+        // Save only the welcome response to history (skip user greeting trigger)
+        // This makes the chat start clean with just the welcome message
         await conversationManager.addMessage(sessionId, "assistant", answer);
         
         return {
@@ -474,7 +537,7 @@ export async function processUserMessage(userMessage, sessionId, participantId, 
     }
 
     // ========== NORMAL AI FLOW ==========
-    const messages = buildMessages(session, userMessage);
+    const messages = await buildMessages(session, userMessage);
     const tools = getToolsForState(session.state);
     const llmWithTools = chatModel.bindTools(tools);
 

@@ -530,11 +530,12 @@ export default function Chatbot() {
     if (isActive && !isLoaded) {
       dispatch(loadChatHistory()).then((result) => {
         if (!result.payload?.messages?.length) {
-          dispatch(setWelcomeMessage(restaurantName));
+          // Send "start" to backend to get welcome message with menu image
+          dispatch(sendChatMessage("start"));
         }
       });
     }
-  }, [isActive, isLoaded, dispatch, restaurantName]);
+  }, [isActive, isLoaded, dispatch]);
 
   // Handle logout - clear chat when user logs out
   useEffect(() => {
@@ -549,11 +550,12 @@ export default function Chatbot() {
     if (!prevAuth && isAuthenticated && isActive) {
       dispatch(loadChatHistory()).then((result) => {
         if (!result.payload?.messages?.length) {
-          dispatch(setWelcomeMessage(restaurantName));
+          // Send "start" to backend to get welcome message with menu image
+          dispatch(sendChatMessage("start"));
         }
       });
     }
-  }, [isAuthenticated, prevAuth, isActive, dispatch, restaurantName]);
+  }, [isAuthenticated, prevAuth, isActive, dispatch]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
