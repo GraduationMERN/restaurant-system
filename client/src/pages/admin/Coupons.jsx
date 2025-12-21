@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Trash2, Edit, Plus, X } from "lucide-react";
+import { Trash2, Edit, Plus, X, HeartPlusIcon } from "lucide-react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
@@ -119,19 +119,18 @@ export default function Coupons() {
       <PageMeta title="Coupons | Admin" description="Manage restaurant coupons" />
       <PageBreadcrumb pageTitle="Coupons" />
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Coupon Management
           </h3>
-          <Button 
-            variant="primary" 
+          <button
             onClick={openAddModal}
-            className="flex items-center gap-2"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/25"
           >
-            <Plus className="w-4 h-4" />
+            <Plus size={18} />
             Add Coupon
-          </Button>
+          </button>
         </div>
 
         {loading ? (

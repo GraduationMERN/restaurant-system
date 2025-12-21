@@ -1,6 +1,5 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import ComponentCard from "../../components/common/ComponentCard";
 import Button from "../../components/ui/button/Button";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
@@ -17,7 +16,6 @@ import {
   PlugInIcon,
   PencilIcon,
   TrashBinIcon,
-  PlusIcon,
 } from "../../icons/admin-icons";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -25,7 +23,7 @@ import { getAllRewards, addReward, deleteReward, updateReward } from "../../redu
 import { getAllRewardOrders } from "../../redux/slices/rewardOrderSlice";
 import { fetchProducts } from "../../redux/slices/ProductSlice";
 import { useToast } from "../../hooks/useToast";
-import { Gift } from "lucide-react";
+import { Gift, Plus } from "lucide-react";
 
 export default function Rewards() {
   const [isOpen, setIsOpen] = useState(false);
@@ -172,7 +170,13 @@ export default function Rewards() {
 
       <div className="mt-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Reward Programs</h3>
-        <Button onClick={openAdd} startIcon={<PlusIcon className="size-5" />}>Add Reward</Button>
+        <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/25"
+          >
+            <Plus size={18} />
+            Add Reward
+          </button>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -247,22 +251,7 @@ export default function Rewards() {
               <Label>Points</Label>
               <Input type="number" value={form.points} onChange={(e) => setForm((f) => ({ ...f, points: e.target.value }))} />
             </div>
-
             <div>
-              <Label>Type</Label>
-              <Select
-                options={[
-                  { value: "free_product", label: "Free Product" },
-                  { value: "discount", label: "Discount" },
-                  { value: "multiplier", label: "Multiplier" },
-                  { value: "coupon", label: "Coupon" },
-                  { value: "generic", label: "Generic" },
-                ]}
-                defaultValue={form.type}
-                onChange={(val) => setForm((f) => ({ ...f, type: val }))}
-              />
-            </div>
-            <div className="sm:col-span-2">
               <Label>Description</Label>
               <Input value={form.desc} onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))} />
             </div>

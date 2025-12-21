@@ -10,7 +10,7 @@ const LayoutContent = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
-    <div className="safe-area-top bg-default min-h-screen xl:flex dark:bg-gray-900 ml-0">
+    <div className="safe-area-top bg-default min-h-screen xl:flex dark:bg-gray-900">
 
       <div>
         <AppSidebar />
@@ -18,7 +18,7 @@ const LayoutContent = () => {
       </div>
       <div
         className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+          isExpanded || isHovered ? "lg:ml-70" : ""
         }`}>
         <AppHeader />
         <div className="p-4 md:p-6 w-full">
