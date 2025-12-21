@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSettings } from "../../context/SettingContext";
 import { Link } from "react-router";
+import { Languages } from "lucide-react";
 import { useSidebar } from "../../context/SidebarContext";
 import { ThemeToggleButton } from "../../components/common/ThemeToggleButton";
 import NotificationDropdown from "../../components/header/NotificationDropdown";
 import UserDropdown from "../../components/header/UserDropdown";
 
 const AppHeader = () => {
+  const { t, i18n } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const { settings } = useSettings();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
@@ -67,6 +70,13 @@ const AppHeader = () => {
 
           {/* Right Controls - Always visible */}
           <div className="flex items-center gap-2 lg:gap-4">
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language === "ar" ? "en" : "ar")}
+              className="relative flex items-center justify-center text-gray-500 transition-colors bg-transparent rounded-full h-11 w-11 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white font-bold"
+              title={i18n.language === "ar" ? "Switch to English" : "التبديل للعربية"}
+            >
+              {i18n.language === "ar" ? "En" : "ع"}
+            </button>
             <ThemeToggleButton />
             <NotificationDropdown />
             <UserDropdown />

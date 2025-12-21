@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   toggleChatbot,
   addLocalMessage,
@@ -477,6 +478,7 @@ const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
 
 export default function Chatbot() {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { settings } = useSettings();
   const { isActive, isWaiting, messages, suggestions, conversationState, isLoaded } =
     useSelector((s) => s.chatbot);
@@ -707,9 +709,14 @@ export default function Chatbot() {
     );
   }, [isWaiting]);
 
+  // In LTR: add some margin from right edge. In RTL: no extra margin needed
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
+  const marginClass = isRTL ? "" : "lg:mr-10";
+
   return (
     <div
-      className={`chatbot-container lg:mx-10 ${isActive ? "active" : ""} ${isExpanded ? "expanded" : ""}`}
+      className={`chatbot-container ${marginClass} ${isActive ? "active" : ""} ${isExpanded ? "expanded" : ""}`}
       id="chatbot"
       style={{ "--cb-primary": primaryColor }}
     >
@@ -732,7 +739,7 @@ export default function Chatbot() {
           
           <div className="header-info">
             <h3>{agentName}</h3>
-            <p>Active</p>
+            <p>{t("chatbot_active")}</p>
           </div>
           
           {/* Menu Button */}
@@ -748,15 +755,15 @@ export default function Chatbot() {
               <div className="menu-dropdown">
                 <button onClick={onToggleExpand}>
                   {isExpanded ? <CollapseIcon /> : <ExpandIcon />}
-                  <span>{isExpanded ? "Collapse window" : "Expand window"}</span>
+                  <span>{isExpanded ? t("chatbot_collapse") : t("chatbot_expand")}</span>
                 </button>
                 <button onClick={onDownloadTranscript}>
                   <DownloadIcon />
-                  <span>Download transcript</span>
+                  <span>{t("chatbot_download")}</span>
                 </button>
                 <button onClick={onResetChat}>
                   <span style={{ fontSize: "18px" }}>🔄</span>
-                  <span>New Conversation</span>
+                  <span>{t("chatbot_new_conversation")}</span>
                 </button>
               </div>
             )}
@@ -836,7 +843,7 @@ export default function Chatbot() {
               <form className="input-wrapper" onSubmit={onSubmit}>
                 <input
                   type="text"
-                  placeholder="Message..."
+                  placeholder={t("chatbot_placeholder")}
                   aria-label="Type your message"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -857,7 +864,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className="input-icon-btn" 
-                    title="Send image"
+                    title={t("send_image")}
                     onClick={() => imageInputRef.current?.click()}
                   >
                     <ImageIcon />
@@ -865,7 +872,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className={`input-icon-btn ${showEmojiPicker ? "active" : ""}`}
-                    title="Add emoji"
+                    title={t("add_emoji")}
                     onClick={() => {
                       setShowEmojiPicker(!showEmojiPicker);
                       setShowGifPicker(false);
@@ -877,7 +884,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className={`input-icon-btn ${showGifPicker ? "active" : ""}`}
-                    title="Add GIF"
+                    title={t("add_gif")}
                     onClick={() => {
                       setShowGifPicker(!showGifPicker);
                       setShowEmojiPicker(false);
@@ -889,7 +896,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className="input-icon-btn" 
-                    title="Voice message"
+                    title={t("voice_message")}
                     onClick={() => setShowVoiceRecorder(true)}
                   >
                     <MicIcon />
@@ -920,16 +927,16 @@ export default function Chatbot() {
           </button>
           <div className="greeting-content">
             <span className="greeting-wave">👋</span>
-            <strong>Hi, I'm {agentName}!</strong>
+            <strong>{t("chatbot_greeting_hi")} {agentName}!</strong>
           </div>
-          <p>I can help with menu selection, orders, or connect you to support.</p>
+          <p>{t("chatbot_greeting_help")}</p>
         </div>
       )}
 
       {/* Floating Buttons Container */}
-      <div className="flex items-center gap-3">
+      <div className="chatbot-buttons-container">
         {/* Scroll to Top Button */}
-        <ScrollToTopButton />
+        <ScrollToTopButton className="scroll-to-top-btn"/>
         
         {/* Toggle Button */}
         <button

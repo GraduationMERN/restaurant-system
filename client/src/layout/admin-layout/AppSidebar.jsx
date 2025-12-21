@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { useTranslation } from "react-i18next";
 
 // Assume these icons are imported from an icon library
 import { ChevronDownIcon, GridIcon, HorizontaLDots, UserCircleIcon, BoxIconLine, TaskIcon, ShootingStarIcon, DollarLineIcon, SettingsGearIcon, GroupIcon } from "../../icons/admin-icons";
@@ -26,6 +27,8 @@ const othersItems = [];
 const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const { settings } = useSettings();
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState(null);
@@ -211,7 +214,8 @@ const AppSidebar = () => {
 
   return (
     <aside
-      className={`fixed flex flex-col top-0 left-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out z-50
+      className={`fixed flex flex-col top-0 h-screen bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out z-50
+        ${isRTL ? 'right-0 border-l' : 'left-0 border-r'}
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"
@@ -220,7 +224,11 @@ const AppSidebar = () => {
             : "w-[90px]"
         }
         ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          isMobileOpen 
+            ? "translate-x-0" 
+            : isRTL 
+              ? "translate-x-full" 
+              : "-translate-x-full"
         }
         lg:translate-x-0 lg:top-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}

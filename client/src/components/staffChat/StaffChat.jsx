@@ -1177,7 +1177,7 @@ export default function StaffChat() {
       {/* Floating Buttons Container */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* Scroll to Top Button */}
-        <ScrollToTopButton />
+        <ScrollToTopButton className="scroll-to-top" />
 
         {/* Toggle Button */}
         <button

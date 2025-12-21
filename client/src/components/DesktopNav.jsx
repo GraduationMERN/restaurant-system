@@ -130,7 +130,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/support"
             icon={<HelpCircle size={20} />}
-            label={"Support"}
+            label={t("Support")}
             active={isActive("/support")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -287,6 +287,7 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
 
 /* ------------ User Dropdown ------------ */
 function UserDropdown({ isOpen, user, onNavClick }) {
+  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { profile } = useSelector((state) => state.userProfile || {});
@@ -311,11 +312,11 @@ function UserDropdown({ isOpen, user, onNavClick }) {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
     }
@@ -369,14 +370,14 @@ function UserDropdown({ isOpen, user, onNavClick }) {
 
       {/* Dropdown Menu */}
       {dropdownOpen && (
-        <div className={`absolute ${isOpen ? "left-2 right-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 min-w-[160px]`}>
+        <div className={`absolute ${isOpen ? "inset-x-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 min-w-[160px]`}>
           <Link
             to="/profile"
             onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <User size={16} />
-            Profile
+            {t("profile")}
           </Link>
           {roleLink && (
             <a
@@ -396,7 +397,7 @@ function UserDropdown({ isOpen, user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
           >
             <LogOut size={16} />
-            Logout
+            {t("logout")}
           </button>
         </div>
       )}
@@ -406,6 +407,7 @@ function UserDropdown({ isOpen, user, onNavClick }) {
 
 /* ------------ Mobile User Dropdown ------------ */
 function MobileUserDropdown({ user, onNavClick }) {
+  const { t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { profile } = useSelector((state) => state.userProfile || {});
@@ -427,11 +429,11 @@ function MobileUserDropdown({ user, onNavClick }) {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
     }
@@ -450,7 +452,7 @@ function MobileUserDropdown({ user, onNavClick }) {
           alt="User"
           className="w-7 h-7 rounded-full object-cover border-2 border-primary/40"
         />
-        <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Me</span>
+        <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">{t("me")}</span>
       </button>
 
       {/* Dropdown Menu - appears above the button */}
@@ -462,7 +464,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <User size={16} />
-            Profile
+            {t("profile")}
           </Link>
           <Link
             to="/reviews"
@@ -470,7 +472,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Star size={16} />
-            Reviews
+            {t("reviews")}
           </Link>
           <Link
             to="/rewards"
@@ -478,7 +480,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Gift size={16} className="text-secondary" />
-            Rewards
+            {t("rewards")}
           </Link>
           {roleLink && (
             <Link

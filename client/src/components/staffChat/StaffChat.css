@@ -560,3 +560,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+html[dir="rtl"] .staff-chat-container{
+  left: 24px;
+
+}
+
+html[dir="rtl"] .scroll-to-top {
+  right: 0px;
+}
