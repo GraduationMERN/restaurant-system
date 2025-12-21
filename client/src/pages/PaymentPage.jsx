@@ -7,12 +7,14 @@ import { createStripeSession, verifyPaymentStatus, clearPaymentState } from "../
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CreditCard, Store, CheckCircle, AlertCircle } from "lucide-react";
 import api from "../api/axios";
+import { useTranslation } from "react-i18next";
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
+  const { t } = useTranslation();
   
   // Get URL params for session ID (from payment-success page redirect)
   const { sessionId } = useParams();
@@ -68,7 +70,7 @@ const PaymentPage = () => {
       if (id === orderId) {
         // If payment was marked paid, navigate to tracking or show toast
         if (order.paymentStatus === 'paid') {
-          toast.showToast({ message: 'Payment received. Tracking your order.', type: 'success' });
+          toast.showToast({ message: t("payment.verified_success"), type: 'success' });
           navigate(`/orders/${id}`, { state: { order } });
         } else {
           toast.showToast({ message: `Payment updated: ${order.paymentStatus}`, type: 'success' });
@@ -83,7 +85,7 @@ const PaymentPage = () => {
       s.off('order:your-payment-updated', handleYourPayment);
       s.off('order:payment-updated', handleYourPayment);
     };
-  }, [orderId, navigate]);
+  }, [orderId, navigate, t]);
 
   // Handle stripe redirect
   useEffect(() => {
@@ -97,7 +99,7 @@ const PaymentPage = () => {
   useEffect(() => {
     if (!orderId && !sessionId) {
       console.error("No orderId found. Location state:", location.state);
-      setLocalError("Order not found. Please complete checkout first.");
+      setLocalError(t("payment.verified_failed"));
       
       // Redirect after 3 seconds
       const timer = setTimeout(() => {
@@ -106,7 +108,7 @@ const PaymentPage = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [orderId, sessionId, navigate]);
+  }, [orderId, sessionId, navigate, t]);
 
   // Verify payment by session ID
   const verifyPaymentBySession = async (sessionId) => {
@@ -122,12 +124,12 @@ const PaymentPage = () => {
           });
         } else {
           // Payment not completed yet, show payment options
-          setLocalError("Payment not completed. Please complete payment below.");
+          setLocalError(t("payment.verified_failed"));
         }
       }
     } catch (err) {
       console.error("Failed to verify payment:", err);
-      setLocalError("Unable to verify payment status. Please try again.");
+      setLocalError(t("payment.verified_failed"));
     } finally {
       setIsVerifyingPayment(false);
     }
@@ -136,7 +138,7 @@ const PaymentPage = () => {
   // Handle payment
   const handlePayment = async () => {
     if (!orderId) {
-      setLocalError("Order not found. Please complete checkout first.");
+      setLocalError(t("payment.verified_failed"));
       return;
     }
 
@@ -170,7 +172,7 @@ const PaymentPage = () => {
           console.log("Stripe session created:", result);
           // Redirection happens automatically via useEffect
         } else {
-          setLocalError(result.message || "Failed to create payment session");
+          setLocalError(result.message || t("payment.verified_failed"));
         }
       } else {
         // For in-store payments we should NOT mark the order as paid from the customer's client.
@@ -192,7 +194,7 @@ const PaymentPage = () => {
       } else if (err.message && err.message.includes("Not authorized")) {
         setLocalError("You are not authorized to pay for this order. Please check your order and try again.");
       } else {
-        setLocalError(err.message || "Payment failed. Please try again.");
+        setLocalError(err.message || t("payment.verified_failed"));
       }
     }
   };
@@ -205,7 +207,7 @@ const PaymentPage = () => {
           <div className="h-16 w-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="h-8 w-8 text-red-500 dark:text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Order Error</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t("payment.verified_failed")}</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{localError}</p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
             Redirecting to checkout in a few seconds...
@@ -214,7 +216,7 @@ const PaymentPage = () => {
             onClick={() => navigate("/checkout")}
             className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition-colors"
           >
-            Go to Checkout Now
+            {t("payment.back")}
           </button>
         </div>
       </div> 
@@ -237,7 +239,7 @@ const PaymentPage = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Verifying payment status...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t("payment.verifying")}</p>
         </div>
       </div>
     );
@@ -254,7 +256,7 @@ const PaymentPage = () => {
               className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary/90 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back
+              {t("payment.back")}
             </button>
           </div>
         </div>
@@ -287,10 +289,10 @@ const PaymentPage = () => {
                 ? 'text-red-800 dark:text-red-300'
                 : 'text-blue-800 dark:text-blue-300'
             }`}>
-              {paymentStatus === 'paid' && '✅ Payment successful! Order confirmed.'}
-              {paymentStatus === 'success' && '✅ Payment processed successfully.'}
-              {paymentStatus === 'failed' && '❌ Payment failed. Please try again.'}
-              {paymentStatus === 'processing' && '⏳ Processing payment...'}
+              {paymentStatus === 'paid' && `✅ ${t("payment.verified_success")}`}
+              {paymentStatus === 'success' && `✅ ${t("payment.verified_success")}`}
+              {paymentStatus === 'failed' && `❌ ${t("payment.verified_failed")}`}
+              {paymentStatus === 'processing' && `⏳ ${t("payment.processing")}`}
               {paymentStatus === 'redirecting' && '↗️ Redirecting to payment gateway...'}
             </p>
           </div>
@@ -301,13 +303,13 @@ const PaymentPage = () => {
           <div className="lg:col-span-7 space-y-6">
             {/* Branch Section */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Branch</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t("payment.branch")}</h2>
               <div className="flex items-start">
                 <div className="bg-primary/10 dark:bg-primary/10 text-primary dark:text-primary-900 rounded-lg p-3 mr-4">
                   <Store className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">From Branch:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t("payment.from_branch")}:</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{branchName}</p>
                 </div>
               </div>
@@ -315,7 +317,7 @@ const PaymentPage = () => {
 
             {/* Payment Methods */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Payment Methods</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t("payment.payment_methods")}</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Online Payment Option */}
@@ -342,9 +344,9 @@ const PaymentPage = () => {
                           ? "text-primary dark:text-primary-dark"
                           : "text-gray-900 dark:text-white"
                       }`}>
-                        Online
+                        {t("payment.online")}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pay securely online</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t("payment.online_desc")}</p>
                     </div>
                     {paymentMethod === "online" && (
                       <div className="ml-auto">
@@ -378,9 +380,9 @@ const PaymentPage = () => {
                           ? "text-primary dark:text-primary-dark/90"
                           : "text-gray-900 dark:text-white"
                       }`}>
-                        In-store
+                        {t("payment.instore")}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pay at the cashier</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t("payment.instore_desc")}</p>
                     </div>
                     {paymentMethod === "instore" && (
                       <div className="ml-auto">
@@ -394,9 +396,9 @@ const PaymentPage = () => {
               {/* Notification Message */}
               <div className="mt-8 p-4 bg-primary/10 dark:bg-blue-900/20 border border-primary dark:border-blue-800 rounded-xl">
                 <p className="text-black dark:text-blue-300 text-center">
-                  We will notify you once your order is ready.{" "}
+                  {t("payment.notify_ready")}{" "}
                   {paymentMethod === "instore" && (
-                    <span className="font-semibold">Kindly pay at the cashier.</span>
+                    <span className="font-semibold">{t("payment.kindly_pay")}</span>
                   )}
                 </p>
               </div>
@@ -412,13 +414,13 @@ const PaymentPage = () => {
               {(paymentStatus === 'paid' || paymentStatus === 'success') && (
                 <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <p className="text-green-700 dark:text-green-300 text-sm text-center">
-                    ✅ This order has already been paid. You can track your order status.
+                    ✅ {t("payment.already_paid")}. {t("payment.thank_you")}
                   </p>
                   <button
                     onClick={() => navigate(`/orders/${displayOrderId}`)}
                     className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition-colors"
                   >
-                    Track My Order
+                    {t("payment.track_order")}
                   </button>
                 </div>
               )}
@@ -429,21 +431,21 @@ const PaymentPage = () => {
           <div className="lg:col-span-5">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-4">
               {/* Order Summary */}
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Total bill</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t("payment.total_bill")}</h2>
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t("payment.subtotal")}</span>
                   <span className="font-semibold text-gray-900 dark:text-white">EGP {subtotal.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-gray-600 dark:text-gray-400">VAT</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t("payment.vat")}</span>
                   <span className="font-semibold text-gray-900 dark:text-white">EGP {vat.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center py-3">
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">{t("payment.total")}</span>
                   <span className="text-lg font-bold text-primary dark:text-primary-dark-900">EGP {total.toFixed(2)}</span>
                 </div>
               </div>
@@ -464,12 +466,12 @@ const PaymentPage = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Processing...
+                    {t("payment.processing")}
                   </span>
                 ) : paymentMethod === "online" ? (
-                  paymentStatus === 'paid' || paymentStatus === 'success' ? "Already Paid" : "Pay Online"
+                  paymentStatus === 'paid' || paymentStatus === 'success' ? t("payment.already_paid") : t("payment.pay_online")
                 ) : (
-                  paymentStatus === 'paid' || paymentStatus === 'success' ? "Already Paid" : "Pay at the cashier"
+                  paymentStatus === 'paid' || paymentStatus === 'success' ? t("payment.already_paid") : t("payment.pay_at_cashier")
                 )}
               </button>
 
@@ -477,7 +479,7 @@ const PaymentPage = () => {
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <details className="group">
                   <summary className="flex items-center justify-between cursor-pointer text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark transition-colors font-medium">
-                    <span className="font-medium">Order Items ({orderItems.length})</span>
+                    <span className="font-medium">{t("payment.order_items_count", { count: orderItems.length })}</span>
                     <svg className="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -516,21 +518,13 @@ const PaymentPage = () => {
 
               {/* Title */}
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Pay at the Cashier
+                {t("payment.modal_title")}
               </h3>
 
               {/* Message */}
               <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                Please proceed to the cashier to confirm your order and complete the payment. Your order will be prepared once payment is confirmed.
+                {t("payment.modal_desc")}
               </p>
-
-              {/* Amount Display */}
-              {/* <div className="bg-primary dark:bg-primary-dark bg-opacity-10 rounded-lg p-4 mb-6">
-                <p className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white font-bold py-3 px-6 rounded-xl transition-colors">Total Amount</p>
-                <p className="text-3xl font-bold text-primary dark:text-primary-dark">
-                  EGP {total.toFixed(2)}
-                </p>
-              </div> */}
 
               {/* Buttons */}
               <div className="space-y-3">
@@ -541,13 +535,13 @@ const PaymentPage = () => {
                   }}
                   className="w-full bg-primary hover:bg-primary/90 dark:bg-primary-dark dark:hover:bg-primary-dark/90 text-white font-bold py-3 px-6 rounded-xl transition-colors"
                 >
-                  I'll Pay at the Cashier
+                  {t("payment.yes_pay_cashier")}
                 </button>
                 <button
                   onClick={() => setShowInstoreModal(false)}
                   className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold py-3 px-6 rounded-xl transition-colors"
                 >
-                  Cancel
+                  {t("payment.cancel")}
                 </button>
               </div>
             </div>
