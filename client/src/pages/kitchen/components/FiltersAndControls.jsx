@@ -9,7 +9,7 @@ const FiltersAndControls = ({ filterStatus, setFilterStatus, sortBy, setSortBy }
     <ComponentCard>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
-          {["active", "confirmed", "preparing", "ready"].map((status) => (
+          {["confirmed", "preparing", "ready"].map((status) => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}

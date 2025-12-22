@@ -5,7 +5,7 @@ import { GiftIcon } from 'lucide-react';
 
 export default function RewardsList({rewards,groupedRewards, setSelectedReward,setShowConfirm, canRedeem}) {
     return (
-        <div className="px-6 mt-60 mb-20 md:mb-10 ">
+        <div className="px-6 mt-65 mb-20 md:mb-10 ">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Available Rewards</h2>
 
             {rewards.length === 0 ? (

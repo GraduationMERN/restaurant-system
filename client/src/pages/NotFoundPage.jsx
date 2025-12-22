@@ -8,7 +8,7 @@ export default function NotFound404() {
     <div className="min-h-screen flex flex-col items-center justify-center sm:p-6 bg-gray-50">
       {/* Animated Image */}
       <motion.img
-        src="/test2.png"
+        src="/test.jpeg"
         alt="404 illustration"
         className="w-full max-w-lg sm:max-w-xl mb-6 select-none"
         initial={{ opacity: 0, y: 40 }}

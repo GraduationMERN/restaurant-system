@@ -30,7 +30,7 @@ const PAYMENT_STATUS_COLORS = {
 
 export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdatePayment, onDelete,}) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
 
@@ -52,6 +52,7 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
 
  return (
   <div
+  onClick={() => setExpanded(!expanded)}
     className={`bg-white dark:bg-gray-800 border-2 ${colors.border} dark:border-gray-700 rounded-2xl p-5 mb-5 transition-all duration-300 hover:shadow-xl hover:scale-[1.01]`}
   >
     {/* Header Row */}
@@ -108,21 +109,20 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
       {/* Quick Action Buttons */}
       <div className="flex gap-2 ml-4 items-start">
         <button
-          onClick={() => onUpdateStatus(order)}
+          onClick={(e) => {e.stopPropagation(); onUpdateStatus(order);}}
           className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
           title={t("update_status")}
         >
           <Edit2 className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onDelete(order._id)}
+          onClick={(e) => {e.stopPropagation(); onDelete(order._id);}}
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:scale-105"
           title={t("delete_order")}
         >
           <Trash2 className="w-4 h-4" />
         </button>
         <button
-          onClick={() => setExpanded(!expanded)}
           className={`${colors.badge} ${colors.text} p-2 rounded-lg transition-transform transform ${
             expanded ? "rotate-180" : ""
           }`}
@@ -138,7 +138,7 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
         {isRewardOrder ? (
           /* Reward Order Details */
           <div>
-            <h4 className="font-bold text-slate-900 mb-2 text-sm">{t("items")}</h4>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">{t("items")}</h4>
             <ul className="space-y-2">
               <li className="flex justify-between items-center text-sm text-slate-700 bg-purple-50 p-2 rounded-lg shadow-sm">
                 <span>
@@ -155,12 +155,12 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
           <>
             {/* Items List */}
             <div>
-              <h4 className="font-bold text-slate-900 mb-2 text-sm">{t("items")}</h4>
+              <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">{t("items")}</h4>
               <ul className="space-y-2">
                 {order.items?.map((item, idx) => (
                   <li
                     key={idx}
-                    className="flex justify-between items-center text-sm text-slate-700 bg-slate-50 p-2 rounded-lg shadow-sm"
+                    className="flex justify-between items-center text-sm text-slate-700 dark:text-gray-300 dark:bg-gray-900 bg-slate-50 p-2 rounded-lg shadow-sm"
                   >
                     <span>
                       {item.name || item.productId?.name} x {item.quantity}
@@ -197,16 +197,16 @@ export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdateP
           {!isRewardOrder && (
              <div className="flex gap-2 flex-wrap mt-2">
             <button
-              onClick={() => onViewDetails(order)}
+              onClick={(e) => {e.stopPropagation(); onViewDetails(order)}}
               className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
             >
               {t("full_details")}
             </button>
             <button
-              onClick={() => onUpdatePayment(order)}
+              onClick={(e) => {e.stopPropagation(); onUpdatePayment(order);}}
               className="flex-1 bg-[#7B4019] hover:bg-[#593114] text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
             >
-              {t("payment")}
+              {t("Payment")}
             </button>
           </div>
           )}
