@@ -154,7 +154,7 @@ export default function CashierDashboard() {
               className={`flex-1 px-6 py-4 font-semibold text-sm transition-colors ${
                 activeTab === "orders"
                   ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               📋 {t("admin.manage_orders")}

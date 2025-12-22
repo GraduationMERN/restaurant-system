@@ -13,7 +13,7 @@ class PaymentController {
       console.log("User:", user?._id || "guest");
       console.log("Is guest:", user?.isGuest || false);
       console.log("STRIPE_SECRET_KEY configured:", !!process.env.STRIPE_SECRET_KEY);
-      console.log("CLIENT_URL:", process.env.CLIENT_URL);
+      console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 
       if (!orderId) {
         return res.status(400).json({ 

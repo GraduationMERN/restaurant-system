@@ -16,7 +16,6 @@ export default function ReviewsPage() {
   const { isOpen, openModal, closeModal } = useModal();
   const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
-
   const { error, warning, success } = useToast();
 
   useEffect(() => {

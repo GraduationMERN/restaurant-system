@@ -70,10 +70,10 @@ export default function OrderHistoryComponent({ orders }) {
               className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
               {/* Header + Status */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
+              <div className="mb-4">
+                <div className="flex-1 justify-between">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                    <h3 className="font-bold text-sm md:text-lg text-gray-900 dark:text-white">
                       {order.orderNumber}
                     </h3>
                     <span
@@ -111,12 +111,6 @@ export default function OrderHistoryComponent({ orders }) {
                   {order.items?.length || 0} item
                   {order.items?.length !== 1 ? "s" : ""}
                 </p>
-
-                <span
-                  className={`text-xs font-semibold capitalize px-2 py-1 rounded border ${paymentClass}`}
-                >
-                  {order.paymentStatus}
-                </span>
               </div>
 
               {/* Expanded Details */}
