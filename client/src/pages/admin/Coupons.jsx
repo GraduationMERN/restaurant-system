@@ -61,7 +61,7 @@ export default function Coupons() {
       code: coupon.code,
       discountPercentage: coupon.discountPercentage,
       maxUses: coupon.maxUses,
-      expiryDate: coupon.expiryDate ? coupon.expiryDate.split('T')[0] : "",
+      expiryDate: coupon.expiryDate ? coupon.expiryDate.split("T")[0] : "",
     });
     setShowModal(true);
   };
@@ -73,7 +73,10 @@ export default function Coupons() {
     }
 
     if (formData.discountPercentage < 1 || formData.discountPercentage > 100) {
-      toast.showToast({ message: "Discount must be between 1 and 100", type: "error" });
+      toast.showToast({
+        message: "Discount must be between 1 and 100",
+        type: "error",
+      });
       return;
     }
 
@@ -81,22 +84,30 @@ export default function Coupons() {
     try {
       if (editingId) {
         // Update
-        const res = await api.put(`/api/coupons/${editingId}`, formData);
-        setCoupons(coupons.map(c => c._id === editingId ? res.data.coupon : c));
-        toast.showToast({ message: "Coupon updated successfully", type: "success" });
+        const res = await api.put(`/api/admin/coupons/${editingId}`, formData);
+        setCoupons(
+          coupons.map((c) => (c._id === editingId ? res.data.coupon : c))
+        );
+        toast.showToast({
+          message: "Coupon updated successfully",
+          type: "success",
+        });
       } else {
         // Create
-        const res = await api.post("/api/coupons", formData);
+        const res = await api.post("/api/admin/coupons", formData);
         setCoupons([...coupons, res.data.coupon]);
-        toast.showToast({ message: "Coupon created successfully", type: "success" });
+        toast.showToast({
+          message: "Coupon created successfully",
+          type: "success",
+        });
       }
       setShowModal(false);
       resetForm();
     } catch (error) {
       console.error("Error saving coupon:", error);
-      toast.showToast({ 
-        message: error.response?.data?.message || "Failed to save coupon", 
-        type: "error" 
+      toast.showToast({
+        message: error.response?.data?.message || "Failed to save coupon",
+        type: "error",
       });
     } finally {
       setSubmitting(false);
@@ -107,9 +118,12 @@ export default function Coupons() {
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
 
     try {
-      await api.delete(`/api/coupons/${id}`);
-      setCoupons(coupons.filter(c => c._id !== id));
-      toast.showToast({ message: "Coupon deleted successfully", type: "success" });
+      await api.delete(`/api/admin/coupons/${id}`);
+      setCoupons(coupons.filter((c) => c._id !== id));
+      toast.showToast({
+        message: "Coupon deleted successfully",
+        type: "success",
+      });
     } catch (error) {
       console.error("Error deleting coupon:", error);
       toast.showToast({ message: "Failed to delete coupon", type: "error" });
@@ -118,7 +132,10 @@ export default function Coupons() {
 
   return (
     <>
-      <PageMeta title={t("admin.coupons_title")} description={t("admin.coupons_desc")} />
+      <PageMeta
+        title={t("admin.coupons_title")}
+        description={t("admin.coupons_desc")}
+      />
       <PageBreadcrumb pageTitle={t("admin.coupons_title")} />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
@@ -141,30 +158,57 @@ export default function Coupons() {
           </div>
         ) : coupons.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-400">{t("admin.no_coupons")}</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t("admin.no_coupons")}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.code")}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.discount")}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.max_uses")}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.used")}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("admin.expiry")}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">{t("actions")}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("admin.code")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("admin.discount")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("admin.max_uses")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("admin.used")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("admin.expiry")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {t("actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {coupons.map((coupon) => (
-                  <tr key={coupon._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{coupon.code}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{coupon.discountPercentage}%</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{coupon.maxUses}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{coupon.usedCount || 0}</td>
+                  <tr
+                    key={coupon._id}
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                      {coupon.code}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                      {coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString() : "No expiry"}
+                      {coupon.discountPercentage}%
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {coupon.maxUses}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {coupon.usedCount || 0}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {coupon.expiryDate
+                        ? new Date(coupon.expiryDate).toLocaleDateString()
+                        : "No expiry"}
                     </td>
                     <td className="px-4 py-3 text-sm flex gap-2">
                       <button
@@ -212,7 +256,12 @@ export default function Coupons() {
                 <input
                   type="text"
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      code: e.target.value.toUpperCase(),
+                    })
+                  }
                   placeholder="e.g., SAVE10"
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
@@ -225,7 +274,15 @@ export default function Coupons() {
                 <input
                   type="number"
                   value={formData.discountPercentage}
-                  onChange={(e) => setFormData({ ...formData, discountPercentage: Math.min(100, Math.max(1, parseInt(e.target.value) || 0)) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      discountPercentage: Math.min(
+                        100,
+                        Math.max(1, parseInt(e.target.value) || 0)
+                      ),
+                    })
+                  }
                   min="1"
                   max="100"
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -239,7 +296,12 @@ export default function Coupons() {
                 <input
                   type="number"
                   value={formData.maxUses}
-                  onChange={(e) => setFormData({ ...formData, maxUses: Math.max(1, parseInt(e.target.value) || 1) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      maxUses: Math.max(1, parseInt(e.target.value) || 1),
+                    })
+                  }
                   min="1"
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
@@ -252,23 +314,25 @@ export default function Coupons() {
                 <input
                   type="date"
                   value={formData.expiryDate}
-                  onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, expiryDate: e.target.value })
+                  }
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex gap-3 mt-6">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowModal(false)}
                 disabled={submitting}
                 className="flex-1"
               >
                 {t("cancel")}
               </Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleSave}
                 loading={submitting}
                 className="flex-1"
