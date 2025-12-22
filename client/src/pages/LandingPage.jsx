@@ -95,7 +95,7 @@ export default function LandingPage() {
       tags: ["pizza", "crust", "baked"]
     },
     {
-      image: "https://www.pinterest.com/pin/609252655860460716/",
+      image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGRpbm5lcnxlbnwwfHwwfHx8MA%3D%3D",
       likes: "900",
       caption: "Fresh ingredients, fresh taste",
       comments: "38",
@@ -491,16 +491,24 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center mt-8">
-            <a
-  href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-flex items-center gap-3 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
->
-  <Instagram className="w-5 h-5" />
-  {t("follow_instagram")}
-</a>
-
+              <a 
+                href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || "restaurant"}`}
+                target="_blank"
+                rel="noopener noreferrer"
+className="
+  inline-flex items-center gap-3
+  bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF]
+  text-white font-bold
+  py-3 px-6 rounded-xl
+  transition-all duration-300
+  hover:scale-105
+  shadow-lg
+  hover:shadow-xl
+"
+              >
+                <Instagram className="w-5 h-5" />
+                Follow on Instagram
+              </a>
             </div>
           </div>
 
