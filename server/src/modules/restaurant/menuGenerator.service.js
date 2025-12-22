@@ -827,17 +827,15 @@ export function generateMenuHTML(products, categories, restaurant, options = {})
 export async function htmlToImage(html) {
   // In production: use remote Chromium binary for serverless
   // In development: use local Chrome/Chromium
-  const isProduction = process.env.NODE_ENV === "production";
+  // Render sets RENDER=true automatically, so we check for that too
+  const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
   
   let executablePath;
   if (isProduction) {
     executablePath = await chromium.executablePath(CHROMIUM_REMOTE_URL);
   } else {
-    // For local development, try common Chrome paths
-    executablePath = process.env.CHROME_PATH || 
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" || // Windows
-      "/usr/bin/google-chrome" || // Linux
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; // Mac
+    // For local development - use local Chrome
+    executablePath = process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
   }
 
   const browser = await puppeteer.launch({
