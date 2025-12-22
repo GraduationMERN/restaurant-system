@@ -35,21 +35,21 @@ export const registerUserService = async (user) => {
   }
   const hashedPassword = await hashPassword(password);
   const code = userRole === "customer" ? generateOTP() : null;
-  
+
   console.log("Generated OTP:", code);
-  
+
   const newUser = await addUser({
     ...user,
-    role: userRole, 
+    role: userRole,
     password: hashedPassword,
     otp: code,
     isVerified: userRole === "customer" ? false : true,
   });
-  
-   if (userRole === "customer") {
+
+  if (userRole === "customer") {
     // Send email in background WITHOUT waiting
     sendOTPEmailInBackground(email, code, newUser.name);
-    
+
     return {
       newUser,
       message: "Account created! Please check your email for OTP.",
@@ -57,7 +57,7 @@ export const registerUserService = async (user) => {
       otp: process.env.NODE_ENV === "development" ? code : undefined
     };
   }
-  
+
   return { newUser, message: "Registered successfully" };
 };
 
@@ -66,7 +66,7 @@ async function sendOTPEmailInBackground(email, code, name) {
   Promise.resolve().then(async () => {
     try {
       console.log("Background: Sending OTP email to", email);
-      
+
       const html = `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <h2>Welcome to Bella Vista, ${name}!</h2>
@@ -75,10 +75,10 @@ async function sendOTPEmailInBackground(email, code, name) {
           <p>Valid for 10 minutes.</p>
         </div>
       `;
-      
+
       await sendEmail(email, "Your Verification Code", `Code: ${code}`, html);
       console.log("Background: Email sent successfully to", email);
-      
+
     } catch (error) {
       console.error("Background: Failed to send email:", error.message);
       console.error("Background: Full error:", error);
@@ -146,31 +146,52 @@ export const resetPasswordService = async (token, newPassword) => {
 };
 
 export const googleAuthService = async (code) => {
-  const { id_token } = await exchangeGoogleCodeForTokens(code);
+  try {
+    const { id_token } = await exchangeGoogleCodeForTokens(code);
+    const googleUser = decodeGoogleIdToken(id_token);
 
-  const googleUser = decodeGoogleIdToken(id_token);
+    let user = await findUserByGoogleId(googleUser.sub);
 
-  let user = await findUserByGoogleId(googleUser.sub);
+    if (!user) {
+      const existingEmailUser = await findUserByEmail(googleUser.email);
 
-  if (!user) {
-    const existingEmailUser = await findUserByEmail(googleUser.email);
+      if (existingEmailUser) {
+        // OPTION 1: Link Google account to existing user
+        existingEmailUser.googleId = googleUser.sub;
+        existingEmailUser.isVerified = true;
+        await existingEmailUser.save();
+        user = existingEmailUser;
 
-    if (existingEmailUser) {
-      throw new Error("Email already registered without Google");
+      } else {
+        user = await addUser({
+          googleId: googleUser.sub,
+          email: googleUser.email,
+          name: googleUser.name,
+          isVerified: true,  
+          avatarUrl: googleUser.picture || "",  
+          role: "customer",  
+          phoneNumber: "",  
+        });
+
+        if (!user) {
+          throw new Error("Failed to create user account");
+        }
+
+        console.log("✅ New Google user created:", user.email);
+      }
     }
 
-    user = await addUser({
-      googleId: googleUser.sub,
-      email: googleUser.email,
-      name: googleUser.name,
-    });
-  }
+    // Generate tokens
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+    await saveRefreshToken(user._id, refreshToken);
 
-  // Step 5: create JWT for your app
-  const accessToken = createAccessToken(user);
-  const refreshToken = createRefreshToken(user);
-  saveRefreshToken(user._id, refreshToken);
-  return { accessToken, refreshToken, user };
+    return { accessToken, refreshToken, user };
+
+  } catch (error) {
+    console.error("❌ Google auth error:", error);
+    throw error;
+  }
 };
 
 const hashPassword = async (password) => {

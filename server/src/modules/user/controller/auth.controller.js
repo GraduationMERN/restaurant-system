@@ -186,7 +186,9 @@ export const googleCallbackController = async (req, res) => {
       )}&email=${encodeURIComponent(user.email)}`
     );
   } catch (err) {
-    res.status(400).json({ message: err.message });
+      res.redirect(
+      `${env.frontendUrl}?error=${encodeURIComponent(err.message)}`
+    );
   }
 };
 

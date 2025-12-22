@@ -25,8 +25,19 @@ export const findUserByResetToken = async (token) => {
   });
 };
 
-export const addUser = async (user) => {
-  return await User.create(user);
+export const addUser = async (userData) => {
+  try {
+    const user = new User(userData);
+    await user.save();
+    
+    return user;
+  } catch (error) {
+    console.error("Full error:", error);
+    if (error.code === 11000) {
+      throw new Error("Email already registered");
+    }
+    throw error;
+  }
 };
 
 export const deleteRefreshToken = async (refreshToken) => {

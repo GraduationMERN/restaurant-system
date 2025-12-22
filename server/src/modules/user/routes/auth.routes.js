@@ -37,21 +37,6 @@ router.get("/google", (req, res) => {
   res.redirect(redirectUrl);
 });
 router.get("/google/callback", googleCallbackController);
-router.get("/test-cookie", (req, res) => {
-  res.cookie("testCookie", "works", {
-    httpOnly: true,
-    sameSite: "None",
-    secure: true,
-    domain: ".your-domain.com", // Your actual domain
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-  
-  res.json({ 
-    message: "Cookie set", 
-    env: process.env.NODE_ENV,
-    frontendUrl: env.frontendUrl 
-  });
-});
 router.post("/logout", logoutController);
 
 export default router;

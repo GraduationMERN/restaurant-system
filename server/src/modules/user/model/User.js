@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: [true, "Name is required"], trim: true },
+     name: { type: String, required: [true, "Name is required"], trim: true },
     email: {
       type: String,
       required: [true, "Email is required"],
@@ -13,14 +13,15 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        return !this.googleId;
+        return !this.googleId;  
       },
       minlength: [6, "Password must be at least 6 characters long"],
     },
-    googleId: String,
+    googleId: { type: String, sparse: true, unique: true }, 
     avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
+      default: "",  // ✅ Make it optional with default
       minlength: [11, "Phone number must be 11 characters long"],
     },
     role: {
@@ -102,6 +103,9 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index({ googleId: 1 });
+userSchema.index({ email: 1 });
 
 const User = mongoose.model("User", userSchema);
 export default User;

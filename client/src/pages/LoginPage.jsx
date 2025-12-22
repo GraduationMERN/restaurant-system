@@ -19,7 +19,38 @@ export default function LoginPage() {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  
+    // ✅ Handle Google OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const name = urlParams.get('name');
+    const email = urlParams.get('email');
 
+    if (error) {
+      // Show error to user
+      toast.error(decodeURIComponent(error));
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (name && email) {
+      // Google login successful - fetch user data and redirect
+      dispatch(getMe()).then((result) => {
+        if (result.payload) {
+          const role = result.payload.role?.toLowerCase();
+          if (role === "admin") {
+            window.location.replace("/admin");
+          } else if (role === "cashier") {
+            window.location.replace("/cashier");
+          } else if (role === "kitchen") {
+            window.location.replace("/kitchen");
+          } else {
+            window.location.replace("/menu");
+          }
+        }
+      });
+    }
+  }, [dispatch, navigate]);
+  
   const validateField = (name, value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
