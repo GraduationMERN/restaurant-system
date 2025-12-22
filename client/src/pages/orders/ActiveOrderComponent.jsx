@@ -91,7 +91,7 @@ export default function ActiveOrderComponent({ order }) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm opacity-90">{t("orders.order_details.order_number")}</p>
-            <h2 className="text-3xl font-bold">{order.orderNumber}</h2>
+            <h2 className="text-sm sm:text-3xl font-bold">{order.orderNumber}</h2>
           </div>
 
           <div

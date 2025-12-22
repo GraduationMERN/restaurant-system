@@ -230,7 +230,12 @@
   "keep_offer": "Keep offer",
   "remove_offer": "Remove offer",
   "points_description": "Confirm your order to earn double points",
-
+  "orders.history.count_suffix": "order(s)",
+  "orders.history.show_details":" Show Details",
+  "orders.history.hide_details":" Hide Details",
+  "orders.history.view_order": "View Order",
+  "orders.history.title": "Order History",
+  "orders.history.customer_label": "Customer:",
   "payment_methods": "Payment Methods",
   "online": "Online",
   "pay_securely": "Pay securely online",

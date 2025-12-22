@@ -239,7 +239,7 @@ export default function OrdersPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
               {t("orders.page_title")}
             </h1>
 
@@ -249,7 +249,8 @@ export default function OrdersPage() {
                   onClick={() => setShowHistoryModal(true)}
                   disabled={refreshing}
                   className={`
-                    flex items-center gap-2 px-4 py-2
+                    text-sm px-2 py-2 md:text-md
+                    flex items-center gap-2 md:px-4 
                     bg-primary hover:bg-primary/80 dark:bg-secondary dark:hover:bg-secondary/90 text-white 
                     font-semibold rounded-lg transition-colors
                     disabled:opacity-60 disabled:cursor-not-allowed
@@ -262,7 +263,8 @@ export default function OrdersPage() {
                   onClick={handleRefresh}
                   disabled={refreshing}
                   className={`
-                    flex items-center gap-2 px-4 py-2
+                    text-sm px-2 py-2 md:text-md
+                    flex items-center gap-2 md:px-4
                     bg-primary hover:bg-primary/80 dark:bg-primary dark:hover:bg-primary/90 text-white 
                     font-semibold rounded-lg transition-colors
                     disabled:opacity-60 disabled:cursor-not-allowed
