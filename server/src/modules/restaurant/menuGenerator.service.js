@@ -2,8 +2,8 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium-min";
 import { v2 as cloudinary } from "cloudinary";
 
-// Remote Chromium URL for serverless environments (Render, Vercel, AWS Lambda)
-const CHROMIUM_REMOTE_URL = "https://github.com/nickmv2000/chromium-binaries/releases/download/main/chromium-v131.0.0-pack.tar";
+// Remote Chromium URL for serverless environments (official Sparticuz release matching v143)
+const CHROMIUM_REMOTE_URL = "https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar";
 
 /**
  * Generates HTML template for the restaurant menu - Exact replica of the flyer design
