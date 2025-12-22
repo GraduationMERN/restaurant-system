@@ -16,10 +16,10 @@ export default function DirectOrderTab({ onOrderCreated }) {
   return (
     <div className="space-y-6">
       {/* Create Order Button */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-8 border-2 border-green-200 text-center">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-8 border-2 dark:from-gray-900 dark:to-gray-800 dark:border-gray-800 border-green-200 text-center">
         <ShoppingCart className="w-16 h-16 text-green-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">{t("admin.create_direct_order")}</h2>
-        <p className="text-slate-600 mb-6">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("admin.create_direct_order")}</h2>
+        <p className="text-slate-600 dark:text-gray-300 mb-6">
           {t("admin.create_direct_order_desc")}
         </p>
         <button
@@ -33,32 +33,32 @@ export default function DirectOrderTab({ onOrderCreated }) {
 
       {/* Instructions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-lg p-6 border border-slate-200 dark:bg-gray-900 dark:border-gray-800 shadow-sm">
           <div className="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center font-bold mb-4">
             1
           </div>
-          <h3 className="font-bold text-slate-900 mb-2">{t("admin.select_items")}</h3>
-          <p className="text-sm text-slate-600">
+          <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t("admin.select_items")}</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-300">
             {t("admin.select_items_desc")}
           </p>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-lg p-6 border border-slate-200 dark:bg-gray-900 dark:border-gray-800  shadow-sm">
           <div className="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center font-bold mb-4">
             2
           </div>
-          <h3 className="font-bold text-slate-900 mb-2">{t("admin.enter_customer_info")}</h3>
-          <p className="text-sm text-slate-600">
+          <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t("admin.enter_customer_info")}</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-300">
             {t("admin.enter_customer_info_desc")}
           </p>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-lg p-6 border border-slate-200 dark:bg-gray-900 dark:border-gray-800  shadow-sm">
           <div className="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center font-bold mb-4">
             3
           </div>
-          <h3 className="font-bold text-slate-900 mb-2">{t("admin.set_payment")}</h3>
-          <p className="text-sm text-slate-600">
+          <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t("admin.set_payment")}</h3>
+          <p className="text-sm text-slate-600 dark:text-gray-300">
             {t("admin.set_payment_desc")}
           </p>
         </div>
