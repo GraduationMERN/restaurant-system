@@ -254,8 +254,8 @@ export default function OrdersTab() {
       <SortBar activeSort={activeSort} onSortChange={setActiveSort} />
 
       {/* Orders Count */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-900">
+      <div className="bg-blue-50 border border-blue-200 dark:bg-blue-900 dark:border-blue-600 rounded-lg p-4">
+        <p className="text-sm text-blue-900 dark:text-blue-50">
           <span className="font-bold">{filteredOrders.length}</span> {t("orders_found")}
         </p>
       </div>

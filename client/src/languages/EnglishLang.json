@@ -205,7 +205,7 @@
   "currency_symbol": "EGP",
   "reward_item": "Reward Item",
   "full_details": "Full Details",
-  "payment": "Payment",
+  "Payment": "Payment",
   "my_order": "My Order",
   "select_branch": "Select Branch",
   "confirm_order": "Confirm your order so we can prep it",
