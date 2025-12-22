@@ -60,12 +60,6 @@ export default function OrdersTab() {
             : order
         )
       );
-      // Show toast
-      toast.showToast({
-        message: `Order #${data.orderNumber || "updated"}: ${data.status.toUpperCase()}`,
-        type: "info",
-        duration: 2000,
-      });
       // Update modal if open
       if (statusUpdateOrder && statusUpdateOrder._id === (data.orderId || data._id)) {
         setStatusUpdateOrder((prev) => prev ? ({
@@ -90,14 +84,7 @@ export default function OrdersTab() {
             : order
         )
       );
-      // Show toast
-      if (data.paymentStatus === "paid") {
-        toast.showToast({
-          message: "✅ Payment received",
-          type: "success",
-          duration: 2000,
-        });
-      }
+
       // Update modal if open
       if (paymentUpdateOrder && paymentUpdateOrder._id === (data.orderId || data._id)) {
         setPaymentUpdateOrder((prev) => prev ? ({

@@ -8,7 +8,6 @@ import Button from "../../components/ui/button/Button";
 import OrdersTab from "./components/OrdersTab";
 import DirectOrderTab from "./components/DirectOrderTab";
 import api from "../../api/axios";
-import { useToast } from "../../hooks/useToast";
 import { useRole } from "../../hooks/useRole";
 import StaffNavbar from "../../components/StaffNavbar";
 import { useTranslation } from "react-i18next";
@@ -16,7 +15,6 @@ import { useTranslation } from "react-i18next";
 
 export default function CashierDashboard() {
   const { t } = useTranslation();
-  const toast = useToast();
   const { isCashier, isAdmin } = useRole();
   const [activeTab, setActiveTab] = useState("orders");
   const [stats, setStats] = useState({
@@ -53,14 +51,12 @@ export default function CashierDashboard() {
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
-      toast.showToast({ message: "Failed to load statistics", type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   const handleOrderCreated = (order) => {
-    toast.showToast({ message: "✅ Order created successfully!", type: "success" });
     setRefreshKey((prev) => prev + 1);
     fetchStats();
     setActiveTab("orders");
@@ -69,7 +65,6 @@ export default function CashierDashboard() {
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
     fetchStats();
-    toast.showToast({ message: "🔄 Refreshed!", type: "success" });
   };
 
   return (

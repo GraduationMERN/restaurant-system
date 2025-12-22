@@ -94,7 +94,6 @@ export default function KitchenOrders() {
   // Clear messages
   useEffect(() => {
     if (successMessage) {
-      toast.showToast({ message: successMessage, type: "success" });
       dispatch(clearKitchenMessages());
     }
     if (error) {

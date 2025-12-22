@@ -44,7 +44,6 @@ export default function SocketProvider() {
     const onYourPaymentUpdated = (payload) => {
       const orderId = payload?._id || payload?.orderId;
       if (orderId) dispatch(fetchOrderById(orderId));
-      if (payload?.paymentStatus === "paid") toast.showToast({ message: "Payment confirmed", type: "success" });
     };
 
     s.on("notification", onNotification);

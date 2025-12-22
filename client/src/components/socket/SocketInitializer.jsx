@@ -24,12 +24,10 @@ export default function SocketInitializer() {
 
     socket.on("notification", (payload) => {
       const message = payload?.message || payload?.title || "New notification";
-      toast.showToast({ message, type: "success" });
     });
 
     socket.on("announcement", (payload) => {
       const message = payload?.message || payload?.title || "Announcement";
-      toast.showToast({ message, type: "success" });
     });
 
     // Order update event: replace or fetch updated order

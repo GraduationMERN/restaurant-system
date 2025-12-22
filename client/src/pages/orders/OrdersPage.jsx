@@ -92,13 +92,6 @@ export default function OrdersPage() {
           refunded: ["Order refunded", "success"],
         };
 
-        if (types[status]) {
-          toast.showToast({
-            message: types[status][0],
-            type: types[status][1],
-            duration: 3000,
-          });
-        }
       }
     };
 
