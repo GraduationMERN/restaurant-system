@@ -1,5 +1,9 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium-min";
 import { v2 as cloudinary } from "cloudinary";
+
+// Remote Chromium URL for serverless environments (Render, Vercel, AWS Lambda)
+const CHROMIUM_REMOTE_URL = "https://github.com/nickmv2000/chromium-binaries/releases/download/main/chromium-v131.0.0-pack.tar";
 
 /**
  * Generates HTML template for the restaurant menu - Exact replica of the flyer design
@@ -821,14 +825,31 @@ export function generateMenuHTML(products, categories, restaurant, options = {})
  * @returns {Promise<Buffer>} PNG image buffer
  */
 export async function htmlToImage(html) {
+  // In production: use remote Chromium binary for serverless
+  // In development: use local Chrome/Chromium
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  let executablePath;
+  if (isProduction) {
+    executablePath = await chromium.executablePath(CHROMIUM_REMOTE_URL);
+  } else {
+    // For local development, try common Chrome paths
+    executablePath = process.env.CHROME_PATH || 
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" || // Windows
+      "/usr/bin/google-chrome" || // Linux
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; // Mac
+  }
+
   const browser = await puppeteer.launch({
-    headless: true,
-    args: [
+    args: isProduction ? chromium.args : [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu"
-    ]
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: isProduction ? chromium.headless : true,
   });
 
   try {
