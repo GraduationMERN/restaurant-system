@@ -511,6 +511,7 @@ export const updateOrderStatus = async (req, res) => {
       // Populate for response
       updatedOrder = await Order.findById(order._id)
         .populate('user', 'name email')
+        .populate('items.productId', 'name price image')
         .populate('createdBy', 'name')
         .lean();
     } else {
@@ -527,6 +528,13 @@ export const updateOrderStatus = async (req, res) => {
 
       // Update reward order
       order.status = status;
+      
+      // Update estimated time if provided for reward orders too
+      if (estimatedTime) {
+        order.estimatedTime = estimatedTime;
+        order.estimatedReadyTime = new Date(Date.now() + estimatedTime * 60000);
+      }
+      
       await order.save({ validateModifiedOnly: true });
 
       // Populate for response
@@ -546,30 +554,37 @@ export const updateOrderStatus = async (req, res) => {
         user: updatedOrder.userId,
         reward: updatedOrder.rewardId,
         pointsUsed: updatedOrder.pointsUsed,
-        createdAt: updatedOrder.redeemedAt
+        createdAt: updatedOrder.redeemedAt // Keep this for reward orders
       };
     }
 
-    // Socket events (use global.io)
+    // ✅ FIXED: Emit COMPLETE order object with all necessary fields
     if (global.io) {
-      // Emit full order data to all listeners
-      global.io.emit("order:status-changed", {
-        orderId: updatedOrder._id,
+      // Prepare complete order payload for socket emission
+      const socketPayload = {
+        ...updatedOrder, // Include ALL order fields
         _id: updatedOrder._id,
         status: updatedOrder.status,
+        createdAt: updatedOrder.createdAt, // ✅ CRITICAL: Always include createdAt
         orderNumber: updatedOrder.orderNumber,
+        estimatedTime: updatedOrder.estimatedTime,
         estimatedReadyTime: updatedOrder.estimatedReadyTime,
-        updatedBy: user?.name || "System",
-        type: isRewardOrder ? 'reward' : 'regular'
-      });
+        type: isRewardOrder ? 'reward' : 'regular',
+        updatedBy: user?.name || "System"
+      };
 
-      // Room-specific events with full order data
+      console.log("📤 [SOCKET] Emitting order:status-changed with createdAt:", socketPayload.createdAt);
+
+      // Emit to all listeners with COMPLETE order data
+      global.io.emit("order:status-changed", socketPayload);
+
+      // Room-specific events with complete order data
       if (["preparing", "ready"].includes(status)) {
-        global.io.to("kitchen").emit("order:kitchen-update", updatedOrder);
+        global.io.to("kitchen").emit("order:kitchen-update", socketPayload);
       }
 
       if (status === "ready") {
-        global.io.to("cashier").emit("order:ready-notification", updatedOrder);
+        global.io.to("cashier").emit("order:ready-notification", socketPayload);
       }
 
       // Only earn points for regular orders when completed
@@ -577,12 +592,14 @@ export const updateOrderStatus = async (req, res) => {
         await earningPoints(updatedOrder._id);
       }
 
-      // Customer notification (standardize to `user:<id>`)
+      // Customer notification with complete data
       const customerId = isRewardOrder ? updatedOrder.userId?._id : updatedOrder.customerId;
       if (customerId) {
         global.io.to(`user:${customerId}`).emit("order:your-status-changed", {
+          ...socketPayload, // Send complete order
           orderId: updatedOrder._id,
           _id: updatedOrder._id,
+          createdAt: updatedOrder.createdAt, // ✅ FIX: was "createAt" (typo)
           status: updatedOrder.status,
           estimatedTime: updatedOrder.estimatedTime,
           estimatedReadyTime: updatedOrder.estimatedReadyTime,

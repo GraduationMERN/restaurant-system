@@ -3,6 +3,20 @@ import ComponentCard from '../../../components/common/ComponentCard';
 import { Clock, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+// Safe date formatter
+const formatOrderTime = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  
+  try {
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (error) {
+    console.error('Date format error:', error);
+    return 'N/A';
+  }
+};
+
 const OrderCard = ({
   order,
   progress,
@@ -13,6 +27,10 @@ const OrderCard = ({
   setViewOrder
 }) => {
   const { t } = useTranslation();
+
+  // Debug log OUTSIDE JSX
+  console.log('OrderCard - createdAt:', order.createdAt, 'Type:', typeof order.createdAt);
+
   return (
     <ComponentCard
       key={order._id}
@@ -29,7 +47,7 @@ const OrderCard = ({
             {t("admin." + order.status)}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {formatOrderTime(order.createdAt)}
           </span>
         </div>
 
@@ -37,14 +55,14 @@ const OrderCard = ({
         <div className="space-y-3">
           <div>
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-              {order.type === 'reward' ? t("reward_redemption_caps") : t("order_caps")} #{order.orderNumber}
+              {order.type === 'reward' ? t("reward_redemption_caps") : t("order_caps")} #{order.orderNumber || 'N/A'}
             </p>
             <p className="font-bold text-gray-900 dark:text-white">
               {order.user?.name || order.customerInfo?.name || t("guest")}
             </p>
             {order.type === 'reward' ? (
               <p className="text-sm text-purple-600 dark:text-purple-400">
-                {t("reward_redemption")} • {order.pointsUsed} {t("points_used")}
+                {t("reward_redemption")} • {order.pointsUsed || 0} {t("points_used")}
               </p>
             ) : (
               order.serviceType && (
@@ -95,7 +113,7 @@ const OrderCard = ({
                       1x {order.reward?.productId?.name || t("reward_item")}
                     </p>
                     <p className="text-xs text-purple-600 dark:text-purple-400">
-                      {t("reward_redemption")} ({order.pointsUsed} {t("pts")})
+                      {t("reward_redemption")} ({order.pointsUsed || 0} {t("pts")})
                     </p>
                   </div>
                   {order.status === "preparing" && (
@@ -119,14 +137,14 @@ const OrderCard = ({
                   )}
                 </div>
               ) : (
-                order.items?.map((item, idx) => (
+                Array.isArray(order.items) && order.items.map((item, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded"
                   >
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {item.quantity}x {item.name}
+                        {item.quantity || 1}x {item.name || 'Unknown Item'}
                       </p>
                       {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -165,7 +183,7 @@ const OrderCard = ({
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={(e) => {
-            e.stopPropagation(); // Prevent triggering the card click
+            e.stopPropagation();
             setViewOrder(order);
           }}
           className="w-full px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20 rounded border border-brand-200 dark:border-brand-800"
