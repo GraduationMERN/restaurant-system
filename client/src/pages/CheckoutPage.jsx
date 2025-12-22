@@ -411,32 +411,6 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Options */}
-                    {item.productId.options?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {item.productId.options.map((opt) => (
-                          <select
-                            key={opt._id}
-                            value={(item.selectedOptions || {})[opt.name] || ""}
-                            onChange={(e) => handleOptionChange(item, opt.name, e.target.value)}
-                            className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                          >
-                            <option value="" className="bg-white dark:bg-gray-700">{t("checkout.select_opt", { name: opt.name })}</option>
-                            {opt.choices.map((choice) => (
-                              <option
-                                key={choice._id}
-                                value={choice.label}
-                                className="bg-white dark:bg-gray-700"
-                              >
-                                {choice.label} {choice.priceDelta ? `(+${choice.priceDelta})` : ""}
-                              </option>
-                            ))}
-                          </select>
-                        ))}
-                      </div>
-                    )}
-
                     {/* Action Buttons */}
                     <div className="flex gap-4 mt-4 text-sm">
                       <button
