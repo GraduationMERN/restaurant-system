@@ -9,10 +9,12 @@ export const getAllCoupons = createAsyncThunk(
   "coupon/getAll",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/api/coupons/admin/coupons");
+      const res = await api.get("/api/admin/coupons");
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch coupons");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch coupons"
+      );
     }
   }
 );
@@ -22,10 +24,12 @@ export const createCoupon = createAsyncThunk(
   "coupon/create",
   async (couponData, { rejectWithValue }) => {
     try {
-      const res = await api.post("/api/coupons/admin/coupons", couponData);
+      const res = await api.post("/api/admin/coupons", couponData);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create coupon");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to create coupon"
+      );
     }
   }
 );
@@ -35,10 +39,12 @@ export const updateCoupon = createAsyncThunk(
   "coupon/update",
   async ({ couponId, data }, { rejectWithValue }) => {
     try {
-      const res = await api.put(`/api/coupons/admin/coupons/${couponId}`, data);
+      const res = await api.put(`/api/admin/coupons/${couponId}`, data);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update coupon");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to update coupon"
+      );
     }
   }
 );
@@ -48,10 +54,12 @@ export const deleteCoupon = createAsyncThunk(
   "coupon/delete",
   async (couponId, { rejectWithValue }) => {
     try {
-      await api.delete(`/api/coupons/admin/coupons/${couponId}`);
+      await api.delete(`/api/admin/coupons/${couponId}`);
       return couponId;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to delete coupon");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to delete coupon"
+      );
     }
   }
 );
@@ -63,10 +71,12 @@ export const validateCouponByCode = createAsyncThunk(
   "coupon/validateByCode",
   async (code, { rejectWithValue }) => {
     try {
-      const res = await api.get(`/api/coupons/validate/${code}`);
+      const res = await api.get(`/api/validate/${code}`);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Invalid coupon code");
+      return rejectWithValue(
+        err.response?.data?.message || "Invalid coupon code"
+      );
     }
   }
 );
@@ -79,7 +89,9 @@ export const validateCoupon = createAsyncThunk(
       const res = await api.post("/api/coupons/validate", { code, orderId });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Coupon validation failed");
+      return rejectWithValue(
+        err.response?.data?.message || "Coupon validation failed"
+      );
     }
   }
 );
@@ -92,7 +104,9 @@ export const applyCoupon = createAsyncThunk(
       const res = await api.post("/api/coupons/apply", { code, orderId });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to apply coupon");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to apply coupon"
+      );
     }
   }
 );
@@ -104,11 +118,11 @@ const couponSlice = createSlice({
   initialState: {
     // Admin
     allCoupons: [],
-    
+
     // Customer
     validatedCoupon: null,
     appliedCoupon: null,
-    
+
     // UI State
     loading: false,
     validating: false,
@@ -132,7 +146,7 @@ const couponSlice = createSlice({
       state.appliedCoupon = null;
       state.error = null;
       state.successMessage = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -173,7 +187,7 @@ const couponSlice = createSlice({
       .addCase(updateCoupon.fulfilled, (state, action) => {
         state.loading = false;
         const updated = action.payload.coupon;
-        state.allCoupons = state.allCoupons.map(c => 
+        state.allCoupons = state.allCoupons.map((c) =>
           c._id === updated._id ? updated : c
         );
         state.successMessage = action.payload.message;
@@ -190,7 +204,9 @@ const couponSlice = createSlice({
       })
       .addCase(deleteCoupon.fulfilled, (state, action) => {
         state.loading = false;
-        state.allCoupons = state.allCoupons.filter(c => c._id !== action.payload);
+        state.allCoupons = state.allCoupons.filter(
+          (c) => c._id !== action.payload
+        );
         state.successMessage = "Coupon deleted successfully";
       })
       .addCase(deleteCoupon.rejected, (state, action) => {
@@ -251,7 +267,7 @@ export const {
   clearCouponMessages,
   clearValidatedCoupon,
   clearAppliedCoupon,
-  resetCouponState
+  resetCouponState,
 } = couponSlice.actions;
 
 export default couponSlice.reducer;
