@@ -118,9 +118,9 @@ class PaymentService {
 
       if (meta.traceId) metadata.traceId = meta.traceId;
 
-      // Validate CLIENT_URL is set
-      if (!process.env.CLIENT_URL) {
-        throw new Error("CLIENT_URL environment variable not configured");
+      // Validate FRONTEND_URL is set
+      if (!process.env.FRONTEND_URL) {
+        throw new Error("FRONTEND_URL environment variable not configured");
       }
 
       console.log("[PAYMENT-SERVICE] Creating Stripe session...");
@@ -129,8 +129,8 @@ class PaymentService {
         payment_method_types: ["card"],
         line_items,
         mode: "payment",
-        success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
-        cancel_url: `${process.env.CLIENT_URL}/payment-cancel?order_id=${order._id}`,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${order._id}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?order_id=${order._id}`,
         metadata,
         customer_email: customerEmail || undefined,
         shipping_address_collection: order.serviceType === "delivery" ? {

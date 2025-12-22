@@ -491,7 +491,6 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center mt-8">
-<<<<<<< HEAD
               <a 
                 href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || "restaurant"}`}
                 target="_blank"
@@ -510,18 +509,6 @@ className="
                 <Instagram className="w-5 h-5" />
                 Follow on Instagram
               </a>
-=======
-            <a
-  href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-flex items-center gap-3 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
->
-  <Instagram className="w-5 h-5" />
-  {t("follow_instagram")}
-</a>
-
->>>>>>> bcdce09b17d7a5ab5f549ca48fd5a82697f75498
             </div>
           </div>
 
