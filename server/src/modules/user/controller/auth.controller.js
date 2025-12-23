@@ -43,13 +43,6 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   try {
-     console.log("=== LOGIN ATTEMPT ===");
-    console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("Frontend URL:", env.frontendUrl);
-    console.log("Request origin:", req.headers.origin);
-    console.log("Request headers:", req.headers);
-    console.log("Cookies received:", req.cookies);
-
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await loginUserService(
       email,
