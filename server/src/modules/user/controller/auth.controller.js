@@ -7,7 +7,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Base cookie options. Use more restrictive SameSite in development for testing
 // and enable `SameSite=None; Secure` in production for cross-site cookie usage.
-const cookieOptionsBase = {
+const cookieOptions = {
   httpOnly: true,
   sameSite: "Lax",
   secure: process.env.NODE_ENV === "production",
