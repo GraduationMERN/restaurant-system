@@ -3,7 +3,11 @@ import User from "../model/User.js";
 import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
 import jwt from "jsonwebtoken";
 
-const cookieOptions = {
+const isProduction = process.env.NODE_ENV === "production";
+
+// Base cookie options. Use more restrictive SameSite in development for testing
+// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+const cookieOptionsBase = {
   httpOnly: true,
   sameSite: "Lax",
   secure: process.env.NODE_ENV === "production",
