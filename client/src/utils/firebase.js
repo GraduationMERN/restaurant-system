@@ -1,13 +1,17 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
+const apiKey = import.meta.env.VITE_API_KEY_FIREBASE;
+const appId = import.meta.env.VITE_APP_ID;
+const messagingSenderId = import.meta.env.VITE_MESSAGE_SENDER_ID
+
   const firebaseConfig = {
-    apiKey: "AIzaSyAPdyhDFPX-v7idQRaf8ogKdW9sSRT_c2o",
+    apiKey,
     authDomain: "brandbite-bb43a.firebaseapp.com",
     projectId: "brandbite-bb43a",
     storageBucket: "brandbite-bb43a.firebasestorage.app",
-    messagingSenderId: "129770247846",
-    appId: "1:129770247846:web:f81ce1431064b3d8604667",
+    messagingSenderId,
+    appId,
     measurementId: "G-30HPP8HZJD"
   };
 

@@ -33,9 +33,10 @@ export const env = {
     geminiApiKey: process.env.GEMINI_API_KEY,
     geminiModel: process.env.GEMINI_MODEL,
     topK: parseInt(process.env.TOP_K || '3'),
-    twilioAccSID: process.env.TWILIO_ACCOUNT_SID,
-    twilioAuthToken:process.env.TWILIO_AUTH_TOKEN,
-    twilioVerifySID:process.env.TWILIO_VERIFY_SID
+    firebaseprojectId : process.env.FIREBASE_PROJECT_ID,
+    firebaseClientEmail:process.env.FIREBASE_CLIENT_EMAIL,
+    firebasePrivateKey:process.env.FIREBASE_PRIVATE_KEY
+
 };
 
 
