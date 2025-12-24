@@ -7,14 +7,18 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Base cookie options. Use more restrictive SameSite in development for testing
 // and enable `SameSite=None; Secure` in production for cross-site cookie usage.
-const cookieOptions = {
+const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: "Lax",
-  secure: process.env.NODE_ENV === "production",
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  path: "/",
+  sameSite: "Lax", // Changed from None to Lax for better compatibility
+  secure: true, // Keep secure for HTTPS
+  maxAge: 24 * 60 * 60 * 1000,
+  path: "/", // Reverted back to "/"
 };
 
+const cookieOptions = {
+  ...cookieOptionsBase,
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+};
 export const firebaseLoginController = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
