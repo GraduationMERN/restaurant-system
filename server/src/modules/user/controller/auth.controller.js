@@ -89,51 +89,54 @@ export const firebaseLoginController = async (req, res) => {
 
 export const completeProfileController = async (req, res) => {
   try {
-    const { name, phoneNumber } = req.body;
+    const { name } = req.body; // Phone is already in req.user from the login step
 
-    if (!name || !phoneNumber) {
-      return res.status(400).json({ 
-        message: "Name and phone number are required" 
-      });
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
     }
 
-    // Find user by phone number
-    const user = await User.findOne({ phoneNumber });
+    // Get the user attached by authMiddleware
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    if (user.name) {
+      return res.status(400).json({ message: "Profile already completed" });
+    }
+    
     // Update user profile
     user.name = name;
     await user.save();
 
-    // Generate new tokens
+    // Generate new tokens with the updated name
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
 
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, cookieOptions);
+    // IMPORTANT: Set cookies so the frontend is automatically updated
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
+      message: "Profile completed successfully",
       user: {
         _id: user._id,
         name: user.name,
         phoneNumber: user.phoneNumber,
         role: user.role,
-        avatarUrl: user.avatarUrl,
-        points: user.points,
         isVerified: user.isVerified,
       },
       accessToken,
     });
   } catch (err) {
     console.error("Complete profile error:", err);
-    res.status(500).json({ 
-      message: err.message || "Error completing profile" 
-    });
+    res.status(500).json({ message: err.message || "Error completing profile" });
   }
 };
 
