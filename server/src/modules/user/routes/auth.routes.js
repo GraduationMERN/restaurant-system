@@ -4,7 +4,7 @@ import { completeProfileController, getMeController, logoutController, refreshTo
 
 const router = express.Router();
 router.post("/firebase-login", firebaseLoginController);
-router.post("/complete-profile", completeProfileController);
+router.post("/complete-profile",authMiddleware, completeProfileController);
 router.get("/me", authMiddleware, getMeController);
 router.post("/refresh", refreshTokenController);
 router.post("/logout", logoutController);
