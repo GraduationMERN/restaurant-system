@@ -60,7 +60,11 @@ export const firebaseLoginController = async (req, res) => {
     await user.save();
 
     // Set refresh token in cookie
-    res.cookie("refreshToken", refreshToken, cookieOptions);
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      maxAge:30*24*60*60*1000
+    });
 
     // Return user and access token
     res.json({
