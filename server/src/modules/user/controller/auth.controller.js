@@ -1,15 +1,7 @@
-import { env } from "../../../config/env.js";
-import {
-  forgetPasswordService,
-  googleAuthService,
-  loginUserService,
-  logoutUserService,
-  registerUserService,
-  resetPasswordService,
-} from "../service/auth.service.js";
-import { refreshTokenService } from "../service/refreshToken.service.js";
-import { verifyOtpService } from "../service/verifyOtp.service.js";
-import orderModel from "../../order.module/orderModel.js";
+import admin from "../../../config/firebaseAdmin.js";
+import User from "../model/User.js";
+import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
+import jwt from "jsonwebtoken";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -23,183 +15,231 @@ const cookieOptionsBase = {
   path: "/", // Reverted back to "/"
 };
 
-// Allow an explicit cookie domain to be set via env (e.g. ".example.com").
-// This helps when frontend and backend are on subdomains of the same eTLD+1.
 const cookieOptions = {
   ...cookieOptionsBase,
   ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
-export const registerUserController = async (req, res) => {
+export const firebaseLoginController = async (req, res) => {
   try {
-    const { message } = await registerUserService(req.body);
-    res.status(201).json({
-      message,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
-  }
-};
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
 
-export const loginUserController = async (req, res) => {
-  try {
-     console.log("=== LOGIN ATTEMPT ===");
-    console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("Frontend URL:", env.frontendUrl);
-    console.log("Request origin:", req.headers.origin);
-    console.log("Request headers:", req.headers);
-    console.log("Cookies received:", req.cookies);
+    // Verify Firebase ID token
+    const decoded = await admin.auth().verifyIdToken(token);
+    const phoneNumber = decoded.phone_number;
 
-    const { email, password } = req.body;
-    const { user, accessToken, refreshToken } = await loginUserService(
-      email,
-      password
-    );
-    
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "Phone number not found in token" });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+      user = await User.create({
+        phoneNumber,
+        isVerified: true,
+        role: "customer",
+      });
+    } else {
+      // Update verification status if not verified
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
+    }
+
+    // Generate tokens
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+    // Save refresh token to user
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Set refresh token in cookie
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge:30*24*60*60*1000
     });
-    
 
-    res.status(200).json({
-      message: "Logged in successfully",
+    // Return user and access token
+    res.json({
       user: {
-        id: user._id,
         _id: user._id,
         name: user.name,
-        email: user.email,
-        role: user.role,
-        points: user.points,
-        avatarUrl: user.avatarUrl,
         phoneNumber: user.phoneNumber,
-        bio: user.bio,
-        address: user.address,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        points: user.points,
+        isVerified: user.isVerified,
       },
+      accessToken,
     });
   } catch (err) {
-    console.error("Login error in production:", err.message);
-    res.status(401).json({ message: err.message });
+    console.error("Firebase login error:", err);
+    res.status(401).json({ 
+      message: err.message || "Invalid Firebase token" 
+    });
   }
 };
-export const getMe = async (req, res) => {
+
+export const completeProfileController = async (req, res) => {
   try {
-    const user = req.user;
+    const { name } = req.body; // Phone is already in req.user from the login step
+
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    // Get the user attached by authMiddleware
+    const user = await User.findById(req.user._id);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // Count completed orders for this user
-    const completedOrders = await orderModel.countDocuments({
-      user: user._id,
-      status: "completed",
-    });
-    return res.status(200).json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      points: user.points,
-      orderCount: completedOrders,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-export const verifyOTP = async (req, res) => {
-  try {
-    const { email, code } = req.body;
-    const { user, accessToken, refreshToken } = await verifyOtpService(
-      email,
-      code
-    );
+    if (user.name) {
+      return res.status(400).json({ message: "Profile already completed" });
+    }
+    
+    // Update user profile
+    user.name = name;
+    await user.save();
+
+    // Generate new tokens with the updated name
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // IMPORTANT: Set cookies so the frontend is automatically updated
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    res.status(201).json({
-      message: "Registered successfully",
+
+    res.json({
+      message: "Profile completed successfully",
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
-        email: user.email,
+        phoneNumber: user.phoneNumber,
         role: user.role,
+        isVerified: user.isVerified,
+      },
+      accessToken,
+    });
+  } catch (err) {
+    console.error("Complete profile error:", err);
+    res.status(500).json({ message: err.message || "Error completing profile" });
+  }
+};
+
+export const getMeController = async (req, res) => {
+  try {
+    // User is already attached to req by authMiddleware
+    const user = await User.findById(req.user._id).select("-refreshToken");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Get me error:", err);
+    res.status(500).json({ 
+      message: err.message || "Error fetching user profile" 
+    });
+  }
+};
+
+export const refreshTokenController = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // Find user with this refresh token
+    const user = await User.findOne({ 
+      _id: decoded.userId, 
+      refreshToken 
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found or token mismatch" });
+    }
+
+    // Generate new tokens
+    const newAccessToken = createAccessToken(user);
+    const newRefreshToken = createRefreshToken(user);
+
+    // Update refresh token in database
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    // Set new refresh token in cookie
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
         points: user.points,
+        isVerified: user.isVerified,
       },
     });
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
-  }
-};
-export const refreshTokenController = async (req, res) => {
-  try {
-    const { newAccessToken, newRefreshToken } = await refreshTokenService(
-      req.cookies.refreshToken
-    );
-    res.cookie("accessToken", newAccessToken, cookieOptions);
-    res.cookie("refreshToken", newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+    console.error("Refresh token error:", err);
+    res.status(500).json({ 
+      message: err.message || "Error refreshing token" 
     });
-
-    res.status(200).json({ message: "Token refreshed" });
-  } catch (err) {
-    res.status(401).json({ message: err.message });
-  }
-};
-export const forgetPasswordController = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const { message } = await forgetPasswordService(email);
-    res.status(200).json({ message });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
-export const resetPasswordController = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-    const { message } = await resetPasswordService(token, newPassword);
-    res.status(200).json({ message });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-export const googleCallbackController = async (req, res) => {
-  const code = req.query.code;
-
-  try {
-    const { refreshToken, accessToken, user } = await googleAuthService(code);
-
-    res.cookie("accessToken", accessToken, cookieOptions);
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
-
-    // Redirect to frontend instead of sending JSON
-    res.redirect(
-      `${env.frontendUrl}?name=${encodeURIComponent(
-        user.name
-      )}&email=${encodeURIComponent(user.email)}`
-    );
-  } catch (err) {
-      res.redirect(
-      `${env.frontendUrl}?error=${encodeURIComponent(err.message)}`
-    );
   }
 };
 
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    await logoutUserService(refreshToken);
-    res.clearCookie("accessToken", cookieOptions);
-    res.clearCookie("refreshToken", cookieOptions);
-    return res.status(200).json({ message: "Logged out successfully" });
+
+    if (refreshToken) {
+      // Remove refresh token from database
+      await User.updateOne(
+        { refreshToken },
+        { $unset: { refreshToken: 1 } }
+      );
+    }
+
+    // Clear refresh token cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+
+    res.json({ message: "Logged out successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Logout error:", err);
+    res.status(500).json({ 
+      message: err.message || "Error logging out" 
+    });
   }
 };

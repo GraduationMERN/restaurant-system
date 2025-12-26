@@ -18,9 +18,6 @@ import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import LoadingSpinner from "./components/LoadingSpinner";
-import GoogleSuccess from "./components/GoogleSuccess";
-import ForgotPassword from "./pages/ForgetPassword";
-import ResetPassword from "./pages/ResetPassword";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderDetailsPage from "./pages/orders/OrderDetailsPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -82,12 +79,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
-            <Route path="/register" element={<RegistrationPage />} />
-            <Route path="/verifyOtp" element={<VerifyOtpPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/google/success" element={<GoogleSuccess />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/cart" element={<CartPage />} />
