@@ -93,7 +93,7 @@ export default function Users() {
 
     setSubmitting(true);
     try {
-      await dispatch(registerUser(formData));
+      await dispatch(loginUser(formData));
       toast.showToast({ message: t("admin.user_created"), type: "success" });
       dispatch(fetchUsers());
     } catch (err) {

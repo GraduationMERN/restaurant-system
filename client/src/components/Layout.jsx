@@ -13,7 +13,6 @@ export default function Layout({ children }) {
   const hiddenPaths = [
     "/admin",
     "/login",
-    "/register",
     "/cashier",
     "/kitchen",
     "/reset-password",
