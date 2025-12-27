@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { registerUser } from "../redux/slices/authSlice";
+// import { registerUser } from "../redux/slices/authSlice";
 import { User, Mail, Lock, Phone, ArrowLeft, ChefHat, CheckCircle, Pizza, Utensils, Sparkles } from "lucide-react";
 
 // Using Coffee as a burger alternative
