@@ -2,17 +2,17 @@ import admin from "../../../config/firebaseAdmin.js";
 import User from "../model/User.js";
 import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
 import jwt from "jsonwebtoken";
+import { env } from "../../../config/env.js";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.nodeEnv === "production";
 
-// Base cookie options. Use more restrictive SameSite in development for testing
-// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+// Base cookie options
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: "Lax", // Changed from None to Lax for better compatibility
-  secure: true, // Keep secure for HTTPS
-  maxAge: 24 * 60 * 60 * 1000,
-  path: "/", // Reverted back to "/"
+  sameSite: isProduction ? "None" : "Lax",
+  secure: isProduction,
+  maxAge: 15 * 60 * 1000,
+  path: "/",
 };
 
 const cookieOptions = {
@@ -26,25 +26,32 @@ export const firebaseLoginController = async (req, res) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Verify Firebase ID token
-    const decoded = await admin.auth().verifyIdToken(token);
-    const phoneNumber = decoded.phone_number;
+    // Verify Firebase ID token - THIS WAS MISSING!
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    
+    const {
+      uid,
+      phone_number,
+      email,
+      name,
+      picture,
+    } = decodedToken;
 
-    if (!phoneNumber) {
-      return res.status(400).json({ message: "Phone number not found in token" });
-    }
-
-    // Find or create user
-    let user = await User.findOne({ phoneNumber });
+    // Find user by Firebase UID
+    let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
       user = await User.create({
-        phoneNumber,
+        firebaseUid: uid,
+        phoneNumber: phone_number || null,
+        email: email || null,
+        name: name || null,
+        avatarUrl: picture || null,
         isVerified: true,
         role: "customer",
       });
     } else {
-      // Update verification status if not verified
+      // Update existing user if not verified
       if (!user.isVerified) {
         user.isVerified = true;
         await user.save();
@@ -59,21 +66,22 @@ export const firebaseLoginController = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    // Set refresh token in cookie
+    // Set cookies with appropriate settings
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge:30*24*60*60*1000
+      maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
     // Return user and access token
     res.json({
       user: {
         _id: user._id,
-        name: user.name,
-        phoneNumber: user.phoneNumber,
+        name: user.name || null,
+        email: user.email || null,
+        phoneNumber: user.phoneNumber || null,
         role: user.role,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: user.avatarUrl || null,
         points: user.points,
         isVerified: user.isVerified,
       },
@@ -81,11 +89,12 @@ export const firebaseLoginController = async (req, res) => {
     });
   } catch (err) {
     console.error("Firebase login error:", err);
-    res.status(401).json({ 
-      message: err.message || "Invalid Firebase token" 
+    res.status(401).json({
+      message: err.message || "Invalid Firebase token"
     });
   }
 };
+
 
 export const completeProfileController = async (req, res) => {
   try {
@@ -104,7 +113,7 @@ export const completeProfileController = async (req, res) => {
     if (user.name) {
       return res.status(400).json({ message: "Profile already completed" });
     }
-    
+
     // Update user profile
     user.name = name;
     await user.save();
@@ -152,8 +161,8 @@ export const getMeController = async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error("Get me error:", err);
-    res.status(500).json({ 
-      message: err.message || "Error fetching user profile" 
+    res.status(500).json({
+      message: err.message || "Error fetching user profile"
     });
   }
 };
@@ -169,15 +178,15 @@ export const refreshTokenController = async (req, res) => {
     // Verify refresh token
     let decoded;
     try {
-      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+      decoded = jwt.verify(refreshToken, env.refreshJwtKey);
     } catch (err) {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
     // Find user with this refresh token
-    const user = await User.findOne({ 
-      _id: decoded.userId, 
-      refreshToken 
+    const user = await User.findOne({
+      _id: decoded.userId,
+      refreshToken
     });
 
     if (!user) {
@@ -209,8 +218,8 @@ export const refreshTokenController = async (req, res) => {
     });
   } catch (err) {
     console.error("Refresh token error:", err);
-    res.status(500).json({ 
-      message: err.message || "Error refreshing token" 
+    res.status(500).json({
+      message: err.message || "Error refreshing token"
     });
   }
 };
@@ -228,18 +237,16 @@ export const logoutController = async (req, res) => {
     }
 
     // Clear refresh token cookie
+    res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", {
-      httpOnly: true,
-      sameSite: "Lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
+      ...cookieOptions,
     });
 
     res.json({ message: "Logged out successfully" });
   } catch (err) {
     console.error("Logout error:", err);
-    res.status(500).json({ 
-      message: err.message || "Error logging out" 
+    res.status(500).json({
+      message: err.message || "Error logging out"
     });
   }
 };

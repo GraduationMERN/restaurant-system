@@ -10,6 +10,8 @@ export const env = {
     mongoUri: process.env.MONGO_URI,
     nodeEnv: process.env.NODE_ENV || "development",
     jwtKey: process.env.JWT_SECRET,
+    refreshJwtKey:process.env.JWT_REFRESH_SECRET,
+    tempJwtKey:process.env.JWT_TEMP_SECRET,
     expiry: process.env.ACCESS_JWT_EXPIRES_IN,
     refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
     sendgridApiKey: process.env.SENDGRID_API_KEY,
