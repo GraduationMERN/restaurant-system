@@ -418,7 +418,7 @@ export default function LandingPage() {
               </div>
 
               <button
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/login")}
                 className="w-full md:w-auto bg-white text-secondary font-bold py-4 px-8 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-2xl text-lg group flex items-center justify-center gap-3"
               >
                 <span>{t("Register_rewards")}</span>
