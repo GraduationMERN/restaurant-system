@@ -315,20 +315,19 @@ export default function LoginPage() {
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">
-                    {error}
+                    {t("auth.login.error_prefix")} 
                   </p>
                 </div>
               )}
 
               {!showOtpInput && !showNameInput && (
                 // Phone Number Input
-                <form onSubmit={handleSendOtp} className="space-y-4">
+                <form onSubmit={handleSendOtp} className="space-y-4 ">
                   <div>
                     <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       {t("auth.login.phoneNumber_label")}
                     </label>
                     <div className="relative">
-                      <Mail className={`absolute ${isRtl ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500`} />
                       <input
                         type="tel"
                         id="phoneNumber"
@@ -337,7 +336,7 @@ export default function LoginPage() {
                         onChange={handlePhoneChange}
                         onBlur={handlePhoneBlur}
                         onKeyPress={handleKeyPress}
-                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.phoneNumber && touched.phoneNumber
+                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-4 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.phoneNumber && touched.phoneNumber
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
                           } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
@@ -347,7 +346,7 @@ export default function LoginPage() {
                    
                     {errors.phoneNumber && touched.phoneNumber && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.phoneNumber}
+                        {t("auth.validation.phoneNumber_invalid") || errors.phoneNumber}
                       </p>
                     )}
                   </div>
@@ -355,17 +354,24 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r mt-2 from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-4 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? "Sending..." : "Send Verification Code"}
+                    {isLoading ? t("auth.login.sending_otp") : t("auth.login.send_otp")}
                   </button>
+                  <div class="relative my-10"><div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200 dark:border-gray-700">
+                      </div></div>
+                      <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
+                        </div>
+                        </div>
                    <button
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={isLoading}
                       className="w-full bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
                     >
-                      Continue with Google
+                      {t("auth.login.continue_with_google")}
                     </button>
                 </form>
               )}
@@ -373,7 +379,7 @@ export default function LoginPage() {
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div>
                     <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Verification Code
+                      {t("auth.verification.code_label")}
                     </label>
                     <input
                       type="text"
@@ -388,7 +394,7 @@ export default function LoginPage() {
                     />
                     {errors.otp && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.otp}
+                        {t("auth.verification.otp_invalid") || errors.otp}
                       </p>
                     )}
                   </div>
@@ -410,7 +416,7 @@ export default function LoginPage() {
                     }}
                     className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                   >
-                    Change phone number
+                    {t("auth.verification.change_number") || "Change Phone Number"}
                   </button>
                 </form>
               )}
@@ -419,7 +425,7 @@ export default function LoginPage() {
                 <form onSubmit={handleCompletProfile} className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Your Name
+                      {t("auth.complete_profile.name_label") || "Your Name"}
                     </label>
                     <div className="relative">
                       <User className={`absolute ${isRtl ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500`} />
@@ -440,7 +446,7 @@ export default function LoginPage() {
                     </div>
                     {errors.name && touched.name && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.name}
+                        {t("auth.complete_profile.name_required") || errors.name}
                       </p>
                     )}
                   </div>
@@ -460,13 +466,6 @@ export default function LoginPage() {
 
         {/* Desktop: Left Column (Branding & Stats) - Now smaller */}
         <div className="hidden lg:flex lg:w-2/5 flex-col justify-center">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary transition-colors mb-10 group"
-          >
-            <ArrowLeft className={`w-5 h-5 ${isRtl ? "ml-2 group-hover:translate-x-1" : "mr-2 group-hover:-translate-x-1"} transition-transform`} />
-            Back to Home
-          </button>
 
           <div className="bg-gradient-to-br from-primary/80 via-primary via-70% to-secondary rounded-3xl p-10 shadow-2xl relative overflow-hidden">
             <div className={`absolute top-0 ${isRtl ? "left-0 translate-x-12" : "right-0 translate-x-12"} w-24 h-24 bg-white/10 rounded-full -translate-y-12`}></div>
