@@ -37,23 +37,70 @@ export const firebaseLoginController = async (req, res) => {
       picture,
     } = decodedToken;
 
-    // Find user by Firebase UID
+    // Find user by Firebase UID first, then by phone/email as fallback
     let user = await User.findOne({ firebaseUid: uid });
 
     if (!user) {
-      user = await User.create({
-        firebaseUid: uid,
-        phoneNumber: phone_number || null,
-        email: email || null,
-        name: name || null,
-        avatarUrl: picture || null,
-        isVerified: true,
-        role: "customer",
+      // Check if user exists with this phone number or email
+      const existingUser = await User.findOne({
+        $or: [
+          phone_number ? { phoneNumber: phone_number } : null,
+          email ? { email: email } : null
+        ].filter(Boolean)
       });
+
+      if (existingUser) {
+        // User exists but doesn't have firebaseUid - update it
+        existingUser.firebaseUid = uid;
+        existingUser.isVerified = true;
+        
+        // Update missing fields
+        if (!existingUser.email && email) existingUser.email = email;
+        if (!existingUser.name && name) existingUser.name = name;
+        if (!existingUser.avatarUrl && picture) existingUser.avatarUrl = picture;
+        
+        await existingUser.save();
+        user = existingUser;
+      } else {
+        // Create completely new user
+        user = await User.create({
+          firebaseUid: uid,
+          phoneNumber: phone_number || null,
+          email: email || null,
+          name: name || null,
+          avatarUrl: picture || null,
+          isVerified: true,
+          role: "customer",
+        });
+      }
     } else {
-      // Update existing user if not verified
+      // User exists with firebaseUid - update their info
+      let needsUpdate = false;
+      
       if (!user.isVerified) {
         user.isVerified = true;
+        needsUpdate = true;
+      }
+      
+      // Update missing fields from Firebase
+      if (!user.email && email) {
+        user.email = email;
+        needsUpdate = true;
+      }
+      if (!user.name && name) {
+        user.name = name;
+        needsUpdate = true;
+      }
+      if (!user.avatarUrl && picture) {
+        user.avatarUrl = picture;
+        needsUpdate = true;
+      }
+      if (!user.phoneNumber && phone_number) {
+        user.phoneNumber = phone_number;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
         await user.save();
       }
     }
@@ -94,6 +141,7 @@ export const firebaseLoginController = async (req, res) => {
     });
   }
 };
+
 
 
 export const completeProfileController = async (req, res) => {
