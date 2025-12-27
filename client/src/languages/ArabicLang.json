@@ -345,7 +345,6 @@
   "Support": "الدعم",
   "FAQ_and_help": "ابحث عن إجابات للأسئلة الشائعة واحصل على المساعدة",
   "tabs.category": "الفئات",
-
   "popup.description": "الوصف",
   "popup.price": "السعر",
   "popup.total": "الإجمالي",
@@ -367,8 +366,20 @@
   "opening_hours": "مواعيد العمل",
   "open_hours": "مفتوح يوميًا من 8:00 صباحًا حتى 11:00 مساءً",
 
-
-  
+ "auth.login.back_to_home": "العودة إلى الرئيسية",
+  "auth.login.welcome_back": "مرحباً بعودتك! الرجاء تسجيل الدخول للمتابعة",
+  "auth.login.login_desc": "أدخل بيانات الاعتماد الخاصة بك للوصول إلى حسابك",
+  "auth.login.error_prefix": "يرجى إدخال بيانات الاعتماد الصحيحة. ",
+  "auth.login.phoneNumber_label": "رقم الهاتف",
+  "auth.login.continue_with_google": "المتابعة مع جوجل",
+  "auth.verification.code_label": "رمز التحقق",
+  "auth.verification.otp_invalid": "رمز OTP غير صحيح",
+  "auth.verification.change_number": "تغيير رقم الهاتف",
+  "auth.complete_profile.name_label": "اسمك",
+  "auth.complete_profile.name_required": "الاسم مطلوب",
+   "auth.login.send_otp": "إرسال رمز التحقق",
+  "auth.login.sending_otp": "جاري إرسال...",
+  "auth.login.continue_with": "أو المتابعة مع",
   "add_to_cart": "أضف إلى السلة",
   "adding": "جاري الإضافة...",
   "item_added": "تمت الإضافة!",
