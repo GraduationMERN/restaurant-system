@@ -25,7 +25,15 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import Offers from "./pages/admin/Offers";
-
+import SettingsLayout from "./features/settings/components/SettingsLayout";
+import GeneralSettings from "./features/settings/pages/GeneralSettings";
+import BrandingSettings from "./features/settings/pages/BrandingSettings";
+import WebsiteSettings from "./features/settings/pages/WebsiteSettings";
+import ServicesSettings from "./features/settings/pages/ServicesSettings";
+import NotificationsSettings from "./features/settings/pages/NotificationsSettings";
+import PaymentsSettings from "./features/settings/pages/PaymentsSettings";
+import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
+import AdvancedSettings from "./features/settings/pages/AdvancedSettings";
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
