@@ -16,6 +16,7 @@
     "settings": "Settings",
     "switch_language": "Switch Language"
   },
+  
   "cart": "Cart",
   "reviews_title_global": "Reviews",
   "write_review": "Write a Review",
@@ -454,6 +455,7 @@
     "users": "Users",
     "kitchen": "Kitchen",
     "cashier": "Cashier",
+     "offers": "Offers",
     "settings": "Settings",
     "panel": "Admin Panel",
     "open_site": "Open Site",

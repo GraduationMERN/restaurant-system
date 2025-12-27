@@ -7,6 +7,7 @@ import Admin from "./pages/admin/Admin";
 import Coupons from "./pages/admin/Coupons";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import FeaturedOfferCard from "./components/offers/FeaturedOfferCard";
 import RegistrationPage from "./pages/RegisterationPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,15 +18,13 @@ import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import LoadingSpinner from "./components/LoadingSpinner";
-import GoogleSuccess from "./components/GoogleSuccess";
-import ForgotPassword from "./pages/ForgetPassword";
-import ResetPassword from "./pages/ResetPassword";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderDetailsPage from "./pages/orders/OrderDetailsPage";
 import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
+import Offers from "./pages/admin/Offers";
 
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
@@ -80,12 +79,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
-            <Route path="/register" element={<RegistrationPage />} />
-            <Route path="/verifyOtp" element={<VerifyOtpPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/google/success" element={<GoogleSuccess />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/cart" element={<CartPage />} />
@@ -131,6 +125,14 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin"]}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/offers"  // Add this route
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Offers />  {/* Your Offers component */}
                   </ProtectedRoute>
                 }
               />

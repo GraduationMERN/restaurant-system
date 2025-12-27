@@ -7,7 +7,7 @@ import ReviewModal from "../components/reviews/ReviewModal";
 import ReviewsGrid from "../components/reviews/ReviewsGrid";
 import api from "../api/axios";
 import { useToast } from "../hooks/useToast";
-import { Star, Sparkles, Users, ChefHat, Award, MessageSquare, Calendar, TrendingUp, ThumbsUp, ExternalLink } from "lucide-react";
+import { Star, Sparkles, Users,ChevronRight , ChefHat, Award, MessageSquare,LogIn , Calendar, TrendingUp, ThumbsUp, ExternalLink, Gift } from "lucide-react";
 import Snowfall from 'react-snowfall';
 
 export default function ReviewsPage() {
@@ -21,7 +21,13 @@ export default function ReviewsPage() {
   useEffect(() => {
     dispatch(fetchReviews());
   }, [dispatch]);
-
+  const handleRewardLogin = () => {
+    if (user?.id) {
+      navigate('/reward');
+    } else {
+      navigate('/login');
+    }
+  };
   const handleOpenReviewModal = async () => {
     if (!user?.id) {
       return warning(t("review_login_warning"));
@@ -138,40 +144,124 @@ export default function ReviewsPage() {
               
               {/* Center Ad Image - Positioned after first row of reviews */}
               {reviews.length > 3 && (
-                <div className="my-8 sm:my-10 md:my-12">
-                  <div className="bg-gradient-to-r from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg sm:shadow-2xl">
-                    <div className="relative h-40 sm:h-52 md:h-64 lg:h-80">
-                      <img 
-                        src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=400&fit=crop" 
-                        alt="Special dining experience"
-                        className="w-full h-full object-cover opacity-90"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/60 sm:from-black/70 to-transparent flex items-center">
-                        <div className="p-4 sm:p-6 md:p-8 lg:p-12 text-white max-w-md sm:max-w-lg">
-                          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center backdrop-blur-sm">
-                              <Award className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </div>
-                            <span className="text-xs sm:text-sm font-semibold bg-white/20 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full">
-                              Featured
-                            </span>
-                          </div>
-                          <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3">
-                            Exclusive Chef's Table
-                          </h3>
-                          <p className="text-gray-300 text-sm sm:text-base mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3">
-                            Book our premium dining experience with personalized menu and wine pairing. 
-                            Limited seats available.
-                          </p>
-                          <button className="bg-white text-gray-900 font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-all duration-300 flex items-center gap-1.5 sm:gap-2 group text-sm sm:text-base w-full sm:w-auto">
-                            {t("reviews.view_details")}
-                            <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                          </button>
+                <div className="my-8 sm:my-10 md:my-12 lg:my-16">
+    <div className="bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-700 dark:to-primary-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg sm:shadow-2xl">
+      <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://plus.unsplash.com/premium_photo-1728970536941-955336bd7ef9?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1pbi1zYW1lLXNlcmllc3wxfHx8ZW58MHx8fHx8" 
+            alt="Rewards and loyalty program"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-700/90 via-primary-600/80 to-primary-500/70 dark:from-primary-800/90 dark:via-primary-700/80 dark:to-primary-600/70" />
+        </div>
+        
+        {/* Content */}
+        <div className="relative h-full flex items-center">
+          <div className="p-6 sm:p-8 md:p-10 lg:p-12 xl:p-16 text-white w-full max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-10">
+              
+              {/* Left Column */}
+              <div className="lg:flex-1">
+                <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    <div>
+                      <span className="text-xs sm:text-sm font-semibold bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        Rewards Program
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-accent-400 to-accent-300 bg-clip-text text-transparent">
+                      500
+                    </div>
+                    <div className="text-sm text-white/80 uppercase tracking-wide">POINTS</div>
+                  </div>
+                </div>
+                
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
+                  Earn <span className="text-accent-300">Rewards Points</span>
+                </h3>
+                
+                <p className="text-gray-100 text-base sm:text-lg mb-6 sm:mb-8 max-w-lg">
+                  Login to see points & redeem exclusive rewards.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <button 
+                    onClick={handleRewardLogin}
+                    className="bg-gradient-to-r from-accent-500 to-accent-600 text-white font-semibold py-3 sm:py-4 px-6 rounded-xl hover:from-accent-600 hover:to-accent-700 transition-all duration-300 flex items-center justify-center gap-2.5 group text-base sm:text-lg w-full sm:w-auto"
+                  >
+                    {user?.id ? (
+                      <>
+                        <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
+                        View Your Rewards
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform" />
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-5 h-5 sm:w-6 sm:h-6" />
+                        Login to See Points
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Right Column - Rewards Cards */}
+              <div className="lg:w-80 xl:w-96">
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Review Bonus Card */}
+                  <div 
+                    onClick={() => window.location.href = '/rewards'}
+                    className="bg-white/10 backdrop-blur-sm hover:bg-white/15 p-4 sm:p-5 rounded-xl transition-all duration-300 group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center">
+                          <span className="text-white font-bold text-sm sm:text-base">+50</span>
+                        </div>
+                        <div>
+                          <div className="text-sm sm:text-base font-semibold">Review Bonus</div>
+                          <div className="text-xs sm:text-sm text-white/70">50 points per review</div>
                         </div>
                       </div>
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/50 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+                  
+                  {/* Rewards Grid */}
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div 
+                      onClick={() => window.location.href = '/rewards'}
+                      className="bg-white/10 backdrop-blur-sm hover:bg-white/15 p-4 sm:p-5 rounded-xl text-center transition-all duration-300 cursor-pointer group"
+                    >
+                      <div className="text-2xl sm:text-3xl font-bold text-accent-300 mb-1 sm:mb-2 group-hover:scale-105 transition-transform">Free</div>
+                      <div className="text-sm sm:text-base text-white/90">200 pts</div>
+                    </div>
+                    
+                    <div 
+                      onClick={() => window.location.href = '/rewards'}
+                      className="bg-white/10 backdrop-blur-sm hover:bg-white/15 p-4 sm:p-5 rounded-xl text-center transition-all duration-300 cursor-pointer group"
+                    >
+                      <div className="text-2xl sm:text-3xl font-bold text-accent-300 mb-1 sm:mb-2 group-hover:scale-105 transition-transform">20% OFF</div>
+                      <div className="text-sm sm:text-base text-white/90">500 pts</div>
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
               )}
             </>
           )}

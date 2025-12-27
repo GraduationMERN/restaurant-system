@@ -34,6 +34,8 @@ import supportRoutes from "./src/modules/support/support.routes.js";
 import adminProfileRoutes from "./src/modules/adminProfile/adminProfile.route.js";
 import searchRoutes from "./src/modules/search/search.routes.js"; // AI Smart Search
 import staffChatRoutes from "./src/modules/staffChat/staffChat.routes.js"; // Staff Chat
+// import offerRoutes from "./src/modules/offer/offer.routes.js";
+import offerRoutes from "./src/modules/offer/offer.route.js";
 
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
@@ -112,6 +114,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/restaurant", restaurantRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/user-profile", adminProfileRoutes);
+app.use("/api", offerRoutes);
+
 // Payment routes - this mounts routes from paymentRoutes.js
 app.use("/api/checkout", paymentRoutes);
 // Smart Search routes (AI Vector Search)

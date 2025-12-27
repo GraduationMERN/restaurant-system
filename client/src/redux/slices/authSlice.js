@@ -3,61 +3,22 @@ import api from "../../api/axios";
 
 // --- THUNKS ---
 
-export const registerUser = createAsyncThunk(
-  "auth/registerUser",
-  async (payload, { rejectWithValue }) => {
+export const firebaseLogin = createAsyncThunk(
+  "auth/firebaseLogin",
+  async (firebaseToken, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/register", payload);
+      const res = await api.post(
+        "/api/auth/firebase-login",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${firebaseToken}`,
+          },
+        }
+      );
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || err.message || "Registration failed"
-      );
-    }
-  }
-);
-
-export const googleLogin = createAsyncThunk(
-  "auth/googleLogin",
-  async (_, { dispatch, rejectWithValue }) => {
-    try {
-      const res = await dispatch(getMe());
-
-      if (res.meta.requestStatus === "rejected") {
-        return rejectWithValue("Failed to login with Google");
-      }
-
-      return res.payload;
-    } catch (err) {
-      return rejectWithValue("Google login failed");
-    }
-  }
-);
-
-export const verifyOtp = createAsyncThunk(
-  "auth/verifyOtp",
-  async ({ email, otp: code }, { rejectWithValue }) => {
-    try {
-      const res = await api.post("api/auth/verifyOtp", { email, code });
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "OTP verification failed"
-      );
-    }
-  }
-);
-
-export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async ({ email, password,points }, { rejectWithValue }) => {
-    try {
-      const res = await api.post("api/auth/login", { email, password,points });
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || err.message || "Login failed"
-      );
+      return rejectWithValue(err.response?.data?.message);
     }
   }
 );
@@ -76,11 +37,11 @@ export const getMe = createAsyncThunk(
 );
 
 // --- FORGOT PASSWORD ---
-export const sendResetEmail = createAsyncThunk(
-  "auth/sendResetEmail",
-  async (email, { rejectWithValue }) => {
+export const completeProfile = createAsyncThunk(
+  "auth/complete-profile",
+  async ({phoneNumber,name}, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/forget", { email });
+      const res = await api.post("api/auth/complete-profile", { phoneNumber,name });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -90,20 +51,6 @@ export const sendResetEmail = createAsyncThunk(
   }
 );
 
-// --- RESET PASSWORD ---
-export const resetPassword = createAsyncThunk(
-  "auth/resetPassword",
-  async ({ token, password }, { rejectWithValue }) => {
-    try {
-      const res = await api.post("api/auth/reset", { token, password });
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "Error resetting password"
-      );
-    }
-  }
-);
 
 export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
@@ -179,47 +126,13 @@ const authSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // --- REGISTER ---
-    builder
-      .addCase(registerUser.pending, (state) => {
-        state.loadingRegister = true;
-        state.error = null;
-      })
-      .addCase(registerUser.fulfilled, (state) => {
-        state.loadingRegister = false;
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.loadingRegister = false;
-        state.error = action.payload || "Registration failed";
-      });
-
-    // --- VERIFY OTP ---
-    builder
-      .addCase(verifyOtp.pending, (state) => {
-        state.loadingVerifyOtp = true;
-        state.error = null;
-      })
-      .addCase(verifyOtp.fulfilled, (state, action) => {
-        state.loadingVerifyOtp = false;
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
-        state.error = null;
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
-        }
-      })
-      .addCase(verifyOtp.rejected, (state, action) => {
-        state.loadingVerifyOtp = false;
-        state.error = action.payload;
-      });
-
     // --- LOGIN ---
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase(firebaseLogin.pending, (state) => {
         state.loadingLogin = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(firebaseLogin.fulfilled, (state, action) => {
         state.loadingLogin = false;
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
@@ -227,13 +140,32 @@ const authSlice = createSlice({
           window.localStorage.setItem("hasSession", "true");
         }
       })
-      .addCase(loginUser.rejected, (state, action) => {
+      .addCase(firebaseLogin.rejected, (state, action) => {
         state.loadingLogin = false;
         state.error = action.payload;
         state.user = null;
         state.isAuthenticated = false;
       });
-
+       builder
+      .addCase(completeProfile.pending, (state) => {
+        state.loadingLogin = true;
+        state.error = null;
+      })
+      .addCase(completeProfile.fulfilled, (state, action) => {
+        state.loadingLogin = false;
+        state.user = action.payload.user || action.payload;
+        state.isAuthenticated = true;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
+      })
+      .addCase(completeProfile.rejected, (state, action) => {
+        state.loadingLogin = false;
+        state.error = action.payload;
+        state.user = null;
+        state.isAuthenticated = false;
+      });
+      
     // --- GET ME ---
     builder
       .addCase(getMe.pending, (state) => {
@@ -276,37 +208,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       });
 
-    // --- SEND RESET EMAIL ---
     builder
-      .addCase(sendResetEmail.pending, (state) => {
-        state.loadingSendReset = true;
-        state.error = null;
-        state.message = "";
-      })
-      .addCase(sendResetEmail.fulfilled, (state) => {
-        state.loadingSendReset = false;
-        state.message = "Reset link sent to your email";
-      })
-      .addCase(sendResetEmail.rejected, (state, action) => {
-        state.loadingSendReset = false;
-        state.error = action.payload;
-      });
-
-    // --- RESET PASSWORD ---
-    builder
-      .addCase(resetPassword.pending, (state) => {
-        state.loadingReset = true;
-        state.error = null;
-        state.message = "";
-      })
-      .addCase(resetPassword.fulfilled, (state) => {
-        state.loadingReset = false;
-        state.message = "Password reset successful";
-      })
-      .addCase(resetPassword.rejected, (state, action) => {
-        state.loadingReset = false;
-        state.error = action.payload;
-      })
       .addCase(refreshToken.pending, (state) => {
         state.loadingRefresh = true;
         state.error = null;

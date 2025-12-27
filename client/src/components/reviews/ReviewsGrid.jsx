@@ -21,7 +21,7 @@ export default function ReviewsGrid({ reviews }) {
       subtitle: t("reviews.promotions.family_feast"),
       description: t("reviews.promotions.family_feast_desc"),
       image: "https://plus.unsplash.com/premium_photo-1723662076067-5aa5881e69c0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8ZmFtaWx5JTIwZmVhc3QlMjBkYXl8ZW58MHx8MHx8fDA%3D",
-      ctaText: t("Check Menu Now"),
+      ctaText: t("reviews.promotions.book_now"),
       badge: "30% OFF", 
       badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500",
       icon: Tag,

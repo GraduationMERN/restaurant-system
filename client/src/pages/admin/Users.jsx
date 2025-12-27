@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, updateUserRole, deleteUser } from "../../redux/slices/usersSlice";
-import { registerUser } from "../../redux/slices/authSlice";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
 import { Plus, X, User, Mail, Phone, Shield, ChevronDown, Loader2, Trash2 } from "lucide-react";
