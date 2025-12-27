@@ -83,7 +83,7 @@ export default function BrandingSettings() {
       <SettingsCard 
         title={t("admin.colors_theme")}
         description="Customize your brand colors"
-        icon="🎨"
+        icon=""
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <ColorPicker
@@ -103,7 +103,7 @@ export default function BrandingSettings() {
       <SettingsCard 
         title={t("admin.logo_branding")}
         description="Upload your restaurant logo"
-        icon="🖼️"
+        icon=""
       >
         <Label>{t("admin.logo")}</Label>
         <div className="flex items-center gap-4 mt-2">
@@ -147,7 +147,7 @@ export default function BrandingSettings() {
       <SettingsCard 
         title={t("admin.menu_image")}
         description="Upload or generate menu images"
-        icon="🍽️"
+        icon=""
       >
         {/* Copy your menu image section from original */}
         {/* ... */}

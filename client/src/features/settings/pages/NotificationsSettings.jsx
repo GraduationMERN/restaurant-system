@@ -45,7 +45,7 @@ export default function NotificationsSettings() {
       <SettingsCard 
         title={t("admin.notifications")}
         description="Configure your notification preferences"
-        icon="🔔"
+        icon=""
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-3">

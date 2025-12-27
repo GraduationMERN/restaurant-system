@@ -71,7 +71,7 @@ export default function GeneralSettings() {
       <SettingsCard 
         title={t("admin.restaurant_info")}
         description="Basic information about your restaurant"
-        icon="🏢"
+        icon=""
       >
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
           <div className="lg:col-span-1">
@@ -114,7 +114,7 @@ export default function GeneralSettings() {
       <SettingsCard 
         title={t("admin.contact_support")}
         description="Contact information for customer support"
-        icon="📞"
+        icon=""
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>

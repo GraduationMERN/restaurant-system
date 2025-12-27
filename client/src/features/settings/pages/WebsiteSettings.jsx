@@ -53,7 +53,7 @@ export default function WebsiteSettings() {
       <SettingsCard 
         title={t("admin.about_us")}
         description="Information displayed on your About page"
-        icon="📝"
+        icon=""
       >
         <div className="space-y-5">
           <div>
@@ -78,7 +78,7 @@ export default function WebsiteSettings() {
       <SettingsCard 
         title={t("admin.faqs")}
         description="Frequently Asked Questions"
-        icon="❓"
+        icon=""
       >
         {/* Copy your FAQ component from original */}
         {/* ... */}

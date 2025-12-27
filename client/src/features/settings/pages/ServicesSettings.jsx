@@ -45,7 +45,7 @@ export default function ServicesSettings() {
       <SettingsCard 
         title={t("admin.policies_agreements")}
         description="Legal policies and terms"
-        icon="⚖️"
+        icon=""
       >
         <div className="space-y-5">
           <div>
