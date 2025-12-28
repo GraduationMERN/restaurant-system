@@ -166,9 +166,11 @@ export const updateRewardOrder = async (req, res) => {
         phone: updatedOrder.phone || updatedOrder.userId?.phone
       },
       user: updatedOrder.userId,
+      userId: updatedOrder.userId,
       
       pointsUsed: updatedOrder.pointsUsed,
       reward: updatedOrder.rewardId,
+      rewardId: updatedOrder.rewardId,
       
       items: updatedOrder.rewardId ? [{
         _id: 'reward',
@@ -186,12 +188,21 @@ export const updateRewardOrder = async (req, res) => {
       console.log('🔔 Emitting reward order update:', {
         orderId: id,
         status: updatedOrder.status,
-        type: 'reward'
+        type: 'reward',
+        userId: updatedOrder.userId?._id
       });
 
-      // Standard order events
+      // Emit to kitchen and cashier rooms
       io.to('kitchen').emit('order:updated', formattedOrder);
       io.to('cashier').emit('order:updated', formattedOrder);
+      io.to('admin').emit('order:updated', formattedOrder);
+      
+      // Emit to specific user room (customer)
+      if (updatedOrder.userId?._id) {
+        const userIdStr = updatedOrder.userId._id.toString();
+        io.to(`user:${userIdStr}`).emit('order:updated', formattedOrder);
+        io.to(userIdStr).emit('order:updated', formattedOrder); // Legacy support
+      }
       
       // Status-specific events
       if (dataToUpdate.status) {
@@ -200,11 +211,13 @@ export const updateRewardOrder = async (req, res) => {
         
         // Emit to specific user
         if (updatedOrder.userId?._id) {
-          io.to(`user:${updatedOrder.userId._id}`).emit('order:your-status-changed', formattedOrder);
+          const userIdStr = updatedOrder.userId._id.toString();
+          io.to(`user:${userIdStr}`).emit('order:status-changed', formattedOrder);
+          io.to(`user:${userIdStr}`).emit('order:your-status-changed', formattedOrder);
         }
         
         // Status-specific events
-        switch(updatedOrder.status) {
+        switch(updatedOrder.status.toLowerCase()) {
           case 'confirmed':
             io.to('kitchen').emit('order:confirmed', formattedOrder);
             break;
@@ -215,7 +228,8 @@ export const updateRewardOrder = async (req, res) => {
             io.to('kitchen').emit('order:ready', formattedOrder);
             io.to('cashier').emit('order:ready-notification', formattedOrder);
             if (updatedOrder.userId?._id) {
-              io.to(`user:${updatedOrder.userId._id}`).emit('order:ready-notification', formattedOrder);
+              const userIdStr = updatedOrder.userId._id.toString();
+              io.to(`user:${userIdStr}`).emit('order:ready-notification', formattedOrder);
             }
             break;
           case 'completed':
@@ -228,21 +242,6 @@ export const updateRewardOrder = async (req, res) => {
             break;
         }
       }
-      
-      // Kitchen-specific update
-      io.to('kitchen').emit('order:kitchen-update', formattedOrder);
-      
-      // Admin notification
-      io.to('admin').emit('order:updated', formattedOrder);
-      
-      // Keep your custom events too (for backwards compatibility)
-      io.to(updatedOrder.userId._id.toString()).emit('reward_order_updated', updatedOrder);
-      io.to(`reward_order_${id}`).emit('reward_order_status_changed', {
-        orderId: id,
-        status: updatedOrder.status,
-        order: updatedOrder
-      });
-      io.to('admin').emit('reward_order_updated_admin', updatedOrder);
     }
 
     res.json({ 

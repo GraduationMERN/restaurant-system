@@ -5,6 +5,7 @@ import User from "../user/model/User.js";
 import { io, notificationService } from "../../../server.js";
 import { getUserByIdService } from "../user/service/user.service.js";
 import { createReward, getAllRewardsRepo, deleteReward, getRewardById, updateReward, getAllRewardOrderRepo, getRewardOrderByIdRepo, createRewardOrderRepo } from "./reward.repo.js";
+import RewardOrder from "./rewardOrder.js";
 
 
 // Reward services
@@ -119,26 +120,13 @@ export const redeemRewardService = async (rewardId, userId) => {
         });
 
         // Emit to kitchen
-        io.to('kitchen').emit('order:new', formattedOrder);
-        io.to('kitchen').emit('order:new:instore', formattedOrder);
-        io.to('kitchen').emit('order:created', formattedOrder);
-
-        // Emit to cashier
-        io.to('cashier').emit('order:new', formattedOrder);
-        io.to('cashier').emit('order:new:instore', formattedOrder);
-        io.to('cashier').emit('order:created', formattedOrder);
+        global.io.to("cashier").emit("order:new", formattedOrder);
+        global.io.to("kitchen").emit("order:new", formattedOrder);
 
         // Emit to the user who created it
         if (userId) {
-          io.to(`user:${userId}`).emit('order:created', formattedOrder);
+          global.io.to(`user:${userId}`).emit('order:created', formattedOrder);
         }
-
-        // Emit to admin
-        io.to('admin').emit('order:created', formattedOrder);
-        io.to('admin').emit('new_reward', formattedOrder); // Keep your custom event too
-
-        // General broadcast
-        io.emit('order:created', formattedOrder);
       }
 
       // Send notification to admin
