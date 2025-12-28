@@ -14,11 +14,17 @@ export default function ProgressBar({ Reward }) {
     const progressBarRef = useRef(null);
     const milestoneRefs = useRef([]);
     const [celebratedMilestones, setCelebratedMilestones] = useState(new Set());
+    const [currentPoints, setCurrentPoints] = useState(points);
 
     const rewards = reward || [];
     const milestones = [...new Set(rewards.map(r => r.pointsRequired))].sort((a, b) => a - b);
     const maxMilestone = milestones[milestones.length - 1] || 1;
     const targetProgress = Math.min((points / maxMilestone) * 100, 100);
+
+    // Update current points when user points change
+    useEffect(() => {
+        setCurrentPoints(points);
+    }, [points]);
 
     // Animate progress bar with GSAP
     useEffect(() => {
@@ -29,11 +35,11 @@ export default function ProgressBar({ Reward }) {
                 ease: "power2.out"
             });
         }
-    }, [targetProgress]);
+    }, [targetProgress, currentPoints]);
 
     // Check for new milestone achievements and animate
     useEffect(() => {
-        const newMilestones = milestones.filter(m => points >= m && !celebratedMilestones.has(m));
+        const newMilestones = milestones.filter(m => currentPoints >= m && !celebratedMilestones.has(m));
 
         newMilestones.forEach((milestone, index) => {
             const milestoneIndex = milestones.indexOf(milestone);
@@ -80,7 +86,13 @@ export default function ProgressBar({ Reward }) {
         if (newMilestones.length > 0) {
             setCelebratedMilestones(prev => new Set([...prev, ...newMilestones]));
         }
-    }, [points, milestones, celebratedMilestones]);
+    }, [currentPoints, milestones, celebratedMilestones]);
+
+    // Reset celebrated milestones if points decrease
+    // useEffect(() => {
+    //     const achievedMilestones = milestones.filter(m => currentPoints >= m);
+    //     setCelebratedMilestones(new Set(achievedMilestones));
+    // }, [currentPoints, milestones]);
 
     return (
         <div className="relative mt-6">
@@ -106,7 +118,7 @@ export default function ProgressBar({ Reward }) {
             <div className="relative w-full ">
                 {milestones.map((m, i) => {
                     const leftPos = (m / maxMilestone) * 100;
-                    const isAchieved = points >= m;
+                    const isAchieved = currentPoints >= m;
                     return (
                         <div
                             key={i}

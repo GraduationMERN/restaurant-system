@@ -9,75 +9,155 @@ import { createReward, getAllRewardsRepo, deleteReward, getRewardById, updateRew
 
 // Reward services
 export const getAllRewardsServices = async () => {
-    return await getAllRewardsRepo()
+  return await getAllRewardsRepo()
 }
 
 export const getRewardByIdService = async (id) => {
-    return await getRewardById(id);
+  return await getRewardById(id);
 }
 
 export const createRewardService = async (rewardData) => {
-    // Validate reward data: product must exist and pointsRequired > 0
+  // Validate reward data: product must exist and pointsRequired > 0
 
-    if (!rewardData.pointsRequired || rewardData.pointsRequired <= 0) throw new Error("pointsRequired must be a positive number");
-    return await createReward(rewardData);
+  if (!rewardData.pointsRequired || rewardData.pointsRequired <= 0) throw new Error("pointsRequired must be a positive number");
+  return await createReward(rewardData);
 }
 
 export const deleteRewardService = async (id) => {
-    return await deleteReward(id);
+  return await deleteReward(id);
 }
 
 export const updateRewardService = async (id, rewardData) => {
-    return await updateReward(id, rewardData);
+  return await updateReward(id, rewardData);
 }
 
 
 // Redeem reward
 export const redeemRewardService = async (rewardId, userId) => {
-    try {
-        // 1. Validate user and reward existence
-        const user = await getUserByIdService(userId);
-        const reward = await getRewardById(rewardId);
-        if (!user) throw new Error("User not found");
-        if (!reward) throw new Error("Reward not found");
+  try {
+    // 1. Validate user and reward existence
+    const user = await getUserByIdService(userId);
+    const reward = await getRewardById(rewardId);
+    if (!user) throw new Error("User not found");
+    if (!reward) throw new Error("Reward not found");
 
-        // 2. Check if user has enough points
-        if (user.points < reward.pointsRequired) throw new Error("Insufficient points to redeem this reward");
-        // 3. Deduct points and create reward order
-            await User.findByIdAndUpdate(
-                        userId,
-                        { $inc: { points: -reward.pointsRequired } },
-                        { new: true }
-                );
-
-                const created = await createRewardOrderRepo({
-                        userId,
-                        rewardId,
-                        pointsUsed: reward.pointsRequired
-                });
-
-                // Simple notification for admin: persist and emit
-                try {
-                    if (io) {
-                        io.to("admin").emit("new_reward", created);
-                    }
-                    await notificationService?.sendToAdmin({
-                        title: "Reward Redeemed",
-                        message: `${reward.productId?.name || 'Reward item'} redeemed by ${user?.name || 'User'}`,
-                        type: "reward",
-                        rewardId: created._id,
-                        createdAt: new Date(),
-                    });
-                } catch (e) {
-                    console.error("Failed to send admin reward notification", e);
-                }
-
-                return created;
-    } catch (error) {
-        throw new Error(`Redemption failed: ${error.message}`);
+    // 2. Check if user has enough points
+    if (user.points < reward.pointsRequired) {
+      throw new Error("Insufficient points to redeem this reward");
     }
 
-}
+    // 3. Deduct points
+    await User.findByIdAndUpdate(
+      userId,
+      { $inc: { points: -reward.pointsRequired } },
+      { new: true }
+    );
+
+    // 4. Create reward order
+    const created = await createRewardOrderRepo({
+      userId,
+      rewardId,
+      pointsUsed: reward.pointsRequired,
+      status: 'confirmed', // Set initial status
+      redeemedAt: new Date()
+    });
+
+    // 5. Populate the created order for socket emission
+    const populatedOrder = await RewardOrder.findById(created._id)
+      .populate({
+        path: 'rewardId',
+        populate: { path: 'productId' }
+      })
+      .populate('userId', 'name email phone');
+
+    // 6. Format reward order to match regular order structure
+    const formattedOrder = {
+      _id: populatedOrder._id,
+      type: 'reward',
+      orderNumber: `R-${populatedOrder._id.toString().slice(-6)}`,
+      status: populatedOrder.status,
+      totalAmount: 0,
+      paymentStatus: 'paid', // Reward orders are "paid" with points
+      paymentMethod: 'points',
+      serviceType: populatedOrder.serviceType || 'instore',
+      createdAt: populatedOrder.redeemedAt || populatedOrder.createdAt,
+      estimatedTime: populatedOrder.estimatedTime,
+      notes: populatedOrder.notes,
+
+      // Customer info
+      customerInfo: {
+        name: populatedOrder.userId?.name || 'Reward Customer',
+        email: populatedOrder.userId?.email,
+        phone: populatedOrder.userId?.phone
+      },
+      user: populatedOrder.userId,
+
+      // Points info
+      pointsUsed: populatedOrder.pointsUsed,
+      reward: populatedOrder.rewardId,
+
+      // Items array (required for kitchen display)
+      items: populatedOrder.rewardId ? [{
+        _id: 'reward',
+        productId: populatedOrder.rewardId.productId?._id || populatedOrder.rewardId._id,
+        name: populatedOrder.rewardId.name || populatedOrder.rewardId.productId?.name || 'Reward Item',
+        quantity: 1,
+        price: 0,
+        image: populatedOrder.rewardId.productId?.image || populatedOrder.rewardId.image,
+        prepared: false
+      }] : []
+    };
+
+    // 7. Emit socket events (standard order events that frontend listens for)
+    try {
+      if (io) {
+        console.log('🔔 Emitting new reward order:', {
+          orderId: populatedOrder._id,
+          type: 'reward',
+          status: populatedOrder.status,
+          user: user.name
+        });
+
+        // Emit to kitchen
+        io.to('kitchen').emit('order:new', formattedOrder);
+        io.to('kitchen').emit('order:new:instore', formattedOrder);
+        io.to('kitchen').emit('order:created', formattedOrder);
+
+        // Emit to cashier
+        io.to('cashier').emit('order:new', formattedOrder);
+        io.to('cashier').emit('order:new:instore', formattedOrder);
+        io.to('cashier').emit('order:created', formattedOrder);
+
+        // Emit to the user who created it
+        if (userId) {
+          io.to(`user:${userId}`).emit('order:created', formattedOrder);
+        }
+
+        // Emit to admin
+        io.to('admin').emit('order:created', formattedOrder);
+        io.to('admin').emit('new_reward', formattedOrder); // Keep your custom event too
+
+        // General broadcast
+        io.emit('order:created', formattedOrder);
+      }
+
+      // Send notification to admin
+      await notificationService?.sendToAdmin({
+        title: "Reward Redeemed",
+        message: `${reward.productId?.name || reward.name || 'Reward item'} redeemed by ${user?.name || 'User'}`,
+        type: "reward",
+        rewardId: created._id,
+        createdAt: new Date(),
+      });
+    } catch (e) {
+      console.error("Failed to emit socket events or send notification:", e);
+    }
+
+    return populatedOrder;
+  } catch (error) {
+    throw new Error(`Redemption failed: ${error.message}`);
+  }
+};
 
 
 
@@ -128,9 +208,9 @@ export async function earningPoints(orderId) {
 
 // Reward order
 export async function getAllRewardOrdersServices() {
-    return await getAllRewardOrderRepo();
+  return await getAllRewardOrderRepo();
 }
 
 export async function getRewardOrderByIdService(id) {
-    return await getRewardOrderByIdRepo(id);
+  return await getRewardOrderByIdRepo(id);
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, redeemReward, getUserRedemptions } from '../redux/slices/rewardSlice';
+import { getMe } from '../redux/slices/authSlice'
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { notifyRedeemed } from '../utils/notifications';
@@ -10,12 +11,13 @@ import MileStones from '../components/Reward/MileStones';
 import RewardsList from '../components/Reward/RewardsList';
 import NotifyToLogin from '../components/Reward/LoginFirst';
 import PageMeta from '../components/common/PageMeta';
+import { useTranslation } from 'react-i18next';
 
 export default function RewardPage() {
-
+  const { i18n } = useTranslation();
   const dispatch = useDispatch();
   const { reward } = useSelector((state) => state.reward || {});
-  const { user} = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const userRedemptions = useSelector((state) => state.reward?.userRedemptions || []);
   const toast = useToast();
   const navigate = useNavigate();
@@ -25,17 +27,39 @@ export default function RewardPage() {
   const [selectedReward, setSelectedReward] = useState(null);
   const [showRedemptions, setShowRedemptions] = useState(false);
   const [notifyLogin, setNotifyLogin] = useState(!user);
+  const [languageKey, setLanguageKey] = useState(i18n.language);
   const userName = user?.name || "Guest";
+
+  useEffect(() => {
+    const handleLanguageChange = (lng) => {
+      setLanguageKey(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
+
+  useEffect(() => {
+    setUserPoints(points);
+  }, [points]);
+
   useEffect(() => {
     dispatch(getAllRewards());
   }, [dispatch]);
 
-   useEffect(() => {
+  useEffect(() => {
     document.body.classList.add('custom-scrollbar-page');
     return () => {
       document.body.classList.remove('custom-scrollbar-page');
     };
   }, []);
+
+  useEffect(() => {
+    setNotifyLogin(!user);
+  }, [user]);
 
   const rewards = reward || [];
 
@@ -55,18 +79,15 @@ export default function RewardPage() {
     if (!canRedeem(item.pointsRequired)) return;
     try {
       const r = await dispatch(redeemReward({ rewardId: item._id })).unwrap();
-      setUserPoints(prev => prev - item.pointsRequired);
       toast.showToast({ message: 'Redeemed successfully', type: 'success' });
-      
-      // Show browser notification on successful redemption
-      notifyRedeemed(item);
 
-      // If server returned the created reward order, navigate to tracking page
+      notifyRedeemed(item);
       if (r && (r._id || r.id)) {
         const orderId = r._id || r.id;
         navigate(`/reward-order/${orderId}`, { state: { order: r } });
         return;
       }
+
     } catch (err) {
       toast.showToast({ message: 'Redeem failed: ' + (err?.message || err || 'unknown'), type: 'error' });
     }
@@ -83,25 +104,25 @@ export default function RewardPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background decorative circles */}
-    <PageMeta title="Rewards" description="Exclusive rewards and offers" />
+      <PageMeta title="Rewards" description="Exclusive rewards and offers" />
 
       {/* Content */}
       <div className="relative z-10">
         {/* HEADER */}
-        <MileStones milestones={milestones} points={points} userName={userName} maxMilestone={maxMilestone} userPoints={userPoints} handleViewRedemptions={handleViewRedemptions} progress={progress} />
+        <MileStones key={points} milestones={milestones} points={points} userName={userName} maxMilestone={maxMilestone} userPoints={userPoints} handleViewRedemptions={handleViewRedemptions} progress={progress} />
         {/* REWARDS LIST */}
-        <RewardsList rewards={rewards} groupedRewards={groupedRewards} setSelectedReward={setSelectedReward} setShowConfirm={setShowConfirm} canRedeem={canRedeem}/>
+        <RewardsList rewards={rewards} groupedRewards={groupedRewards} setSelectedReward={setSelectedReward} setShowConfirm={setShowConfirm} canRedeem={canRedeem} />
       </div>
 
       {showConfirm && (
-        <Confirmation selectedReward = {selectedReward} onClick={() => {handleRedeem(selectedReward); setShowConfirm(false)}} onReject={() => setShowConfirm(false)}/>
+        <Confirmation selectedReward={selectedReward} onClick={() => { handleRedeem(selectedReward); setShowConfirm(false) }} onReject={() => setShowConfirm(false)} />
       )}
       {notifyLogin && (
-      <NotifyToLogin  onClick={() => setShowRedemptions(false)} onLeter={()=>{setNotifyLogin(false)}}/>
-    )}
+        <NotifyToLogin onClick={() => setShowRedemptions(false)} onLeter={() => { setNotifyLogin(false) }} />
+      )}
       {/* REDEMPTIONS HISTORY MODAL */}
       {showRedemptions && (
-        <Redemptions  userRedemptions = {userRedemptions} onClick={() => setShowRedemptions(false)} viewDetails={(redemption) => navigate(`/reward-order/${redemption._id}`, { state: { order: redemption } })}/>
+        <Redemptions userRedemptions={userRedemptions} onClick={() => setShowRedemptions(false)} viewDetails={(redemption) => navigate(`/reward-order/${redemption._id}`, { state: { order: redemption } })} />
       )}
     </div>
   );

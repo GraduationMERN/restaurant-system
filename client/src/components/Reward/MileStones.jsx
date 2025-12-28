@@ -1,9 +1,11 @@
 import { t } from 'i18next';
 import ProgressBar from './ProgressBar';
+import { useTranslation } from 'react-i18next';
 
 export default function MileStones({userName, userPoints, handleViewRedemptions}) {
+  const { i18n } = useTranslation();
   return (
-     <div className="fixed z-10 top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
+     <div key={i18n.language} className="fixed z-10 top-0 w-full md:w-9/10 dark:bg-gray-800 bg-white py-8 px-6 rounded-b-3xl shadow-lg">
             <div className="dark:bg-black/30 px-6 py-8 rounded-2xl backdrop-blur-md">
               
               <div className="flex justify-between items-center mb-2">

@@ -126,7 +126,7 @@ export const updateRewardOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const allowedUpdates = ["status", "notes", "address", "phone"];
+    const allowedUpdates = ["status", "notes", "address", "phone", "estimatedTime", "serviceType"];
     const dataToUpdate = {};
 
     allowedUpdates.forEach(key => {
@@ -140,41 +140,146 @@ export const updateRewardOrder = async (req, res) => {
     ).populate({
       path: 'rewardId',
       populate: { path: 'productId' }
-    }).populate('userId');
+    }).populate('userId', 'name email phone');
 
     if (!updatedOrder) {
       return res.status(404).json({ message: "Reward order not found" });
     }
 
-    // Emit socket event to notify user of status update
+    // Format for socket emission
+    const formattedOrder = {
+      _id: updatedOrder._id,
+      type: 'reward',
+      orderNumber: `R-${updatedOrder._id.toString().slice(-6)}`,
+      status: updatedOrder.status,
+      totalAmount: 0,
+      paymentStatus: 'paid',
+      paymentMethod: 'points',
+      serviceType: updatedOrder.serviceType || 'instore',
+      createdAt: updatedOrder.redeemedAt || updatedOrder.createdAt,
+      estimatedTime: updatedOrder.estimatedTime,
+      notes: updatedOrder.notes,
+      
+      customerInfo: {
+        name: updatedOrder.userId?.name || 'Reward Customer',
+        email: updatedOrder.userId?.email,
+        phone: updatedOrder.phone || updatedOrder.userId?.phone
+      },
+      user: updatedOrder.userId,
+      
+      pointsUsed: updatedOrder.pointsUsed,
+      reward: updatedOrder.rewardId,
+      
+      items: updatedOrder.rewardId ? [{
+        _id: 'reward',
+        productId: updatedOrder.rewardId.productId?._id || updatedOrder.rewardId._id,
+        name: updatedOrder.rewardId.name || updatedOrder.rewardId.productId?.name || 'Reward Item',
+        quantity: 1,
+        price: 0,
+        image: updatedOrder.rewardId.productId?.image || updatedOrder.rewardId.image,
+        prepared: dataToUpdate.status === 'ready' || dataToUpdate.status === 'completed'
+      }] : []
+    };
+
+    // Emit socket events
     if (io) {
-      // Notify the specific user
+      console.log('🔔 Emitting reward order update:', {
+        orderId: id,
+        status: updatedOrder.status,
+        type: 'reward'
+      });
+
+      // Standard order events
+      io.to('kitchen').emit('order:updated', formattedOrder);
+      io.to('cashier').emit('order:updated', formattedOrder);
+      
+      // Status-specific events
+      if (dataToUpdate.status) {
+        io.to('kitchen').emit('order:status-changed', formattedOrder);
+        io.to('cashier').emit('order:status-changed', formattedOrder);
+        
+        // Emit to specific user
+        if (updatedOrder.userId?._id) {
+          io.to(`user:${updatedOrder.userId._id}`).emit('order:your-status-changed', formattedOrder);
+        }
+        
+        // Status-specific events
+        switch(updatedOrder.status) {
+          case 'confirmed':
+            io.to('kitchen').emit('order:confirmed', formattedOrder);
+            break;
+          case 'preparing':
+            io.to('kitchen').emit('order:preparing', formattedOrder);
+            break;
+          case 'ready':
+            io.to('kitchen').emit('order:ready', formattedOrder);
+            io.to('cashier').emit('order:ready-notification', formattedOrder);
+            if (updatedOrder.userId?._id) {
+              io.to(`user:${updatedOrder.userId._id}`).emit('order:ready-notification', formattedOrder);
+            }
+            break;
+          case 'completed':
+            io.to('kitchen').emit('order:completed', formattedOrder);
+            io.to('cashier').emit('order:completed', formattedOrder);
+            break;
+          case 'cancelled':
+            io.to('kitchen').emit('order:cancelled', formattedOrder);
+            io.to('cashier').emit('order:cancelled', formattedOrder);
+            break;
+        }
+      }
+      
+      // Kitchen-specific update
+      io.to('kitchen').emit('order:kitchen-update', formattedOrder);
+      
+      // Admin notification
+      io.to('admin').emit('order:updated', formattedOrder);
+      
+      // Keep your custom events too (for backwards compatibility)
       io.to(updatedOrder.userId._id.toString()).emit('reward_order_updated', updatedOrder);
-      // Also emit status change event
       io.to(`reward_order_${id}`).emit('reward_order_status_changed', {
         orderId: id,
         status: updatedOrder.status,
         order: updatedOrder
       });
-      // Notify admins
       io.to('admin').emit('reward_order_updated_admin', updatedOrder);
     }
 
-    res.json({ message: "Reward order updated", order: updatedOrder });
+    res.json({ 
+      success: true,
+      message: "Reward order updated", 
+      data: updatedOrder 
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update reward order error:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 export const deleteRewardOrder = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const deleted = await RewardOrder.findByIdAndDelete(id);
-        if (!deleted) return res.status(404).json({ message: 'Reward order not found' });
-        res.json({ message: 'Reward order deleted', order: deleted });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  try {
+    const { id } = req.params;
+    const deleted = await RewardOrder.findByIdAndDelete(id);
+    
+    if (!deleted) {
+      return res.status(404).json({ message: 'Reward order not found' });
     }
+    
+    // Emit socket event for deletion
+    if (io) {
+      io.to('kitchen').emit('order:deleted', { orderId: id });
+      io.to('cashier').emit('order:deleted', { orderId: id });
+      io.to('admin').emit('order:deleted', { orderId: id });
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'Reward order deleted', 
+      data: deleted 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 export async function getUserRedemptions(req, res) {
