@@ -113,12 +113,14 @@ export default function RewardOrderTrackingPage() {
 
   // Get reward title
   const rewardTitle = order?.rewardId?.title || order?.rewardId?.productId?.name || 'Reward Item';
-
+  const normalizedStatus = order?.status
+    ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
+    : 'Preparing';
   // Determine status display - 3 step progression
   const statusSteps = [
-    { label: 'Preparing', completed: order?.status === 'Preparing' || order?.status === 'Confirmed' || order?.status === 'Ready' },
-    { label: 'Confirmed', completed: order?.status === 'Confirmed' || order?.status === 'Ready' },
-    { label: 'Ready', completed: order?.status === 'Ready' }
+    { label: 'Preparing', completed: ['Preparing', 'Confirmed', 'Ready'].includes(normalizedStatus) },
+    { label: 'Confirmed', completed: ['Confirmed', 'Ready'].includes(normalizedStatus) },
+    { label: 'Ready', completed: normalizedStatus === 'Ready' }
   ];
 
   return (
@@ -311,7 +313,7 @@ export default function RewardOrderTrackingPage() {
                     order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
-                    {order.status || 'Preparing'}
+                    {normalizedStatus}
                   </span>
                 </div>
 
