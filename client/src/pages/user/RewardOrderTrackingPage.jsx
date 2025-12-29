@@ -5,7 +5,7 @@ import { Phone, Star } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createReview } from "../../redux/slices/reviewSlice";
-import socketClient from "../../utils/socketClient";
+import socketClient from "../../utils/socket";
 import { useRef } from "react";
 
 export default function RewardOrderTrackingPage() {
