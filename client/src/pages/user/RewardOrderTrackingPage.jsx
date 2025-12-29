@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
-import { showStatusNotification } from '../../utils/notifications';
 import { Phone, Star } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createReview } from "../../redux/slices/reviewSlice";
-import socketClient, { setupSocketListeners, joinSocketRooms } from "../../utils/socketRedux";
-import api from "../../api/axios";
+import socketClient from "../../utils/socketClient";
+import { useRef } from "react";
 
 export default function RewardOrderTrackingPage() {
   const dispatch = useDispatch();
@@ -22,59 +21,32 @@ export default function RewardOrderTrackingPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const toast = useToast();
+  const socketRef = useRef(null);
 
-  // Fetch order data if not provided via state
+  if (!socketRef.current) {
+    socketRef.current =
+      socketClient.getSocket() || socketClient.initSocket();
+  }
+  const socket = socketRef.current;
+
   useEffect(() => {
-    if (!order && orderId) {
-      const fetchOrder = async () => {
-        try {
-          const response = await api.get(`/api/rewards/orders/${orderId}`);
-          if (response.data.success) {
-            setOrder(response.data.data);
-          }
-        } catch (error) {
-          console.error('Failed to fetch order:', error);
-          toast.showToast({ message: "Failed to load order details", type: "error" });
-        }
-      };
-      fetchOrder();
-    }
-  }, [orderId, order]);
+    if (!socket || !orderId) return;
 
-  // Initialize Socket.IO connection using Redux socket system
-  useEffect(() => {
-    if (!user?._id) return;
+    socket.emit("join_reward_order", { orderId });
 
-    const socket = socketClient.getSocket() || socketClient.initSocket();
-    if (!socket) return;
-
-    setupSocketListeners(socket);
-    joinSocketRooms(socket, user);
-
-    // Listen for order updates
-    const handleOrderUpdate = (updatedOrder) => {
-      console.log('📦 Received order update:', updatedOrder);
-      if (updatedOrder?._id === orderId) {
+    const handleRewardUpdate = (updatedOrder) => {
+      if (updatedOrder._id === orderId) {
+        console.log("📦 Reward order updated:", updatedOrder.status);
         setOrder(updatedOrder);
-        if (updatedOrder.status) {
-          showStatusNotification(updatedOrder.status);
-        }
       }
     };
 
-    // Listen to all possible socket events
-    socket.on('order:updated', handleOrderUpdate);
-    socket.on('order:status-changed', handleOrderUpdate);
-    socket.on('order:your-status-changed', handleOrderUpdate);
-    socket.on('order:ready-notification', handleOrderUpdate);
+    socket.on("reward:order-updated", handleRewardUpdate);
 
     return () => {
-      socket.off('order:updated', handleOrderUpdate);
-      socket.off('order:status-changed', handleOrderUpdate);
-      socket.off('order:your-status-changed', handleOrderUpdate);
-      socket.off('order:ready-notification', handleOrderUpdate);
+      socket.off("reward:order-updated", handleRewardUpdate);
     };
-  }, [orderId, user?._id, order?.status]);
+  }, [orderId]);
 
   // Countdown timer
   useEffect(() => {
@@ -114,7 +86,7 @@ export default function RewardOrderTrackingPage() {
       const formData = new FormData();
       formData.append("rating", String(reviewRating));
       formData.append("comment", reviewText || "");
-      
+
       await dispatch(createReview(formData)).unwrap();
 
       toast.showToast({ message: "Thank you for your review!", type: "success" });
@@ -129,28 +101,17 @@ export default function RewardOrderTrackingPage() {
 
   // Get reward title
   const rewardTitle = order?.rewardId?.title || order?.rewardId?.productId?.name || 'Reward Item';
-  
+
   // Normalize status to match your progression: Confirmed -> Preparing -> Ready
-  const normalizedStatus = order?.status
-    ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
-    : 'Confirmed';
+  const normalizedStatus = order?.status?.toLowerCase();
 
   console.log('Current order status:', order?.status, 'Normalized:', normalizedStatus);
 
   // Determine status display - 3 step progression: Confirmed -> Preparing -> Ready
   const statusSteps = [
-    { 
-      label: 'Confirmed', 
-      completed: ['Confirmed', 'Preparing', 'Ready'].includes(normalizedStatus) 
-    },
-    { 
-      label: 'Preparing', 
-      completed: ['Preparing', 'Ready'].includes(normalizedStatus) 
-    },
-    { 
-      label: 'Ready', 
-      completed: normalizedStatus === 'Ready' 
-    }
+    { label: 'Confirmed', completed: ['confirmed', 'preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Preparing', completed: ['preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Ready', completed: normalizedStatus === 'ready' }
   ];
 
   return (
@@ -207,21 +168,18 @@ export default function RewardOrderTrackingPage() {
                   {statusSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="flex flex-col items-center flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${
-                          step.completed ? 'bg-secondary text-white scale-110' : 'bg-gray-300 text-gray-600'
-                        }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${step.completed ? 'bg-secondary text-white scale-110' : 'bg-gray-300 text-gray-600'
+                          }`}>
                           <FaCheckCircle className="w-5 h-5" />
                         </div>
-                        <p className={`text-sm font-medium transition-colors text-center ${
-                          step.completed ? 'text-secondary' : 'text-gray-600 dark:text-gray-400'
-                        }`}>
+                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-secondary' : 'text-gray-600 dark:text-gray-400'
+                          }`}>
                           {step.label}
                         </p>
                       </div>
                       {idx < statusSteps.length - 1 && (
-                        <div className={`flex-1 h-1 transition-all duration-500 mb-6 ${
-                          step.completed ? 'bg-secondary' : 'bg-gray-300'
-                        }`} />
+                        <div className={`flex-1 h-1 transition-all duration-500 mb-6 ${step.completed ? 'bg-secondary' : 'bg-gray-300'
+                          }`} />
                       )}
                     </React.Fragment>
                   ))}
@@ -273,9 +231,8 @@ export default function RewardOrderTrackingPage() {
                       <button
                         key={star}
                         onClick={() => setReviewRating(star)}
-                        className={`text-3xl transition-transform hover:scale-110 ${
-                          star <= reviewRating ? "text-yellow-400" : "text-gray-300"
-                        }`}
+                        className={`text-3xl transition-transform hover:scale-110 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+                          }`}
                       >
                         ★
                       </button>
@@ -344,11 +301,10 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
                   <span>Status</span>
-                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                    normalizedStatus === 'Ready' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                    normalizedStatus === 'Preparing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  }`}>
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${normalizedStatus === 'ready' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                    normalizedStatus === 'preparing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    }`}>
                     {normalizedStatus}
                   </span>
                 </div>
