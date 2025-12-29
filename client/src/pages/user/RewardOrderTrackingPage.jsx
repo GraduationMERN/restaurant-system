@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
-import { io } from 'socket.io-client';
-import { showStatusNotification } from '../../utils/notifications';
 import { Phone, Star } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createReview } from "../../redux/slices/reviewSlice";
+import socketClient from "../../utils/socket";
+import { useRef } from "react";
 
 export default function RewardOrderTrackingPage() {
   const dispatch = useDispatch();
@@ -16,85 +16,37 @@ export default function RewardOrderTrackingPage() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(state?.order || null);
   const [timeRemaining, setTimeRemaining] = useState(329); // 5:49 in seconds
-  const [socket, setSocket] = useState(null);
   const orderId = order?._id || id;
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const toast = useToast();
+  const socketRef = useRef(null);
 
-  // Initialize Socket.IO connection
+  if (!socketRef.current) {
+    socketRef.current =
+      socketClient.getSocket() || socketClient.initSocket();
+  }
+  const socket = socketRef.current;
+
   useEffect(() => {
-    if (!orderId || !user?._id) return;
+    if (!socket || !orderId) return;
 
-    const apiUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    socket.emit("join_reward_order", { orderId });
 
-    const newSocket = io(apiUrl, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 10,
-    });
-
-    newSocket.on('connect', () => {
-      console.log('🔌 Socket connected:', newSocket.id);
-      // Register user
-      newSocket.emit('register', user._id);
-      console.log('✅ Registered user:', user._id);
-    });
-
-    // Single unified listener for order updates
-    newSocket.on('order:updated', (updatedOrder) => {
-      console.log('📦 Received order:updated', updatedOrder);
-      if (updatedOrder?._id === orderId) {
+    const handleRewardUpdate = (updatedOrder) => {
+      if (updatedOrder._id === orderId) {
+        console.log("📦 Reward order updated:", updatedOrder.status);
         setOrder(updatedOrder);
-        if (updatedOrder.status) {
-          showStatusNotification(updatedOrder.status);
-        }
       }
-    });
+    };
 
-    // Status change listener
-    newSocket.on('order:status-changed', (updatedOrder) => {
-      console.log('🔄 Received order:status-changed', updatedOrder);
-      if (updatedOrder?._id === orderId) {
-        setOrder(updatedOrder);
-        showStatusNotification(updatedOrder.status);
-      }
-    });
-
-    // Personal status change
-    newSocket.on('order:your-status-changed', (updatedOrder) => {
-      console.log('👤 Received order:your-status-changed', updatedOrder);
-      if (updatedOrder?._id === orderId) {
-        setOrder(updatedOrder);
-        showStatusNotification(updatedOrder.status);
-      }
-    });
-
-    // Ready notification
-    newSocket.on('order:ready-notification', (updatedOrder) => {
-      console.log('✅ Received order:ready-notification', updatedOrder);
-      if (updatedOrder?._id === orderId) {
-        setOrder(updatedOrder);
-        showStatusNotification('Ready');
-      }
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('🔴 Socket connection error:', error);
-    });
-
-    setSocket(newSocket);
+    socket.on("reward:order-updated", handleRewardUpdate);
 
     return () => {
-      console.log('🔌 Cleaning up socket connection');
-      newSocket.disconnect();
+      socket.off("reward:order-updated", handleRewardUpdate);
     };
-  }, [orderId, user?._id]);
+  }, [orderId]);
 
   // Countdown timer
   useEffect(() => {
@@ -134,7 +86,7 @@ export default function RewardOrderTrackingPage() {
       const formData = new FormData();
       formData.append("rating", String(reviewRating));
       formData.append("comment", reviewText || "");
-      
+
       await dispatch(createReview(formData)).unwrap();
 
       toast.showToast({ message: "Thank you for your review!", type: "success" });
@@ -149,15 +101,17 @@ export default function RewardOrderTrackingPage() {
 
   // Get reward title
   const rewardTitle = order?.rewardId?.title || order?.rewardId?.productId?.name || 'Reward Item';
-  const normalizedStatus = order?.status
-    ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
-    : 'Preparing';
 
-  // Determine status display - 3 step progression
+  // Normalize status to match your progression: Confirmed -> Preparing -> Ready
+  const normalizedStatus = order?.status?.toLowerCase();
+
+  console.log('Current order status:', order?.status, 'Normalized:', normalizedStatus);
+
+  // Determine status display - 3 step progression: Confirmed -> Preparing -> Ready
   const statusSteps = [
-    { label: 'Preparing', completed: ['Preparing', 'Confirmed', 'Ready'].includes(normalizedStatus) },
-    { label: 'Confirmed', completed: ['Confirmed', 'Ready'].includes(normalizedStatus) },
-    { label: 'Ready', completed: normalizedStatus === 'Ready' }
+    { label: 'Confirmed', completed: ['confirmed', 'preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Preparing', completed: ['preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Ready', completed: normalizedStatus === 'ready' }
   ];
 
   return (
@@ -208,27 +162,24 @@ export default function RewardOrderTrackingPage() {
                 <p className="text-gray-400 text-sm mt-1">{order?.address || 'Main Branch'}</p>
               </div>
 
-              {/* Progress Timeline */}
+              {/* Progress Timeline - Now reactive to socket updates */}
               <div className="mb-8">
                 <div className="flex items-center justify-between gap-2 mb-8">
                   {statusSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="flex flex-col items-center flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${
-                          step.completed ? 'bg-secondary text-white' : 'bg-gray-300 text-gray-600'
-                        }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${step.completed ? 'bg-secondary text-white scale-110' : 'bg-gray-300 text-gray-600'
+                          }`}>
                           <FaCheckCircle className="w-5 h-5" />
                         </div>
-                        <p className={`text-sm font-medium transition-colors text-center ${
-                          step.completed ? 'text-secondary' : 'text-gray-600'
-                        }`}>
+                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-secondary' : 'text-gray-600 dark:text-gray-400'
+                          }`}>
                           {step.label}
                         </p>
                       </div>
                       {idx < statusSteps.length - 1 && (
-                        <div className={`flex-1 h-1 transition-colors mb-6 ${
-                          step.completed ? 'bg-secondary' : 'bg-gray-300'
-                        }`} />
+                        <div className={`flex-1 h-1 transition-all duration-500 mb-6 ${step.completed ? 'bg-secondary' : 'bg-gray-300'
+                          }`} />
                       )}
                     </React.Fragment>
                   ))}
@@ -237,12 +188,12 @@ export default function RewardOrderTrackingPage() {
 
               {/* Estimated Time */}
               <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-2 text-gray-700 mb-2">
+                <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 mb-2">
                   <FaClock className="w-5 h-5" />
                   <span className="font-semibold text-2xl text-secondary">{formatTime(timeRemaining)}</span>
-                  <span className="text-gray-600">Estimated ready time</span>
+                  <span className="text-gray-600 dark:text-gray-400">Estimated ready time</span>
                 </div>
-                <p className="text-sm text-gray-600">We will let you know when your reward is ready.</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">We will let you know when your reward is ready.</p>
               </div>
 
               {/* Action Buttons */}
@@ -280,9 +231,8 @@ export default function RewardOrderTrackingPage() {
                       <button
                         key={star}
                         onClick={() => setReviewRating(star)}
-                        className={`text-3xl transition-transform hover:scale-110 ${
-                          star <= reviewRating ? "text-yellow-400" : "text-gray-300"
-                        }`}
+                        className={`text-3xl transition-transform hover:scale-110 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+                          }`}
                       >
                         ★
                       </button>
@@ -331,9 +281,9 @@ export default function RewardOrderTrackingPage() {
               <div className="border-b border-gray-500 pb-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-gray-700 font-semibold">{rewardTitle}</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-semibold">{rewardTitle}</p>
                     {order?.rewardId?.productId?.basePrice && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         Regular price: EGP {order.rewardId.productId.basePrice}
                       </p>
                     )}
@@ -351,11 +301,10 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
                   <span>Status</span>
-                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                    order.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                    order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${normalizedStatus === 'ready' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                    normalizedStatus === 'preparing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    }`}>
                     {normalizedStatus}
                   </span>
                 </div>
@@ -368,9 +317,9 @@ export default function RewardOrderTrackingPage() {
                 )}
 
                 {order.notes && (
-                  <div className="flex justify-between items-start text-gray-600 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-start text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <span>Notes</span>
-                    <p className="text-gray-900 font-semibold text-right max-w-xs">{order.notes}</p>
+                    <p className="text-gray-900 dark:text-white font-semibold text-right max-w-xs">{order.notes}</p>
                   </div>
                 )}
 
@@ -384,7 +333,7 @@ export default function RewardOrderTrackingPage() {
               <div className="flex gap-3 mt-8 flex-col md:flex-row">
                 <button
                   onClick={() => navigate('/orders')}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   My Orders
                 </button>
