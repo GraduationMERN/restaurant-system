@@ -904,7 +904,14 @@ export default function StaffChat() {
                           >
                             <div className="staff-chat-avatar">
                               {other?.userId?.avatarUrl ? (
-                                <img src={other.userId.avatarUrl} alt="" />
+                                <img
+                                  src={other.userId.avatarUrl}
+                                  alt=""
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = '/images/bot-logo.png';
+                                  }}
+                                />
                               ) : (
                                 <span>{getInitials(other?.userId?.name)}</span>
                               )}
@@ -950,7 +957,14 @@ export default function StaffChat() {
                       >
                         <div className="staff-chat-avatar">
                           {staff.avatarUrl ? (
-                            <img src={staff.avatarUrl} alt="" />
+                            <img
+                              src={staff.avatarUrl}
+                              alt=""
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/images/bot-logo.png';
+                              }}
+                            />
                           ) : (
                             <span>{getInitials(staff.name)}</span>
                           )}

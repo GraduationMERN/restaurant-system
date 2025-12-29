@@ -1,4 +1,3 @@
-// context/SettingContext.js (updated)
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import api from "../api/axios";
@@ -10,7 +9,7 @@ export function SettingsProvider({ children }) {
     const isArabic = i18n.language === "ar";
     
     const [settings, setSettings] = useState({
-        // Basic Info
+        branding: { primaryColor: "", secondaryColor: "", logoUrl: "" },
         restaurantName: "",
         restaurantNameAr: "",
         description: "",
@@ -18,150 +17,111 @@ export function SettingsProvider({ children }) {
         phone: "",
         address: "",
         addressAr: "",
-        
-        // White-label Categories
-        systemSettings: {
-            general: { currency: "USD", timezone: "America/New_York", language: "en", dateFormat: "MM/DD/YYYY", timeFormat: "12h" },
-            location: { latitude: 0, longitude: 0, deliveryRadius: 5 },
-            conditionalFees: { enabled: false, rules: [] },
-            policies: { requireTerms: true, requirePrivacy: true },
-            functionality: { customerAccounts: true, ageVerification: false, tipping: true, webhooks: false },
-            receiptPrinting: { enabled: true, header: "Thank You!", footer: "Visit Again!" },
-            emailNotifications: { enabled: true, orderConfirmation: true, orderReady: true },
-            audioNotifications: { enabled: true, sound: "default" },
-            ordering: { prepTime: 20, minOrderAmount: 0, advanceOrdering: true },
-            misc: { autoLogout: 30, maintenanceMode: false },
-        },
-        
-        services: {
-            pickups: { enabled: true, prepTime: 15 },
-            deliveries: { enabled: true, fee: 0, minOrder: 0 },
-            dineIns: { enabled: true, tableManagement: false },
-            tableBookings: { enabled: false, advanceBooking: true },
-        },
-        
-        paymentMethods: [
-            { name: "Cash", type: "cash", enabled: true, processingFee: 0 },
-            { name: "Credit/Debit Card", type: "card", enabled: true, processingFee: 0 },
-        ],
-        
-        websiteDesign: {
-            colors: { primary: "#2563eb", secondary: "#e27e36", background: "#ffffff", text: "#333333" },
-            fonts: { primary: "Inter, sans-serif", secondary: "Roboto, sans-serif" },
-            layout: { headerType: "standard", menuStyle: "grid", footerEnabled: true },
-            domain: { customDomain: "", subdomain: "" },
-            seo: { title: "", description: "", keywords: "" },
-            customCode: { css: "", javascript: "" },
-            socialMedia: { facebook: "", instagram: "", twitter: "" },
-        },
-        
-        integrations: {
-            facebookPixel: { enabled: false, pixelId: "" },
-            googleAnalytics: { enabled: false, trackingId: "" },
-        },
-        
-        branding: { 
-            primaryColor: "#2563eb", 
-            secondaryColor: "#e27e36", 
-            logoUrl: "", 
-            menuImage: "", 
-            faviconUrl: "" 
-        },
-        
         notifications: { newOrder: true, review: true, dailySales: true, lowStock: false },
         about: { title: "", titleAr: "", content: "", contentAr: "" },
         support: { email: "", phone: "" },
         faqs: [],
         policies: { terms: "", termsAr: "", privacy: "", privacyAr: "" },
-        
-        // System fields
-        isActive: true,
-        status: "pending",
-        subscriptionPlan: "free",
     });
     
-    // Apply branding CSS variables
     useEffect(() => {
+      // Apply whenever settings.branding changes
       if (settings.branding) {
-        document.documentElement.style.setProperty("--color-primary", settings.branding.primaryColor || "#2563eb");
-        document.documentElement.style.setProperty("--color-secondary", settings.branding.secondaryColor || "#e27e36");
-        
-        // Apply website design colors too
-        if (settings.websiteDesign?.colors) {
-          document.documentElement.style.setProperty("--website-primary", settings.websiteDesign.colors.primary);
-          document.documentElement.style.setProperty("--website-secondary", settings.websiteDesign.colors.secondary);
-          document.documentElement.style.setProperty("--website-background", settings.websiteDesign.colors.background);
-          document.documentElement.style.setProperty("--website-text", settings.websiteDesign.colors.text);
-        }
+        document.documentElement.style.setProperty("--color-primary", settings.branding.primaryColor || "#FF5733");
+        document.documentElement.style.setProperty("--color-secondary", settings.branding.secondaryColor || "#33C3FF");
       }
-    }, [settings.branding, settings.websiteDesign?.colors]);
+    }, [settings.branding]);
     
-    // Fetch settings from backend
+    // Fetch settings from backend on mount
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     useEffect(() => {
         async function fetchSettings() {
+            setLoading(true);
             try {
                 const res = await api.get("/api/restaurant");
-                const data = res.data.data || res.data;
-                setSettings(prev => ({
-                    ...prev,
-                    ...data,
-                    // Ensure nested objects exist
-                    systemSettings: { ...prev.systemSettings, ...(data.systemSettings || {}) },
-                    services: { ...prev.services, ...(data.services || {}) },
-                    websiteDesign: { ...prev.websiteDesign, ...(data.websiteDesign || {}) },
-                    integrations: { ...prev.integrations, ...(data.integrations || {}) },
-                    paymentMethods: data.paymentMethods || prev.paymentMethods,
-                }));
+                // API returns { success, data }
+                const payload = res.data?.data ?? res.data;
+                // Normalize branding location: backend may store branding at root or under systemSettings.branding
+                const normalized = {
+                    ...(payload || {}),
+                    branding: (payload && (payload.branding || payload.systemSettings?.branding)) || undefined,
+                };
+                setSettings(normalized);
             } catch (err) {
                 console.error("Failed to load restaurant settings", err);
+                setError(err?.response?.data?.message || err.message || "Failed to load settings");
+            } finally {
+                setLoading(false);
             }
         }
         fetchSettings();
     }, []);
 
-    // Update specific setting
-    const updateSetting = (path, value) => {
-        setSettings(prev => {
-            const newSettings = { ...prev };
-            const keys = path.split('.');
-            let current = newSettings;
-            
-            for (let i = 0; i < keys.length - 1; i++) {
-                if (!current[keys[i]]) current[keys[i]] = {};
-                current = current[keys[i]];
-            }
-            
-            current[keys[keys.length - 1]] = value;
-            return newSettings;
-        });
-    };
-
-    // Update multiple settings at once
+    // Update local state only
     const updateSettings = (newSettings) => {
         setSettings(prev => ({ ...prev, ...newSettings }));
     };
 
-    // Save settings to backend
-    const saveSettings = async (settingsToSave = null) => {
+    // Persist a specific system category to backend and update local state
+    const saveSystemCategory = async (category, categoryPayload) => {
+        setLoading(true);
+        setError(null);
         try {
-            const dataToSave = settingsToSave || settings;
-            await api.put("/api/restaurant", dataToSave);
-            return true;
+            const body = categoryPayload;
+            const res = await api.put(`/api/restaurant/system-settings/${category}`, body);
+            const returned = res.data?.data ?? null; // controller returns updated category data
+
+            // Merge returned category into local settings.systemSettings
+            setSettings((prev) => {
+                const newSystem = {
+                    ...(prev.systemSettings || {}),
+                    [category]: returned ?? (categoryPayload[category] ?? categoryPayload),
+                };
+                const newRoot = {
+                    ...prev,
+                    systemSettings: newSystem,
+                };
+                // If category is branding, also mirror to top-level `branding` for compatibility
+                if (category === 'branding') {
+                    newRoot.branding = returned ?? (categoryPayload[category] ?? categoryPayload);
+                }
+                return newRoot;
+            });
+
+            return returned;
         } catch (err) {
-            console.error("Failed to save settings", err);
-            return false;
+            console.error(`Failed to save system category ${category}:`, err);
+            setError(err?.response?.data?.message || err.message || "Failed to save settings");
+            return null;
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Update specific category
-    const updateCategory = async (category, data) => {
+    // Persist full system settings
+    const saveSystemSettings = async (systemSettingsPayload) => {
+        setLoading(true);
+        setError(null);
         try {
-            await api.put(`/api/restaurant/${category}`, data);
-            updateSettings({ [category]: data });
-            return true;
+            const res = await api.put('/api/restaurant/system-settings', { systemSettings: systemSettingsPayload });
+            const returned = res.data?.data ?? null; // updated.systemSettings
+            if (returned) {
+                setSettings((prev) => ({
+                    ...prev,
+                    systemSettings: returned,
+                    // Mirror branding if present
+                    branding: returned.branding ?? prev.branding,
+                }));
+            }
+            return returned;
         } catch (err) {
-            console.error(`Failed to update ${category}`, err);
-            return false;
+            console.error('Failed to save system settings:', err);
+            setError(err?.response?.data?.message || err.message || 'Failed to save settings');
+            return null;
+        } finally {
+            setLoading(false);
         }
     };
     
@@ -192,13 +152,14 @@ export function SettingsProvider({ children }) {
     }, [settings, isArabic]);
 
     return (
-        <settingsContext.Provider value={{ 
-            settings: localizedSettings, 
-            rawSettings: settings, 
+        <settingsContext.Provider value={{
+            settings: localizedSettings,
+            rawSettings: settings,
             updateSettings,
-            updateSetting,
-            saveSettings,
-            updateCategory
+            saveSystemCategory,
+            saveSystemSettings,
+            loading,
+            error,
         }}>
             {children}
         </settingsContext.Provider>

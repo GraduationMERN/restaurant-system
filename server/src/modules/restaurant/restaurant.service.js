@@ -84,17 +84,20 @@ class RestaurantService {
       throw new Error("Restaurant not found");
     }
 
-    // Validate category exists
-    if (!restaurant.systemSettings[category]) {
-      throw new Error(`Invalid system category: ${category}`);
-    }
+    // Ensure systemSettings object exists
+    const currentSystem = restaurant.systemSettings || {};
+
+    // Support payloads that may be nested (e.g. { branding: { ... } })
+    const payloadForCategory = categoryData && Object.prototype.hasOwnProperty.call(categoryData, category)
+      ? categoryData[category]
+      : categoryData;
 
     const updateData = {
       systemSettings: {
-        ...restaurant.systemSettings,
+        ...currentSystem,
         [category]: {
-          ...restaurant.systemSettings[category],
-          ...categoryData,
+          ...currentSystem[category],
+          ...payloadForCategory,
         },
       },
     };

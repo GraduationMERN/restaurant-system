@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsAPI } from '../hooks/useSettingsAPI';
+import { useSettings } from '../../../context/SettingContext';
 import { Save, AlertCircle, Upload, X } from 'lucide-react';
 
 export default function BrandingSettings() {
@@ -25,6 +26,7 @@ export default function BrandingSettings() {
   const [hasChanges, setHasChanges] = useState(false);
 
   const { updateSystemCategory, uploadLogo } = useSettingsAPI();
+  const { saveSystemCategory } = useSettings();
 
   useEffect(() => {
     loadBranding();
@@ -98,7 +100,7 @@ export default function BrandingSettings() {
 
   const handleSave = async () => {
     setSaving(true);
-    const success = await updateSystemCategory('branding', {
+    const payload = {
       branding: {
         logoUrl: branding.logoUrl,
         faviconUrl: branding.faviconUrl,
@@ -112,8 +114,15 @@ export default function BrandingSettings() {
         description: branding.description,
         descriptionAr: branding.descriptionAr,
       },
-    });
-    if (success) {
+    };
+
+    const result = await saveSystemCategory('branding', payload);
+    if (result) {
+      // If backend returned the saved branding object, merge into local state
+      const newBranding = result?.branding ?? result ?? null;
+      if (newBranding) {
+        setBranding((prev) => ({ ...prev, ...newBranding }));
+      }
       setHasChanges(false);
     }
     setSaving(false);

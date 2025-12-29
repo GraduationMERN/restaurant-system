@@ -120,6 +120,15 @@ export const firebaseLoginController = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
+    // Debug: log cookie setting confirmation (avoid printing full tokens)
+    try {
+      console.debug('Set accessToken cookie length:', accessToken?.length);
+      console.debug('Set refreshToken cookie length:', refreshToken?.length);
+      console.debug('Cookie options used:', cookieOptions);
+    } catch (e) {
+      // ignore
+    }
+
     // Return user and access token
     res.json({
       user: {
@@ -219,6 +228,10 @@ export const refreshTokenController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
 
+    // Debugging: log incoming cookies/headers when troubleshooting 401
+    console.debug('Refresh token request cookies:', req.cookies);
+    console.debug('Refresh token request headers Authorization:', req.headers.authorization);
+
     if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token provided" });
     }
@@ -249,8 +262,15 @@ export const refreshTokenController = async (req, res) => {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    // Set new refresh token in cookie
-    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+    // Set new cookies: access (short) and refresh (long)
+    res.cookie('accessToken', newAccessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
     res.json({
       accessToken: newAccessToken,
