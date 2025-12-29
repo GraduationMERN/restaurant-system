@@ -22,20 +22,21 @@ export function SettingsProvider({ children }) {
         support: { email: "", phone: "" },
         faqs: [],
         policies: { terms: "", termsAr: "", privacy: "", privacyAr: "" },
+        systemSettings: {},
     });
     
-    useEffect(() => {
-      // Apply whenever settings.branding changes
-      if (settings.branding) {
-        document.documentElement.style.setProperty("--color-primary", settings.branding.primaryColor || "#FF5733");
-        document.documentElement.style.setProperty("--color-secondary", settings.branding.secondaryColor || "#33C3FF");
-      }
-    }, [settings.branding]);
-    
-    // Fetch settings from backend on mount
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Apply CSS variables whenever branding changes
+    useEffect(() => {
+        if (settings.branding) {
+            document.documentElement.style.setProperty("--color-primary", settings.branding.primaryColor || "#FF5733");
+            document.documentElement.style.setProperty("--color-secondary", settings.branding.secondaryColor || "#33C3FF");
+        }
+    }, [settings.branding]);
+
+    // Fetch settings from backend on mount
     useEffect(() => {
         async function fetchSettings() {
             setLoading(true);
@@ -46,7 +47,8 @@ export function SettingsProvider({ children }) {
                 // Normalize branding location: backend may store branding at root or under systemSettings.branding
                 const normalized = {
                     ...(payload || {}),
-                    branding: (payload && (payload.branding || payload.systemSettings?.branding)) || undefined,
+                    branding: (payload && (payload.branding || payload.systemSettings?.branding)) || { primaryColor: "", secondaryColor: "", logoUrl: "" },
+                    systemSettings: payload?.systemSettings || {},
                 };
                 setSettings(normalized);
             } catch (err) {
@@ -59,9 +61,35 @@ export function SettingsProvider({ children }) {
         fetchSettings();
     }, []);
 
-    // Update local state only
+    // Update local state only (for form drafts)
     const updateSettings = (newSettings) => {
         setSettings(prev => ({ ...prev, ...newSettings }));
+    };
+
+    // Save general restaurant settings to backend (root level fields)
+    const saveGeneralSettings = async (generalSettings) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.put('/api/restaurant', generalSettings);
+            const returned = res.data?.data ?? res.data;
+            
+            // Update local state with saved data
+            setSettings(prev => ({
+                ...prev,
+                ...returned,
+                branding: returned.branding || prev.branding,
+                systemSettings: returned.systemSettings || prev.systemSettings,
+            }));
+            
+            return returned;
+        } catch (err) {
+            console.error('Failed to save general settings:', err);
+            setError(err?.response?.data?.message || err.message || 'Failed to save settings');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Persist a specific system category to backend and update local state
@@ -71,7 +99,7 @@ export function SettingsProvider({ children }) {
         try {
             const body = categoryPayload;
             const res = await api.put(`/api/restaurant/system-settings/${category}`, body);
-            const returned = res.data?.data ?? null; // controller returns updated category data
+            const returned = res.data?.data ?? null;
 
             // Merge returned category into local settings.systemSettings
             setSettings((prev) => {
@@ -94,7 +122,7 @@ export function SettingsProvider({ children }) {
         } catch (err) {
             console.error(`Failed to save system category ${category}:`, err);
             setError(err?.response?.data?.message || err.message || "Failed to save settings");
-            return null;
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -106,12 +134,11 @@ export function SettingsProvider({ children }) {
         setError(null);
         try {
             const res = await api.put('/api/restaurant/system-settings', { systemSettings: systemSettingsPayload });
-            const returned = res.data?.data ?? null; // updated.systemSettings
+            const returned = res.data?.data ?? null;
             if (returned) {
                 setSettings((prev) => ({
                     ...prev,
                     systemSettings: returned,
-                    // Mirror branding if present
                     branding: returned.branding ?? prev.branding,
                 }));
             }
@@ -119,7 +146,7 @@ export function SettingsProvider({ children }) {
         } catch (err) {
             console.error('Failed to save system settings:', err);
             setError(err?.response?.data?.message || err.message || 'Failed to save settings');
-            return null;
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -129,7 +156,6 @@ export function SettingsProvider({ children }) {
     const localizedSettings = useMemo(() => {
         return {
             ...settings,
-            // Use Arabic values if available and language is Arabic
             restaurantName: isArabic && settings.restaurantNameAr ? settings.restaurantNameAr : settings.restaurantName,
             description: isArabic && settings.descriptionAr ? settings.descriptionAr : settings.description,
             address: isArabic && settings.addressAr ? settings.addressAr : settings.address,
@@ -156,6 +182,7 @@ export function SettingsProvider({ children }) {
             settings: localizedSettings,
             rawSettings: settings,
             updateSettings,
+            saveGeneralSettings,
             saveSystemCategory,
             saveSystemSettings,
             loading,
@@ -166,4 +193,10 @@ export function SettingsProvider({ children }) {
     );
 }
 
-export const useSettings = () => useContext(settingsContext);
+export const useSettings = () => {
+    const context = useContext(settingsContext);
+    if (!context) {
+        throw new Error('useSettings must be used within a SettingsProvider');
+    }
+    return context;
+};

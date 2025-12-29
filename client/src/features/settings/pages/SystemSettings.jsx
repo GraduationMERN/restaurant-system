@@ -1,31 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettingsAPI } from '../hooks/useSettingsAPI';
+import { useSettings } from '../../../context/SettingContext';
 import { ChevronDown, Save, AlertCircle } from 'lucide-react';
 
 export default function SystemSettings() {
   const { i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [settings, setSettings] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { getSystemSettings, updateSystemCategory } = useSettingsAPI();
+  const { rawSettings, saveSystemCategory, loading: contextLoading } = useSettings();
 
   useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    setLoading(true);
-    const data = await getSystemSettings();
-    if (data) {
-      setSettings(data);
+    if (rawSettings?.systemSettings) {
+      setSettings(rawSettings.systemSettings);
     }
-    setLoading(false);
-  };
+  }, [rawSettings]);
 
   const handleInputChange = (category, field, value) => {
     setSettings((prev) => ({
@@ -51,11 +43,16 @@ export default function SystemSettings() {
 
   const handleSave = async (category) => {
     setSaving(true);
-    const success = await updateSystemCategory(category, settings[category] || {});
-    if (success) {
+    try {
+      await saveSystemCategory(category, settings[category] || {});
       setHasChanges(false);
+      alert(isRTL ? 'تم حفظ الإعدادات بنجاح!' : 'Settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert(isRTL ? 'حدث خطأ أثناء الحفظ' : 'Error saving settings');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const categories = [
@@ -137,7 +134,7 @@ export default function SystemSettings() {
     },
   ];
 
-  if (loading) {
+  if (contextLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

@@ -16,6 +16,10 @@ export const firebaseLogin = createAsyncThunk(
           },
         }
       );
+      // Store refresh token from server (fallback for dev where cookies may not be sent)
+      if (typeof window !== "undefined" && res?.data?.refreshToken) {
+        window.localStorage.setItem("refreshToken", res.data.refreshToken);
+      }
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -56,7 +60,10 @@ export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.post("/api/auth/refresh");
+      // Try cookie-based refresh first; if not available, fall back to stored refresh token
+      const stored = typeof window !== "undefined" ? window.localStorage.getItem("refreshToken") : null;
+      const headers = stored ? { Authorization: `Bearer ${stored}` } : undefined;
+      const res = await api.post("/api/auth/refresh", {}, { headers });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -139,6 +146,16 @@ const authSlice = createSlice({
         if (typeof window !== "undefined") {
           window.localStorage.setItem("hasSession", "true");
         }
+        // Set axios Authorization header for immediate authenticated requests
+        try {
+          const access = action.payload?.accessToken;
+          if (access) {
+            api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+            if (typeof window !== "undefined") window.localStorage.setItem("accessToken", access);
+          }
+        } catch (e) {
+          // ignore
+        }
       })
       .addCase(firebaseLogin.rejected, (state, action) => {
         state.loadingLogin = false;
@@ -201,6 +218,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         if (typeof window !== "undefined") {
           window.localStorage.removeItem("hasSession");
+          window.localStorage.removeItem("refreshToken");
+          window.localStorage.removeItem("accessToken");
         }
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -217,6 +236,15 @@ const authSlice = createSlice({
         state.loadingRefresh = false;
         state.user = action.payload.user;
         state.isAuthenticated = true;
+        try {
+          const access = action.payload?.accessToken;
+          if (access) {
+            api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+            if (typeof window !== "undefined") window.localStorage.setItem("accessToken", access);
+          }
+        } catch (e) {
+          // ignore
+        }
       })
       .addCase(refreshToken.rejected, (state, action) => {
         state.loadingRefresh = false;

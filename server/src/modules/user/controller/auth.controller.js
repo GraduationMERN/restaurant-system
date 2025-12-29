@@ -142,6 +142,7 @@ export const firebaseLoginController = async (req, res) => {
         isVerified: user.isVerified,
       },
       accessToken,
+      refreshToken,
     });
   } catch (err) {
     console.error("Firebase login error:", err);
@@ -226,7 +227,7 @@ export const getMeController = async (req, res) => {
 
 export const refreshTokenController = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken || req.headers.authorization?.split(" ")[1];
 
     // Debugging: log incoming cookies/headers when troubleshooting 401
     console.debug('Refresh token request cookies:', req.cookies);
