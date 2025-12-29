@@ -78,25 +78,24 @@ class SettingsService {
   }
 
   async updatePaymentMethod(methodId, updates) {
-    // Since paymentMethods don't have _id, we need to find by index
-    // In real implementation, methodId would be the index or we'd need a different approach
-    // For now, let's assume methodId is the index
-    const index = parseInt(methodId);
-    if (isNaN(index)) {
-      throw new Error("Invalid payment method ID");
+    // Support both numeric index IDs (legacy) and Mongo _id strings
+    const maybeIndex = parseInt(methodId);
+    if (!isNaN(maybeIndex)) {
+      return await restaurantRepository.updateInArrayByIndex("paymentMethods", maybeIndex, updates);
     }
 
-    return await restaurantRepository.updateInArrayByIndex("paymentMethods", index, updates);
+    // Treat as _id
+    return await restaurantRepository.updateInArrayById("paymentMethods", methodId, updates);
   }
 
   async removePaymentMethod(methodId) {
-    // methodId is the index since no _id
-    const index = parseInt(methodId);
-    if (isNaN(index)) {
-      throw new Error("Invalid payment method ID");
+    const maybeIndex = parseInt(methodId);
+    if (!isNaN(maybeIndex)) {
+      return await restaurantRepository.removeFromArrayByIndex("paymentMethods", maybeIndex);
     }
 
-    return await restaurantRepository.removeFromArrayByIndex("paymentMethods", index);
+    // Treat as _id
+    return await restaurantRepository.removeFromArrayById("paymentMethods", methodId);
   }
 
   async togglePaymentMethod(methodId, enabled) {

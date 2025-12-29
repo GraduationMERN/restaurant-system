@@ -27,7 +27,7 @@ export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("api/auth/me");
+      const res = await api.get("/api/auth/me");
       return res.data;
     } catch (err) {
       if (err.response?.status === 401) return rejectWithValue("Unauthorized");
@@ -41,7 +41,7 @@ export const completeProfile = createAsyncThunk(
   "auth/complete-profile",
   async ({phoneNumber,name}, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/complete-profile", { phoneNumber,name });
+      const res = await api.post("/api/auth/complete-profile", { phoneNumber,name });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -56,7 +56,7 @@ export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/refresh");
+      const res = await api.post("/api/auth/refresh");
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -70,7 +70,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      await api.post("api/auth/logout");
+      await api.post("/api/auth/logout");
       return true;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);

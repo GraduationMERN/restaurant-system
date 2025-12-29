@@ -22,16 +22,6 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import Offers from "./pages/admin/Offers";
 import Settings from "./pages/admin/Settings";
-
-// import SettingsLayout from "./features/settings/components/SettingsLayout";
-// import GeneralSettings from "./features/settings/pages/GeneralSettings";
-// import BrandingSettings from "./features/settings/pages/BrandingSettings";
-// import WebsiteSettings from "./features/settings/pages/WebsiteSettings";
-// import ServicesSettings from "./features/settings/pages/ServicesSettings";
-// import NotificationsSettings from "./features/settings/pages/NotificationsSettings";
-// import PaymentsSettings from "./features/settings/pages/PaymentsSettings";
-// import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
-// import AdvancedSettings from "./features/settings/pages/AdvancedSettings";
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
@@ -44,7 +34,17 @@ import { requestNotificationPermission } from "./utils/notifications";
 import Support from "./pages/Support";
 import ProfilePage from "./pages/ProfilePage";
 
-function App() {
+// Settings Components
+import SettingsLayout from "./features/settings/components/SettingsLayout";
+import SystemSettings from "./features/settings/pages/SystemSettings";
+import ServiceSettings from "./features/settings/pages/ServiceSettings";
+import PaymentMethodsSettings from "./features/settings/pages/PaymentMethodsSettings";
+import WebsiteDesignSettings from "./features/settings/pages/WebsiteDesignSettings";
+import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
+import BrandingSettings from "./features/settings/pages/BrandingSettings";
+import ContentSettings from "./features/settings/pages/ContentSettings";
+
+ function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
@@ -160,28 +160,24 @@ function App() {
                 }
               />
               
-              {/* Settings Route - Option 1: Single route for all settings */}
+              {/* Settings Route - Main Settings Page */}
               <Route
                 path="/admin/settings"
                 element={
                   <ProtectedRoute roles={["admin"]}>
-                    <Settings />
+                    <SettingsLayout />
                   </ProtectedRoute>
                 }
-              />
-              
-              {/* Settings Route - Option 2: Individual section routes */}
-              {/* Uncomment this if you want separate URLs for each section */}
-              {/* 
-              <Route
-                path="/admin/settings/:section"
-                element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              */}
+              >
+                <Route index element={<SystemSettings />} />
+                <Route path="system" element={<SystemSettings />} />
+                <Route path="services" element={<ServiceSettings />} />
+                <Route path="payments" element={<PaymentMethodsSettings />} />
+                <Route path="website" element={<WebsiteDesignSettings />} />
+                <Route path="integrations" element={<IntegrationsSettings />} />
+                <Route path="branding" element={<BrandingSettings />} />
+                <Route path="content" element={<ContentSettings />} />
+              </Route>
             </Route>
             
             <Route path="/payment" element={<PaymentPage />} />

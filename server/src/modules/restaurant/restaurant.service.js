@@ -125,6 +125,56 @@ class RestaurantService {
       exportDate: new Date().toISOString(),
     };
   }
+
+  // Import settings (merge or overwrite)
+  async importSettings(settings, options = { overwrite: false }) {
+    const restaurant = await restaurantRepository.findOne();
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    let payload = {};
+    if (options.overwrite) {
+      // Overwrite major sections
+      payload = {
+        systemSettings: settings.systemSettings || {},
+        services: settings.services || {},
+        paymentMethods: settings.paymentMethods || [],
+        websiteDesign: settings.websiteDesign || {},
+        integrations: settings.integrations || {},
+        branding: settings.branding || {},
+        policies: settings.policies || {},
+        faqs: settings.faqs || [],
+        about: settings.about || {},
+        support: settings.support || {},
+        notifications: settings.notifications || {},
+      };
+    } else {
+      // Merge into existing
+      payload = {
+        systemSettings: { ...restaurant.systemSettings, ...(settings.systemSettings || {}) },
+        services: { ...restaurant.services, ...(settings.services || {}) },
+        paymentMethods: settings.paymentMethods || restaurant.paymentMethods,
+        websiteDesign: { ...restaurant.websiteDesign, ...(settings.websiteDesign || {}) },
+        integrations: { ...restaurant.integrations, ...(settings.integrations || {}) },
+        branding: { ...restaurant.branding, ...(settings.branding || {}) },
+        policies: { ...restaurant.policies, ...(settings.policies || {}) },
+        faqs: settings.faqs || restaurant.faqs,
+        about: { ...restaurant.about, ...(settings.about || {}) },
+        support: { ...restaurant.support, ...(settings.support || {}) },
+        notifications: { ...restaurant.notifications, ...(settings.notifications || {}) },
+      };
+    }
+
+    // Attempt translation where applicable
+    try {
+      const translated = await translateRestaurantSettings(payload);
+      return await restaurantRepository.update(restaurant._id, translated);
+    } catch (err) {
+      // Fallback to raw payload
+      return await restaurantRepository.update(restaurant._id, payload);
+    }
+  }
 }
 
 export default new RestaurantService();

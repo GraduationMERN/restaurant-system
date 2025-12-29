@@ -551,6 +551,21 @@ export async function exportSettings(req, res) {
   }
 }
 
+export async function importSettings(req, res) {
+  try {
+    const { settings, options } = req.body;
+    if (!settings) {
+      return res.status(400).json({ success: false, message: "Missing settings payload" });
+    }
+
+    const updated = await restaurantService.importSettings(settings, options || { overwrite: false });
+    res.status(200).json({ success: true, message: "Settings imported successfully", data: updated });
+  } catch (error) {
+    console.error("Error importing settings:", error);
+    res.status(500).json({ success: false, message: error.message || "Internal server error" });
+  }
+}
+
 // File Upload Controllers
 export async function uploadLogo(req, res) {
   try {

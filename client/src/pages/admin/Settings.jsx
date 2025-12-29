@@ -1,32 +1,41 @@
 // src/pages/admin/Settings.jsx
 import { useState } from 'react';
 import SettingsLayout from '../../features/settings/components/SettingsLayout';
-import GeneralSettings from '../../features/settings/pages/GeneralSettings';
+import SystemSettings from '../../features/settings/pages/SystemSettings';
+import ServiceSettings from '../../features/settings/pages/ServiceSettings';
+import PaymentMethodsSettings from '../../features/settings/pages/PaymentMethodsSettings';
+import WebsiteDesignSettings from '../../features/settings/pages/WebsiteDesignSettings';
+import IntegrationsSettings from '../../features/settings/pages/IntegrationsSettings';
 import BrandingSettings from '../../features/settings/pages/BrandingSettings';
-import WebsiteSettings from '../../features/settings/pages/WebsiteSettings';
-import ServicesSettings from '../../features/settings/pages/ServicesSettings';
-import NotificationsSettings from '../../features/settings/pages/NotificationsSettings';
+import ContentSettings from '../../features/settings/pages/ContentSettings';
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState('general');
+  const [activeSection, setActiveSection] = useState('system');
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'general': return <GeneralSettings />;
-      case 'branding': return <BrandingSettings />;
-      case 'website': return <WebsiteSettings />;
-      case 'services': return <ServicesSettings />;
-      case 'notifications': return <NotificationsSettings />;
-      case 'payments': return <div>Payments Settings - Coming Soon</div>;
-      case 'integrations': return <div>Integrations Settings - Coming Soon</div>;
-      case 'advanced': return <div>Advanced Settings - Coming Soon</div>;
-      default: return <GeneralSettings />;
+      case 'system':
+        return <SystemSettings />;
+      case 'services':
+        return <ServiceSettings />;
+      case 'payments':
+        return <PaymentMethodsSettings />;
+      case 'website':
+        return <WebsiteDesignSettings />;
+      case 'integrations':
+        return <IntegrationsSettings />;
+      case 'branding':
+        return <BrandingSettings />;
+      case 'content':
+        return <ContentSettings />;
+      default:
+        return <SystemSettings />;
     }
   };
 
   return (
-    <SettingsLayout 
-      activeSection={activeSection} 
+    <SettingsLayout
+      activeSection={activeSection}
       onSectionChange={setActiveSection}
     >
       {renderSection()}

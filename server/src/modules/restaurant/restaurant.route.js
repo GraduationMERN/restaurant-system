@@ -42,6 +42,7 @@ import {
   
   // Bulk Operations
   exportSettings,
+  importSettings,
   
   // File Uploads
   uploadLogo,
@@ -134,6 +135,7 @@ app.delete("/faqs/:faqId", removeFAQ); // Remove FAQ
 // 8. BULK OPERATIONS
 // ======================
 app.get("/export-settings", exportSettings); // Export all settings as JSON
+app.post("/import-settings", importSettings); // Import settings (merge/overwrite)
 // app.post("/import-settings", importSettings); // Add this later if needed
 // app.post("/reset-defaults", resetToDefaults); // Add this later if needed
 
