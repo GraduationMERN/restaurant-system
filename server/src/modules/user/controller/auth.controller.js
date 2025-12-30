@@ -22,12 +22,34 @@ const cookieOptions = {
 export const firebaseLoginController = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
+    console.log('firebaseLoginController - received token:', !!token);
+    if (token) {
+      console.log('Token starts with:', token.substring(0, 50) + '...');
+      // Try to decode without verification to see what's inside
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+          console.log('Token payload:', decoded);
+        }
+      } catch (e) {
+        console.log('Could not parse token:', e.message);
+      }
+    }
+    
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Verify Firebase ID token - THIS WAS MISSING!
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    // Verify Firebase ID token
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+      console.log('Firebase token verified for UID:', decodedToken.uid);
+    } catch (verifyErr) {
+      console.error('Firebase token verification failed:', verifyErr?.message || verifyErr);
+      return res.status(401).json({ message: "Invalid Firebase token: " + (verifyErr?.message || "unknown error") });
+    }
     
     const {
       uid,
@@ -145,9 +167,9 @@ export const firebaseLoginController = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    console.error("Firebase login error:", err);
-    res.status(401).json({
-      message: err.message || "Invalid Firebase token"
+    console.error("Firebase login error:", err && err.stack ? err.stack : err);
+    res.status(500).json({
+      message: err.message || "Internal server error"
     });
   }
 };

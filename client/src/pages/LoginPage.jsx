@@ -194,15 +194,29 @@ export default function LoginPage() {
         prompt: "select_account",
       });
 
+      console.log("Initiating Google Sign-In popup...");
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
+      console.log("Firebase user authenticated:", {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName
+      });
 
-      const idToken = await firebaseUser.getIdToken();
+      // Wait a moment for the token to be fully issued
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const idToken = await firebaseUser.getIdToken(true); // Force token refresh
+      console.log("Firebase ID token obtained", {
+        length: idToken.length,
+        prefix: idToken.substring(0, 30)
+      });
 
       const resultAction = await dispatch(firebaseLogin(idToken));
 
       if (firebaseLogin.fulfilled.match(resultAction)) {
         const user = resultAction.payload?.user || resultAction.payload;
+        console.log("Firebase login successful, user:", user.email);
 
         if (!user.name) {
           setShowNameInput(true);
@@ -210,10 +224,13 @@ export default function LoginPage() {
         }
 
         redirectUser(user);
+      } else {
+        console.error("Firebase login rejected:", resultAction.payload);
+        setErrors({ google: resultAction.payload || "Login failed. Please try again." });
       }
     } catch (err) {
-      console.error("Google login error:", err);
-      setErrors({ google: err.message || "Google sign-in failed" });
+      console.error("Google login error:", err.message, err.code);
+      setErrors({ google: err.message || "Google sign-in failed. Please try again." });
     } finally {
       setIsLoading(false);
     }
