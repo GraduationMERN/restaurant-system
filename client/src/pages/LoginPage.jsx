@@ -194,29 +194,55 @@ export default function LoginPage() {
         prompt: "select_account",
       });
 
-      console.log("Initiating Google Sign-In popup...");
+      console.log("Step 1: Initiating Google Sign-In popup...");
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
-      console.log("Firebase user authenticated:", {
+      console.log("Step 2: Firebase user authenticated:", {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        displayName: firebaseUser.displayName
+        displayName: firebaseUser.displayName,
+        metadata: firebaseUser.metadata
+      });
+
+      // Check the credential from Google result
+      console.log("Step 3: Checking credential from result:", {
+        hasCredential: !!result.credential,
+        credentialType: result.credential?.constructor?.name
       });
 
       // Wait a moment for the token to be fully issued
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
+      console.log("Step 4: Getting ID token from user object...");
       const idToken = await firebaseUser.getIdToken(true); // Force token refresh
-      console.log("Firebase ID token obtained", {
+      
+      // Decode the token to inspect it
+      const tokenParts = idToken.split('.');
+      let decodedHeader = {}, decodedPayload = {};
+      try {
+        if (tokenParts.length === 3) {
+          decodedHeader = JSON.parse(Buffer.from(tokenParts[0], 'base64').toString());
+          decodedPayload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        }
+      } catch (e) {
+        console.log("Could not decode token parts");
+      }
+
+      console.log("Step 5: Firebase ID token obtained", {
         length: idToken.length,
-        prefix: idToken.substring(0, 30)
+        prefix: idToken.substring(0, 30),
+        partsCount: tokenParts.length,
+        header: decodedHeader,
+        payload: decodedPayload,
+        hasKid: !!decodedHeader.kid
       });
 
+      console.log("Step 6: Sending token to backend...");
       const resultAction = await dispatch(firebaseLogin(idToken));
 
       if (firebaseLogin.fulfilled.match(resultAction)) {
         const user = resultAction.payload?.user || resultAction.payload;
-        console.log("Firebase login successful, user:", user.email);
+        console.log("Step 7: Firebase login successful, user:", user.email);
 
         if (!user.name) {
           setShowNameInput(true);
@@ -225,11 +251,11 @@ export default function LoginPage() {
 
         redirectUser(user);
       } else {
-        console.error("Firebase login rejected:", resultAction.payload);
+        console.error("Step 7: Firebase login rejected:", resultAction.payload);
         setErrors({ google: resultAction.payload || "Login failed. Please try again." });
       }
     } catch (err) {
-      console.error("Google login error:", err.message, err.code);
+      console.error("Google login error at step:", err.message, err.code);
       setErrors({ google: err.message || "Google sign-in failed. Please try again." });
     } finally {
       setIsLoading(false);
