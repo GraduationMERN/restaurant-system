@@ -9,15 +9,15 @@ const isProduction = env.nodeEnv === "production";
 // Base cookie options
 const cookieOptionsBase = {
   httpOnly: true,
-  secure: true,
-  sameSite:  "Lax",
+  secure: isProduction, 
+  sameSite: isProduction ? "None" : "Lax", 
   maxAge: 15 * 60 * 1000,
   path: "/",
 };
 
 const cookieOptions = {
   ...cookieOptionsBase,
-  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  ...(isProduction && process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const firebaseLoginController = async (req, res) => {
   try {

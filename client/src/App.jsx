@@ -46,7 +46,7 @@ import ContentSettings from "./features/settings/pages/ContentSettings";
 import LandingSettings from "./features/settings/pages/LandingSettings";
 import ErrorBoundary from "./components/ErrorBoundary";
 
- function App() {
+function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
@@ -54,25 +54,24 @@ import ErrorBoundary from "./components/ErrorBoundary";
   useEffect(() => {
     const init = async () => {
       try {
-        await dispatch(refreshToken());
-        await dispatch(getMe());
-      } catch (e) {
-        // ignore errors
+        const result = await dispatch(refreshToken());
+        // ONLY if refresh succeeds, fetch the full user profile (which contains the role)
+        if (refreshToken.fulfilled.match(result)) {
+          await dispatch(getMe());
+        }
       } finally {
         setChecked(true);
       }
     };
-  
+
     if (!checked) init();
   }, [dispatch, checked]);
-  
-
   // Request notification permission on app load (centralized)
   useEffect(() => {
     requestNotificationPermission();
   }, []);
 
-  if (loadingGetMe) {
+ if (!checked || loadingGetMe) {
     return <LoadingSpinner />;
   }
 
@@ -108,7 +107,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
-            
+
             {/* Cashier & Kitchen Dashboards */}
             <Route
               path="/cashier"
@@ -161,7 +160,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Settings Route - Main Settings Page */}
               <Route
                 path="/admin/settings"
@@ -182,11 +181,11 @@ import ErrorBoundary from "./components/ErrorBoundary";
                 <Route path="content" element={<ContentSettings />} />
               </Route>
             </Route>
-            
+
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
-            
+
             {/* Single Admin Page with section sub-route */}
             <Route element={<AppLayout />}>
               <Route
