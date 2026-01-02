@@ -37,13 +37,6 @@ export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
     try {
-      // Don't try to getMe if no access token stored
-      const accessToken = typeof window !== "undefined" ? window.localStorage.getItem("accessToken") : null;
-      if (!accessToken) {
-        console.debug("No access token found, skipping getMe");
-        return null;
-      }
-      
       const res = await api.get("/api/auth/me");
       return res.data;
     } catch (err) {
@@ -172,10 +165,9 @@ const authSlice = createSlice({
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
         if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
+
           const access = action.payload?.accessToken;
           if (access) {
-            window.localStorage.setItem("accessToken", access);
           }
         }
       })
@@ -195,7 +187,6 @@ const authSlice = createSlice({
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
         if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
         }
       })
       .addCase(completeProfile.rejected, (state, action) => {
@@ -218,14 +209,11 @@ const authSlice = createSlice({
           state.user = action.payload;
           state.isAuthenticated = true;
           if (typeof window !== "undefined") {
-            window.localStorage.setItem("hasSession", "true");
           }
         }
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loadingGetMe = false;
-        state.user = null;
-        state.isAuthenticated = false;
         if (action.payload !== "Unauthorized") {
           state.error = action.payload;
         }
