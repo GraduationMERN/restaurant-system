@@ -5,18 +5,19 @@ import jwt from "jsonwebtoken";
 import { env } from "../../../config/env.js";
 
 
+const isProduction = env.nodeEnv === "production";
 // Base cookie options
 const cookieOptionsBase = {
-  httpOnly: true,
-  sameSite:"Lax",
-  secure: true,
+  httpOnly: isProduction,
+  secure: isProduction,
+  sameSite:  "Lax",
   maxAge: 15 * 60 * 1000,
   path: "/",
 };
 
 const cookieOptions = {
   ...cookieOptionsBase,
-  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  ...(isProduction && process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const firebaseLoginController = async (req, res) => {
   try {

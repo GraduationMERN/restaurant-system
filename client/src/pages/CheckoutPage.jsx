@@ -29,7 +29,7 @@ export default function CheckoutPage() {
     (state) => state.cart
   );
   const authUser = useSelector((state) => state.auth?.user || null);
-
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated || false);
   const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
@@ -220,7 +220,10 @@ export default function CheckoutPage() {
       setOrderError("No cart found. Please add items to cart first.");
       return;
     }
-
+    if(!isAuthenticated){
+      navigate('/login');
+      return;
+    }
     if (products.length === 0) {
       setOrderError("Your cart is empty. Please add items before checking out.");
       return;
