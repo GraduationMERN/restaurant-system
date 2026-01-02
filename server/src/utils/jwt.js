@@ -5,7 +5,7 @@ export const createAccessToken = (user) =>
   jwt.sign(
     { id: user._id, role: user.role },
     env.jwtKey,
-    { expiresIn: env.refreshExpiry }
+    { expiresIn: "15m" }
   );
 
 export const createRefreshToken = (user) =>

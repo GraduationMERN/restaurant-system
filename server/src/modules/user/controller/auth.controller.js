@@ -163,8 +163,6 @@ export const firebaseLoginController = async (req, res) => {
         points: user.points,
         isVerified: user.isVerified,
       },
-      accessToken,
-      refreshToken,
     });
   } catch (err) {
     console.error("Firebase login error:", err && err.stack ? err.stack : err);

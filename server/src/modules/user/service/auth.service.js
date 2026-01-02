@@ -1,9 +1,10 @@
 import User from "../model/User.js";
 import jwt from "jsonwebtoken";
 import {createAccessToken,createRefreshToken} from "../../../utils/jwt.js";
+import { env } from "../../../config/env.js";
 
 export async function completeProfileServices(name, tempToken) {
-  const decoded = jwt.verify(tempToken, process.env.TEMP_JWT_SECRET);
+  const decoded = jwt.verify(tempToken,env.tempJwtKey);
 
   const existing = await User.findOne({ phoneNumber: decoded.phoneNumber });
   if (existing) throw new Error("User already exists");
