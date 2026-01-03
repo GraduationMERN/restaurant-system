@@ -105,11 +105,11 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-          setDeliveryLocation({
-            lat: latitude,
-            lng: longitude,
-            address: t("checkout.current_location"),
-          });
+        setDeliveryLocation({
+          lat: latitude,
+          lng: longitude,
+          address: t("checkout.current_location"),
+        });
         setLocationError(null);
         setLocationLoading(false);
       },
@@ -134,13 +134,21 @@ export default function CheckoutPage() {
   };
 
 
-  const handleQuantityChange = (productId, quantity) => {
-    if (quantity < 1) return;
-    console.log("Updating quantity for productId:", productId);
+  const handleQuantityChange = (cartItemId, newQuantity) => {
+    console.log("=== FRONTEND handleQuantityChange ===");
+    console.log("cartItemId:", cartItemId);
+    console.log("newQuantity:", newQuantity);
+    console.log("Type of newQuantity:", typeof newQuantity);
+    console.log("Is NaN?", isNaN(newQuantity));
+
+    if (newQuantity < 1) {
+      console.log("⚠️ Quantity less than 1, returning");
+      return;
+    }
 
     dispatch(updateCartQuantity({
-      cartItemId: productId,
-      newQuantity: quantity
+      productId: cartItemId,
+      newQuantity
     }));
   };
 
@@ -220,7 +228,7 @@ export default function CheckoutPage() {
       setOrderError("No cart found. Please add items to cart first.");
       return;
     }
-    if(!isAuthenticated){
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -397,16 +405,18 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-primary/10 dark:bg-primary/10 rounded-full px-1">
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
+                            onClick={() => handleQuantityChange(item._id, item.quantity - 1) }
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
+
                           <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
