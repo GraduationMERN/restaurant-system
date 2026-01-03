@@ -71,7 +71,7 @@ function App() {
     requestNotificationPermission();
   }, []);
 
- if (!checked || loadingGetMe) {
+  if (!checked || loadingGetMe) {
     return <LoadingSpinner />;
   }
 
@@ -98,7 +98,11 @@ function App() {
             {/* Customer Routes */}
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment" element={
+              <ProtectedRoute>
+                <PaymentPage />
+              </ProtectedRoute>
+            } />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             <Route path="/support" element={<Support />} />

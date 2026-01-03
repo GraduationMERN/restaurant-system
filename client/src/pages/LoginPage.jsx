@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { firebaseLogin, completeProfile } from "../redux/slices/authSlice";
-import { Mail, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight, User } from "lucide-react";
+import {  ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight, User } from "lucide-react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
@@ -12,7 +12,8 @@ export default function LoginPage() {
   const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const {  error } = useSelector((state) => state.auth);
 
   // State management
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const isRtl = i18n.dir() === "rtl";
+  const from = location.state?.from?.pathname || "/";
 
   // Initialize reCAPTCHA
   const setupRecaptcha = () => {
@@ -205,7 +207,6 @@ export default function LoginPage() {
 
       // Wait a moment for the token to be fully issued
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       const idToken = await firebaseUser.getIdToken(true); // Force token refresh
       console.log("Firebase ID token obtained", {
         length: idToken.length,
@@ -272,14 +273,21 @@ export default function LoginPage() {
 
   const redirectUser = (user) => {
     const role = (user?.role || "").toString().toLowerCase();
+
+    // Check if there's a redirect location
+    if (from && from !== "/login") {
+      navigate(from, { replace: true });
+      return;
+    }
+
     if (role === "admin") {
-      window.location.replace("/admin");
+      navigate("/admin", { replace: true });
     } else if (role === "cashier") {
-      window.location.replace("/cashier");
+      navigate("/cashier", { replace: true });
     } else if (role === "kitchen") {
-      window.location.replace("/kitchen");
+      navigate("/kitchen", { replace: true });
     } else {
-      window.location.replace("/menu");
+      navigate("/menu", { replace: true });
     }
   };
 
@@ -332,7 +340,7 @@ export default function LoginPage() {
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">
-                    {t("auth.login.error_prefix")} 
+                    {t("auth.login.error_prefix")}
                   </p>
                 </div>
               )}
@@ -360,14 +368,14 @@ export default function LoginPage() {
                         placeholder="01012345678"
                       />
                     </div>
-                   
+
                     {errors.phoneNumber && touched.phoneNumber && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
                         {t("auth.validation.phoneNumber_invalid") || errors.phoneNumber}
                       </p>
                     )}
                   </div>
-                    
+
                   <button
                     type="submit"
                     disabled={isLoading}
@@ -377,19 +385,19 @@ export default function LoginPage() {
                   </button>
                   <div className="relative my-10"><div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200 dark:border-gray-700">
-                      </div></div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
-                        </div>
-                        </div>
-                   <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      disabled={isLoading}
-                      className="w-full text-white bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
-                    >
-                      {t("auth.login.continue_with_google")}
-                    </button>
+                    </div></div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                    className="w-full text-white bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
+                  >
+                    {t("auth.login.continue_with_google")}
+                  </button>
                 </form>
               )}
               {showOtpInput && (
@@ -455,8 +463,8 @@ export default function LoginPage() {
                         onBlur={handleNameBlur}
                         onKeyPress={handleKeyPress}
                         className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.name && touched.name
-                            ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
                           } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
                         placeholder="Enter your name"
                       />
