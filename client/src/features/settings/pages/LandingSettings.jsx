@@ -325,8 +325,8 @@ export default function LandingSettings() {
           descriptionAr: 'وصف الخدمة',
           image: '',
           colorClass: 'text-blue-600 dark:text-blue-400',
-          bgClass: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900',
-          imageBgClass: 'bg-blue-100 dark:bg-blue-900/30',
+          bgClass: 'bg-white dark:from-gray-800 dark:to-gray-900',
+          imageBgClass: 'bg-white dark:bg-blue-900/30',
           navigate: '/',
           enabled: true
         }]
