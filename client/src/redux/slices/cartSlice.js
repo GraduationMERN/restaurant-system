@@ -41,12 +41,18 @@ export const updateCartItemOptions = createAsyncThunk(
 
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateQuantity",
-  async ({ cartItemId, newQuantity }, { rejectWithValue }) => {
+  async ({ productId, newQuantity }, { rejectWithValue }) => {
+    console.log("=== REDUX THUNK updateCartQuantity ===");
+    console.log("productId:", productId);
+    console.log("newQuantity:", newQuantity);
+    console.log("Request body:", { newQuantity });
+    
     try {
-      const res = await api.put(`/api/cart/${cartItemId}`, { newQuantity });
+      const res = await api.put(`/api/cart/${productId}`, { newQuantity });
+      console.log("✅ Update successful:", res.data);
       return res.data;
     } catch (err) {
-      // ✅ هنا بنرسل رسالة الخطأ من الباك للفِرونت
+      console.error("❌ Update failed:", err.response?.data);
       return rejectWithValue(err.response?.data || { message: err.message });
     }
   }

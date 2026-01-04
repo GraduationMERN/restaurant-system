@@ -4,20 +4,20 @@ import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
 import jwt from "jsonwebtoken";
 import { env } from "../../../config/env.js";
 
-const isProduction = env.nodeEnv === "production";
 
+const isProduction = env.nodeEnv === "production";
 // Base cookie options
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: isProduction ? "None" : "Lax",
-  secure: isProduction,
+  secure: isProduction, 
+  sameSite: isProduction ? "None" : "Lax", 
   maxAge: 15 * 60 * 1000,
   path: "/",
 };
 
 const cookieOptions = {
   ...cookieOptionsBase,
-  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  ...(isProduction && process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const firebaseLoginController = async (req, res) => {
   try {
@@ -163,8 +163,6 @@ export const firebaseLoginController = async (req, res) => {
         points: user.points,
         isVerified: user.isVerified,
       },
-      accessToken,
-      refreshToken,
     });
   } catch (err) {
     console.error("Firebase login error:", err && err.stack ? err.stack : err);

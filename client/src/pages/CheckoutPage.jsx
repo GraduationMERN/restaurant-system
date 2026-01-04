@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
@@ -24,12 +24,13 @@ L.Icon.Default.mergeOptions({
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { products, totalPrice, loading, _id: cartId } = useSelector(
     (state) => state.cart
   );
   const authUser = useSelector((state) => state.auth?.user || null);
-
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated || false);
   const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
@@ -105,11 +106,11 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-          setDeliveryLocation({
-            lat: latitude,
-            lng: longitude,
-            address: t("checkout.current_location"),
-          });
+        setDeliveryLocation({
+          lat: latitude,
+          lng: longitude,
+          address: t("checkout.current_location"),
+        });
         setLocationError(null);
         setLocationLoading(false);
       },
@@ -134,13 +135,21 @@ export default function CheckoutPage() {
   };
 
 
-  const handleQuantityChange = (productId, quantity) => {
-    if (quantity < 1) return;
-    console.log("Updating quantity for productId:", productId);
+  const handleQuantityChange = (cartItemId, newQuantity) => {
+    console.log("=== FRONTEND handleQuantityChange ===");
+    console.log("cartItemId:", cartItemId);
+    console.log("newQuantity:", newQuantity);
+    console.log("Type of newQuantity:", typeof newQuantity);
+    console.log("Is NaN?", isNaN(newQuantity));
+
+    if (newQuantity < 1) {
+      console.log("⚠️ Quantity less than 1, returning");
+      return;
+    }
 
     dispatch(updateCartQuantity({
-      cartItemId: productId,
-      newQuantity: quantity
+      productId: cartItemId,
+      newQuantity
     }));
   };
 
@@ -220,7 +229,10 @@ export default function CheckoutPage() {
       setOrderError("No cart found. Please add items to cart first.");
       return;
     }
-
+    if(!isAuthenticated){
+      navigate('/login',{ state: { from: location } });
+      return;
+    }
     if (products.length === 0) {
       setOrderError("Your cart is empty. Please add items before checking out.");
       return;
@@ -394,16 +406,18 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-primary/10 dark:bg-primary/10 rounded-full px-1">
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
+                            onClick={() => handleQuantityChange(item._id, item.quantity - 1) }
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
+
                           <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />

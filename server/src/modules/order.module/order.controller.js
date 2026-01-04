@@ -27,9 +27,6 @@ function getOrderUserId(req, res) {
 
   if (!guestId) {
     guestId = uuidv4();
-    console.log("[ORDER] No guestOrderId found → Generating:", guestId);
-    console.log("[ORDER] Current cookies:", req.cookies);
-
     res.cookie("guestOrderId", guestId, {
       httpOnly: false,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -37,10 +34,7 @@ function getOrderUserId(req, res) {
       secure: isProduction,
       path: "/",
     });
-  } else {
-    console.log("[ORDER] Existing guestOrderId found:", guestId);
   }
-
   return guestId;
 }
 

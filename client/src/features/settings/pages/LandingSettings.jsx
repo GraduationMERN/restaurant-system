@@ -1273,7 +1273,6 @@ export default function LandingSettings() {
       </section>
 
       {/* Save Button */}
-    // In your LandingSettings.js, replace the reset button:
 <div className="flex gap-3 justify-end pt-6 border-t">
   <button
     className="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"

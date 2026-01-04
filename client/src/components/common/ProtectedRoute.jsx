@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useRole } from "../../hooks/useRole";
 
@@ -7,7 +7,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
   const authState = useSelector((state) => state.auth || {});
   const { user, loadingGetMe } = authState;
   const { isAdmin, isCashier, isKitchen } = useRole();
-
+  const location = useLocation(); 
 
   if (!user) {
     if (loadingGetMe || (typeof window !== 'undefined' && window.localStorage.getItem('hasSession') === 'true')) {
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
         </div>
       );
     }
-    return <Navigate to="/login" replace />;
+   return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (roles.length === 0) return children;

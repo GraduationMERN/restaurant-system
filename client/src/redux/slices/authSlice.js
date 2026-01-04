@@ -37,13 +37,6 @@ export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
     try {
-      // Don't try to getMe if no access token stored
-      const accessToken = typeof window !== "undefined" ? window.localStorage.getItem("accessToken") : null;
-      if (!accessToken) {
-        console.debug("No access token found, skipping getMe");
-        return null;
-      }
-      
       const res = await api.get("/api/auth/me");
       return res.data;
     } catch (err) {
@@ -56,9 +49,9 @@ export const getMe = createAsyncThunk(
 // --- FORGOT PASSWORD ---
 export const completeProfile = createAsyncThunk(
   "auth/complete-profile",
-  async ({phoneNumber,name}, { rejectWithValue }) => {
+  async ({ phoneNumber, name }, { rejectWithValue }) => {
     try {
-      const res = await api.post("/api/auth/complete-profile", { phoneNumber,name });
+      const res = await api.post("/api/auth/complete-profile", { phoneNumber, name });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -75,13 +68,13 @@ export const refreshToken = createAsyncThunk(
     try {
       // Try cookie-based refresh first; if not available, fall back to stored refresh token
       const stored = typeof window !== "undefined" ? window.localStorage.getItem("refreshToken") : null;
-      
+
       // If no token stored and no cookies, silently skip refresh (user not logged in yet)
       if (!stored) {
         console.debug("No refresh token found in localStorage, skipping refresh");
         return null;
       }
-      
+
       const headers = stored ? { Authorization: `Bearer ${stored}` } : undefined;
       const res = await api.post("/api/auth/refresh", {}, { headers });
       // Save returned tokens to localStorage
@@ -172,10 +165,9 @@ const authSlice = createSlice({
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
         if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
+
           const access = action.payload?.accessToken;
           if (access) {
-            window.localStorage.setItem("accessToken", access);
           }
         }
       })
@@ -185,7 +177,7 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       });
-       builder
+    builder
       .addCase(completeProfile.pending, (state) => {
         state.loadingLogin = true;
         state.error = null;
@@ -195,7 +187,6 @@ const authSlice = createSlice({
         state.user = action.payload.user || action.payload;
         state.isAuthenticated = true;
         if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
         }
       })
       .addCase(completeProfile.rejected, (state, action) => {
@@ -204,7 +195,7 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       });
-      
+
     // --- GET ME ---
     builder
       .addCase(getMe.pending, (state) => {
@@ -215,17 +206,15 @@ const authSlice = createSlice({
         state.loadingGetMe = false;
         // Handle null payload (user not logged in)
         if (action.payload) {
+          console.log(action.payload)
           state.user = action.payload;
           state.isAuthenticated = true;
           if (typeof window !== "undefined") {
-            window.localStorage.setItem("hasSession", "true");
           }
         }
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loadingGetMe = false;
-        state.user = null;
-        state.isAuthenticated = false;
         if (action.payload !== "Unauthorized") {
           state.error = action.payload;
         }
@@ -259,9 +248,12 @@ const authSlice = createSlice({
       })
       .addCase(refreshToken.fulfilled, (state, action) => {
         state.loadingRefresh = false;
-        // Handle null payload (no token to refresh)
         if (action.payload) {
-          state.user = action.payload.user || null;
+          // Only update the user if the payload actually has a user object
+          // Otherwise, keep the existing state.user until getMe() finishes
+          if (action.payload.user) {
+            state.user = action.payload.user;
+          }
           state.isAuthenticated = true;
         }
       })
