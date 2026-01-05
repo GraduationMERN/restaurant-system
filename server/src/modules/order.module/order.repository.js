@@ -52,7 +52,7 @@ class OrderRepository {
 
     return await query;
   }
-
+  
   // Find order by Stripe payment intent id
   async findByStripePaymentIntent(paymentIntent, populate = false) {
     let query = Order.findOne({ stripePaymentIntent: paymentIntent });

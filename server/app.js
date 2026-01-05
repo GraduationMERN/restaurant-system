@@ -36,8 +36,6 @@ import searchRoutes from "./src/modules/search/search.routes.js"; // AI Smart Se
 import staffChatRoutes from "./src/modules/staffChat/staffChat.routes.js"; // Staff Chat
 // import offerRoutes from "./src/modules/offer/offer.routes.js";
 import offerRoutes from "./src/modules/offer/offer.route.js";
-import morgan from 'morgan';
-import logger from "./src/utils/logger.js"
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
 

@@ -20,7 +20,7 @@ router.get("/active", optionalAuthMiddleware, orderController.getActiveOrder);
 router.get("/history", optionalAuthMiddleware, orderController.getOrderHistoryForUser);
 
 // ============= PUBLIC/GUEST ROUTES (continued) =============
-
+router.post("/reorder/:orderId", authMiddleware, orderController.reorderController);
 
 // Global: attach requestId + optional auth for allowed routes
 router.use(requestIdMiddleware);
