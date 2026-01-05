@@ -389,6 +389,24 @@ export const getDailyStats = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+export const reorderController = async (req, res) => {
+  try {
+    const userId = req.user.id; // from auth middleware
+    const { orderId } = req.params;
+
+    const newOrder = await OrderService.reorderPreviousOrder(orderId, userId);
+
+    res.status(201).json({
+      message: "Order placed successfully",
+      order: newOrder
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
 
 export const getTopItems = async (req, res) => {
   try {
