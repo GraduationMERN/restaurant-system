@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, ShoppingBag, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { reorderOrder } from "../../redux/slices/ordersSlice";
 
 export default function OrderHistoryComponent({ orders }) {
   const navigate = useNavigate();
@@ -185,6 +186,16 @@ export default function OrderHistoryComponent({ orders }) {
                     }`}
                   />
                 </button>
+
+                <button
+    onClick={() => dispatch(reorderOrder(order._id))}
+    className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-sm ${
+      activeOrderLoading ? "opacity-50 cursor-not-allowed" : ""
+    }`}
+    disabled={activeOrderLoading}
+  >
+    Reorder
+  </button>
 
                 <button
                   onClick={() => navigate(`/orders/${order._id}`)}
