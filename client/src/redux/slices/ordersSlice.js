@@ -227,7 +227,7 @@ const ordersSlice = createSlice({
         state.historyLoading = false;
         state.historyError = action.payload;
       });
-//reorder 
+
 // Reorder
 builder
   .addCase(reorderOrder.pending, (state) => {
