@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, ShoppingBag, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { reorderOrder } from "../../redux/slices/ordersSlice";
+import { useDispatch, useSelector } from "react-redux";
+
+
 
 export default function OrderHistoryComponent({ orders }) {
   const navigate = useNavigate();
@@ -21,6 +24,12 @@ export default function OrderHistoryComponent({ orders }) {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+//use activeOrderLoading from orders slice
+    const dispatch = useDispatch();
+
+const { activeOrderLoading } = useSelector((state) => state.orders);
+
 
   // Unified Status Colors
   const statusStyles = {
@@ -189,13 +198,14 @@ export default function OrderHistoryComponent({ orders }) {
 
 <button
   onClick={() => dispatch(reorderOrder(order._id))}
+  disabled={activeOrderLoading}
   className={`px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors text-sm ${
     activeOrderLoading ? "opacity-50 cursor-not-allowed" : ""
   }`}
-  disabled={activeOrderLoading}
 >
-  Reorder
+  {activeOrderLoading ? "Reordering..." : "Reorder"}
 </button>
+
 
 
                 <button
