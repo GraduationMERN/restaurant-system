@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import orderService from "./order.service.js";
+import  OrderService from "./order.service.js";
+
 import PaymentService from "../payment/paymentService.js";
 import Order from "../order.module/orderModel.js";
 import RewardOrder from "../rewards/rewardOrder.js";
@@ -389,23 +390,40 @@ export const getDailyStats = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
-export const reorderController = async (req, res) => {
+export const reorderOrderController = async (req, res, next) => {
   try {
-    const userId = req.user.id; // from auth middleware
     const { orderId } = req.params;
+    const userId = req.user._id;
 
     const newOrder = await OrderService.reorderPreviousOrder(orderId, userId);
 
     res.status(201).json({
-      message: "Order placed successfully",
-      order: newOrder
+      success: true,
+      message: "Order successfully recreated",
+      order: newOrder,
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: error.message });
+    console.error(`Reorder controller error for order ${req.params.orderId}:`, error);
+    
+    // Determine appropriate status code
+    let statusCode = 500;
+    let errorMessage = error.message;
+    
+    if (error.message.includes("Order not found")) {
+      statusCode = 404;
+    } else if (error.message.includes("access denied")) {
+      statusCode = 403;
+    } else if (error.message.includes("validation failed")) {
+      statusCode = 400;
+    }
+    
+    res.status(statusCode).json({
+      success: false,
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
-
 
 
 export const getTopItems = async (req, res) => {

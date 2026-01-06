@@ -44,7 +44,7 @@ const OrderSchema = new mongoose.Schema(
     // ============= ORDER IDENTIFICATION =============
     orderNumber: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
     },
 

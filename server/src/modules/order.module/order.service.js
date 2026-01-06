@@ -345,9 +345,12 @@ class OrderService {
     // Try as string ID
     return await orderRepo.findById(identifier, true);
   }
+
+  ///////////reordering
+  
 async reorderPreviousOrder(orderId, userId) {
     // 1. Fetch the previous order
-    const previousOrder = await OrderRepository.findById(orderId);
+    const previousOrder = await orderRepo.findById(orderId);
     
     // Make sure the order belongs to this user
     if (!previousOrder || previousOrder.user.toString() !== userId.toString()) {
@@ -355,18 +358,18 @@ async reorderPreviousOrder(orderId, userId) {
     }
 
     // 2. Prepare new order data
-    const newOrderData = {
-      user: previousOrder.user,
-      customerId: previousOrder.customerId,
-      customerType: previousOrder.customerType,
-      items: previousOrder.items, // clone items
-      totalAmount: previousOrder.totalAmount,
-      status: "pending",
-      createdAt: new Date(),
-    };
+ const newOrderData = {
+  ...previousOrder.toObject(), // Copy everything
+  _id: undefined, // Remove the ID
+  orderNumber: undefined, // Will be auto-generated
+  status: "pending",
+  paymentStatus: "pending",
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
 
     // 3. Save new order using repo
-    const newOrder = await OrderRepository.create(newOrderData);
+    const newOrder = await orderRepo.create(newOrderData);
     return newOrder;
   }
   // Get orders by user (works for both guest and registered)
