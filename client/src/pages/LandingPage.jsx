@@ -366,11 +366,11 @@ function LandingPageContent() {
                   : "translate-y-10 opacity-0"
               }`}
             >
-              <div className="relative w-40 h-40 mx-auto mb-8">
+              <div className="relative w-48 h-48 md:w-56 md:h-56 mx-auto mb-8">
                 {/* Decorative circle */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/40 rounded-full opacity-20 animate-pulse-slow" />
-                <div className="absolute inset-4 rounded-full border-4 border-white/50 dark:border-gray-700/50" />
-                <div className="absolute inset-8 rounded-full overflow-hidden shadow-2xl ring-4 ring-white dark:ring-gray-800 transition-transform duration-500 group-hover:scale-105">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-primary/30 to-secondary/20 rounded-full opacity-25 animate-pulse-slow" />
+                <div className="absolute inset-3 rounded-full border-4 border-white/60 dark:border-gray-700/60" />
+                <div className="absolute inset-6 rounded-full overflow-hidden shadow-2xl ring-4 ring-white/20 dark:ring-gray-800/20 transition-transform duration-500 group-hover:scale-105">
                   {(() => {
                     const heroImageSrc = hero.image || settings.branding?.logoUrl || '';
                     if (heroImageSrc) {
@@ -378,7 +378,7 @@ function LandingPageContent() {
                         <img
                           src={heroImageSrc}
                           alt={hero.title || settings.restaurantName || t("welcome")}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-center"
                           loading="lazy"
                         />
                       );
@@ -419,6 +419,7 @@ function LandingPageContent() {
               {actionCards.map((card, index) => (
                 <button
                   key={index}
+                  aria-label={`Open ${card.title || 'service'}`}
                   onClick={() => card.navigate && navigate(card.navigate)}
                   className={`${card.bgColor || 'bg-white dark:bg-gray-800'} rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-white/50 dark:border-gray-700/50 group text-left backdrop-blur-sm hover:-translate-y-2 active:scale-[0.98] overflow-hidden ${
                     isRTL ? "text-right" : ""
@@ -426,13 +427,13 @@ function LandingPageContent() {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className={`flex items-start justify-between mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <div className={`w-14 h-14 ${card.imageBg || 'bg-gray-100 dark:bg-gray-700'} rounded-xl overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md relative`}>
+                    <div className={`w-16 h-16 md:w-20 md:h-20 ${card.imageBg || 'bg-gray-100 dark:bg-gray-700'} rounded-2xl overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md relative flex-shrink-0`}> 
                       <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent z-10" />
                       {card.image ? (
                         <img
                           src={card.image}
                           alt={card.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
                       ) : (
@@ -447,7 +448,7 @@ function LandingPageContent() {
                       }`}
                     />
                   </div>
-                  <h3 className={`text-xl font-bold text-gray-900 dark:text-white mb-2`}>
+                  <h3 className={`text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-2`}>
                     {card.title || 'Service Title'}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
@@ -578,6 +579,8 @@ function LandingPageContent() {
                 {instagramPosts.map((post, i) => (
                   <div 
                     key={i} 
+                    role="button"
+                    aria-label={`Open Instagram post ${i + 1}`}
                     className="relative group overflow-hidden rounded-2xl cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 aspect-square"
                     onClick={() => handleImageExpand(i)}
                   >
@@ -742,11 +745,11 @@ function LandingPageContent() {
 
           {/* FOOTER - Modern multi-column footer */}
           {renderSection(footer.enabled !== false, (
-            <footer className="mt-12 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl p-8">
-              <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
+            <footer className="mt-12 bg-gradient-to-r from-primary/6 via-primary/4 to-secondary/6 dark:from-primary-900 dark:to-secondary-900 text-gray-800 dark:text-gray-200 rounded-2xl p-8">
+              <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <div className="md:col-span-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 dark:bg-primary/800 flex items-center justify-center">
                       {settings.branding?.logoUrl ? (
                         <img src={settings.branding.logoUrl} alt={settings.restaurantName} className="w-10 h-10 object-contain" />
                       ) : (
@@ -754,48 +757,47 @@ function LandingPageContent() {
                       )}
                     </div>
                     <div>
-                      <div className="font-bold">{settings.restaurantName || t('Restaurant')}</div>
-                      <div className="text-sm text-gray-500">{settings.description || ''}</div>
+                      <div className="font-bold text-lg">{settings.restaurantName || t('Restaurant')}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{settings.description || ''}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Instagram className="w-5 h-5 text-pink-500" />
-                    <a href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}`} target="_blank" rel="noreferrer" className="underline">@{settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}</a>
+                  <div className="flex items-center gap-3 text-sm mt-3">
+                    <a href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-pink-500 hover:underline">
+                      <Instagram className="w-5 h-5" />
+                      <span>@{settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}</span>
+                    </a>
                   </div>
                 </div>
 
-                <div>
+                <div className="md:col-span-3">
                   <h4 className="font-semibold mb-3">Quick Links</h4>
                   <ul className="space-y-2 text-sm">
-                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/menu')}>Menu</li>
-                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/orders')}>Orders</li>
-                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/reviews')}>Reviews</li>
-                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/contact')}>Contact</li>
+                    <li><button className="hover:underline text-left" onClick={()=>navigate('/menu')}>Menu</button></li>
+                    <li><button className="hover:underline text-left" onClick={()=>navigate('/orders')}>Orders</button></li>
+                    <li><button className="hover:underline text-left" onClick={()=>navigate('/reviews')}>Reviews</button></li>
+                    <li><button className="hover:underline text-left" onClick={()=>navigate('/contact')}>Contact</button></li>
                   </ul>
                 </div>
 
-                <div>
+                <div className="md:col-span-3">
                   <h4 className="font-semibold mb-3">Contact</h4>
                   <div className="text-sm space-y-2">
                     <div className="flex items-center gap-2"><MapPin className="w-4 h-4" /> <span>{location.address || settings.address || t('address_not_set')}</span></div>
                     <div className="flex items-center gap-2"><Phone className="w-4 h-4" /> <span>{callUs.number || contact.phone || settings.phone || t('phone_not_set')}</span></div>
-                    <div className="text-xs text-gray-500">{footer.text || `© ${new Date().getFullYear()} ${settings.restaurantName || 'Restaurant'}.`}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{footer.text || `© ${new Date().getFullYear()} ${settings.restaurantName || 'Restaurant'}.`}</div>
                   </div>
                 </div>
 
-                {/* <div>
-                  <h4 className="font-semibold mb-3">Newsletter</h4>
-                  <form onSubmit={(e)=>{ e.preventDefault(); const f = new FormData(e.target); console.log('Subscribe', f.get('email')); }} className="flex gap-2">
-                    <input name="email" type="email" placeholder={t('your_email') || 'you@example.com'} className="flex-1 p-2 rounded border bg-white dark:bg-gray-800 text-sm" />
-                    <button type="submit" className="px-3 py-2 bg-primary text-white rounded">Join</button>
-                  </form>
-                  <div className="mt-4 text-sm">Payment methods</div>
-                  <div className="flex items-center gap-2 mt-2 text-sm">
-                    <div className="px-2 py-1 bg-white rounded shadow">Visa</div>
-                    <div className="px-2 py-1 bg-white rounded shadow">Mastercard</div>
-                    <div className="px-2 py-1 bg-white rounded shadow">Cash</div>
+                <div className="md:col-span-2 flex flex-col gap-3">
+                  <h4 className="font-semibold mb-1">Follow</h4>
+                  <div className="flex gap-2">
+                    <a aria-label="instagram" href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}`} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-sm inline-flex items-center gap-2">
+                      <Instagram className="w-4 h-4" /> Instagram
+                    </a>
+                   
                   </div>
-                </div> */}
+                  <div className="mt-auto text-xs text-gray-500 dark:text-gray-400">Built with care • Fast support</div>
+                </div>
               </div>
             </footer>
           ))}
