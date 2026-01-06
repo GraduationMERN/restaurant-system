@@ -270,6 +270,17 @@ export function SettingsProvider({ children }) {
     // Landing specific
     const getLandingSettings = () => settings.systemSettings?.landing || DEFAULT_LANDING;
     const updateLandingSettings = async (payload, opts) => saveSystemCategory('landing', payload, opts);
+    const importInstagramPosts = async ({ username, count = 8, persist = false } = {}) => {
+        const url = `/api/restaurant/landing-settings/import-instagram${persist ? '' : '?persist=false'}`;
+        const res = await fetchWithRetry({ method: 'post', url, data: { username, count } }, { retries: 1 });
+        const returned = res?.data?.data ?? res?.data ?? null;
+        // If persisted response includes landing with instagram posts, merge into settings
+        if (persist && returned && returned.instagram && Array.isArray(returned.instagram.posts)) {
+            setSettings(s => ({ ...s, systemSettings: { ...(s.systemSettings || {}), landing: { ...(s.systemSettings?.landing || {}), instagram: { ...(s.systemSettings?.landing?.instagram || {}), posts: returned.instagram.posts, enabled: returned.instagram.enabled !== false } } } }));
+        }
+        // for preview (persist=false) returned contains { instagram: { posts } }
+        return returned;
+    };
     const resetLandingPage = async () => {
         try {
             const res = await fetchWithRetry({ method: 'post', url: '/api/restaurant/landing-settings/reset' }, { retries: 1 });
@@ -486,6 +497,7 @@ export function SettingsProvider({ children }) {
             // Landing
             getLandingSettings,
             updateLandingSettings,
+            importInstagramPosts,
             resetLandingPage,
             uploadLandingImage,
             // Assets

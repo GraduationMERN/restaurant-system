@@ -55,6 +55,8 @@ import {
   uploadMenuImage,
   uploadFavicon,
   generateMenuImage,
+  // Instagram import
+  importInstagramPosts,
   
   // General Update
   updateRestaurant,
@@ -113,6 +115,8 @@ app.get("/landing-settings", getLandingSettings); // Get landing page settings
 app.put("/landing-settings", updateLandingSettings); // Update landing page settings
 app.post("/landing-settings/reset", resetLandingPage); // Reset landing page to defaults
 app.post("/upload-landing-image", uploadCloud.single("image"), uploadLandingImage); // Upload landing image
+// Import Instagram (admin)
+app.post('/landing-settings/import-instagram', importInstagramPosts);
 
 // ======================
 // 4. SERVICE WHITE-LABEL

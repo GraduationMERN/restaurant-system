@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchReviews } from '../../../redux/slices/reviewSlice';
 
 export default function LandingSettings() {
-  const { rawSettings, saveSystemCategory, loading, isOnline, uploadLandingImage } = useSettings();
+  const { rawSettings, saveSystemCategory, loading, isOnline, uploadLandingImage, importInstagramPosts } = useSettings();
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const existing = rawSettings?.systemSettings?.landing;
@@ -39,6 +39,9 @@ export default function LandingSettings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importPreviewPosts, setImportPreviewPosts] = useState([]);
+  const [importMode, setImportMode] = useState('merge'); // 'merge' or 'replace'
 
   // Load existing settings into local state - FIXED with deep merge
   useEffect(() => {
@@ -400,6 +403,24 @@ export default function LandingSettings() {
     }));
   };
 
+  // Merge previewed imported posts with existing manual posts uniquely
+  const mergeUniquePosts = (imported = [], existing = []) => {
+    const seen = new Set();
+    const normalizedKey = (p) => (p.permalink || p.image || p.id || p.caption || '').toString();
+    const out = [];
+    // Add imported first
+    for (const p of imported) {
+      const k = normalizedKey(p);
+      if (!seen.has(k)) { seen.add(k); out.push(p); }
+    }
+    // Add existing only if not in imported
+    for (const p of existing) {
+      const k = normalizedKey(p);
+      if (!seen.has(k)) { seen.add(k); out.push(p); }
+    }
+    return out;
+  };
+
   // Debug function
   const logCurrentState = () => {
     console.log('=== CURRENT LANDING STATE ===');
@@ -408,6 +429,45 @@ export default function LandingSettings() {
     console.log('Services items:', landing.services.items);
     console.log('Services items count:', landing.services.items?.length);
     console.log('Testimonials:', landing.testimonials);
+  };
+
+  // Confirm and apply the import (persisted)
+  const confirmImport = async () => {
+    if (!landing._importUsername) return setError('Missing instagram username');
+    setError(null);
+    setSaving(true);
+    try {
+      // Persist import on server (this will fetch and save unless server configured differently)
+      const returned = await importInstagramPosts({ username: landing._importUsername, count: 50, persist: true });
+      const importedPosts = returned?.instagram?.posts || returned?.instagram?.posts || [];
+
+      if (importMode === 'replace') {
+        // Update local draft to returned landing if available
+        if (returned) setLanding(prev => ({ ...prev, instagram: { ...(prev.instagram||{}), posts: importedPosts, enabled: true } }));
+      } else {
+        // Merge: combine imported with existing manual posts and persist via saveSystemCategory
+        const existing = landing.instagram?.posts || [];
+        const merged = mergeUniquePosts(importedPosts, existing);
+        try {
+          const saved = await saveSystemCategory('landing', { ...(landing), instagram: { ...(landing.instagram||{}), posts: merged } });
+          // server returns category data; update local state
+          if (saved) setLanding(prev => ({ ...prev, instagram: { ...(prev.instagram||{}), posts: saved.instagram?.posts || merged, enabled: saved.instagram?.enabled !== false } }));
+        } catch (err) {
+          console.error('Failed to save merged posts', err);
+          setError(err?.message || 'Failed to save merged posts');
+        }
+      }
+
+      setSuccess('Instagram import applied');
+      setTimeout(()=>setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Confirm import failed', err);
+      setError(err?.message || 'Confirm import failed');
+    } finally {
+      setSaving(false);
+      setShowImportConfirm(false);
+      setImportPreviewPosts([]);
+    }
   };
 
   return (
@@ -550,6 +610,40 @@ export default function LandingSettings() {
           </div>
         </div>
       </section>
+
+      {/* Import Confirmation Modal */}
+      {showImportConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={()=>{ setShowImportConfirm(false); setImportPreviewPosts([]); }} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full p-6 z-10">
+            <h3 className="text-xl font-semibold mb-3">Preview Instagram Import</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Previewing {importPreviewPosts.length} posts for @{landing._importUsername}. Choose how to apply them:</p>
+            <div className="flex items-center gap-4 mb-4">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="importMode" checked={importMode==='merge'} onChange={()=>setImportMode('merge')} />
+                <span className="text-sm">Merge with existing manual posts (keep both)</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="importMode" checked={importMode==='replace'} onChange={()=>setImportMode('replace')} />
+                <span className="text-sm">Replace existing Instagram posts</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4 max-h-60 overflow-auto">
+              {importPreviewPosts.slice(0, 24).map((p, i) => (
+                <div key={i} className="rounded overflow-hidden bg-gray-100 dark:bg-gray-700 h-28 flex items-center justify-center">
+                  {p.image ? <img src={p.image} alt={p.caption || 'post'} className="w-full h-full object-cover" /> : <div className="text-xs text-gray-500 p-2">No image</div>}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button className="px-4 py-2 bg-gray-200 rounded" onClick={()=>{ setShowImportConfirm(false); setImportPreviewPosts([]); }}>Cancel</button>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={confirmImport} disabled={saving}>{saving ? 'Applying...' : 'Confirm Import'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Services Section */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
@@ -1105,22 +1199,56 @@ export default function LandingSettings() {
 
       {/* Instagram Section */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">Instagram Posts</h3>
-          <label className="flex items-center gap-2 text-sm">
-            <input 
-              type="checkbox" 
-              checked={landing.instagram.enabled !== false} 
-              onChange={(e)=>setLanding(l=>({
-                ...l, 
-                instagram: {
-                  ...l.instagram, 
-                  enabled: e.target.checked
-                }
-              }))} 
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-semibold">Instagram Posts</h3>
+            <label className="flex items-center gap-2 text-sm">
+              <input 
+                type="checkbox" 
+                checked={landing.instagram.enabled !== false} 
+                onChange={(e)=>setLanding(l=>({
+                  ...l, 
+                  instagram: {
+                    ...l.instagram, 
+                    enabled: e.target.checked
+                  }
+                }))} 
+              />
+              Enabled
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              placeholder="instagram username"
+              value={landing._importUsername || ''}
+              onChange={(e)=>setLanding(l=>({...l, _importUsername: e.target.value}))}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-sm"
             />
-            Enabled
-          </label>
+            <button
+              className="px-3 py-2 bg-pink-500 text-white rounded text-sm"
+              onClick={async ()=>{
+                if (!landing._importUsername) return setError('Enter Instagram username to import');
+                setError(null);
+                setSaving(true);
+                try {
+                  // Preview fetch (do not persist)
+                  const returned = await importInstagramPosts({ username: landing._importUsername, count: 12, persist: false });
+                  const posts = returned?.instagram?.posts || [];
+                  if (!posts.length) return setError('No posts returned from Instagram');
+                  setImportPreviewPosts(posts);
+                  setImportMode('merge');
+                  setShowImportConfirm(true);
+                } catch (err) {
+                  console.error('Import preview failed', err);
+                  // Prefer server-provided message when available
+                  const serverMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
+                  setError(serverMsg || 'Import preview failed');
+                } finally { setSaving(false); }
+              }}
+            >
+              {saving ? 'Fetching...' : 'Preview Import'}
+            </button>
+          </div>
         </div>
         <div className="space-y-4">
           {(landing.instagram.posts || []).map((post, idx) => (

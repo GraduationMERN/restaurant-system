@@ -1,6 +1,7 @@
 // restaurant.service.js
 import restaurantRepository from "./restaurant.repository.js";
 import { translateRestaurantSettings } from "../../utils/translation.service.js";
+import instagramService from "./instagram.service.js";
 
 class RestaurantService {
   // Basic restaurant operations
@@ -186,6 +187,32 @@ class RestaurantService {
       return await restaurantRepository.updateSystemSettings(restaurant._id, updates);
     } catch (err) {
       console.error('resetLandingPage error', err);
+      throw err;
+    }
+  }
+
+  // Import Instagram posts and merge into landing.instagram.posts
+  async importInstagramPosts({ username, count = 8 } = {}, selector = {}) {
+    try {
+      const posts = await instagramService.fetchPosts({ username, count });
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      // Merge: replace instagram.posts with fetched posts but keep enabled flag
+      const currentLanding = restaurant.systemSettings?.landing || {};
+      const updatedLanding = {
+        ...currentLanding,
+        instagram: {
+          ...(currentLanding.instagram || {}),
+          enabled: true,
+          posts,
+        }
+      };
+
+      const updates = { landing: updatedLanding };
+      return await restaurantRepository.updateSystemSettings(restaurant._id, updates);
+    } catch (err) {
+      console.error('importInstagramPosts error', err);
       throw err;
     }
   }

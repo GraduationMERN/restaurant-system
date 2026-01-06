@@ -718,3 +718,34 @@ export async function uploadFavicon(req, res) {
     res.status(500).json({ success: false, message: error.message || 'Internal server error' });
   }
 }
+
+// Import Instagram posts into landing settings (admin only)
+export async function importInstagramPosts(req, res) {
+  try {
+    const { username, count } = req.body;
+    if (!username) return res.status(400).json({ success: false, message: 'Missing username' });
+
+    // Support preview mode: ?persist=false will fetch posts but NOT save to DB
+    const persist = req.query?.persist !== 'false';
+
+    // Use instagramService directly for preview (no DB write)
+    const instagramService = (await import('./instagram.service.js')).default;
+    const posts = await instagramService.fetchPosts({ username, count: Number(count) || 8 });
+
+    if (!persist) {
+      return res.status(200).json({ success: true, message: 'Fetched Instagram posts (preview)', data: { instagram: { posts } } });
+    }
+
+    // Persist into landing settings
+    const updated = await restaurantService.importInstagramPosts({ username, count: Number(count) || 8 });
+    res.status(200).json({ success: true, message: 'Imported Instagram posts', data: updated.systemSettings?.landing });
+  } catch (error) {
+    console.error('Error importing instagram posts:', error);
+    const msg = error?.message || '';
+    // Return 400 for configuration or upstream API errors with helpful message
+    if (msg.includes('not configured') || msg.includes('No fetch available') || msg.includes('Instagram API error')) {
+      return res.status(400).json({ success: false, message: msg });
+    }
+    res.status(500).json({ success: false, message: msg || 'Failed to import Instagram posts' });
+  }
+}
