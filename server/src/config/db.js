@@ -4,7 +4,7 @@ import { env } from "./env.js"; // import centralized env config
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(env.mongoUri, {
-      dbName: env.dbName || "qr_restaurant",
+      dbName: env.dbName || "brandbite",
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

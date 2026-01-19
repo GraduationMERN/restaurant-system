@@ -18,6 +18,20 @@ export const fetchActiveOrder = createAsyncThunk(
     }
   }
 );
+// Reorder order
+export const reorderOrder = createAsyncThunk(
+  "orders/reorder",
+  async (orderId, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/api/orders/reorder/${orderId}`);
+      return res.data.order; // The new order returned from backend
+    } catch (err) {
+            console.error("REORDER ERROR:", err.response?.data);
+
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
 
 // Fetch user's order history (all orders)
 export const fetchOrderHistory = createAsyncThunk(
@@ -215,6 +229,25 @@ const ordersSlice = createSlice({
         state.historyLoading = false;
         state.historyError = action.payload;
       });
+
+// Reorder
+builder
+  .addCase(reorderOrder.pending, (state) => {
+    state.activeOrderLoading = true;
+    state.activeOrderError = null;
+  })
+  .addCase(reorderOrder.fulfilled, (state, action) => {
+    state.activeOrderLoading = false;
+    // Set the new order as activeOrder
+    state.activeOrder = action.payload;
+
+    // Optionally add to history if needed
+    state.orderHistory.unshift(action.payload);
+  })
+  .addCase(reorderOrder.rejected, (state, action) => {
+    state.activeOrderLoading = false;
+    state.activeOrderError = action.payload;
+  });
 
     // Fetch Order By ID
     builder

@@ -42,10 +42,16 @@ const OrderItemSchema = new mongoose.Schema(
 const OrderSchema = new mongoose.Schema(
   {
     // ============= ORDER IDENTIFICATION =============
-    orderNumber: {
+   orderNumber: {
       type: String,
       required: true,
       unique: true,
+      default: function() {
+        const date = new Date();
+        const timestamp = date.getTime();
+        const random = Math.floor(Math.random() * 1000);
+        return `ORD-${timestamp}-${random}`;
+      }
     },
 
     // ============= CUSTOMER IDENTIFICATION =============

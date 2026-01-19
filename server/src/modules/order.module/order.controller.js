@@ -27,9 +27,6 @@ function getOrderUserId(req, res) {
 
   if (!guestId) {
     guestId = uuidv4();
-    console.log("[ORDER] No guestOrderId found → Generating:", guestId);
-    console.log("[ORDER] Current cookies:", req.cookies);
-
     res.cookie("guestOrderId", guestId, {
       httpOnly: false,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -37,10 +34,7 @@ function getOrderUserId(req, res) {
       secure: isProduction,
       path: "/",
     });
-  } else {
-    console.log("[ORDER] Existing guestOrderId found:", guestId);
   }
-
   return guestId;
 }
 
@@ -395,6 +389,28 @@ export const getDailyStats = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+export const reorderController = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id; // from auth middleware
+    const { orderId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const newOrder = await orderService.reorderPreviousOrder(orderId, userId);
+
+    res.status(201).json({
+      message: "Order placed successfully",
+      order: newOrder
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
 
 export const getTopItems = async (req, res) => {
   try {

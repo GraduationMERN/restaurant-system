@@ -1,16 +1,15 @@
 import winston from 'winston';
 
-const { combine, timestamp, json, printf } = winston.format;
-
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: combine(timestamp(), json()),
-  defaultMeta: { service: 'restaurant-server' },
-  transports: [new winston.transports.Console({ level: process.env.LOG_LEVEL || 'info' })],
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'logs/app.log' })
+  ]
 });
-
-export function childLogger(meta = {}) {
-  return logger.child(meta);
-}
 
 export default logger;

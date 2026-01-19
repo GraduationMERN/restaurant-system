@@ -79,3 +79,5 @@ yarn-debug.log*
 *.tsbuildinfo
 .turbo
 .env*.local
+.env*
+.env*

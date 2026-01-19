@@ -8,10 +8,18 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.server.development
+.env.server.production
+
+# Firebase credentials (IMPORTANT!)
+**/firebase-service-account.json
+firebase-service-account.json
+server/src/config/firebase-service-account.json
 
 # IDE
 .vscode/
 .idea/
+logs/
 *.swp
 *.swo
 *~

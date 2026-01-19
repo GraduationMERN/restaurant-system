@@ -2,36 +2,40 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-     name: { type: String, required: [true, "Name is required"], trim: true },
-    email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
-    },
-    password: {
-      type: String,
-      required: function () {
-        return !this.googleId;  
-      },
-      minlength: [6, "Password must be at least 6 characters long"],
-    },
-    googleId: { type: String, sparse: true, unique: true }, 
+    name: { type: String, trim: true },
     avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
-      default: "",  // ✅ Make it optional with default
+      trim: true,
+      sparse: true,
       minlength: [11, "Phone number must be 11 characters long"],
+    },
+    email: {
+      type: String,
+      sparse: true,
+    },
+    firebaseUid: {
+      type: String,
+      required: true,
+      unique: true,
     },
     role: {
       type: String,
-      enum: ["customer", "cashier", "kitchen", "admin"],
-      default: "customer",
+      enum: [
+        "super_admin",
+        "restaurant_owner",
+        "restaurant_staff",
+        "customer",
+        "cashier",
+        "kitchen",
+        "admin",
+      ],
+      default: "restaurant_staff",
     },
-    bio: {
-      type: String,
-      default: "",
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      default: null,
     },
     address: {
       country: { type: String, default: "" },
@@ -42,6 +46,10 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    refreshToken: {
+      type: String,
+      select: false
     },
     points: {
       type: Number,
@@ -95,17 +103,19 @@ const userSchema = new mongoose.Schema(
         }
       ]
     },
-    otp: String,
-    otpExpires: Date,
-    refreshToken: String,
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );
 
-userSchema.index({ googleId: 1 });
-userSchema.index({ email: 1 });
+userSchema.index({ phoneNumber: 1 });
+
+// Validation: Super admins must not be associated with a restaurant
+userSchema.pre("validate", function (next) {
+  if (this.role === "super_admin" && this.restaurantId) {
+    return next(new Error("super_admin must not have a restaurantId"));
+  }
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 export default User;

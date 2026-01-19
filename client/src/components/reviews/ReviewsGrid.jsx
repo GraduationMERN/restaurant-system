@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { format } from "timeago.js";
 import { Star, Calendar, Image as ImageIcon, ChevronRight, Quote, Clock, Tag, ChevronLeft, ChevronRight as ChevronRightIcon, X, CheckCircle, ChevronFirst, ChevronLast } from "lucide-react";
 
 export default function ReviewsGrid({ reviews }) {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // Pagination settings
   const reviewsPerPage = 6;
   const totalPages = Math.ceil(reviews?.length / reviewsPerPage) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Promotional/Ad content data
+  // Promotional/Ad content data - Single ad
   const promotionalAds = [
     {
       id: 1,
@@ -21,35 +22,15 @@ export default function ReviewsGrid({ reviews }) {
       subtitle: t("reviews.promotions.family_feast"),
       description: t("reviews.promotions.family_feast_desc"),
       image: "https://plus.unsplash.com/premium_photo-1723662076067-5aa5881e69c0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8ZmFtaWx5JTIwZmVhc3QlMjBkYXl8ZW58MHx8MHx8fDA%3D",
-      ctaText: t("Check Menu Now"),
+      ctaText: t("reviews.promotions.book_now"),
       badge: "30% OFF", 
       badgeColor: "bg-gradient-to-r from-amber-500 to-orange-500",
       icon: Tag,
       expiresIn: "48:00:00"
     },
-    {
-      id: 2,
-      title: t("reviews.promotions.new_menu_launch"),
-      subtitle: t("reviews.promotions.seasonal_specials"),
-      description: t("reviews.promotions.seasonal_desc"),
-      image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop",
-      ctaText: t("reviews.promotions.view_menu"),
-      badge: "NEW",
-      badgeColor: "bg-gradient-to-r from-blue-500 to-cyan-500",
-      icon: Clock,
-      expiresIn: "72:00:00"
-    }
   ];
 
-  const featuredAd = promotionalAds[currentAdIndex];
-
-  const handleNextAd = () => {
-    setCurrentAdIndex((prev) => (prev + 1) % promotionalAds.length);
-  };
-
-  const handlePrevAd = () => {
-    setCurrentAdIndex((prev) => (prev - 1 + promotionalAds.length) % promotionalAds.length);
-  };
+  const featuredAd = promotionalAds[0];
 
   if (!reviews || reviews.length === 0) {
     return (
@@ -165,24 +146,6 @@ export default function ReviewsGrid({ reviews }) {
                       {featuredAd.badge}
                     </span>
                   </div>
-
-                  {/* Navigation */}
-                  {promotionalAds.length > 1 && (
-                    <div className="absolute top-3 right-3 flex items-center gap-2">
-                      <button
-                        onClick={handlePrevAd}
-                        className="w-7 h-7 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30"
-                      >
-                        <ChevronLeft className="w-3 h-3 text-white" />
-                      </button>
-                      <button
-                        onClick={handleNextAd}
-                        className="w-7 h-7 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30"
-                      >
-                        <ChevronRightIcon className="w-3 h-3 text-white" />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* Ad Content */}
@@ -221,7 +184,9 @@ export default function ReviewsGrid({ reviews }) {
                     </div>
                   </div>
 
-                  <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-sm">
+                  <button 
+                    onClick={() => navigate('/bookings')}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-sm">
                     {featuredAd.ctaText}
                   </button>
                 </div>
@@ -385,26 +350,11 @@ export default function ReviewsGrid({ reviews }) {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-sm">
+                    <button 
+                      onClick={() => navigate('/bookings')}
+                      className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-sm">
                       {featuredAd.ctaText}
                     </button>
-                    
-                    {promotionalAds.length > 1 && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={handlePrevAd}
-                          className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600"
-                        >
-                          <ChevronLeft className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={handleNextAd}
-                          className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600"
-                        >
-                          <ChevronRightIcon className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -508,29 +458,14 @@ export default function ReviewsGrid({ reviews }) {
                   {featuredAd.badge}
                 </span>
               </div>
-
-              {promotionalAds.length > 1 && (
-                <div className="absolute bottom-3 right-3 flex items-center gap-1">
-                  <button
-                    onClick={handlePrevAd}
-                    className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30"
-                  >
-                    <ChevronLeft className="w-3 h-3 text-white" />
-                  </button>
-                  <button
-                    onClick={handleNextAd}
-                    className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30"
-                  >
-                    <ChevronRightIcon className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              )}
             </div>
 
             <div className="p-3">
               <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">{featuredAd.title}</h3>
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{featuredAd.description}</p>
-              <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium py-2 rounded-lg text-sm">
+              <button 
+                onClick={() => navigate('/bookings')}
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium py-2 rounded-lg text-sm">
                 {featuredAd.ctaText}
               </button>
             </div>

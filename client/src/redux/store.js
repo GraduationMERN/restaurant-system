@@ -19,6 +19,8 @@ import userProfileReducer from "./slices/userProfileSlice";
 import searchReducer from "./slices/searchSlice";
 import couponReducer from './slices/couponSlice';
 import staffChatReducer from "./slices/staffChatSlice";
+import bookingReducer from "./slices/bookingSlice";
+import tableReducer from "./slices/tableSlice";
 
 export const store = configureStore({
   reducer: {
@@ -42,5 +44,7 @@ export const store = configureStore({
     search: searchReducer,
     coupon: couponReducer,
     staffChat: staffChatReducer,
+    booking: bookingReducer,
+    table: tableReducer,
   },
 });

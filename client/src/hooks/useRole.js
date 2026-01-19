@@ -13,6 +13,7 @@ export const useRole = () => {
     const role = (user?.role || "").toString().toLowerCase();
     return {
       isAdmin: role === "admin",
+      isSuperAdmin: role === "super_admin",
       isCashier: role === "cashier",
       isKitchen: role === "kitchen",
       isCustomer: role === "customer",

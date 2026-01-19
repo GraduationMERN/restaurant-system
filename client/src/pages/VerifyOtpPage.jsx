@@ -1,7 +1,7 @@
 // src/features/auth/OtpVerificationPage.jsx
-import React, { useState, useEffect } from "react";
+import{ useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyOtp, clearError } from "../redux/slices/authSlice";
+import { clearError } from "../redux/slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function OtpVerificationPage() {
@@ -30,14 +30,6 @@ export default function OtpVerificationPage() {
       return; // simple validation
     }
 
-    try {
-      const resultAction = await dispatch(verifyOtp({ email, otp }));
-      if (verifyOtp.fulfilled.match(resultAction)) {
-        navigate("/");
-      }
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   const handleInputChange = (e) => {

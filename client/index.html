@@ -11,6 +11,46 @@
     />
     <link rel="icon" type="image/svg+xml" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "dark") document.documentElement.classList.add("dark");
+
+          // Apply cached branding colors early to avoid white/unstyled flash
+          var branding = localStorage.getItem("branding");
+          if (branding) {
+            try {
+              var b = JSON.parse(branding);
+              if (b?.primaryColor)
+                document.documentElement.style.setProperty(
+                  "--color-primary",
+                  b.primaryColor
+                );
+              if (b?.secondaryColor)
+                document.documentElement.style.setProperty(
+                  "--color-secondary",
+                  b.secondaryColor
+                );
+            } catch (e) {
+              // ignore parse errors
+            }
+          } else {
+            // sensible defaults to avoid white loader
+            document.documentElement.style.setProperty(
+              "--color-primary",
+              "#2563eb"
+            );
+            document.documentElement.style.setProperty(
+              "--color-secondary",
+              "#e27e36"
+            );
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
     <meta name="theme-color" content="##ecf5ff" />
     <meta
       name="description"

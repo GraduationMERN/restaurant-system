@@ -11,18 +11,7 @@ async function populateCartWithProductPoints(cart) {
   return populatedCart;
 }
 
-//getCartUserId for both guest and registered users
-// function getCartUserId(req, res) {
-//     if (req.user?._id) return req.user._id.toString(); // مستخدم مسجل
-//     // guest user
-//     if (!req.cookies.guestCartId) {
-//         const guestId = uuidv4();
-//         const isProduction = process.env.NODE_ENV === "production";
-//         res.cookie('guestCartId', guestId, { httpOnly: false, maxAge: 7*24*60*60*1000 ,sameSite: isProduction ? "none" : "lax",secure: isProduction ? true : false}); // أسبوع
-//         return guestId;
-//     }
-//     return req.cookies.guestCartId;
-// }
+
 
 function getCartUserId(req, res) {
 //   console.log(" Incoming cookies:", req.cookies);

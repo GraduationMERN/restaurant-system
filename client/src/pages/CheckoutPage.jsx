@@ -3,12 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderFromCart } from "../redux/slices/orderSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
 import PointsModal from "../components/PointsModal";
 import OrderRecommendations from "../components/recommendations/OrderRecommendations";
 import api from "../api/axios";
+import { useServices } from "../hooks/useServices";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
@@ -24,12 +25,18 @@ L.Icon.Default.mergeOptions({
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { products, totalPrice, loading, _id: cartId } = useSelector(
     (state) => state.cart
   );
   const authUser = useSelector((state) => state.auth?.user || null);
-
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated || false);
+  
+  // Fetch enabled services from backend
+  const { getEnabledServiceTypes, isServiceEnabled, loading: servicesLoading } = useServices();
+  const enabledServices = getEnabledServiceTypes();
+  
   const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
@@ -53,6 +60,17 @@ export default function CheckoutPage() {
   useEffect(() => {
     dispatch(getCartForUser());
   }, [dispatch]);
+
+  // Set initial service type based on enabled services
+  useEffect(() => {
+    if (enabledServices.length > 0) {
+      // Set to first enabled service, or pickup if available
+      const defaultService = enabledServices.includes('pickup') 
+        ? 'pickup' 
+        : enabledServices[0];
+      setServiceType(defaultService);
+    }
+  }, [enabledServices]);
 
   // Auto-fill contact info from auth user
   useEffect(() => {
@@ -105,11 +123,11 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-          setDeliveryLocation({
-            lat: latitude,
-            lng: longitude,
-            address: t("checkout.current_location"),
-          });
+        setDeliveryLocation({
+          lat: latitude,
+          lng: longitude,
+          address: t("checkout.current_location"),
+        });
         setLocationError(null);
         setLocationLoading(false);
       },
@@ -134,13 +152,21 @@ export default function CheckoutPage() {
   };
 
 
-  const handleQuantityChange = (productId, quantity) => {
-    if (quantity < 1) return;
-    console.log("Updating quantity for productId:", productId);
+  const handleQuantityChange = (cartItemId, newQuantity) => {
+    console.log("=== FRONTEND handleQuantityChange ===");
+    console.log("cartItemId:", cartItemId);
+    console.log("newQuantity:", newQuantity);
+    console.log("Type of newQuantity:", typeof newQuantity);
+    console.log("Is NaN?", isNaN(newQuantity));
+
+    if (newQuantity < 1) {
+      console.log("⚠️ Quantity less than 1, returning");
+      return;
+    }
 
     dispatch(updateCartQuantity({
-      cartItemId: productId,
-      newQuantity: quantity
+      productId: cartItemId,
+      newQuantity
     }));
   };
 
@@ -220,9 +246,18 @@ export default function CheckoutPage() {
       setOrderError("No cart found. Please add items to cart first.");
       return;
     }
-
+    if(!isAuthenticated){
+      navigate('/login',{ state: { from: location } });
+      return;
+    }
     if (products.length === 0) {
       setOrderError("Your cart is empty. Please add items before checking out.");
+      return;
+    }
+
+    // Validate service is still enabled
+    if (!isServiceEnabled(serviceType)) {
+      setOrderError("Selected service is no longer available. Please select another service.");
       return;
     }
 
@@ -335,6 +370,29 @@ export default function CheckoutPage() {
     );
   }
 
+  // Show error if no services are available
+  if (!servicesLoading && enabledServices.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="h-16 w-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Services Unavailable</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            All services are currently disabled. Please contact the restaurant for assistance.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="text-primary dark:text-primary/90 hover:text-primary/110 font-medium"
+          >
+            {t("checkout.back")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header with Back Button */}
@@ -394,16 +452,18 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-primary/10 dark:bg-primary/10 rounded-full px-1">
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
+                            onClick={() => handleQuantityChange(item._id, item.quantity - 1) }
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
+
                           <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -464,19 +524,38 @@ export default function CheckoutPage() {
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-5">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 lg:sticky lg:top-4">
-              {/* Service Type Dropdown */}
+              {/* Service Type Dropdown - Only show enabled services */}
               <div className="mb-6">
                 <div className="relative">
-                  <select
-                    value={serviceType}
-                    onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
-                  >
-                    <option value="pickup" className="bg-white dark:bg-gray-700">{t("checkout.pickup")}</option>
-                    <option value="dine-in" className="bg-white dark:bg-gray-700">{t("checkout.dine_in")}</option>
-                    <option value="delivery" className="bg-white dark:bg-gray-700">{t("checkout.delivery")}</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                  {servicesLoading ? (
+                    <div className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 font-medium text-gray-900 dark:text-white flex items-center">
+                      <div className="h-4 w-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin mr-2"></div>
+                      {t("loading")}...
+                    </div>
+                  ) : enabledServices.length > 0 ? (
+                    <>
+                      <select
+                        value={serviceType}
+                        onChange={(e) => setServiceType(e.target.value)}
+                        className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
+                      >
+                        {enabledServices.includes('pickup') && (
+                          <option value="pickup" className="bg-white dark:bg-gray-700">{t("checkout.pickup")}</option>
+                        )}
+                        {enabledServices.includes('dine-in') && (
+                          <option value="dine-in" className="bg-white dark:bg-gray-700">{t("checkout.dine_in")}</option>
+                        )}
+                        {enabledServices.includes('delivery') && (
+                          <option value="delivery" className="bg-white dark:bg-gray-700">{t("checkout.delivery")}</option>
+                        )}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                    </>
+                  ) : (
+                    <div className="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 font-medium">
+                      {t("checkout.no_services_available")}
+                    </div>
+                  )}
                 </div>
               </div>
 

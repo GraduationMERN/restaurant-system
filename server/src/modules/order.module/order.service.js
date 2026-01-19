@@ -346,6 +346,32 @@ class OrderService {
     return await orderRepo.findById(identifier, true);
   }
 
+  ///////////reordering
+  
+async reorderPreviousOrder(orderId, userId) {
+    // 1. Fetch the previous order
+    const previousOrder = await orderRepo.findById(orderId);
+    
+    // Make sure the order belongs to this user
+    if (!previousOrder || previousOrder.user.toString() !== userId.toString()) {
+      throw new Error("Order not found or access denied");
+    }
+
+    // 2. Prepare new order data
+ const newOrderData = {
+  ...previousOrder.toObject(), // Copy everything
+  _id: undefined, // Remove the ID
+  orderNumber: undefined, // Will be auto-generated
+  status: "pending",
+  paymentStatus: "pending",
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
+
+    // 3. Save new order using repo
+    const newOrder = await orderRepo.create(newOrderData);
+    return newOrder;
+  }
   // Get orders by user (works for both guest and registered)
   async getOrdersByUser(customerId) {
     return await orderRepo.findByUserId(customerId, true);

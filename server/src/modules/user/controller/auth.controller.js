@@ -1,205 +1,326 @@
+import admin from "../../../config/firebaseAdmin.js";
+import User from "../model/User.js";
+import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
+import jwt from "jsonwebtoken";
 import { env } from "../../../config/env.js";
-import {
-  forgetPasswordService,
-  googleAuthService,
-  loginUserService,
-  logoutUserService,
-  registerUserService,
-  resetPasswordService,
-} from "../service/auth.service.js";
-import { refreshTokenService } from "../service/refreshToken.service.js";
-import { verifyOtpService } from "../service/verifyOtp.service.js";
-import orderModel from "../../order.module/orderModel.js";
+import logger from "../../../utils/logger.js";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.nodeEnv === "production";
 
-// Base cookie options. Use more restrictive SameSite in development for testing
-// and enable `SameSite=None; Secure` in production for cross-site cookie usage.
+// Base cookie options
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: "Lax", // Changed from None to Lax for better compatibility
-  secure: true, // Keep secure for HTTPS
-  maxAge: 24 * 60 * 60 * 1000,
-  path: "/", // Reverted back to "/"
+  secure: isProduction,
+  sameSite: isProduction ? "None" : "Lax",
+  maxAge: 15 * 60 * 1000,
+  path: "/",
 };
 
-// Allow an explicit cookie domain to be set via env (e.g. ".example.com").
-// This helps when frontend and backend are on subdomains of the same eTLD+1.
 const cookieOptions = {
   ...cookieOptionsBase,
-  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  ...(isProduction && process.env.COOKIE_DOMAIN
+    ? { domain: process.env.COOKIE_DOMAIN }
+    : {}),
 };
-export const registerUserController = async (req, res) => {
+
+/* ============================
+   FIREBASE LOGIN
+============================ */
+export const firebaseLoginController = async (req, res) => {
   try {
-    const { message } = await registerUserService(req.body);
-    res.status(201).json({
-      message,
+    const token = req.headers.authorization?.split(" ")[1];
+
+    logger.info("Firebase login attempt", {
+      hasToken: !!token,
+      ip: req.ip,
     });
-  } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
-  }
-};
 
-export const loginUserController = async (req, res) => {
-  try {
-     console.log("=== LOGIN ATTEMPT ===");
-    console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("Frontend URL:", env.frontendUrl);
-    console.log("Request origin:", req.headers.origin);
-    console.log("Request headers:", req.headers);
-    console.log("Cookies received:", req.cookies);
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
 
-    const { email, password } = req.body;
-    const { user, accessToken, refreshToken } = await loginUserService(
-      email,
-      password
-    );
-    
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+    } catch (err) {
+      logger.warn("Firebase token verification failed", {
+        message: err.message,
+      });
+      return res.status(401).json({ message: "Invalid Firebase token" });
+    }
+
+    const { uid, phone_number, email, name, picture } = decodedToken;
+
+    let user = await User.findOne({ firebaseUid: uid });
+
+    if (!user) {
+      const existingUser = await User.findOne({
+        $or: [
+          phone_number ? { phoneNumber: phone_number } : null,
+          email ? { email } : null,
+        ].filter(Boolean),
+      });
+
+      if (existingUser) {
+        existingUser.firebaseUid = uid;
+        existingUser.isVerified = true;
+        if (!existingUser.email && email) existingUser.email = email;
+        if (!existingUser.name && name) existingUser.name = name;
+        if (!existingUser.avatarUrl && picture)
+          existingUser.avatarUrl = picture;
+
+        await existingUser.save();
+        user = existingUser;
+      } else {
+        user = await User.create({
+          firebaseUid: uid,
+          phoneNumber: phone_number || null,
+          email: email || null,
+          name: name || null,
+          avatarUrl: picture || null,
+          isVerified: true,
+          role: "customer",
+        });
+      }
+    }
+
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    
 
-    res.status(200).json({
-      message: "Logged in successfully",
+    logger.info("User authenticated successfully", {
+      userId: user._id,
+      provider: "firebase",
+    });
+
+    res.json({
       user: {
-        id: user._id,
         _id: user._id,
-        name: user.name,
-        email: user.email,
+        name: user.name || null,
+        email: user.email || null,
+        phoneNumber: user.phoneNumber || null,
         role: user.role,
+        avatarUrl: user.avatarUrl || null,
         points: user.points,
-        avatarUrl: user.avatarUrl,
-        phoneNumber: user.phoneNumber,
-        bio: user.bio,
-        address: user.address,
+        isVerified: user.isVerified,
       },
     });
   } catch (err) {
-    console.error("Login error in production:", err.message);
-    res.status(401).json({ message: err.message });
+    logger.error("Firebase login error", {
+      message: err.message,
+      stack: err.stack,
+    });
+
+    res.status(500).json({
+      message: err.message || "Internal server error",
+    });
   }
 };
-export const getMe = async (req, res) => {
+
+/* ============================
+   COMPLETE PROFILE
+============================ */
+export const completeProfileController = async (req, res) => {
   try {
-    const user = req.user;
+    const { name } = req.body;
+
+    logger.info("Complete profile attempt", {
+      userId: req.user._id,
+    });
+
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    // Count completed orders for this user
-    const completedOrders = await orderModel.countDocuments({
-      user: user._id,
-      status: "completed",
-    });
-    return res.status(200).json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      points: user.points,
-      orderCount: completedOrders,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-export const verifyOTP = async (req, res) => {
-  try {
-    const { email, code } = req.body;
-    const { user, accessToken, refreshToken } = await verifyOtpService(
-      email,
-      code
-    );
+
+    if (user.name) {
+      return res.status(400).json({ message: "Profile already completed" });
+    }
+
+    user.name = name;
+    await user.save();
+
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    res.status(201).json({
-      message: "Registered successfully",
+
+    logger.info("User profile completed", {
+      userId: user._id,
+    });
+
+    res.json({
+      message: "Profile completed successfully",
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
-        email: user.email,
+        phoneNumber: user.phoneNumber,
         role: user.role,
-        points: user.points,
+        isVerified: user.isVerified,
       },
     });
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ message: err.message });
+    logger.error("Complete profile error", {
+      userId: req.user?._id,
+      message: err.message,
+    });
+
+    res.status(500).json({
+      message: err.message || "Error completing profile",
+    });
   }
 };
+
+/* ============================
+   GET ME
+============================ */
+export const getMeController = async (req, res) => {
+  try {
+    logger.info("Get current user", {
+      userId: req.user._id,
+    });
+
+    const user = await User.findById(req.user._id).select("-refreshToken");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    logger.error("Get me error", {
+      userId: req.user?._id,
+      message: err.message,
+    });
+
+    res.status(500).json({
+      message: err.message || "Error fetching user",
+    });
+  }
+};
+
+/* ============================
+   REFRESH TOKEN
+============================ */
 export const refreshTokenController = async (req, res) => {
   try {
-    const { newAccessToken, newRefreshToken } = await refreshTokenService(
-      req.cookies.refreshToken
-    );
+    const refreshToken =
+      req.cookies.refreshToken ||
+      req.headers.authorization?.split(" ")[1];
+
+    logger.info("Refresh token attempt", {
+      hasToken: !!refreshToken,
+    });
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, env.refreshJwtKey);
+    } catch {
+      logger.warn("Invalid refresh token");
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    const user = await User.findOne({
+      _id: decoded.userId,
+      refreshToken,
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Token mismatch" });
+    }
+
+    const newAccessToken = createAccessToken(user);
+    const newRefreshToken = createRefreshToken(user);
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
     res.cookie("accessToken", newAccessToken, cookieOptions);
     res.cookie("refreshToken", newRefreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Token refreshed" });
-  } catch (err) {
-    res.status(401).json({ message: err.message });
-  }
-};
-export const forgetPasswordController = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const { message } = await forgetPasswordService(email);
-    res.status(200).json({ message });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
-export const resetPasswordController = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-    const { message } = await resetPasswordService(token, newPassword);
-    res.status(200).json({ message });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-export const googleCallbackController = async (req, res) => {
-  const code = req.query.code;
-
-  try {
-    const { refreshToken, accessToken, user } = await googleAuthService(code);
-
-    res.cookie("accessToken", accessToken, cookieOptions);
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+    logger.info("Token refreshed", {
+      userId: user._id,
     });
 
-    // Redirect to frontend instead of sending JSON
-    res.redirect(
-      `${env.frontendUrl}?name=${encodeURIComponent(
-        user.name
-      )}&email=${encodeURIComponent(user.email)}`
-    );
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        points: user.points,
+        isVerified: user.isVerified,
+      },
+    });
   } catch (err) {
-      res.redirect(
-      `${env.frontendUrl}?error=${encodeURIComponent(err.message)}`
-    );
+    logger.error("Refresh token error", {
+      message: err.message,
+    });
+
+    res.status(500).json({
+      message: err.message || "Error refreshing token",
+    });
   }
 };
 
+/* ============================
+   LOGOUT
+============================ */
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    await logoutUserService(refreshToken);
+
+    if (refreshToken) {
+      await User.updateOne(
+        { refreshToken },
+        { $unset: { refreshToken: 1 } }
+      );
+    }
+
     res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", cookieOptions);
-    return res.status(200).json({ message: "Logged out successfully" });
+
+    logger.info("User logged out", {
+      userId: req.user?._id,
+    });
+
+    res.json({ message: "Logged out successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    logger.error("Logout error", {
+      message: err.message,
+    });
+
+    res.status(500).json({
+      message: err.message || "Error logging out",
+    });
   }
 };

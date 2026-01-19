@@ -3,7 +3,7 @@ import logger from '../utils/logger.js';
 export default function errorHandler(err, req, res, next) {
 	const requestId = req && req.requestId;
 	const status = err.statusCode || err.status || 500;
-	const message = err ;
+	const message = err.message || String(err);
 
 	// Log full error server-side, include requestId for correlation
 	logger.error('unhandled_error', {

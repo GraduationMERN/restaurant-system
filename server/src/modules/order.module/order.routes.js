@@ -22,6 +22,9 @@ router.get("/history", optionalAuthMiddleware, orderController.getOrderHistoryFo
 // ============= PUBLIC/GUEST ROUTES (continued) =============
 
 
+
+
+
 // Global: attach requestId + optional auth for allowed routes
 router.use(requestIdMiddleware);
 
@@ -37,6 +40,8 @@ router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopIte
 router.get("/stats/peak-hours", optionalAuthMiddleware, orderController.getPeakHours);
 router.get("/stats/revenue-by-day", optionalAuthMiddleware, orderController.getRevenueByDayOfWeek);
 router.get("/stats/monthly", optionalAuthMiddleware, orderController.getMonthlyRevenue);
+router.post("/reorder/:orderId", optionalAuthMiddleware, orderController.reorderController);
+
 
 
 
