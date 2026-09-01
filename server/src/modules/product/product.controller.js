@@ -7,7 +7,7 @@ import {
   getNewProductsService,
   getProductForListService,
 } from "./product.service.js";
-// import { getEmbedding } from "../chat/chat.service.js"; // for AI
+import { embeddingsModel } from "../../config/ai.js"; // for AI vector search
 
 //getAllProducts
 export const getAllProducts = async (req, res) => {
@@ -75,7 +75,7 @@ export const createProduct = async (req, res, next) => {
 
     let embeddingProduct = [];
     try {
-      embeddingProduct = await getEmbedding(text);
+      embeddingProduct = await embeddingsModel.embedQuery(text);
     } catch (e) {
       // embedding failures should not block product creation; log and continue
       req?.log?.warn("embedding generation failed", {
@@ -108,6 +108,28 @@ export const updateProduct = async (req, res) => {
           .json({ message: "Options must be a valid JSON string" });
       }
     }
+
+    // Regenerate the embedding on every update, using the existing product as a
+    // base so a partial update (e.g. price/image only) still ends up with an
+    // up-to-date embedding instead of staying stuck at whatever it was created with.
+    try {
+      const existing = await getProductByIdService(req.params.id);
+      if (existing) {
+        const name = req.body.name ?? existing.name;
+        const desc = req.body.desc ?? existing.desc;
+        const basePrice = req.body.basePrice ?? existing.basePrice;
+        const tags = req.body.tags ?? existing.tags ?? [];
+        const text = `${name}. ${desc}. Tags: ${
+          Array.isArray(tags) ? tags.join(",") : tags
+        }. Price: ${basePrice}`;
+        req.body.embedding = await embeddingsModel.embedQuery(text);
+      }
+    } catch (e) {
+      req?.log?.warn("embedding regeneration failed", {
+        error: e?.message || String(e),
+      });
+    }
+
     const product = await updateProductService(req.body, req.params.id);
     if (!product) {
       return res.status(404).json({ message: "product not found" });

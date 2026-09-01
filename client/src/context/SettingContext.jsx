@@ -37,7 +37,9 @@ export function SettingsProvider({ children }) {
         async function fetchSettings() {
             try {
                 const res = await api.get("/api/restaurant");
-                setSettings(res.data);
+                if (res.data) {
+                    setSettings(prev => ({ ...prev, ...res.data }));
+                }
             } catch (err) {
                 console.error("Failed to load restaurant settings", err);
             }

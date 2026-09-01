@@ -26,7 +26,9 @@ export const registerUserService = async (user) => {
     error.statusCode = 400;
     throw error;
   }
-  const userRole = user.role || "customer";
+  // Public self-registration is always a customer account. Staff/admin roles
+  // are granted separately via PUT /api/users/:id/role by an existing admin -
+  // never trust a role supplied in the registration payload.
   const exists = await User.findOne({ email });
   if (exists) {
     const error = new Error("Email already exists");
@@ -34,31 +36,27 @@ export const registerUserService = async (user) => {
     throw error;
   }
   const hashedPassword = await hashPassword(password);
-  const code = userRole === "customer" ? generateOTP() : null;
+  const code = generateOTP();
 
   console.log("Generated OTP:", code);
 
   const newUser = await addUser({
     ...user,
-    role: userRole,
+    role: "customer",
     password: hashedPassword,
     otp: code,
-    isVerified: userRole === "customer" ? false : true,
+    isVerified: false,
   });
 
-  if (userRole === "customer") {
-    // Send email in background WITHOUT waiting
-    sendOTPEmailInBackground(email, code, newUser.name);
+  // Send email in background WITHOUT waiting
+  sendOTPEmailInBackground(email, code, newUser.name);
 
-    return {
-      newUser,
-      message: "Account created! Please check your email for OTP.",
-      // Return OTP for development/testing (remove in production)
-      otp: process.env.NODE_ENV === "development" ? code : undefined
-    };
-  }
-
-  return { newUser, message: "Registered successfully" };
+  return {
+    newUser,
+    message: "Account created! Please check your email for OTP.",
+    // Return OTP for development/testing (remove in production)
+    otp: process.env.NODE_ENV === "development" ? code : undefined
+  };
 };
 
 async function sendOTPEmailInBackground(email, code, name) {
